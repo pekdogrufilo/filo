@@ -3187,17 +3187,23 @@ function wireDocType(d){
 }
 
 // Gemini API'ye direkt istek — Cloud Run bypass
-const GEMINI_MODEL = 'gemini-3.5-flash-lite';
+const GEMINI_MODELS = [
+  'gemini-2.5-flash-lite',
+  'gemini-3.5-flash-lite',
+  'gemini-2.0-flash',
+  'gemini-1.5-flash',
+];
 
 function getGeminiKey(){
   try{ return localStorage.getItem('filoPaneli_geminiKey') || ''; }catch(e){ return ''; }
 }
 
-async function callGeminiDirect(system, userText, contentBlock, retryCount=0){
+async function callGeminiDirect(system, userText, contentBlock, modelIdx=0, retryCount=0){
   const GEMINI_API_KEY = getGeminiKey();
   if(!GEMINI_API_KEY){
     throw new Error('Gemini API anahtarı ayarlanmamış. Ayarlar → AI bölümünden anahtarınızı girin.');
   }
+  const GEMINI_MODEL = GEMINI_MODELS[modelIdx] || GEMINI_MODELS[0];
   const base64 = contentBlock?.source?.data;
   const mimeType = contentBlock?.source?.media_type || 'application/pdf';
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
@@ -3225,10 +3231,19 @@ async function callGeminiDirect(system, userText, contentBlock, retryCount=0){
     if(!res.ok){
       const err = await res.json().catch(()=>({}));
       // 503 yoğunluk hatası — 3 kez tekrar dene
-      if(res.status === 503 && retryCount < 3){
-        const bekle = (retryCount + 1) * 2000;
-        await new Promise(r=>setTimeout(r, bekle));
-        return callGeminiDirect(system, userText, contentBlock, retryCount + 1);
+      if(res.status === 503){
+        // Önce aynı modeli 1 kez daha dene
+        if(retryCount < 1){
+          await new Promise(r=>setTimeout(r, 2000));
+          return callGeminiDirect(system, userText, contentBlock, modelIdx, retryCount + 1);
+        }
+        // Sonra bir sonraki modele geç
+        const nextModel = modelIdx + 1;
+        if(nextModel < GEMINI_MODELS.length){
+          console.log('Model degistiriliyor:', GEMINI_MODELS[nextModel]);
+          await new Promise(r=>setTimeout(r, 1000));
+          return callGeminiDirect(system, userText, contentBlock, nextModel, 0);
+        }
       }
       throw new Error(`Gemini hatası (${res.status}): ${err?.error?.message||''}`);
     }
