@@ -1,0 +1,16 @@
+{
+  "name": "Pekdoğru Filo Kontrol Paneli",
+  "short_name": "Filo Panel",
+  "description": "Araç, kira, sigorta, muayene ve masraf takibi",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0D1420",
+  "theme_color": "#0D1420",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
