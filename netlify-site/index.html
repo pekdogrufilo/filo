@@ -15,10 +15,14 @@
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#0D1420" id="themeColorMeta">
 <script>
-  // Sayfa çizilmeden önce (flaş olmadan) kayıtlı tema tercihini uygula
+  // v5 — cache temizle
   try{
-    const t = localStorage.getItem('filoPaneli_theme') || 'dark';
-    // Açık tema kaldırıldı — her zaman koyu tema
+    if('serviceWorker' in navigator){
+      navigator.serviceWorker.getRegistrations().then(regs=>regs.forEach(r=>r.unregister()));
+    }
+    if('caches' in window){
+      caches.keys().then(keys=>keys.forEach(k=>caches.delete(k)));
+    }
     const _t = localStorage.getItem('filoPaneli_theme') || 'dark';
     if(_t === 'light') document.documentElement.setAttribute('data-theme','light');
     else document.documentElement.removeAttribute('data-theme');
@@ -32,93 +36,88 @@
 <link rel="apple-touch-icon" href="./apple-touch-icon.png">
 <style>
   :root{
-    /* Vercel Dark — siyah, minimal, ince */
-    --bg:#000000;
-    --surface:#0A0A0A;
-    --surface-2:#111111;
-    --surface-3:#1A1A1A;
-    --border:#222222;
-    --border-2:#333333;
-    --text:#EDEDED;
-    --text-2:#888888;
-    --text-3:#555555;
-    --blue:#0070F3;
-    --blue-dim:rgba(0,112,243,.12);
-    --green:#00D084;
-    --green-dim:rgba(0,208,132,.12);
-    --amber:#F5A623;
-    --amber-dim:rgba(245,166,35,.12);
-    --red:#FF4444;
-    --red-dim:rgba(255,68,68,.12);
-    --purple:#7928CA;
-    --radius:8px;
-    --radius-sm:6px;
-    --radius-lg:12px;
-    --shadow-sm:0 0 0 1px #222;
-    --shadow-md:0 4px 16px rgba(0,0,0,.8);
-    --shadow-lg:0 16px 48px rgba(0,0,0,.9);
+    /* CRM Dark Gold — koyu lacivert + altın */
+    --bg:#0D0E18;
+    --surface:#13152A;
+    --surface-2:#1A1D35;
+    --surface-3:#222540;
+    --border:#2A2D50;
+    --border-2:#3A3D65;
+    --text:#F0F0FF;
+    --text-2:#8890B0;
+    --text-3:#50557A;
+    --blue:#D4AF37;
+    --blue-dim:rgba(212,175,55,.15);
+    --green:#3DCF8E;
+    --green-dim:rgba(61,207,142,.15);
+    --amber:#D4AF37;
+    --amber-dim:rgba(212,175,55,.15);
+    --red:#FF5C7A;
+    --red-dim:rgba(255,92,122,.15);
+    --purple:#A78BFA;
+    --radius:12px;
+    --radius-sm:8px;
+    --radius-lg:16px;
+    --shadow-sm:0 2px 8px rgba(0,0,0,.4);
+    --shadow-md:0 8px 24px rgba(0,0,0,.5);
+    --shadow-lg:0 16px 48px rgba(0,0,0,.6);
     --ease:cubic-bezier(.22,1,.36,1);
-    --asphalt-900:#000000;
-    --asphalt-800:#0A0A0A;
-    --asphalt-700:#111111;
-    --steel-600:#1A1A1A;
-    --steel-500:#444444;
-    --steel-300:#888888;
-    --steel-100:#EDEDED;
-    --paper:#EDEDED;
-    --safety:#FF4444;
-    --safety-dim:rgba(255,68,68,.12);
-    --teal:#00D084;
-    --teal-dim:rgba(0,208,132,.12);
-    --coral:#FF4444;
-    --coral-dim:rgba(255,68,68,.12);
-    --line:#222222;
-    --glow:rgba(0,112,243,.08);
-    --gold:#F5A623;
-    --gold-dim:rgba(245,166,35,.12);
-    --accent-blue:#0070F3;
-    --sidebar-bg:#0A0A0A;
-    --fixed-light:#EDEDED;
-    --fixed-dark:#0A0A0A;
+    --asphalt-900:#0D0E18;
+    --asphalt-800:#13152A;
+    --asphalt-700:#1A1D35;
+    --steel-600:#222540;
+    --steel-500:#50557A;
+    --steel-300:#8890B0;
+    --steel-100:#F0F0FF;
+    --paper:#F0F0FF;
+    --safety:#FF5C7A;
+    --safety-dim:rgba(255,92,122,.15);
+    --teal:#3DCF8E;
+    --teal-dim:rgba(61,207,142,.15);
+    --coral:#FF5C7A;
+    --coral-dim:rgba(255,92,122,.15);
+    --line:#2A2D50;
+    --glow:rgba(212,175,55,.08);
+    --gold:#D4AF37;
+    --gold-2:#F0CB55;
+    --gold-dim:rgba(212,175,55,.15);
+    --accent-blue:#D4AF37;
+    --sidebar-bg:#0A0B15;
+    --fixed-light:#F0F0FF;
+    --fixed-dark:#13152A;
   }
     html[data-theme="light"]{
-    --bg:#FAFAFA;
+    --bg:#F0F2FF;
     --surface:#FFFFFF;
-    --surface-2:#F5F5F5;
-    --surface-3:#EEEEEE;
-    --border:#EAEAEA;
-    --border-2:#D4D4D4;
-    --text:#000000;
-    --text-2:#666666;
-    --text-3:#999999;
-    --blue:#0070F3;
-    --blue-dim:rgba(0,112,243,.08);
-    --green:#00A86B;
-    --green-dim:rgba(0,168,107,.08);
-    --amber:#F5A623;
-    --amber-dim:rgba(245,166,35,.08);
-    --red:#EE0000;
-    --red-dim:rgba(238,0,0,.08);
-    --sidebar-bg:#111111;
-    --asphalt-900:#FAFAFA;
+    --surface-2:#F5F6FF;
+    --surface-3:#ECEEFF;
+    --border:#E0E3F0;
+    --border-2:#C8CCDF;
+    --text:#1A1D2E;
+    --text-2:#6B6F8A;
+    --text-3:#9EA2B8;
+    --blue:#6C63FF;
+    --blue-dim:rgba(108,99,255,.08);
+    --accent-blue:#6C63FF;
+    --sidebar-bg:#1A1D27;
+    --asphalt-900:#F0F2FF;
     --asphalt-800:#FFFFFF;
-    --asphalt-700:#F5F5F5;
-    --steel-600:#EAEAEA;
-    --steel-500:#999999;
-    --steel-300:#666666;
-    --steel-100:#000000;
-    --paper:#000000;
-    --line:#EAEAEA;
-    --shadow-sm:0 0 0 1px #EAEAEA;
-    --shadow-md:0 4px 16px rgba(0,0,0,.06);
-    --shadow-lg:0 16px 40px rgba(0,0,0,.08);
-    --safety-dim:rgba(238,0,0,.08);
-    --teal-dim:rgba(0,168,107,.08);
-    --coral-dim:rgba(238,0,0,.08);
-    --gold-dim:rgba(245,166,35,.08);
-    --accent-blue:#0070F3;
-    --fixed-light:#FAFAFA;
-    --fixed-dark:#111111;
+    --asphalt-700:#F5F6FF;
+    --steel-600:#E0E3F0;
+    --steel-500:#9EA2B8;
+    --steel-300:#6B6F8A;
+    --steel-100:#1A1D2E;
+    --paper:#1A1D2E;
+    --line:#E0E3F0;
+    --shadow-sm:0 2px 8px rgba(0,0,0,.06);
+    --shadow-md:0 8px 24px rgba(0,0,0,.08);
+    --shadow-lg:0 16px 48px rgba(0,0,0,.1);
+    --safety-dim:rgba(255,92,122,.08);
+    --teal-dim:rgba(76,175,125,.08);
+    --coral-dim:rgba(255,92,122,.08);
+    --gold-dim:rgba(255,181,71,.08);
+    --fixed-light:#F0F2FF;
+    --fixed-dark:#1A1D27;
   }
   *{box-sizing:border-box;}
   body{
@@ -149,7 +148,7 @@
   .brand-mark svg{width:24px;height:24px;}
   h1{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif;font-size:22px;font-weight:600;margin:0;letter-spacing:.2px;}
   .sub{color:var(--steel-100);font-size:13px;margin-top:2px;}
-  .add-btn{background:#0070F3;color:#fff;border:none;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif;font-weight:600;font-size:14px;padding:11px 20px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:opacity .15s ease, transform .15s ease;box-shadow:0 4px 14px rgba(66,153,225,.3);}
+  .add-btn{background:linear-gradient(135deg,#8B6914,#D4AF37);color:#fff;border:none;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif;font-weight:600;font-size:14px;padding:11px 20px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:opacity .15s ease, transform .15s ease;box-shadow:0 4px 14px rgba(66,153,225,.3);}
   .add-btn:hover{opacity:.9;transform:translateY(-1px);}
   .add-btn:active{transform:translateY(0) scale(.98);}
   .btn-row{display:flex;gap:10px;flex-wrap:wrap;}
@@ -466,18 +465,18 @@
 
   /* ===== Yeni kabuk: sol menü + üst çubuk + sayfa sistemi ===== */
   .app-shell{display:flex;min-height:100vh;}
-  .sidebar{width:210px;flex-shrink:0;background:var(--sidebar-bg);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;}
+  .sidebar{width:220px;flex-shrink:0;background:var(--sidebar-bg);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;}
   .sb-brand{display:flex;align-items:center;gap:10px;padding:20px 16px 16px;}
   .sb-brand-mark{width:30px;height:30px;border-radius:7px;background:var(--fixed-light);display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:4px;}
   .sb-brand-mark img{width:100%;height:100%;object-fit:contain;}
-  .sb-brand-text{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif;font-weight:700;font-size:13px;line-height:1.2;letter-spacing:.2px;color:#FFFFFF;}
+  .sb-brand-text{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif;font-weight:600;font-size:13px;line-height:1.2;letter-spacing:-.1px;color:#FFFFFF;}
   .sb-brand-sub{font-size:10px;color:rgba(255,255,255,.45);letter-spacing:.5px;margin-top:1px;}
   .sb-nav{flex:1;padding:6px 8px;}
   .sb-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:7px;color:rgba(255,255,255,.5);font-size:13px;font-weight:500;cursor:pointer;margin-bottom:1px;transition:all .12s ease;position:relative;border:none;background:none;width:100%;text-align:left;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',Arial,sans-serif;}
   .sb-item svg{flex-shrink:0;width:15px;height:15px;}
   .sb-item:hover{background:rgba(255,255,255,.08);color:#fff;}
-  .sb-item.active{background:#1A1A1A;color:#EDEDED;border-left:2px solid #0070F3;}
-  .sb-item.active svg{color:#0070F3;}
+  .sb-item.active{background:rgba(212,175,55,.12);color:#F0F0FF;border-left:2px solid #D4AF37;border-radius:0 8px 8px 0;}
+  .sb-item.active svg{color:#D4AF37;}
   .sb-item .sb-badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;min-width:16px;text-align:center;}
   .sb-divider{height:1px;background:rgba(255,255,255,.08);margin:6px 8px;}
   .sb-foot{padding:12px 14px 16px;border-top:1px solid rgba(255,255,255,.08);}
@@ -492,7 +491,7 @@
   .bn-item.active svg{transform:translateY(-1px);}
   .bn-badge{position:absolute;top:4px;right:calc(50% - 16px);background:var(--coral);color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:10px;min-width:14px;text-align:center;}
   .main-area{flex:1;min-width:0;}
-  .top-header{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;border-bottom:1px solid var(--border);background:var(--surface);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);position:sticky;top:0;z-index:40;gap:12px;}
+  .top-header{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;border-bottom:1px solid var(--border);background:var(--bg);position:sticky;top:0;z-index:40;gap:12px;}
   .th-title{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif;font-size:19.5px;font-weight:650;letter-spacing:.2px;color:var(--text);}
   .th-sub{font-size:13px;color:var(--steel-100);margin-top:2px;}
   .th-right{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
@@ -544,9 +543,9 @@
   .vqm-close{background:none;border:none;color:var(--steel-100);cursor:pointer;padding:4px;display:flex;border-radius:6px;}
   .vqm-close:hover{background:var(--surface-2);color:var(--paper);}
   .vqm-body{overflow-y:auto;padding:12px 16px 20px;flex:1;}
-  .dstat-ic{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;}
-  .dstat-txt .n{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif;font-size:25px;font-weight:600;line-height:1;letter-spacing:-.2px;}
-  .dstat-txt .l{font-size:13px;color:var(--steel-300);margin-top:7px;}
+  .dstat-ic{display:none;}
+  .dstat-txt .n{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif;font-size:32px;font-weight:700;line-height:1;letter-spacing:-.5px;color:var(--text);}
+  .dstat-txt .l{font-size:12px;color:var(--text-3);margin-bottom:8px;font-weight:500;letter-spacing:.3px;text-transform:uppercase;}
   .dstat-txt .d{font-size:12px;margin-top:4px;font-weight:600;}
 
   .dash-grid{display:grid;grid-template-columns:1fr 1fr 320px;gap:20px;align-items:start;}
@@ -4536,11 +4535,23 @@ function renderDashboard(){
   const page = document.getElementById('page-genel-bakis');
   page.innerHTML = `
     <div class="dash-stats">
-      <div class="dstat" onclick="showVehicleQuickList('Toplam','Tüm Araçlar')" title="Tıkla — tüm araçları gör"><div class="dstat-ic" style="background:var(--accent-blue)">${DASH_ICONS.car}</div><div class="dstat-txt"><div class="n">${total}</div><div class="l">Toplam Araç</div></div></div>
-      <div class="dstat" onclick="showVehicleQuickList('Kirada','Kiradaki Araçlar')" title="Tıkla — kiradaki araçları gör"><div class="dstat-ic" style="background:#38A169">${DASH_ICONS.check}</div><div class="dstat-txt"><div class="n">${kirada}</div><div class="l">Kiradaki Araç</div><div class="d" style="color:#7FDFC4">%${pct(kirada)}</div></div></div>
-      <div class="dstat" onclick="showVehicleQuickList('Müsait','Müsait Araçlar')" title="Tıkla — müsait araçları gör"><div class="dstat-ic" style="background:#C9A961">${DASH_ICONS.clock}</div><div class="dstat-txt"><div class="n">${musait}</div><div class="l">Müsait Araç</div><div class="d" style="color:#E8D49A">%${pct(musait)}</div></div></div>
-      <div class="dstat" onclick="showVehicleQuickList('Serviste','Servisteki Araçlar')" title="Tıkla — servisteki araçları gör"><div class="dstat-ic" style="background:var(--safety)">${DASH_ICONS.wrench}</div><div class="dstat-txt"><div class="n">${serviste}</div><div class="l">Servisteki Araç</div><div class="d" style="color:#F3A392">%${pct(serviste)}</div></div></div>
-      <div class="dstat" style="cursor:default;"><div class="dstat-ic" style="background:var(--accent-blue)">${DASH_ICONS.trend}</div><div class="dstat-txt"><div class="n">${fmtTL_role(gelir)}</div><div class="l">Aylık Kira Geliri</div></div></div>
+      <div class="dstat" onclick="showVehicleQuickList('Toplam','Tüm Araçlar')">
+        <div class="dstat-txt"><div class="l">Toplam Araç</div><div class="n">${total}</div></div>
+      </div>
+      <div class="dstat" onclick="showVehicleQuickList('Kirada','Kiradaki Araçlar')">
+        <div class="dstat-txt"><div class="l">Kiradaki Araç</div><div class="n" style="color:var(--green)">${kirada}</div></div>
+        <div style="font-size:12px;color:var(--text-3);margin-top:4px;">%${pct(kirada)} doluluk</div>
+      </div>
+      <div class="dstat" onclick="showVehicleQuickList('Müsait','Müsait Araçlar')">
+        <div class="dstat-txt"><div class="l">Müsait Araç</div><div class="n" style="color:var(--text-2)">${musait}</div></div>
+        <div style="font-size:12px;color:var(--text-3);margin-top:4px;">%${pct(musait)}</div>
+      </div>
+      <div class="dstat" onclick="showVehicleQuickList('Serviste','Servisteki Araçlar')">
+        <div class="dstat-txt"><div class="l">Servisteki Araç</div><div class="n" style="color:var(--red)">${serviste}</div></div>
+      </div>
+      <div class="dstat" style="cursor:default;">
+        <div class="dstat-txt"><div class="l">Aylık Kira Geliri</div><div class="n" style="color:var(--blue)">${fmtTL_role(gelir)}</div></div>
+      </div>
     </div>
     <div class="dash-grid">
       <div class="dcard">
@@ -5385,13 +5396,70 @@ async function kmRaporuYukle(file){
     // Başlık satırından sütunları bul
     const headers = (rows[0]||[]).map(h=>(h||'').toString().trim().toLocaleLowerCase('tr-TR'));
     const plakaCol = headers.findIndex(h=>h.includes('plaka'));
-    const basKmCol = headers.findIndex(h=>h.includes('başlangıç km') || h.includes('baslangic km'));
-    const bitKmCol = headers.findIndex(h=>h.includes('bitiş km') || h.includes('bitis km'));
-    const toplamCol = headers.findIndex(h=>h.includes('toplam km'));
-    const basTarihCol = headers.findIndex(h=>h.includes('başlangıç tarihi') || h.includes('baslangic tarihi'));
-    const bitTarihCol = headers.findIndex(h=>h.includes('bitiş tarihi') || h.includes('bitis tarihi'));
+    const basKmCol = headers.findIndex(h=>h.includes('başlangıç km') || h.includes('baslangic km') || h.includes('başlangiç km') || (h.includes('başlangıç') && h.includes('km')));
+    const bitKmCol = headers.findIndex(h=>h.includes('bitiş km') || h.includes('bitis km') || h.includes('biti') && h.includes('km'));
+    const toplamCol = headers.findIndex(h=>h.includes('toplam km') || h === 'toplam km');
+    // N2 Mobil Sürüş Özeti formatı
+    const mesafeCol = headers.findIndex(h=>h.includes('katedilen mesafe') || h.includes('mesafe (km)') || h.includes('mesafe'));
+    const basTarihCol = headers.findIndex(h=>h.includes('başlangıç tarihi') || h.includes('baslangic tarihi') || (h.includes('başlangıç') && h.includes('tarih')));
+    const bitTarihCol = headers.findIndex(h=>h.includes('bitiş tarihi') || h.includes('bitis tarihi') || (h.includes('biti') && h.includes('tarih')));
+    
+    // N2 Mobil formatı mı? (Katedilen Mesafe sütunu var)
+    const isN2Mobil = plakaCol !== -1 && mesafeCol !== -1 && toplamCol === -1;
+    const aktifMesafeCol = isN2Mobil ? mesafeCol : toplamCol;
+    
+    console.log('Kolonlar:', {plakaCol, basKmCol, bitKmCol, toplamCol, mesafeCol, isN2Mobil});
 
-    if(plakaCol === -1 || toplamCol === -1){
+    if(plakaCol === -1 || aktifMesafeCol === -1){
+      // Index ile dene — Triomobil raporu sabit sütun sırası kullanır
+      // Plaka=0, BaşlangıçKM=10, BitişKM=11, ToplamKM=17
+      const testRow = rows[1];
+      if(testRow && testRow.length >= 18){
+        log.innerHTML = '<div style="color:var(--amber);font-size:13px;">Başlık eşleşmedi, sütun sırası ile deneniyor...</div>';
+        // Manuel index ata
+        rows.unshift(null); // dummy
+        const fixedRows = rows.slice(1);
+        // Direkt işle
+        let eslesme2 = 0;
+        const ornekTarih2 = fixedRows[0]?.[4];
+        let donem2 = '—';
+        if(ornekTarih2){
+          const parts = ornekTarih2.toString().split('.');
+          if(parts.length>=2){
+            const aylar = ['','Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+            const ay = parseInt(parts[1]);
+            donem2 = `${aylar[ay]||parts[1]} ${parts[2]||''}`.trim();
+          }
+        }
+        const kmMap2 = {};
+        for(const row of fixedRows){
+          if(!row || !row[0]) continue;
+          const plaka = normPlaka(row[0].toString());
+          const topKm = Number(row[17])||0;
+          const basKm = Number(row[10])||0;
+          const bitKm = Number(row[11])||0;
+          if(!kmMap2[plaka]) kmMap2[plaka] = {toplamKm:0, basKm:Infinity, bitKm:0};
+          kmMap2[plaka].toplamKm += topKm;
+          if(basKm > 0 && basKm < kmMap2[plaka].basKm) kmMap2[plaka].basKm = basKm;
+          if(bitKm > kmMap2[plaka].bitKm) kmMap2[plaka].bitKm = bitKm;
+        }
+        const logLines2 = [];
+        for(let i=0; i<vehicles.length; i++){
+          const v = vehicles[i];
+          const km = kmMap2[normPlaka(v.plaka)];
+          if(!km) continue;
+          const kmGecmisi = v.kmGecmisi || [];
+          const mevcutIdx = kmGecmisi.findIndex(k=>k.donem===donem2);
+          const yeniKayit = {donem:donem2, basKm:km.basKm===Infinity?0:Math.round(km.basKm), bitKm:Math.round(km.bitKm), toplamKm:Math.round(km.toplamKm), kaynak:file.name};
+          if(mevcutIdx>=0) kmGecmisi[mevcutIdx]=yeniKayit; else kmGecmisi.push(yeniKayit);
+          vehicles[i] = {...v, kmGecmisi, sonKm:Math.round(km.bitKm), aykm:Math.round(km.toplamKm)};
+          eslesme2++;
+          logLines2.push(`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);font-size:12.5px;"><span class="mini-plaka">${esc(v.plaka)}</span><span style="color:var(--text-2)">${esc([v.marka,v.model].filter(Boolean).join(' ')||'')}</span><span style="margin-left:auto;font-family:monospace;color:var(--blue);font-weight:600">${Math.round(km.toplamKm).toLocaleString('tr-TR')} km</span></div>`);
+        }
+        await persist(); render();
+        log.innerHTML = `<div style="padding:12px;background:var(--green-dim);border:1px solid var(--green);border-radius:8px;margin-bottom:12px;"><div style="font-weight:600;color:var(--green);font-size:13px;">✓ ${eslesme2} araç güncellendi</div><div style="font-size:12px;color:var(--text-2);margin-top:3px;">Dönem: ${donem2}</div></div><div style="max-height:300px;overflow-y:auto;">${logLines2.join('')}</div>`;
+        return;
+      }
       log.innerHTML = '<div style="color:var(--red)">Plaka veya Toplam KM sütunu bulunamadı. Triomobil/N2 Mobil detaylı km raporu olduğundan emin olun.</div>';
       return;
     }
@@ -5413,9 +5481,9 @@ async function kmRaporuYukle(file){
     for(const row of rows.slice(1)){
       if(!row || !row[plakaCol]) continue;
       const plaka = normPlaka(row[plakaCol].toString());
-      const topKm = Number(row[toplamCol])||0;
-      const basKm = Number(row[basKmCol])||0;
-      const bitKm = Number(row[bitKmCol])||0;
+      const topKm = Number(row[aktifMesafeCol])||0;
+      const basKm = basKmCol !== -1 ? (Number(row[basKmCol])||0) : 0;
+      const bitKm = bitKmCol !== -1 ? (Number(row[bitKmCol])||0) : 0;
       if(!kmMap[plaka]) kmMap[plaka] = {toplamKm:0, basKm:Infinity, bitKm:0};
       kmMap[plaka].toplamKm += topKm;
       if(basKm > 0 && basKm < kmMap[plaka].basKm) kmMap[plaka].basKm = basKm;
