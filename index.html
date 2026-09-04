@@ -5397,13 +5397,65 @@ async function kmRaporuYukle(file){
     // Başlık satırından sütunları bul
     const headers = (rows[0]||[]).map(h=>(h||'').toString().trim().toLocaleLowerCase('tr-TR'));
     const plakaCol = headers.findIndex(h=>h.includes('plaka'));
-    const basKmCol = headers.findIndex(h=>h.includes('başlangıç km') || h.includes('baslangic km'));
-    const bitKmCol = headers.findIndex(h=>h.includes('bitiş km') || h.includes('bitis km'));
-    const toplamCol = headers.findIndex(h=>h.includes('toplam km'));
-    const basTarihCol = headers.findIndex(h=>h.includes('başlangıç tarihi') || h.includes('baslangic tarihi'));
-    const bitTarihCol = headers.findIndex(h=>h.includes('bitiş tarihi') || h.includes('bitis tarihi'));
+    const basKmCol = headers.findIndex(h=>h.includes('başlangıç km') || h.includes('baslangic km') || h.includes('başlangiç km') || (h.includes('başlangıç') && h.includes('km')));
+    const bitKmCol = headers.findIndex(h=>h.includes('bitiş km') || h.includes('bitis km') || h.includes('biti') && h.includes('km'));
+    const toplamCol = headers.findIndex(h=>h.includes('toplam km') || h === 'toplam km');
+    const basTarihCol = headers.findIndex(h=>h.includes('başlangıç tarihi') || h.includes('baslangic tarihi') || (h.includes('başlangıç') && h.includes('tarih')));
+    const bitTarihCol = headers.findIndex(h=>h.includes('bitiş tarihi') || h.includes('bitis tarihi') || (h.includes('biti') && h.includes('tarih')));
+    
+    console.log('Kolonlar:', {plakaCol, basKmCol, bitKmCol, toplamCol, basTarihCol});
+    console.log('Headers:', headers);
 
     if(plakaCol === -1 || toplamCol === -1){
+      // Index ile dene — Triomobil raporu sabit sütun sırası kullanır
+      // Plaka=0, BaşlangıçKM=10, BitişKM=11, ToplamKM=17
+      const testRow = rows[1];
+      if(testRow && testRow.length >= 18){
+        log.innerHTML = '<div style="color:var(--amber);font-size:13px;">Başlık eşleşmedi, sütun sırası ile deneniyor...</div>';
+        // Manuel index ata
+        rows.unshift(null); // dummy
+        const fixedRows = rows.slice(1);
+        // Direkt işle
+        let eslesme2 = 0;
+        const ornekTarih2 = fixedRows[0]?.[4];
+        let donem2 = '—';
+        if(ornekTarih2){
+          const parts = ornekTarih2.toString().split('.');
+          if(parts.length>=2){
+            const aylar = ['','Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+            const ay = parseInt(parts[1]);
+            donem2 = `${aylar[ay]||parts[1]} ${parts[2]||''}`.trim();
+          }
+        }
+        const kmMap2 = {};
+        for(const row of fixedRows){
+          if(!row || !row[0]) continue;
+          const plaka = normPlaka(row[0].toString());
+          const topKm = Number(row[17])||0;
+          const basKm = Number(row[10])||0;
+          const bitKm = Number(row[11])||0;
+          if(!kmMap2[plaka]) kmMap2[plaka] = {toplamKm:0, basKm:Infinity, bitKm:0};
+          kmMap2[plaka].toplamKm += topKm;
+          if(basKm > 0 && basKm < kmMap2[plaka].basKm) kmMap2[plaka].basKm = basKm;
+          if(bitKm > kmMap2[plaka].bitKm) kmMap2[plaka].bitKm = bitKm;
+        }
+        const logLines2 = [];
+        for(let i=0; i<vehicles.length; i++){
+          const v = vehicles[i];
+          const km = kmMap2[normPlaka(v.plaka)];
+          if(!km) continue;
+          const kmGecmisi = v.kmGecmisi || [];
+          const mevcutIdx = kmGecmisi.findIndex(k=>k.donem===donem2);
+          const yeniKayit = {donem:donem2, basKm:km.basKm===Infinity?0:Math.round(km.basKm), bitKm:Math.round(km.bitKm), toplamKm:Math.round(km.toplamKm), kaynak:file.name};
+          if(mevcutIdx>=0) kmGecmisi[mevcutIdx]=yeniKayit; else kmGecmisi.push(yeniKayit);
+          vehicles[i] = {...v, kmGecmisi, sonKm:Math.round(km.bitKm), aykm:Math.round(km.toplamKm)};
+          eslesme2++;
+          logLines2.push(`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);font-size:12.5px;"><span class="mini-plaka">${esc(v.plaka)}</span><span style="color:var(--text-2)">${esc([v.marka,v.model].filter(Boolean).join(' ')||'')}</span><span style="margin-left:auto;font-family:monospace;color:var(--blue);font-weight:600">${Math.round(km.toplamKm).toLocaleString('tr-TR')} km</span></div>`);
+        }
+        await persist(); render();
+        log.innerHTML = `<div style="padding:12px;background:var(--green-dim);border:1px solid var(--green);border-radius:8px;margin-bottom:12px;"><div style="font-weight:600;color:var(--green);font-size:13px;">✓ ${eslesme2} araç güncellendi</div><div style="font-size:12px;color:var(--text-2);margin-top:3px;">Dönem: ${donem2}</div></div><div style="max-height:300px;overflow-y:auto;">${logLines2.join('')}</div>`;
+        return;
+      }
       log.innerHTML = '<div style="color:var(--red)">Plaka veya Toplam KM sütunu bulunamadı. Triomobil/N2 Mobil detaylı km raporu olduğundan emin olun.</div>';
       return;
     }
