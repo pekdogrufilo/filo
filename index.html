@@ -2147,6 +2147,10 @@ function render(){
             <div class="ci-label">Şoför</div>
             <div class="ci-val">${esc(v.sofor)}</div>
           </div>` : ''}
+          ${v.aykm ? `<div class="ci">
+            <div class="ci-label">Bu Ay km</div>
+            <div class="ci-val mono" style="color:var(--blue)">${v.aykm.toLocaleString('tr-TR')} km</div>
+          </div>` : ''}
           ${v.kira ? `<div class="ci" ${!isAdmin()?'style="display:none"':''}>
             <div class="ci-label">Aylık Kira</div>
             <div class="ci-val mono">${fmtTL2(v.kira)}</div>
@@ -5190,30 +5194,66 @@ function renderBildirimlerPage(){
 function renderExcelPage(){
   const page = document.getElementById('page-excel');
   page.innerHTML = `
-    <div class="dcard">
+    <div class="dcard" style="margin-bottom:16px;">
+      <h3>🚗 Km Takip Raporu Yükle (Triomobil / N2 Mobil)</h3>
+      <p style="color:var(--text-2);font-size:13px;margin-bottom:16px;">Triomobil veya N2 Mobil'den indirdiğin "Detaylı Km Raporu" Excel dosyasını yükle. Sistem plakaları eşleştirip her araca aylık km bilgisini otomatik kaydeder.</p>
+      <div id="kmYuklemeArea" style="border:2px dashed var(--border);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:border-color .2s ease;"
+        ondragover="event.preventDefault();this.style.borderColor='var(--accent-blue)'"
+        ondragleave="this.style.borderColor='var(--border)'"
+        ondrop="event.preventDefault();this.style.borderColor='var(--border)';kmRaporuYukle(event.dataTransfer.files[0])">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:8px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">Excel dosyasını sürükle bırak</div>
+        <div style="font-size:12px;color:var(--text-3);margin-bottom:12px;">Triomobil veya N2 Mobil km raporu (.xlsx)</div>
+        <button class="settings-btn" onclick="document.getElementById('kmRaporInput').click()">Dosya Seç</button>
+        <input type="file" id="kmRaporInput" accept=".xlsx,.xls" style="display:none" onchange="kmRaporuYukle(this.files[0])">
+      </div>
+      <div id="kmYuklemeLog" style="margin-top:12px;"></div>
+    </div>
+
+    <div class="dcard" style="margin-bottom:16px;">
+      <h3>Km Geçmişi</h3>
+      ${vehicles.filter(v=>v.kmGecmisi&&v.kmGecmisi.length>0).length > 0 ? `
+      <div class="table-scroll"><table class="mini-table">
+        <thead><tr><th>Plaka</th><th>Araç</th><th>Dönem</th><th style="text-align:right">Başlangıç km</th><th style="text-align:right">Bitiş km</th><th style="text-align:right">Toplam km</th></tr></thead>
+        <tbody>${vehicles.filter(v=>v.kmGecmisi&&v.kmGecmisi.length>0).flatMap(v=>
+          [...(v.kmGecmisi||[])].reverse().slice(0,3).map(k=>`
+            <tr>
+              <td><span class="mini-plaka">${esc(v.plaka)}</span></td>
+              <td>${esc([v.marka,v.model].filter(Boolean).join(' ')||'—')}</td>
+              <td style="color:var(--text-2);font-size:12px;">${esc(k.donem||'—')}</td>
+              <td style="text-align:right;font-family:'SF Mono',monospace">${k.basKm?k.basKm.toLocaleString('tr-TR')+' km':'—'}</td>
+              <td style="text-align:right;font-family:'SF Mono',monospace">${k.bitKm?k.bitKm.toLocaleString('tr-TR')+' km':'—'}</td>
+              <td style="text-align:right;font-family:'SF Mono',monospace;font-weight:600;color:var(--blue)">${k.toplamKm?k.toplamKm.toLocaleString('tr-TR')+' km':'—'}</td>
+            </tr>
+          `)
+        ).join('')}</tbody>
+      </table></div>` : '<div class="log-empty">Henüz km raporu yüklenmedi.</div>'}
+    </div>
+
+    <div class="dcard" style="margin-bottom:16px;">
       <h3>Excel'e Aktar</h3>
-      <p>Tüm filo verisini bir Excel dosyası olarak indir.</p>
+      <p style="color:var(--text-2);font-size:13px;">Tüm filo verisini bir Excel dosyası olarak indir.</p>
       <div class="row-btns"><button class="settings-btn" id="xpExport"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 19h16"/></svg> Excel'e aktar</button></div>
     </div>
-    <div class="dcard">
+    <div class="dcard" style="margin-bottom:16px;">
       <h3>Excel'den Güncelle</h3>
-      <p>Var olan araçları, plaka eşleşmesine göre yüklediğin Excel dosyasındaki bilgilerle günceller.</p>
+      <p style="color:var(--text-2);font-size:13px;">Var olan araçları, plaka eşleşmesine göre yüklediğin Excel dosyasındaki bilgilerle günceller.</p>
       <div class="row-btns"><button class="settings-btn" id="xpImport"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.3"/><path d="M21 3v6h-6"/></svg> Excel dosyası seç</button></div>
     </div>
     <div class="dcard">
       <h3>Toplu Poliçe / Belge Yükleme</h3>
-      <p>Birden fazla sigorta poliçesi, kasko veya muayene raporunu aynı anda yükle. AI her belgeyi okuyup plakayla eşleştirecek ve otomatik olarak ilgili araç kartına işleyecek.</p>
-      <div id="topluYuklemeArea" style="border:2px dashed var(--line);border-radius:10px;padding:28px;text-align:center;cursor:pointer;transition:border-color .2s ease;"
+      <p style="color:var(--text-2);font-size:13px;">Birden fazla sigorta poliçesi, kasko veya muayene raporunu aynı anda yükle.</p>
+      <div id="topluYuklemeArea" style="border:2px dashed var(--border);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:border-color .2s ease;"
         ondragover="event.preventDefault();this.style.borderColor='var(--accent-blue)'"
-        ondragleave="this.style.borderColor='var(--line)'"
-        ondrop="event.preventDefault();this.style.borderColor='var(--line)';topluYuklemeHandle(event.dataTransfer.files)">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--steel-300)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:10px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        <div style="font-size:14px;font-weight:600;color:var(--paper);margin-bottom:4px;">Dosyaları buraya sürükle bırak</div>
-        <div style="font-size:13px;color:var(--steel-100);margin-bottom:14px;">PDF veya görsel — sigorta poliçesi, kasko, muayene raporu</div>
-        <button class="settings-btn" onclick="document.getElementById('topluYuklemeInput').click()" style="margin:0 auto;">Dosya Seç</button>
+        ondragleave="this.style.borderColor='var(--border)'"
+        ondrop="event.preventDefault();this.style.borderColor='var(--border)';topluYuklemeHandle(event.dataTransfer.files)">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:8px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">Dosyaları buraya sürükle bırak</div>
+        <div style="font-size:12px;color:var(--text-3);margin-bottom:12px;">PDF veya görsel — sigorta poliçesi, kasko, muayene raporu</div>
+        <button class="settings-btn" onclick="document.getElementById('topluYuklemeInput').click()">Dosya Seç</button>
         <input type="file" id="topluYuklemeInput" accept="application/pdf,image/*" multiple style="display:none" onchange="topluYuklemeHandle(this.files)">
       </div>
-      <div id="topluYuklemeLog" style="margin-top:14px;"></div>
+      <div id="topluYuklemeLog" style="margin-top:12px;"></div>
     </div>
   `;
   document.getElementById('xpExport').onclick = exportExcel;
@@ -5290,6 +5330,122 @@ function renderAyarlarPage(){
   if(document.getElementById('apAi')) document.getElementById('apAi').onclick = ()=>document.getElementById('menuAiSettings')?.click();
   document.getElementById('apBackup').onclick = backupToJson;
   document.getElementById('apRestore').onclick = ()=>document.getElementById('restoreJsonInput').click();
+}
+
+// ===== Triomobil / N2 Mobil Km Raporu Yükleme =====
+async function kmRaporuYukle(file){
+  if(!file) return;
+  const log = document.getElementById('kmYuklemeLog');
+  if(!log) return;
+  log.innerHTML = '<div style="color:var(--text-2);font-size:13px;">Dosya okunuyor...</div>';
+
+  try{
+    const data = await new Promise((res,rej)=>{
+      const fr = new FileReader();
+      fr.onload = e => res(e.target.result);
+      fr.onerror = rej;
+      fr.readAsArrayBuffer(file);
+    });
+
+    // SheetJS ile Excel oku
+    const XLSX = await import('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm');
+    const wb = XLSX.read(data, {type:'array'});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
+
+    if(!rows || rows.length < 2){
+      log.innerHTML = '<div style="color:var(--red)">Dosya boş veya okunamadı.</div>';
+      return;
+    }
+
+    // Başlık satırından sütunları bul
+    const headers = (rows[0]||[]).map(h=>(h||'').toString().trim().toLocaleLowerCase('tr-TR'));
+    const plakaCol = headers.findIndex(h=>h.includes('plaka'));
+    const basKmCol = headers.findIndex(h=>h.includes('başlangıç km') || h.includes('baslangic km'));
+    const bitKmCol = headers.findIndex(h=>h.includes('bitiş km') || h.includes('bitis km'));
+    const toplamCol = headers.findIndex(h=>h.includes('toplam km'));
+    const basTarihCol = headers.findIndex(h=>h.includes('başlangıç tarihi') || h.includes('baslangic tarihi'));
+    const bitTarihCol = headers.findIndex(h=>h.includes('bitiş tarihi') || h.includes('bitis tarihi'));
+
+    if(plakaCol === -1 || toplamCol === -1){
+      log.innerHTML = '<div style="color:var(--red)">Plaka veya Toplam KM sütunu bulunamadı. Triomobil/N2 Mobil detaylı km raporu olduğundan emin olun.</div>';
+      return;
+    }
+
+    // Dönemi belirle
+    const ornekTarih = rows[1]?.[basTarihCol];
+    let donem = '—';
+    if(ornekTarih){
+      const parts = ornekTarih.toString().split('.');
+      if(parts.length>=2){
+        const aylar = ['','Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+        const ay = parseInt(parts[1]);
+        donem = `${aylar[ay]||parts[1]} ${parts[2]||''}`.trim();
+      }
+    }
+
+    // Plaka bazında topla (aynı araç birden fazla seyahat kaydı olabilir)
+    const kmMap = {};
+    for(const row of rows.slice(1)){
+      if(!row || !row[plakaCol]) continue;
+      const plaka = normPlaka(row[plakaCol].toString());
+      const topKm = Number(row[toplamCol])||0;
+      const basKm = Number(row[basKmCol])||0;
+      const bitKm = Number(row[bitKmCol])||0;
+      if(!kmMap[plaka]) kmMap[plaka] = {toplamKm:0, basKm:Infinity, bitKm:0};
+      kmMap[plaka].toplamKm += topKm;
+      if(basKm > 0 && basKm < kmMap[plaka].basKm) kmMap[plaka].basKm = basKm;
+      if(bitKm > kmMap[plaka].bitKm) kmMap[plaka].bitKm = bitKm;
+    }
+
+    // Araçlarla eşleştir ve kaydet
+    let eslesme = 0, eslesmeme = 0;
+    const logLines = [];
+
+    for(let i=0; i<vehicles.length; i++){
+      const v = vehicles[i];
+      const nplaka = normPlaka(v.plaka);
+      const km = kmMap[nplaka];
+      if(!km){ eslesmeme++; continue; }
+
+      const kmGecmisi = v.kmGecmisi || [];
+      // Aynı dönem zaten varsa üzerine yaz
+      const mevcutIdx = kmGecmisi.findIndex(k=>k.donem===donem);
+      const yeniKayit = {
+        donem,
+        basKm: km.basKm === Infinity ? 0 : Math.round(km.basKm),
+        bitKm: Math.round(km.bitKm),
+        toplamKm: Math.round(km.toplamKm),
+        kaynak: file.name
+      };
+      if(mevcutIdx>=0) kmGecmisi[mevcutIdx] = yeniKayit;
+      else kmGecmisi.push(yeniKayit);
+
+      vehicles[i] = {...v, kmGecmisi, sonKm: Math.round(km.bitKm), aykm: Math.round(km.toplamKm)};
+      eslesme++;
+      logLines.push(`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);font-size:12.5px;">
+        <span class="mini-plaka">${esc(v.plaka)}</span>
+        <span style="color:var(--text-2)">${esc([v.marka,v.model].filter(Boolean).join(' ')||'')}</span>
+        <span style="margin-left:auto;font-family:'SF Mono',monospace;color:var(--blue);font-weight:600">${Math.round(km.toplamKm).toLocaleString('tr-TR')} km</span>
+      </div>`);
+    }
+
+    await persist();
+    render();
+
+    log.innerHTML = `
+      <div style="padding:12px;background:var(--green-dim);border:1px solid var(--green);border-radius:8px;margin-bottom:12px;">
+        <div style="font-weight:600;color:var(--green);font-size:13px;">✓ ${eslesme} araç güncellendi · ${eslesmeme} araç eşleşmedi</div>
+        <div style="font-size:12px;color:var(--text-2);margin-top:3px;">Dönem: ${donem} · Kaynak: ${esc(file.name)}</div>
+      </div>
+      <div style="max-height:300px;overflow-y:auto;">${logLines.join('')}</div>
+    `;
+    logActivity('add', `Km raporu yüklendi: ${donem} — ${eslesme} araç güncellendi`);
+
+  }catch(e){
+    log.innerHTML = `<div style="color:var(--red)">Hata: ${esc(e.message||'Bilinmeyen hata')}</div>`;
+    console.error(e);
+  }
 }
 
 // ===== Toplu poliçe yükleme =====
