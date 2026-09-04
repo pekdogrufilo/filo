@@ -3187,10 +3187,17 @@ function wireDocType(d){
 }
 
 // Gemini API'ye direkt istek — Cloud Run bypass
-const GEMINI_API_KEY = 'AQ.Ab8RN6JMAMYtrVO_l2E3pB3x5ozjAuNQxuQUEd_1wAneJU-CHg';
 const GEMINI_MODEL = 'gemini-3.5-flash-lite';
 
+function getGeminiKey(){
+  try{ return localStorage.getItem('filoPaneli_geminiKey') || ''; }catch(e){ return ''; }
+}
+
 async function callGeminiDirect(system, userText, contentBlock){
+  const GEMINI_API_KEY = getGeminiKey();
+  if(!GEMINI_API_KEY){
+    throw new Error('Gemini API anahtarı ayarlanmamış. Ayarlar → AI bölümünden anahtarınızı girin.');
+  }
   const base64 = contentBlock?.source?.data;
   const mimeType = contentBlock?.source?.media_type || 'application/pdf';
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
@@ -5267,8 +5274,16 @@ function renderAyarlarPage(){
         <div class="row-btns"><button class="settings-btn" id="apCloud">${window.__cloudSyncActive ? 'Yönet' : 'Bağlan'}</button></div>
       </div>
       <div class="settings-card">
-        <h3><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg> AI Otomatik Doldurma</h3>
-        <p style="color:#68D391">✓ Aktif — Gemini AI ile belgeler otomatik okunuyor. Herhangi bir ayar gerekmez.</p>
+        <h3><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg> AI Otomatik Doldurma (Gemini)</h3>
+        <p style="font-size:13px;color:var(--text-2);margin-bottom:12px;">Belge okuma için Gemini API anahtarı gerekli. <a href="https://aistudio.google.com" target="_blank" style="color:var(--accent-blue);">aistudio.google.com</a> adresinden ücretsiz anahtar alabilirsin. Anahtar bu cihazda saklanır, GitHub'a yüklenmez.</p>
+        <div class="field" style="margin-bottom:10px;">
+          <label style="font-size:12px;color:var(--text-2);display:block;margin-bottom:5px;">API Anahtarı</label>
+          <div style="display:flex;gap:8px;">
+            <input type="password" id="geminiKeyInput" placeholder="AQ.Ab8RN6..." style="flex:1;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:8px;font-family:monospace;font-size:13px;">
+            <button class="settings-btn" id="apSaveGeminiKey">Kaydet</button>
+          </div>
+        </div>
+        <div id="geminiKeyStatus" style="font-size:13px;"></div>
       </div>
       <div class="settings-card">
         <h3><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg> Yedekleme</h3>
@@ -5291,6 +5306,27 @@ function renderAyarlarPage(){
   document.getElementById('apEmail').onclick = ()=>document.getElementById('menuEmailSettings').click();
   document.getElementById('apCloud').onclick = ()=>document.getElementById('menuCloudSync').click();
   if(document.getElementById('apAi')) document.getElementById('apAi').onclick = ()=>document.getElementById('menuAiSettings')?.click();
+  
+  // Gemini API anahtarı
+  const geminiInput = document.getElementById('geminiKeyInput');
+  const geminiStatus = document.getElementById('geminiKeyStatus');
+  if(geminiInput){
+    const savedKey = getGeminiKey();
+    if(savedKey) {
+      geminiInput.value = savedKey;
+      geminiStatus.innerHTML = '<span style="color:#2ECC71">✓ Anahtar kayıtlı</span>';
+    }
+    document.getElementById('apSaveGeminiKey').onclick = ()=>{
+      const key = geminiInput.value.trim();
+      if(!key){ geminiStatus.innerHTML = '<span style="color:#E74C3C">Anahtar boş olamaz.</span>'; return; }
+      try{
+        localStorage.setItem('filoPaneli_geminiKey', key);
+        geminiStatus.innerHTML = '<span style="color:#2ECC71">✓ Anahtar kaydedildi. Artık AI belge okuma çalışacak.</span>';
+      }catch(e){
+        geminiStatus.innerHTML = '<span style="color:#E74C3C">Kayıt hatası: '+e.message+'</span>';
+      }
+    };
+  }
   document.getElementById('apBackup').onclick = backupToJson;
   document.getElementById('apRestore').onclick = ()=>document.getElementById('restoreJsonInput').click();
 }
