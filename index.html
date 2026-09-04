@@ -5400,13 +5400,18 @@ async function kmRaporuYukle(file){
     const basKmCol = headers.findIndex(h=>h.includes('başlangıç km') || h.includes('baslangic km') || h.includes('başlangiç km') || (h.includes('başlangıç') && h.includes('km')));
     const bitKmCol = headers.findIndex(h=>h.includes('bitiş km') || h.includes('bitis km') || h.includes('biti') && h.includes('km'));
     const toplamCol = headers.findIndex(h=>h.includes('toplam km') || h === 'toplam km');
+    // N2 Mobil Sürüş Özeti formatı
+    const mesafeCol = headers.findIndex(h=>h.includes('katedilen mesafe') || h.includes('mesafe (km)') || h.includes('mesafe'));
     const basTarihCol = headers.findIndex(h=>h.includes('başlangıç tarihi') || h.includes('baslangic tarihi') || (h.includes('başlangıç') && h.includes('tarih')));
     const bitTarihCol = headers.findIndex(h=>h.includes('bitiş tarihi') || h.includes('bitis tarihi') || (h.includes('biti') && h.includes('tarih')));
     
-    console.log('Kolonlar:', {plakaCol, basKmCol, bitKmCol, toplamCol, basTarihCol});
-    console.log('Headers:', headers);
+    // N2 Mobil formatı mı? (Katedilen Mesafe sütunu var)
+    const isN2Mobil = plakaCol !== -1 && mesafeCol !== -1 && toplamCol === -1;
+    const aktifMesafeCol = isN2Mobil ? mesafeCol : toplamCol;
+    
+    console.log('Kolonlar:', {plakaCol, basKmCol, bitKmCol, toplamCol, mesafeCol, isN2Mobil});
 
-    if(plakaCol === -1 || toplamCol === -1){
+    if(plakaCol === -1 || aktifMesafeCol === -1){
       // Index ile dene — Triomobil raporu sabit sütun sırası kullanır
       // Plaka=0, BaşlangıçKM=10, BitişKM=11, ToplamKM=17
       const testRow = rows[1];
@@ -5477,9 +5482,9 @@ async function kmRaporuYukle(file){
     for(const row of rows.slice(1)){
       if(!row || !row[plakaCol]) continue;
       const plaka = normPlaka(row[plakaCol].toString());
-      const topKm = Number(row[toplamCol])||0;
-      const basKm = Number(row[basKmCol])||0;
-      const bitKm = Number(row[bitKmCol])||0;
+      const topKm = Number(row[aktifMesafeCol])||0;
+      const basKm = basKmCol !== -1 ? (Number(row[basKmCol])||0) : 0;
+      const bitKm = bitKmCol !== -1 ? (Number(row[bitKmCol])||0) : 0;
       if(!kmMap[plaka]) kmMap[plaka] = {toplamKm:0, basKm:Infinity, bitKm:0};
       kmMap[plaka].toplamKm += topKm;
       if(basKm > 0 && basKm < kmMap[plaka].basKm) kmMap[plaka].basKm = basKm;
