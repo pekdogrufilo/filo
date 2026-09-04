@@ -3193,7 +3193,7 @@ function getGeminiKey(){
   try{ return localStorage.getItem('filoPaneli_geminiKey') || ''; }catch(e){ return ''; }
 }
 
-async function callGeminiDirect(system, userText, contentBlock){
+async function callGeminiDirect(system, userText, contentBlock, retryCount=0){
   const GEMINI_API_KEY = getGeminiKey();
   if(!GEMINI_API_KEY){
     throw new Error('Gemini API anahtarı ayarlanmamış. Ayarlar → AI bölümünden anahtarınızı girin.');
@@ -3224,6 +3224,12 @@ async function callGeminiDirect(system, userText, contentBlock){
     clearTimeout(timeout);
     if(!res.ok){
       const err = await res.json().catch(()=>({}));
+      // 503 yoğunluk hatası — 3 kez tekrar dene
+      if(res.status === 503 && retryCount < 3){
+        const bekle = (retryCount + 1) * 2000;
+        await new Promise(r=>setTimeout(r, bekle));
+        return callGeminiDirect(system, userText, contentBlock, retryCount + 1);
+      }
       throw new Error(`Gemini hatası (${res.status}): ${err?.error?.message||''}`);
     }
     const data = await res.json();
