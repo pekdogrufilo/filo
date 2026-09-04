@@ -32,94 +32,90 @@
 <link rel="apple-touch-icon" href="./apple-touch-icon.png">
 <style>
   :root{
-    /* iPhone koyu tema — tam olarak iOS sistem renkleri */
-    --bg:#000000;
-    --surface:#1C1C1E;
-    --surface-2:#2C2C2E;
-    --surface-3:#3A3A3C;
-    --border:rgba(255,255,255,.08);
-    --border-2:rgba(255,255,255,.15);
-    --text:#FFFFFF;
-    --text-2:#EBEBF5CC;
-    --text-3:#EBEBF599;
-    --blue:#0A84FF;
-    --blue-dim:rgba(10,132,255,.15);
-    --green:#30D158;
-    --green-dim:rgba(48,209,88,.15);
-    --amber:#FF9F0A;
-    --amber-dim:rgba(255,159,10,.15);
-    --red:#FF453A;
-    --red-dim:rgba(255,69,58,.15);
-    --purple:#BF5AF2;
-    --radius:13px;
-    --radius-sm:10px;
-    --radius-lg:18px;
-    --shadow-sm:0 1px 0 rgba(255,255,255,.06);
-    --shadow-md:0 4px 20px rgba(0,0,0,.5);
-    --shadow-lg:0 16px 48px rgba(0,0,0,.7);
+    /* Horizon Admin Dark — Koyu premium */
+    --bg:#0B0C10;
+    --surface:#13141A;
+    --surface-2:#1C1E26;
+    --surface-3:#24263000;
+    --border:#2E3040;
+    --border-2:#3E4255;
+    --text:#E8E9F0;
+    --text-2:#8B8FA8;
+    --text-3:#55596E;
+    --gold:#D4AF37;
+    --gold-2:#F0CB55;
+    --gold-dim:rgba(212,175,55,.12);
+    --blue:#4F8EF7;
+    --blue-dim:rgba(79,142,247,.10);
+    --green:#2ECC71;
+    --green-dim:rgba(46,204,113,.10);
+    --amber:#D4AF37;
+    --amber-dim:rgba(212,175,55,.12);
+    --red:#E74C3C;
+    --red-dim:rgba(231,76,60,.10);
+    --purple:#9B59B6;
+    --radius:12px;
+    --radius-sm:8px;
+    --radius-lg:16px;
+    --shadow-sm:0 2px 8px rgba(0,0,0,.5);
+    --shadow-md:0 8px 24px rgba(0,0,0,.45);
+    --shadow-lg:0 20px 60px rgba(0,0,0,.6);
     --ease:cubic-bezier(.22,1,.36,1);
-    /* Eski değişken uyumluluğu */
-    --asphalt-900:var(--bg);
-    --asphalt-800:var(--surface);
-    --asphalt-700:var(--surface-2);
-    --steel-600:var(--surface-3);
-    --steel-500:#636366;
-    --steel-300:var(--text-2);
-    --steel-100:var(--text);
-    --paper:var(--text);
-    --safety:var(--red);
-    --safety-dim:var(--red-dim);
-    --teal:var(--green);
-    --teal-dim:var(--green-dim);
-    --coral:var(--red);
-    --coral-dim:var(--red-dim);
-    --line:var(--border);
-    --glow:var(--blue-dim);
-    --gold:var(--amber);
-    --gold-dim:var(--amber-dim);
-    --accent-blue:var(--blue);
-    --sidebar-bg:#1C1C1E;
-    --fixed-light:#F2F2F7;
-    --fixed-dark:#1C1C1E;
+    --asphalt-900:#0B0C10;
+    --asphalt-800:#13141A;
+    --asphalt-700:#1C1E26;
+    --steel-600:#2E3040;
+    --steel-500:#55596E;
+    --steel-300:#8B8FA8;
+    --steel-100:#E8E9F0;
+    --paper:#E8E9F0;
+    --safety:#E74C3C;
+    --safety-dim:rgba(231,76,60,.10);
+    --teal:#2ECC71;
+    --teal-dim:rgba(46,204,113,.10);
+    --coral:#E74C3C;
+    --coral-dim:rgba(231,76,60,.10);
+    --line:#2E3040;
+    --glow:rgba(212,175,55,.08);
+    --accent-blue:#D4AF37;
+    --sidebar-bg:#0D0E14;
+    --fixed-light:#E8E9F0;
+    --fixed-dark:#13141A;
   }
-  html[data-theme="light"]{
-    --bg:#F2F2F7;
+    html[data-theme="light"]{
+    /* Black Gold Light — Krem & Altın */
+    --bg:#FAF6EE;
     --surface:#FFFFFF;
-    --surface-2:#F2F2F7;
-    --surface-3:#E5E5EA;
-    --border:rgba(0,0,0,.08);
-    --border-2:rgba(0,0,0,.14);
-    --text:#000000;
-    --text-2:rgba(60,60,67,.6);
-    --text-3:rgba(60,60,67,.3);
-    --blue:#007AFF;
-    --blue-dim:rgba(0,122,255,.1);
-    --green:#34C759;
-    --green-dim:rgba(52,199,89,.1);
-    --amber:#FF9500;
-    --amber-dim:rgba(255,149,0,.1);
-    --red:#FF3B30;
-    --red-dim:rgba(255,59,48,.1);
-    --sidebar-bg:#1C1C1E;
-    --asphalt-900:#F2F2F7;
+    --surface-2:#F5F0E6;
+    --surface-3:#EDE8DC;
+    --border:#DDD5C0;
+    --border-2:#C8BFA8;
+    --text:#1A1508;
+    --text-2:#6B6040;
+    --text-3:#9A9070;
+    --gold:#8B6914;
+    --gold-2:#A07820;
+    --gold-dim:rgba(139,105,20,.10);
+    --accent-blue:#8B6914;
+    --sidebar-bg:#1A1508;
+    --asphalt-900:#FAF6EE;
     --asphalt-800:#FFFFFF;
-    --asphalt-700:#F2F2F7;
-    --steel-600:#E5E5EA;
-    --steel-500:#8E8E93;
-    --steel-300:rgba(60,60,67,.6);
-    --steel-100:#000000;
-    --paper:#000000;
-    --line:rgba(0,0,0,.08);
-    --shadow-sm:0 1px 3px rgba(0,0,0,.08);
-    --shadow-md:0 4px 16px rgba(0,0,0,.10);
-    --shadow-lg:0 16px 48px rgba(0,0,0,.12);
-    --safety-dim:rgba(255,59,48,.1);
-    --teal-dim:rgba(52,199,89,.1);
-    --coral-dim:rgba(255,59,48,.1);
-    --gold-dim:rgba(255,149,0,.1);
-    --accent-blue:#007AFF;
-    --fixed-light:#F2F2F7;
-    --fixed-dark:#1C1C1E;
+    --asphalt-700:#F5F0E6;
+    --steel-600:#DDD5C0;
+    --steel-500:#9A9070;
+    --steel-300:#6B6040;
+    --steel-100:#1A1508;
+    --paper:#1A1508;
+    --line:#DDD5C0;
+    --shadow-sm:0 1px 3px rgba(0,0,0,.07);
+    --shadow-md:0 4px 16px rgba(0,0,0,.09);
+    --shadow-lg:0 16px 40px rgba(0,0,0,.11);
+    --safety-dim:rgba(220,38,38,.08);
+    --teal-dim:rgba(5,150,105,.08);
+    --coral-dim:rgba(220,38,38,.08);
+    --gold-dim:rgba(139,105,20,.10);
+    --fixed-light:#FAF6EE;
+    --fixed-dark:#1A1508;
   }
   *{box-sizing:border-box;}
   body{
@@ -149,7 +145,7 @@
   .brand-mark svg{width:24px;height:24px;}
   h1{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif;font-size:22px;font-weight:600;margin:0;letter-spacing:.2px;}
   .sub{color:var(--steel-100);font-size:13px;margin-top:2px;}
-  .add-btn{background:var(--accent-blue);color:#fff;border:none;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif;font-weight:600;font-size:14px;padding:11px 20px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:opacity .15s ease, transform .15s ease;box-shadow:0 4px 14px rgba(66,153,225,.3);}
+  .add-btn{background:linear-gradient(135deg,#7A5C10,#D4AF37);color:#fff;border:none;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif;font-weight:600;font-size:14px;padding:11px 20px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:opacity .15s ease, transform .15s ease;box-shadow:0 4px 14px rgba(66,153,225,.3);}
   .add-btn:hover{opacity:.9;transform:translateY(-1px);}
   .add-btn:active{transform:translateY(0) scale(.98);}
   .btn-row{display:flex;gap:10px;flex-wrap:wrap;}
@@ -187,7 +183,7 @@
 
   /* Kart üst bant — durum rengi */
   .card-band{height:3px;width:100%;flex-shrink:0;}
-  .card-band.kirada{background:linear-gradient(90deg,#2E8C63,#4FD1A5);}
+  .card-band.kirada{background:linear-gradient(90deg,#7A5C10,#D4AF37);}
   .card-band.musait{background:linear-gradient(90deg,#4A5568,#718096);}
   .card-band.serviste{background:linear-gradient(90deg,#8C3430,#F3A392);}
 
@@ -398,7 +394,7 @@
   .lock-field .eye:hover{color:rgba(255,255,255,.7);}
   .lock-card.shake{animation:shake .45s ease;}
   .lock-err{color:#FC8181;font-size:13px;margin:2px 0 6px;min-height:16px;}
-  .lock-btn-main{width:100%;background:var(--accent-blue);color:#fff;border:none;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif;font-weight:600;font-size:15px;padding:14px;border-radius:11px;cursor:pointer;margin-top:10px;transition:opacity .15s ease, transform .15s ease;box-shadow:0 6px 24px rgba(66,153,225,.38);letter-spacing:.3px;}
+  .lock-btn-main{width:100%;background:linear-gradient(135deg,#7A5C10,#D4AF37);color:#fff;border:none;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif;font-weight:600;font-size:15px;padding:14px;border-radius:11px;cursor:pointer;margin-top:10px;transition:opacity .15s ease, transform .15s ease;box-shadow:0 6px 24px rgba(212,175,55,.35);letter-spacing:.3px;}
   .lock-btn-main:hover:not(:disabled){opacity:.88;transform:translateY(-1px);}
   .lock-btn-main:disabled{opacity:.35;cursor:not-allowed;}
   .lock-forgot{margin-top:18px;font-size:13px;color:rgba(255,255,255,.3);text-decoration:underline;cursor:pointer;background:none;border:none;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',Arial,sans-serif;}
@@ -470,18 +466,18 @@
   .sb-brand{display:flex;align-items:center;gap:10px;padding:20px 16px 16px;}
   .sb-brand-mark{width:30px;height:30px;border-radius:7px;background:var(--fixed-light);display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:4px;}
   .sb-brand-mark img{width:100%;height:100%;object-fit:contain;}
-  .sb-brand-text{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif;font-weight:700;font-size:13px;line-height:1.2;letter-spacing:.2px;color:var(--text);}
-  .sb-brand-sub{font-size:10px;color:var(--text-3);letter-spacing:.5px;margin-top:1px;}
+  .sb-brand-text{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif;font-weight:700;font-size:13px;line-height:1.2;letter-spacing:.2px;color:#FFFFFF;}
+  .sb-brand-sub{font-size:10px;color:rgba(255,255,255,.45);letter-spacing:.5px;margin-top:1px;}
   .sb-nav{flex:1;padding:6px 8px;}
-  .sb-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:7px;color:var(--text-3);font-size:13px;font-weight:500;cursor:pointer;margin-bottom:1px;transition:all .12s ease;position:relative;border:none;background:none;width:100%;text-align:left;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',Arial,sans-serif;}
+  .sb-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:7px;color:rgba(255,255,255,.5);font-size:13px;font-weight:500;cursor:pointer;margin-bottom:1px;transition:all .12s ease;position:relative;border:none;background:none;width:100%;text-align:left;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',Arial,sans-serif;}
   .sb-item svg{flex-shrink:0;width:15px;height:15px;}
-  .sb-item:hover{background:var(--surface-2);color:var(--text);}
-  .sb-item.active{background:var(--blue-dim);color:var(--blue);}
-  .sb-item.active svg{color:var(--blue);}
+  .sb-item:hover{background:rgba(255,255,255,.08);color:#fff;}
+  .sb-item.active{background:rgba(212,175,55,.15);color:#D4AF37;}
+  .sb-item.active svg{color:#D4AF37;}
   .sb-item .sb-badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;min-width:16px;text-align:center;}
-  .sb-divider{height:1px;background:var(--border);margin:6px 8px;}
-  .sb-foot{padding:12px 14px 16px;border-top:1px solid var(--border);}
-  .sb-foot-tag{font-size:10.5px;color:var(--text-3);text-align:center;}
+  .sb-divider{height:1px;background:rgba(255,255,255,.08);margin:6px 8px;}
+  .sb-foot{padding:12px 14px 16px;border-top:1px solid rgba(255,255,255,.08);}
+  .sb-foot-tag{font-size:10.5px;color:rgba(255,255,255,.3);text-align:center;}
 
   /* Mobil alt tab bar */
   .bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(9,9,15,.97);border-top:1px solid var(--border);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);z-index:100;padding:6px 0 env(safe-area-inset-bottom,6px);}
@@ -492,8 +488,8 @@
   .bn-item.active svg{transform:translateY(-1px);}
   .bn-badge{position:absolute;top:4px;right:calc(50% - 16px);background:var(--coral);color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:10px;min-width:14px;text-align:center;}
   .main-area{flex:1;min-width:0;}
-  .top-header{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;border-bottom:1px solid var(--border);background:rgba(9,9,15,.9);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);position:sticky;top:0;z-index:40;gap:12px;}
-  .th-title{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif;font-size:19.5px;font-weight:650;letter-spacing:.2px;}
+  .top-header{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;border-bottom:1px solid var(--border);background:var(--surface);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);position:sticky;top:0;z-index:40;gap:12px;}
+  .th-title{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif;font-size:19.5px;font-weight:650;letter-spacing:.2px;color:var(--text);}
   .th-sub{font-size:13px;color:var(--steel-100);margin-top:2px;}
   .th-right{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
   @media (min-width:640px){ .th-user-text{display:flex !important;} }
@@ -551,7 +547,8 @@
 
   .dash-grid{display:grid;grid-template-columns:1fr 1fr 320px;gap:20px;align-items:start;}
   @media (max-width:1100px){.dash-grid{grid-template-columns:1fr;}}
-  .dcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;transition:border-color .15s ease;}
+  .dcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;transition:border-color .2s ease, box-shadow .2s ease;}
+  .dcard:hover{border-color:var(--border-2);}
   .dcard:hover{border-color:var(--steel-600);}
   .dcard h3{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif;font-size:13.5px;font-weight:600;margin:0 0 16px;display:flex;align-items:center;justify-content:space-between;letter-spacing:0;color:var(--steel-100);}
   .dcard h3 a{font-size:13px;color:var(--accent-blue);font-weight:500;cursor:pointer;text-decoration:none;}
@@ -590,8 +587,8 @@
   .table-scroll::-webkit-scrollbar{height:4px;}
   .table-scroll::-webkit-scrollbar-track{background:var(--surface-2);border-radius:2px;}
   .table-scroll::-webkit-scrollbar-thumb{background:var(--steel-500);border-radius:2px;}
-  .mini-table th{text-align:left;color:var(--steel-300);font-size:12px;text-transform:uppercase;letter-spacing:.3px;padding:0 8px 10px;font-weight:600;}
-  .mini-table td{padding:11px 8px;border-top:1px solid var(--line);}
+  .mini-table th{text-align:left;color:var(--text-3);font-size:11.5px;letter-spacing:.2px;padding:0 8px 10px;font-weight:600;}
+  .mini-table td{padding:10px 8px;border-top:1px solid var(--border);}
   .mini-table tr:hover td{background:var(--surface-2);}
   .mini-plaka{font-family:'SF Mono',SFMono-Regular,Consolas,monospace;font-weight:600;background:var(--fixed-light);color:var(--fixed-dark);padding:2px 8px;border-radius:5px;font-size:13px;}
   .mini-badge{font-size:12px;font-weight:600;padding:3px 9px;border-radius:12px;}
@@ -2148,6 +2145,10 @@ function render(){
             <div class="ci-label">Şoför</div>
             <div class="ci-val">${esc(v.sofor)}</div>
           </div>` : ''}
+          ${v.aykm ? `<div class="ci">
+            <div class="ci-label">Bu Ay km</div>
+            <div class="ci-val mono" style="color:var(--blue)">${v.aykm.toLocaleString('tr-TR')} km</div>
+          </div>` : ''}
           ${v.kira ? `<div class="ci" ${!isAdmin()?'style="display:none"':''}>
             <div class="ci-label">Aylık Kira</div>
             <div class="ci-val mono">${fmtTL2(v.kira)}</div>
@@ -3186,10 +3187,17 @@ function wireDocType(d){
 }
 
 // Gemini API'ye direkt istek — Cloud Run bypass
-const GEMINI_API_KEY = 'AQ.Ab8RN6JMAMYtrVO_l2E3pB3x5ozjAuNQxuQUEd_1wAneJU-CHg';
-const GEMINI_MODEL = 'gemini-3.5-flash-lite';
+const GEMINI_MODEL = 'gemini-2.5-flash-lite';
 
-async function callGeminiDirect(system, userText, contentBlock){
+function getGeminiKey(){
+  try{ return localStorage.getItem('filoPaneli_geminiKey') || ''; }catch(e){ return ''; }
+}
+
+async function callGeminiDirect(system, userText, contentBlock, retryCount=0){
+  const GEMINI_API_KEY = getGeminiKey();
+  if(!GEMINI_API_KEY){
+    throw new Error('Gemini API anahtarı ayarlanmamış. Ayarlar → AI bölümünden anahtarınızı girin.');
+  }
   const base64 = contentBlock?.source?.data;
   const mimeType = contentBlock?.source?.media_type || 'application/pdf';
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
@@ -3216,6 +3224,12 @@ async function callGeminiDirect(system, userText, contentBlock){
     clearTimeout(timeout);
     if(!res.ok){
       const err = await res.json().catch(()=>({}));
+      // 503 yoğunluk hatası — 3 kez tekrar dene
+      if(res.status === 503 && retryCount < 3){
+        const bekle = (retryCount + 1) * 2000;
+        await new Promise(r=>setTimeout(r, bekle));
+        return callGeminiDirect(system, userText, contentBlock, retryCount + 1);
+      }
       throw new Error(`Gemini hatası (${res.status}): ${err?.error?.message||''}`);
     }
     const data = await res.json();
@@ -3696,56 +3710,21 @@ async function delVehicle(id){
 function getMarkaLogo(marka){
   if(!marka) return '';
   const m = marka.toLocaleLowerCase('tr-TR').trim();
-
-  // Orijinal marka logoları — SVG/PNG URL
-  const logoUrls = {
-    'renault': 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/49/Renault_2009_logo.svg/120px-Renault_2009_logo.svg.png',
-    'fiat': 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Fiat_logo_%282020%29.svg/120px-Fiat_logo_%282020%29.svg.png',
-    'ford': 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Ford_Motor_Company_Logo.svg/120px-Ford_Motor_Company_Logo.svg.png',
-    'volkswagen': 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Volkswagen_logo_2019.svg/120px-Volkswagen_logo_2019.svg.png',
-    'vw': 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Volkswagen_logo_2019.svg/120px-Volkswagen_logo_2019.svg.png',
-    'mercedes': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Mercedes-Logo.svg/120px-Mercedes-Logo.svg.png',
-    'mercedes-benz': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Mercedes-Logo.svg/120px-Mercedes-Logo.svg.png',
-    'bmw': 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/BMW.svg/120px-BMW.svg.png',
-    'toyota': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Toyota_carlogo.svg/120px-Toyota_carlogo.svg.png',
-    'hyundai': 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Hyundai_Motor_Company_logo.svg/120px-Hyundai_Motor_Company_logo.svg.png',
-    'kia': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/13/Kia-logo.svg/120px-Kia-logo.svg.png',
-    'peugeot': 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Logo_peugeot.svg/120px-Logo_peugeot.svg.png',
-    'citroen': 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/Citro%C3%ABn_logo.svg/120px-Citro%C3%ABn_logo.svg.png',
-    'citroën': 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/Citro%C3%ABn_logo.svg/120px-Citro%C3%ABn_logo.svg.png',
-    'opel': 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Opel_logo_2021.svg/120px-Opel_logo_2021.svg.png',
-    'nissan': 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Nissan_2020_logo.svg/120px-Nissan_2020_logo.svg.png',
-    'dacia': 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Dacia_2021_logo.svg/120px-Dacia_2021_logo.svg.png',
-    'isuzu': 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/Isuzu_Motors_Logo.svg/120px-Isuzu_Motors_Logo.svg.png',
-    'man': 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/MAN-Logo.svg/120px-MAN-Logo.svg.png',
-    'iveco': 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/Iveco_logo.svg/120px-Iveco_logo.svg.png',
-    'volvo': 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Volvo_Cars_logo.svg/120px-Volvo_Cars_logo.svg.png',
-    'skoda': 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Skoda_Auto_2011_logo.svg/120px-Skoda_Auto_2011_logo.svg.png',
-    'škoda': 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Skoda_Auto_2011_logo.svg/120px-Skoda_Auto_2011_logo.svg.png',
-    'audi': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/Audi-Logo_2016.svg/120px-Audi-Logo_2016.svg.png',
-    'seat': 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/SEAT_Logo.svg/120px-SEAT_Logo.svg.png',
-    'mitsubishi': 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Mitsubishi_Motors_new_logo.svg/120px-Mitsubishi_Motors_new_logo.svg.png',
-    'honda': 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/Honda.svg/120px-Honda.svg.png',
-    'suzuki': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Suzuki_logo_2.svg/120px-Suzuki_logo_2.svg.png',
-    'land rover': 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Land_Rover_logo.svg/120px-Land_Rover_logo.svg.png',
-    'jeep': 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Jeep_logo.svg/120px-Jeep_logo.svg.png',
-    'mazda': 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Mazda_logo.svg/120px-Mazda_logo.svg.png',
-    'mercedes benz': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Mercedes-Logo.svg/120px-Mercedes-Logo.svg.png',
+  const markaRenk = {
+    'renault':'#FFCC00','fiat':'#8B0000','ford':'#003478','volkswagen':'#001E50','vw':'#001E50',
+    'mercedes':'#222222','mercedes-benz':'#222222','mercedes benz':'#222222',
+    'bmw':'#1C69D4','toyota':'#EB0A1E','hyundai':'#002C5F','kia':'#05141F',
+    'peugeot':'#0033A0','citroen':'#C00000','citroën':'#C00000','opel':'#F5A623',
+    'nissan':'#CC0000','dacia':'#1A2B6B','isuzu':'#CC0000','man':'#E2001A',
+    'iveco':'#003087','volvo':'#003057','skoda':'#4BA82E','škoda':'#4BA82E',
+    'audi':'#BB0A30','seat':'#CC0000','mitsubishi':'#E60012','honda':'#CC0000',
+    'suzuki':'#003087','land rover':'#005A2B','jeep':'#2B2B2B','mazda':'#910000',
   };
-
-  const url = logoUrls[m];
-  if(url){
-    const harf = esc(marka.charAt(0).toLocaleUpperCase('tr-TR'));
-    return `<div style="width:34px;height:34px;border-radius:8px;overflow:hidden;flex-shrink:0;background:#fff;display:flex;align-items:center;justify-content:center;padding:3px;">
-      <img src="${url}" alt="${esc(marka)}" style="width:100%;height:100%;object-fit:contain;" onerror="this.parentElement.style.background='#1C1C1E';this.style.display='none';this.parentElement.innerHTML='<span style=\\"font-weight:700;font-size:14px\\">${harf}</span>'">
-    </div>`;
-  }
-
-  // Fallback: renkli harf rozeti
-  const colors = ['#0A84FF','#30D158','#FF9F0A','#FF453A','#BF5AF2','#FF6B6B'];
-  const color = colors[marka.charCodeAt(0)%colors.length];
-  return `<div style="width:34px;height:34px;border-radius:8px;background:${color}22;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:${color};flex-shrink:0;">${esc(marka.charAt(0).toLocaleUpperCase('tr-TR'))}</div>`;
+  const renk = markaRenk[m] || '#4F8EF7';
+  const harf = esc(marka.charAt(0).toLocaleUpperCase('tr-TR'));
+  return '<div style="width:34px;height:34px;border-radius:8px;background:'+renk+';display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#fff;flex-shrink:0;">'+harf+'</div>';
 }
+
 function normPlaka(p){ return String(p||'').trim().toLocaleUpperCase('tr-TR').replace(/\s+/g,''); }
 function validPlaka(p){
   const il = parseInt(p.slice(0,2),10);
@@ -5191,30 +5170,66 @@ function renderBildirimlerPage(){
 function renderExcelPage(){
   const page = document.getElementById('page-excel');
   page.innerHTML = `
-    <div class="dcard">
+    <div class="dcard" style="margin-bottom:16px;">
+      <h3>🚗 Km Takip Raporu Yükle (Triomobil / N2 Mobil)</h3>
+      <p style="color:var(--text-2);font-size:13px;margin-bottom:16px;">Triomobil veya N2 Mobil'den indirdiğin "Detaylı Km Raporu" Excel dosyasını yükle. Sistem plakaları eşleştirip her araca aylık km bilgisini otomatik kaydeder.</p>
+      <div id="kmYuklemeArea" style="border:2px dashed var(--border);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:border-color .2s ease;"
+        ondragover="event.preventDefault();this.style.borderColor='var(--accent-blue)'"
+        ondragleave="this.style.borderColor='var(--border)'"
+        ondrop="event.preventDefault();this.style.borderColor='var(--border)';kmRaporuYukle(event.dataTransfer.files[0])">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:8px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">Excel dosyasını sürükle bırak</div>
+        <div style="font-size:12px;color:var(--text-3);margin-bottom:12px;">Triomobil veya N2 Mobil km raporu (.xlsx)</div>
+        <button class="settings-btn" onclick="document.getElementById('kmRaporInput').click()">Dosya Seç</button>
+        <input type="file" id="kmRaporInput" accept=".xlsx,.xls" style="display:none" onchange="kmRaporuYukle(this.files[0])">
+      </div>
+      <div id="kmYuklemeLog" style="margin-top:12px;"></div>
+    </div>
+
+    <div class="dcard" style="margin-bottom:16px;">
+      <h3>Km Geçmişi</h3>
+      ${vehicles.filter(v=>v.kmGecmisi&&v.kmGecmisi.length>0).length > 0 ? `
+      <div class="table-scroll"><table class="mini-table">
+        <thead><tr><th>Plaka</th><th>Araç</th><th>Dönem</th><th style="text-align:right">Başlangıç km</th><th style="text-align:right">Bitiş km</th><th style="text-align:right">Toplam km</th></tr></thead>
+        <tbody>${vehicles.filter(v=>v.kmGecmisi&&v.kmGecmisi.length>0).flatMap(v=>
+          [...(v.kmGecmisi||[])].reverse().slice(0,3).map(k=>`
+            <tr>
+              <td><span class="mini-plaka">${esc(v.plaka)}</span></td>
+              <td>${esc([v.marka,v.model].filter(Boolean).join(' ')||'—')}</td>
+              <td style="color:var(--text-2);font-size:12px;">${esc(k.donem||'—')}</td>
+              <td style="text-align:right;font-family:'SF Mono',monospace">${k.basKm?k.basKm.toLocaleString('tr-TR')+' km':'—'}</td>
+              <td style="text-align:right;font-family:'SF Mono',monospace">${k.bitKm?k.bitKm.toLocaleString('tr-TR')+' km':'—'}</td>
+              <td style="text-align:right;font-family:'SF Mono',monospace;font-weight:600;color:var(--blue)">${k.toplamKm?k.toplamKm.toLocaleString('tr-TR')+' km':'—'}</td>
+            </tr>
+          `)
+        ).join('')}</tbody>
+      </table></div>` : '<div class="log-empty">Henüz km raporu yüklenmedi.</div>'}
+    </div>
+
+    <div class="dcard" style="margin-bottom:16px;">
       <h3>Excel'e Aktar</h3>
-      <p>Tüm filo verisini bir Excel dosyası olarak indir.</p>
+      <p style="color:var(--text-2);font-size:13px;">Tüm filo verisini bir Excel dosyası olarak indir.</p>
       <div class="row-btns"><button class="settings-btn" id="xpExport"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 19h16"/></svg> Excel'e aktar</button></div>
     </div>
-    <div class="dcard">
+    <div class="dcard" style="margin-bottom:16px;">
       <h3>Excel'den Güncelle</h3>
-      <p>Var olan araçları, plaka eşleşmesine göre yüklediğin Excel dosyasındaki bilgilerle günceller.</p>
+      <p style="color:var(--text-2);font-size:13px;">Var olan araçları, plaka eşleşmesine göre yüklediğin Excel dosyasındaki bilgilerle günceller.</p>
       <div class="row-btns"><button class="settings-btn" id="xpImport"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.3"/><path d="M21 3v6h-6"/></svg> Excel dosyası seç</button></div>
     </div>
     <div class="dcard">
       <h3>Toplu Poliçe / Belge Yükleme</h3>
-      <p>Birden fazla sigorta poliçesi, kasko veya muayene raporunu aynı anda yükle. AI her belgeyi okuyup plakayla eşleştirecek ve otomatik olarak ilgili araç kartına işleyecek.</p>
-      <div id="topluYuklemeArea" style="border:2px dashed var(--line);border-radius:10px;padding:28px;text-align:center;cursor:pointer;transition:border-color .2s ease;"
+      <p style="color:var(--text-2);font-size:13px;">Birden fazla sigorta poliçesi, kasko veya muayene raporunu aynı anda yükle.</p>
+      <div id="topluYuklemeArea" style="border:2px dashed var(--border);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:border-color .2s ease;"
         ondragover="event.preventDefault();this.style.borderColor='var(--accent-blue)'"
-        ondragleave="this.style.borderColor='var(--line)'"
-        ondrop="event.preventDefault();this.style.borderColor='var(--line)';topluYuklemeHandle(event.dataTransfer.files)">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--steel-300)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:10px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        <div style="font-size:14px;font-weight:600;color:var(--paper);margin-bottom:4px;">Dosyaları buraya sürükle bırak</div>
-        <div style="font-size:13px;color:var(--steel-100);margin-bottom:14px;">PDF veya görsel — sigorta poliçesi, kasko, muayene raporu</div>
-        <button class="settings-btn" onclick="document.getElementById('topluYuklemeInput').click()" style="margin:0 auto;">Dosya Seç</button>
+        ondragleave="this.style.borderColor='var(--border)'"
+        ondrop="event.preventDefault();this.style.borderColor='var(--border)';topluYuklemeHandle(event.dataTransfer.files)">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:8px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">Dosyaları buraya sürükle bırak</div>
+        <div style="font-size:12px;color:var(--text-3);margin-bottom:12px;">PDF veya görsel — sigorta poliçesi, kasko, muayene raporu</div>
+        <button class="settings-btn" onclick="document.getElementById('topluYuklemeInput').click()">Dosya Seç</button>
         <input type="file" id="topluYuklemeInput" accept="application/pdf,image/*" multiple style="display:none" onchange="topluYuklemeHandle(this.files)">
       </div>
-      <div id="topluYuklemeLog" style="margin-top:14px;"></div>
+      <div id="topluYuklemeLog" style="margin-top:12px;"></div>
     </div>
   `;
   document.getElementById('xpExport').onclick = exportExcel;
@@ -5265,8 +5280,16 @@ function renderAyarlarPage(){
         <div class="row-btns"><button class="settings-btn" id="apCloud">${window.__cloudSyncActive ? 'Yönet' : 'Bağlan'}</button></div>
       </div>
       <div class="settings-card">
-        <h3><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg> AI Otomatik Doldurma</h3>
-        <p style="color:#68D391">✓ Aktif — Gemini AI ile belgeler otomatik okunuyor. Herhangi bir ayar gerekmez.</p>
+        <h3><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg> AI Otomatik Doldurma (Gemini)</h3>
+        <p style="font-size:13px;color:var(--text-2);margin-bottom:12px;">Belge okuma için Gemini API anahtarı gerekli. <a href="https://aistudio.google.com" target="_blank" style="color:var(--accent-blue);">aistudio.google.com</a> adresinden ücretsiz anahtar alabilirsin. Anahtar bu cihazda saklanır, GitHub'a yüklenmez.</p>
+        <div class="field" style="margin-bottom:10px;">
+          <label style="font-size:12px;color:var(--text-2);display:block;margin-bottom:5px;">API Anahtarı</label>
+          <div style="display:flex;gap:8px;">
+            <input type="password" id="geminiKeyInput" placeholder="AQ.Ab8RN6..." style="flex:1;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:8px;font-family:monospace;font-size:13px;">
+            <button class="settings-btn" id="apSaveGeminiKey">Kaydet</button>
+          </div>
+        </div>
+        <div id="geminiKeyStatus" style="font-size:13px;"></div>
       </div>
       <div class="settings-card">
         <h3><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg> Yedekleme</h3>
@@ -5289,8 +5312,145 @@ function renderAyarlarPage(){
   document.getElementById('apEmail').onclick = ()=>document.getElementById('menuEmailSettings').click();
   document.getElementById('apCloud').onclick = ()=>document.getElementById('menuCloudSync').click();
   if(document.getElementById('apAi')) document.getElementById('apAi').onclick = ()=>document.getElementById('menuAiSettings')?.click();
+  
+  // Gemini API anahtarı
+  const geminiInput = document.getElementById('geminiKeyInput');
+  const geminiStatus = document.getElementById('geminiKeyStatus');
+  if(geminiInput){
+    const savedKey = getGeminiKey();
+    if(savedKey) {
+      geminiInput.value = savedKey;
+      geminiStatus.innerHTML = '<span style="color:#2ECC71">✓ Anahtar kayıtlı</span>';
+    }
+    document.getElementById('apSaveGeminiKey').onclick = ()=>{
+      const key = geminiInput.value.trim();
+      if(!key){ geminiStatus.innerHTML = '<span style="color:#E74C3C">Anahtar boş olamaz.</span>'; return; }
+      try{
+        localStorage.setItem('filoPaneli_geminiKey', key);
+        geminiStatus.innerHTML = '<span style="color:#2ECC71">✓ Anahtar kaydedildi. Artık AI belge okuma çalışacak.</span>';
+      }catch(e){
+        geminiStatus.innerHTML = '<span style="color:#E74C3C">Kayıt hatası: '+e.message+'</span>';
+      }
+    };
+  }
   document.getElementById('apBackup').onclick = backupToJson;
   document.getElementById('apRestore').onclick = ()=>document.getElementById('restoreJsonInput').click();
+}
+
+// ===== Triomobil / N2 Mobil Km Raporu Yükleme =====
+async function kmRaporuYukle(file){
+  if(!file) return;
+  const log = document.getElementById('kmYuklemeLog');
+  if(!log) return;
+  log.innerHTML = '<div style="color:var(--text-2);font-size:13px;">Dosya okunuyor...</div>';
+
+  try{
+    const data = await new Promise((res,rej)=>{
+      const fr = new FileReader();
+      fr.onload = e => res(e.target.result);
+      fr.onerror = rej;
+      fr.readAsArrayBuffer(file);
+    });
+
+    // SheetJS ile Excel oku
+    const XLSX = await import('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm');
+    const wb = XLSX.read(data, {type:'array'});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
+
+    if(!rows || rows.length < 2){
+      log.innerHTML = '<div style="color:var(--red)">Dosya boş veya okunamadı.</div>';
+      return;
+    }
+
+    // Başlık satırından sütunları bul
+    const headers = (rows[0]||[]).map(h=>(h||'').toString().trim().toLocaleLowerCase('tr-TR'));
+    const plakaCol = headers.findIndex(h=>h.includes('plaka'));
+    const basKmCol = headers.findIndex(h=>h.includes('başlangıç km') || h.includes('baslangic km'));
+    const bitKmCol = headers.findIndex(h=>h.includes('bitiş km') || h.includes('bitis km'));
+    const toplamCol = headers.findIndex(h=>h.includes('toplam km'));
+    const basTarihCol = headers.findIndex(h=>h.includes('başlangıç tarihi') || h.includes('baslangic tarihi'));
+    const bitTarihCol = headers.findIndex(h=>h.includes('bitiş tarihi') || h.includes('bitis tarihi'));
+
+    if(plakaCol === -1 || toplamCol === -1){
+      log.innerHTML = '<div style="color:var(--red)">Plaka veya Toplam KM sütunu bulunamadı. Triomobil/N2 Mobil detaylı km raporu olduğundan emin olun.</div>';
+      return;
+    }
+
+    // Dönemi belirle
+    const ornekTarih = rows[1]?.[basTarihCol];
+    let donem = '—';
+    if(ornekTarih){
+      const parts = ornekTarih.toString().split('.');
+      if(parts.length>=2){
+        const aylar = ['','Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+        const ay = parseInt(parts[1]);
+        donem = `${aylar[ay]||parts[1]} ${parts[2]||''}`.trim();
+      }
+    }
+
+    // Plaka bazında topla (aynı araç birden fazla seyahat kaydı olabilir)
+    const kmMap = {};
+    for(const row of rows.slice(1)){
+      if(!row || !row[plakaCol]) continue;
+      const plaka = normPlaka(row[plakaCol].toString());
+      const topKm = Number(row[toplamCol])||0;
+      const basKm = Number(row[basKmCol])||0;
+      const bitKm = Number(row[bitKmCol])||0;
+      if(!kmMap[plaka]) kmMap[plaka] = {toplamKm:0, basKm:Infinity, bitKm:0};
+      kmMap[plaka].toplamKm += topKm;
+      if(basKm > 0 && basKm < kmMap[plaka].basKm) kmMap[plaka].basKm = basKm;
+      if(bitKm > kmMap[plaka].bitKm) kmMap[plaka].bitKm = bitKm;
+    }
+
+    // Araçlarla eşleştir ve kaydet
+    let eslesme = 0, eslesmeme = 0;
+    const logLines = [];
+
+    for(let i=0; i<vehicles.length; i++){
+      const v = vehicles[i];
+      const nplaka = normPlaka(v.plaka);
+      const km = kmMap[nplaka];
+      if(!km){ eslesmeme++; continue; }
+
+      const kmGecmisi = v.kmGecmisi || [];
+      // Aynı dönem zaten varsa üzerine yaz
+      const mevcutIdx = kmGecmisi.findIndex(k=>k.donem===donem);
+      const yeniKayit = {
+        donem,
+        basKm: km.basKm === Infinity ? 0 : Math.round(km.basKm),
+        bitKm: Math.round(km.bitKm),
+        toplamKm: Math.round(km.toplamKm),
+        kaynak: file.name
+      };
+      if(mevcutIdx>=0) kmGecmisi[mevcutIdx] = yeniKayit;
+      else kmGecmisi.push(yeniKayit);
+
+      vehicles[i] = {...v, kmGecmisi, sonKm: Math.round(km.bitKm), aykm: Math.round(km.toplamKm)};
+      eslesme++;
+      logLines.push(`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);font-size:12.5px;">
+        <span class="mini-plaka">${esc(v.plaka)}</span>
+        <span style="color:var(--text-2)">${esc([v.marka,v.model].filter(Boolean).join(' ')||'')}</span>
+        <span style="margin-left:auto;font-family:'SF Mono',monospace;color:var(--blue);font-weight:600">${Math.round(km.toplamKm).toLocaleString('tr-TR')} km</span>
+      </div>`);
+    }
+
+    await persist();
+    render();
+
+    log.innerHTML = `
+      <div style="padding:12px;background:var(--green-dim);border:1px solid var(--green);border-radius:8px;margin-bottom:12px;">
+        <div style="font-weight:600;color:var(--green);font-size:13px;">✓ ${eslesme} araç güncellendi · ${eslesmeme} araç eşleşmedi</div>
+        <div style="font-size:12px;color:var(--text-2);margin-top:3px;">Dönem: ${donem} · Kaynak: ${esc(file.name)}</div>
+      </div>
+      <div style="max-height:300px;overflow-y:auto;">${logLines.join('')}</div>
+    `;
+    logActivity('add', `Km raporu yüklendi: ${donem} — ${eslesme} araç güncellendi`);
+
+  }catch(e){
+    log.innerHTML = `<div style="color:var(--red)">Hata: ${esc(e.message||'Bilinmeyen hata')}</div>`;
+    console.error(e);
+  }
 }
 
 // ===== Toplu poliçe yükleme =====
