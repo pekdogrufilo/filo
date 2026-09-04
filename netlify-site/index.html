@@ -32,96 +32,100 @@
 <link rel="apple-touch-icon" href="./apple-touch-icon.png">
 <style>
   :root{
-    /* Horizon Admin Dark — Koyu premium */
-    --bg:#0B0C10;
-    --surface:#13141A;
-    --surface-2:#1C1E26;
-    --surface-3:#24263000;
-    --border:#2E3040;
-    --border-2:#3E4255;
-    --text:#E8E9F0;
-    --text-2:#8B8FA8;
-    --text-3:#55596E;
-    --gold:#D4AF37;
-    --gold-2:#F0CB55;
-    --gold-dim:rgba(212,175,55,.12);
-    --blue:#4F8EF7;
-    --blue-dim:rgba(79,142,247,.10);
-    --green:#2ECC71;
-    --green-dim:rgba(46,204,113,.10);
-    --amber:#D4AF37;
-    --amber-dim:rgba(212,175,55,.12);
-    --red:#E74C3C;
-    --red-dim:rgba(231,76,60,.10);
-    --purple:#9B59B6;
-    --radius:12px;
-    --radius-sm:8px;
-    --radius-lg:16px;
-    --shadow-sm:0 2px 8px rgba(0,0,0,.5);
-    --shadow-md:0 8px 24px rgba(0,0,0,.45);
-    --shadow-lg:0 20px 60px rgba(0,0,0,.6);
+    /* Vercel Dark — siyah, minimal, ince */
+    --bg:#000000;
+    --surface:#0A0A0A;
+    --surface-2:#111111;
+    --surface-3:#1A1A1A;
+    --border:#222222;
+    --border-2:#333333;
+    --text:#EDEDED;
+    --text-2:#888888;
+    --text-3:#555555;
+    --blue:#0070F3;
+    --blue-dim:rgba(0,112,243,.12);
+    --green:#00D084;
+    --green-dim:rgba(0,208,132,.12);
+    --amber:#F5A623;
+    --amber-dim:rgba(245,166,35,.12);
+    --red:#FF4444;
+    --red-dim:rgba(255,68,68,.12);
+    --purple:#7928CA;
+    --radius:8px;
+    --radius-sm:6px;
+    --radius-lg:12px;
+    --shadow-sm:0 0 0 1px #222;
+    --shadow-md:0 4px 16px rgba(0,0,0,.8);
+    --shadow-lg:0 16px 48px rgba(0,0,0,.9);
     --ease:cubic-bezier(.22,1,.36,1);
-    --asphalt-900:#0B0C10;
-    --asphalt-800:#13141A;
-    --asphalt-700:#1C1E26;
-    --steel-600:#2E3040;
-    --steel-500:#55596E;
-    --steel-300:#8B8FA8;
-    --steel-100:#E8E9F0;
-    --paper:#E8E9F0;
-    --safety:#E74C3C;
-    --safety-dim:rgba(231,76,60,.10);
-    --teal:#2ECC71;
-    --teal-dim:rgba(46,204,113,.10);
-    --coral:#E74C3C;
-    --coral-dim:rgba(231,76,60,.10);
-    --line:#2E3040;
-    --glow:rgba(212,175,55,.08);
-    --accent-blue:#D4AF37;
-    --sidebar-bg:#0D0E14;
-    --fixed-light:#E8E9F0;
-    --fixed-dark:#13141A;
+    --asphalt-900:#000000;
+    --asphalt-800:#0A0A0A;
+    --asphalt-700:#111111;
+    --steel-600:#1A1A1A;
+    --steel-500:#444444;
+    --steel-300:#888888;
+    --steel-100:#EDEDED;
+    --paper:#EDEDED;
+    --safety:#FF4444;
+    --safety-dim:rgba(255,68,68,.12);
+    --teal:#00D084;
+    --teal-dim:rgba(0,208,132,.12);
+    --coral:#FF4444;
+    --coral-dim:rgba(255,68,68,.12);
+    --line:#222222;
+    --glow:rgba(0,112,243,.08);
+    --gold:#F5A623;
+    --gold-dim:rgba(245,166,35,.12);
+    --accent-blue:#0070F3;
+    --sidebar-bg:#0A0A0A;
+    --fixed-light:#EDEDED;
+    --fixed-dark:#0A0A0A;
   }
     html[data-theme="light"]{
-    /* Black Gold Light — Krem & Altın */
-    --bg:#FAF6EE;
+    --bg:#FAFAFA;
     --surface:#FFFFFF;
-    --surface-2:#F5F0E6;
-    --surface-3:#EDE8DC;
-    --border:#DDD5C0;
-    --border-2:#C8BFA8;
-    --text:#1A1508;
-    --text-2:#6B6040;
-    --text-3:#9A9070;
-    --gold:#8B6914;
-    --gold-2:#A07820;
-    --gold-dim:rgba(139,105,20,.10);
-    --accent-blue:#8B6914;
-    --sidebar-bg:#1A1508;
-    --asphalt-900:#FAF6EE;
+    --surface-2:#F5F5F5;
+    --surface-3:#EEEEEE;
+    --border:#EAEAEA;
+    --border-2:#D4D4D4;
+    --text:#000000;
+    --text-2:#666666;
+    --text-3:#999999;
+    --blue:#0070F3;
+    --blue-dim:rgba(0,112,243,.08);
+    --green:#00A86B;
+    --green-dim:rgba(0,168,107,.08);
+    --amber:#F5A623;
+    --amber-dim:rgba(245,166,35,.08);
+    --red:#EE0000;
+    --red-dim:rgba(238,0,0,.08);
+    --sidebar-bg:#111111;
+    --asphalt-900:#FAFAFA;
     --asphalt-800:#FFFFFF;
-    --asphalt-700:#F5F0E6;
-    --steel-600:#DDD5C0;
-    --steel-500:#9A9070;
-    --steel-300:#6B6040;
-    --steel-100:#1A1508;
-    --paper:#1A1508;
-    --line:#DDD5C0;
-    --shadow-sm:0 1px 3px rgba(0,0,0,.07);
-    --shadow-md:0 4px 16px rgba(0,0,0,.09);
-    --shadow-lg:0 16px 40px rgba(0,0,0,.11);
-    --safety-dim:rgba(220,38,38,.08);
-    --teal-dim:rgba(5,150,105,.08);
-    --coral-dim:rgba(220,38,38,.08);
-    --gold-dim:rgba(139,105,20,.10);
-    --fixed-light:#FAF6EE;
-    --fixed-dark:#1A1508;
+    --asphalt-700:#F5F5F5;
+    --steel-600:#EAEAEA;
+    --steel-500:#999999;
+    --steel-300:#666666;
+    --steel-100:#000000;
+    --paper:#000000;
+    --line:#EAEAEA;
+    --shadow-sm:0 0 0 1px #EAEAEA;
+    --shadow-md:0 4px 16px rgba(0,0,0,.06);
+    --shadow-lg:0 16px 40px rgba(0,0,0,.08);
+    --safety-dim:rgba(238,0,0,.08);
+    --teal-dim:rgba(0,168,107,.08);
+    --coral-dim:rgba(238,0,0,.08);
+    --gold-dim:rgba(245,166,35,.08);
+    --accent-blue:#0070F3;
+    --fixed-light:#FAFAFA;
+    --fixed-dark:#111111;
   }
   *{box-sizing:border-box;}
   body{
     margin:0;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing:antialiased;font-size:14px;line-height:1.6;
     background:var(--bg);
     min-height:100vh;
+    letter-spacing:-.01em;
   }
   ::selection{background:var(--accent-blue);color:#fff;}
   ::-webkit-scrollbar{width:6px;height:6px;}
@@ -145,7 +149,7 @@
   .brand-mark svg{width:24px;height:24px;}
   h1{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif;font-size:22px;font-weight:600;margin:0;letter-spacing:.2px;}
   .sub{color:var(--steel-100);font-size:13px;margin-top:2px;}
-  .add-btn{background:linear-gradient(135deg,#7A5C10,#D4AF37);color:#fff;border:none;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif;font-weight:600;font-size:14px;padding:11px 20px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:opacity .15s ease, transform .15s ease;box-shadow:0 4px 14px rgba(66,153,225,.3);}
+  .add-btn{background:#0070F3;color:#fff;border:none;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif;font-weight:600;font-size:14px;padding:11px 20px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:opacity .15s ease, transform .15s ease;box-shadow:0 4px 14px rgba(66,153,225,.3);}
   .add-btn:hover{opacity:.9;transform:translateY(-1px);}
   .add-btn:active{transform:translateY(0) scale(.98);}
   .btn-row{display:flex;gap:10px;flex-wrap:wrap;}
@@ -472,8 +476,8 @@
   .sb-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:7px;color:rgba(255,255,255,.5);font-size:13px;font-weight:500;cursor:pointer;margin-bottom:1px;transition:all .12s ease;position:relative;border:none;background:none;width:100%;text-align:left;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',Arial,sans-serif;}
   .sb-item svg{flex-shrink:0;width:15px;height:15px;}
   .sb-item:hover{background:rgba(255,255,255,.08);color:#fff;}
-  .sb-item.active{background:rgba(212,175,55,.15);color:#D4AF37;}
-  .sb-item.active svg{color:#D4AF37;}
+  .sb-item.active{background:#1A1A1A;color:#EDEDED;border-left:2px solid #0070F3;}
+  .sb-item.active svg{color:#0070F3;}
   .sb-item .sb-badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;min-width:16px;text-align:center;}
   .sb-divider{height:1px;background:rgba(255,255,255,.08);margin:6px 8px;}
   .sb-foot{padding:12px 14px 16px;border-top:1px solid rgba(255,255,255,.08);}
@@ -3187,17 +3191,23 @@ function wireDocType(d){
 }
 
 // Gemini API'ye direkt istek — Cloud Run bypass
-const GEMINI_MODEL = 'gemini-2.5-flash-lite';
+const GEMINI_MODELS = [
+  'gemini-2.5-flash-lite',
+  'gemini-3.5-flash-lite',
+  'gemini-2.0-flash',
+  'gemini-1.5-flash',
+];
 
 function getGeminiKey(){
   try{ return localStorage.getItem('filoPaneli_geminiKey') || ''; }catch(e){ return ''; }
 }
 
-async function callGeminiDirect(system, userText, contentBlock, retryCount=0){
+async function callGeminiDirect(system, userText, contentBlock, modelIdx=0, retryCount=0){
   const GEMINI_API_KEY = getGeminiKey();
   if(!GEMINI_API_KEY){
     throw new Error('Gemini API anahtarı ayarlanmamış. Ayarlar → AI bölümünden anahtarınızı girin.');
   }
+  const GEMINI_MODEL = GEMINI_MODELS[modelIdx] || GEMINI_MODELS[0];
   const base64 = contentBlock?.source?.data;
   const mimeType = contentBlock?.source?.media_type || 'application/pdf';
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
@@ -3225,10 +3235,19 @@ async function callGeminiDirect(system, userText, contentBlock, retryCount=0){
     if(!res.ok){
       const err = await res.json().catch(()=>({}));
       // 503 yoğunluk hatası — 3 kez tekrar dene
-      if(res.status === 503 && retryCount < 3){
-        const bekle = (retryCount + 1) * 2000;
-        await new Promise(r=>setTimeout(r, bekle));
-        return callGeminiDirect(system, userText, contentBlock, retryCount + 1);
+      if(res.status === 503){
+        // Önce aynı modeli 1 kez daha dene
+        if(retryCount < 1){
+          await new Promise(r=>setTimeout(r, 2000));
+          return callGeminiDirect(system, userText, contentBlock, modelIdx, retryCount + 1);
+        }
+        // Sonra bir sonraki modele geç
+        const nextModel = modelIdx + 1;
+        if(nextModel < GEMINI_MODELS.length){
+          console.log('Model degistiriliyor:', GEMINI_MODELS[nextModel]);
+          await new Promise(r=>setTimeout(r, 1000));
+          return callGeminiDirect(system, userText, contentBlock, nextModel, 0);
+        }
       }
       throw new Error(`Gemini hatası (${res.status}): ${err?.error?.message||''}`);
     }
