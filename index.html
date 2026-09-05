@@ -790,7 +790,7 @@
 
       <div class="sb-section">DOKÜMAN</div>
       <button class="sb-item" data-page="belgeler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>Belgeler</button>
-      <button class="sb-item" data-page="excel-islemleri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="m8 13 2.5 5"/><path d="m13.5 13-2.5 5"/></svg>Veri Aktarımı</button>
+      <button class="sb-item" data-page="excel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="m8 13 2.5 5"/><path d="m13.5 13-2.5 5"/></svg>Veri Aktarımı</button>
 
       <div class="sb-section">SİSTEM</div>
       <button class="sb-item" data-page="bildirimler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>Bildirimler<span class="sb-badge" id="sbBildirimBadge" style="display:none">0</span></button>
@@ -5591,14 +5591,44 @@ function renderBildirimlerPage(){
 function renderExcelPage(){
   const page = document.getElementById('page-excel');
   page.innerHTML = `
-    <div class="dcard" style="margin-bottom:16px;">
-      <h3>🚗 Km Takip Raporu Yükle (Triomobil / N2 Mobil)</h3>
-      <p style="color:var(--text-2);font-size:13px;margin-bottom:16px;">Triomobil veya N2 Mobil'den indirdiğin "Detaylı Km Raporu" Excel dosyasını yükle. Sistem plakaları eşleştirip her araca aylık km bilgisini otomatik kaydeder.</p>
-      <div id="kmYuklemeArea" style="border:2px dashed var(--border);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:border-color .2s ease;"
+    <div class="topbar">
+      <div class="topbar-left">
+        <h1>Veri Aktarımı</h1>
+        <span style="font-size:13px;color:var(--text-3);">Excel import/export, km takibi ve toplu belge yükleme</span>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+      <!-- Excel'e Aktar -->
+      <div class="dcard">
+        <h3 style="margin-bottom:8px;">📤 Excel'e Aktar</h3>
+        <p style="color:var(--text-2);font-size:13px;margin-bottom:14px;">Tüm araç, kiralama ve masraf verilerini Excel dosyası olarak indir.</p>
+        <button class="add-btn" id="xpExport" style="width:100%;justify-content:center;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 19h16"/></svg>
+          Tüm Veriyi Excel'e Aktar
+        </button>
+      </div>
+
+      <!-- Excel'den Güncelle -->
+      <div class="dcard">
+        <h3 style="margin-bottom:8px;">📥 Excel'den Güncelle</h3>
+        <p style="color:var(--text-2);font-size:13px;margin-bottom:14px;">Var olan araçları plaka eşleşmesiyle Excel dosyasındaki bilgilerle günceller.</p>
+        <button class="settings-btn" id="xpImport" style="width:100%;justify-content:center;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.3"/><path d="M21 3v6h-6"/></svg>
+          Excel Dosyası Seç
+        </button>
+      </div>
+    </div>
+
+    <!-- Km Takip Raporu -->
+    <div class="dcard" style="margin-bottom:14px;">
+      <h3 style="margin-bottom:6px;">🚗 Km Takip Raporu Yükle</h3>
+      <p style="color:var(--text-2);font-size:13px;margin-bottom:14px;">Triomobil veya N2 Mobil'den indirdiğin detaylı km raporu Excel dosyasını yükle. Sistem plakaları eşleştirip her araca aylık km bilgisini otomatik kaydeder.</p>
+      <div id="kmYuklemeArea" style="border:2px dashed var(--border);border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:border-color .2s ease;"
         ondragover="event.preventDefault();this.style.borderColor='var(--accent-blue)'"
         ondragleave="this.style.borderColor='var(--border)'"
         ondrop="event.preventDefault();this.style.borderColor='var(--border)';kmRaporuYukle(event.dataTransfer.files[0])">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:8px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:8px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
         <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">Excel dosyasını sürükle bırak</div>
         <div style="font-size:12px;color:var(--text-3);margin-bottom:12px;">Triomobil veya N2 Mobil km raporu (.xlsx)</div>
         <button class="settings-btn" onclick="document.getElementById('kmRaporInput').click()">Dosya Seç</button>
@@ -5607,8 +5637,9 @@ function renderExcelPage(){
       <div id="kmYuklemeLog" style="margin-top:12px;"></div>
     </div>
 
-    <div class="dcard" style="margin-bottom:16px;">
-      <h3>Km Geçmişi</h3>
+    <!-- Km Geçmişi -->
+    <div class="dcard" style="margin-bottom:14px;">
+      <h3 style="margin-bottom:10px;">📊 Km Geçmişi</h3>
       ${vehicles.filter(v=>v.kmGecmisi&&v.kmGecmisi.length>0).length > 0 ? `
       <div class="table-scroll"><table class="mini-table">
         <thead><tr><th>Plaka</th><th>Araç</th><th>Dönem</th><th style="text-align:right">Başlangıç km</th><th style="text-align:right">Bitiş km</th><th style="text-align:right">Toplam km</th></tr></thead>
@@ -5618,33 +5649,24 @@ function renderExcelPage(){
               <td><span class="mini-plaka">${esc(v.plaka)}</span></td>
               <td>${esc([v.marka,v.model].filter(Boolean).join(' ')||'—')}</td>
               <td style="color:var(--text-2);font-size:12px;">${esc(k.donem||'—')}</td>
-              <td style="text-align:right;font-family:'SF Mono',monospace">${k.basKm?k.basKm.toLocaleString('tr-TR')+' km':'—'}</td>
-              <td style="text-align:right;font-family:'SF Mono',monospace">${k.bitKm?k.bitKm.toLocaleString('tr-TR')+' km':'—'}</td>
-              <td style="text-align:right;font-family:'SF Mono',monospace;font-weight:600;color:var(--blue)">${k.toplamKm?k.toplamKm.toLocaleString('tr-TR')+' km':'—'}</td>
+              <td style="text-align:right;font-family:monospace">${k.basKm?k.basKm.toLocaleString('tr-TR')+' km':'—'}</td>
+              <td style="text-align:right;font-family:monospace">${k.bitKm?k.bitKm.toLocaleString('tr-TR')+' km':'—'}</td>
+              <td style="text-align:right;font-family:monospace;font-weight:600;color:var(--accent-blue)">${k.toplamKm?k.toplamKm.toLocaleString('tr-TR')+' km':'—'}</td>
             </tr>
           `)
         ).join('')}</tbody>
       </table></div>` : '<div class="log-empty">Henüz km raporu yüklenmedi.</div>'}
     </div>
 
-    <div class="dcard" style="margin-bottom:16px;">
-      <h3>Excel'e Aktar</h3>
-      <p style="color:var(--text-2);font-size:13px;">Tüm filo verisini bir Excel dosyası olarak indir.</p>
-      <div class="row-btns"><button class="settings-btn" id="xpExport"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 19h16"/></svg> Excel'e aktar</button></div>
-    </div>
-    <div class="dcard" style="margin-bottom:16px;">
-      <h3>Excel'den Güncelle</h3>
-      <p style="color:var(--text-2);font-size:13px;">Var olan araçları, plaka eşleşmesine göre yüklediğin Excel dosyasındaki bilgilerle günceller.</p>
-      <div class="row-btns"><button class="settings-btn" id="xpImport"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.3"/><path d="M21 3v6h-6"/></svg> Excel dosyası seç</button></div>
-    </div>
+    <!-- Toplu Belge Yükleme -->
     <div class="dcard">
-      <h3>Toplu Poliçe / Belge Yükleme</h3>
-      <p style="color:var(--text-2);font-size:13px;">Birden fazla sigorta poliçesi, kasko veya muayene raporunu aynı anda yükle.</p>
-      <div id="topluYuklemeArea" style="border:2px dashed var(--border);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:border-color .2s ease;"
+      <h3 style="margin-bottom:6px;">📄 Toplu Poliçe / Belge Yükleme</h3>
+      <p style="color:var(--text-2);font-size:13px;margin-bottom:14px;">Birden fazla sigorta poliçesi, kasko veya muayene raporunu aynı anda yükle. AI her belgeyi okuyup ilgili araca kaydeder.</p>
+      <div id="topluYuklemeArea" style="border:2px dashed var(--border);border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:border-color .2s ease;"
         ondragover="event.preventDefault();this.style.borderColor='var(--accent-blue)'"
         ondragleave="this.style.borderColor='var(--border)'"
         ondrop="event.preventDefault();this.style.borderColor='var(--border)';topluYuklemeHandle(event.dataTransfer.files)">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:8px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:8px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
         <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">Dosyaları buraya sürükle bırak</div>
         <div style="font-size:12px;color:var(--text-3);margin-bottom:12px;">PDF veya görsel — sigorta poliçesi, kasko, muayene raporu</div>
         <button class="settings-btn" onclick="document.getElementById('topluYuklemeInput').click()">Dosya Seç</button>
