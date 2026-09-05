@@ -639,6 +639,14 @@
   h2{font-size:17px;font-weight:700;margin:0;}
   h3{font-size:14px;font-weight:700;margin:0;}
 
+  .stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:20px;}
+  .stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow-sm);}
+  .stat .n{font-size:26px;font-weight:700;color:var(--text);letter-spacing:-.5px;line-height:1;margin-bottom:5px;}
+  .stat .l{font-size:11px;color:var(--text-3);text-transform:uppercase;letter-spacing:.4px;font-weight:600;}
+  .stat.ok .n{color:var(--green);}
+  .stat.warn .n{color:var(--amber);}
+  .stat.bad .n{color:var(--red);}
+
   @media(min-width:640px){.th-user-text{display:flex !important;}}
   @media(max-width:1100px){.dash-grid{grid-template-columns:1fr;}}
 
@@ -2179,8 +2187,8 @@ function render(){
   document.getElementById('statMusait').textContent = vehicles.filter(v=>v.durum==='Müsait').length;
   document.getElementById('statKirada').textContent = vehicles.filter(v=>v.durum==='Kirada').length;
   document.getElementById('statBelge').textContent = vehicles.filter(v=>{
-    const dm=daysLeft(v.muayeneTarihi), ds=daysLeft(v.sigortaTarihi);
-    return (dm!==null && dm<=30) || (ds!==null && ds<=30);
+    const fields = [v.muayeneTarihi, v.sigortaTarihi, v.kiraBitis, v.sozlesmeBitis, v.kaskoBitis];
+    return fields.some(d=>{ const dl=daysLeft(d); return dl!==null && dl<=30; });
   }).length;
   document.getElementById('statGelir').textContent = fmtTL(vehicles.filter(v=>v.durum==='Kirada').reduce((s,v)=>s+(v.kira||0),0));
   renderStatMasraf();
@@ -3719,6 +3727,12 @@ function getMarkaLogo(marka){
 }
 
 function normPlaka(p){ return String(p||'').trim().toLocaleUpperCase('tr-TR').replace(/\s+/g,''); }
+function fmtPlaka(p){ 
+  // "42AKS976" → "42 AKS 976" formatına çevir
+  const s = normPlaka(p);
+  const m = s.match(/^(\d{2})([A-ZÇĞİÖŞÜ]+)(\d+)$/);
+  return m ? `${m[1]} ${m[2]} ${m[3]}` : s;
+}
 function validPlaka(p){
   const il = parseInt(p.slice(0,2),10);
   if(isNaN(il) || il<1 || il>81) return false;
@@ -4378,6 +4392,8 @@ function computeMasrafKategoriData(){
     {label:'Tamir', color:'var(--coral)'},
     {label:'Lastik', color:'#C98A3E'},
     {label:'Bakım', color:'#2E8C63'},
+    {label:'Sigorta', color:'#8B5CF6'},
+    {label:'Kasko', color:'#0EA5E9'},
     {label:'Diğer', color:'var(--steel-500)'},
   ];
   return categories.map(c=>({
@@ -4736,7 +4752,7 @@ function renderMasrafPage(){
           <input type="text" id="mpPlaka" placeholder="34 ABC 123 yazın..." autocomplete="off" style="text-transform:uppercase;" oninput="this.value=this.value.toLocaleUpperCase('tr-TR');mpPlakaSuggest(this.value)">
           <div id="mpPlakaSuggestBox" style="display:none;position:absolute;z-index:50;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;max-height:160px;overflow-y:auto;box-shadow:var(--shadow-md);min-width:220px;"></div>
         </div>
-        <div class="field"><label>Tip</label><select id="mpTip"><option>Yakıt</option><option>Tamir</option><option>Lastik</option><option>Bakım</option><option>Diğer</option></select></div>
+        <div class="field"><label>Tip</label><select id="mpTip"><option>Yakıt</option><option>Tamir</option><option>Lastik</option><option>Bakım</option><option>Sigorta</option><option>Kasko</option><option>Diğer</option></select></div>
       </div>
       <div class="field-row">
         <div class="field"><label>Tarih</label><input type="date" id="mpTarih"></div>
@@ -5261,7 +5277,7 @@ function renderBildirimlerPage(){
       ${list.length ? list.map(u=>{
         const dtxt = u.dl<0 ? `${Math.abs(u.dl)} gün gecikti` : (u.dl===0?'bugün':`${u.dl} gün kaldı`);
         const bad = u.dl<0;
-        return `<div class="rem-item ${bad?'gecti':'acil'}"><span class="rp">${esc(u.plaka)}</span><span>${esc(u.tip)}</span><span class="rd">${dtxt}</span></div>`;
+        return `<div class="rem-item ${bad?'gecti':'acil'}"><span class="rp">${esc(fmtPlaka(u.plaka))}</span><span style="margin:0 6px;color:var(--steel-500)">—</span><span>${esc(u.tip)}</span><span class="rd">${dtxt}</span></div>`;
       }).join('') : '<div class="log-empty">Yaklaşan ya da geçmiş bir durum yok.</div>'}
     </div>
   `;
