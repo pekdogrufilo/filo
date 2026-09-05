@@ -736,6 +736,10 @@
         <option>Tamir</option>
         <option>Lastik</option>
         <option>Bakım</option>
+        <option>Sigorta</option>
+        <option>Kasko</option>
+        <option>Vergi</option>
+        <option>Ceza</option>
         <option>Diğer</option>
       </select>
       <input type="date" id="mTarih">
@@ -4569,11 +4573,15 @@ function computeMasrafKategoriData(){
   const ym = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
   const thisMonth = expenses.filter(e=>(e.tarih||'').slice(0,7)===ym);
   const categories = [
-    {label:'Yakıt', color:'var(--accent-blue)'},
-    {label:'Tamir', color:'var(--coral)'},
-    {label:'Lastik', color:'#C98A3E'},
-    {label:'Bakım', color:'#2E8C63'},
-    {label:'Diğer', color:'var(--steel-500)'},
+    {label:'Yakıt',    color:'#2563EB'},
+    {label:'Tamir',    color:'#DC2626'},
+    {label:'Lastik',   color:'#D97706'},
+    {label:'Bakım',    color:'#16A34A'},
+    {label:'Sigorta',  color:'#7C3AED'},
+    {label:'Kasko',    color:'#0891B2'},
+    {label:'Vergi',    color:'#BE185D'},
+    {label:'Ceza',     color:'#EA580C'},
+    {label:'Diğer',    color:'#6B7280'},
   ];
   return categories.map(c=>({
     label: c.label,
@@ -4883,7 +4891,7 @@ function renderMasrafPage(){
           <input type="text" id="mpPlaka" placeholder="34 ABC 123 yazın..." autocomplete="off" style="text-transform:uppercase;" oninput="this.value=this.value.toLocaleUpperCase('tr-TR');mpPlakaSuggest(this.value)">
           <div id="mpPlakaSuggestBox" style="display:none;position:absolute;z-index:50;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;max-height:160px;overflow-y:auto;box-shadow:var(--shadow-md);min-width:220px;"></div>
         </div>
-        <div class="field"><label>Tip</label><select id="mpTip"><option>Yakıt</option><option>Tamir</option><option>Lastik</option><option>Bakım</option><option>Diğer</option></select></div>
+        <div class="field"><label>Tip</label><select id="mpTip"><option>Yakıt</option><option>Tamir</option><option>Lastik</option><option>Bakım</option><option>Sigorta</option><option>Kasko</option><option>Vergi</option><option>Ceza</option><option>Diğer</option></select></div>
       </div>
       <div class="field-row">
         <div class="field"><label>Tarih</label><input type="date" id="mpTarih"></div>
