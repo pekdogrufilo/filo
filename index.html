@@ -3245,7 +3245,7 @@ async function callGeminiDirect(system, userText, contentBlock, modelIdx=0, retr
         { text: userText }
       ]
     }],
-    generationConfig: { temperature: 0, maxOutputTokens: 1024 }
+    generationConfig: { temperature: 0, maxOutputTokens: 4096 }
   };
   const controller = new AbortController();
   const timeout = setTimeout(()=>controller.abort(), 45000);
@@ -4952,27 +4952,12 @@ async function fisOku(file){
     const mimeType = file.type === 'application/pdf' ? 'application/pdf' : (file.type || 'image/jpeg');
     const plakaList = vehicles.map(v=>v.plaka).join(', ');
 
-    const system = `Sen bir filo yönetim sistemi için belge okuma asistanısın.
-Yüklenen belge tek bir tamir fişi, fatura veya çok satırlı cari ekstre/hareket raporu olabilir.
+    const system = `Filo masraf belgesi okuma asistanı. Belgedeki TÜM masraf satırlarını çıkar.
+SADECE JSON döndür, başka açıklama yapma:
+{"tip":"cari","kayitlar":[{"plaka":"42AKS976","tarih":"2026-01-15","tutar":5250,"tip":"Tamir","not":"açıklama"}]}
 
-Belgedeki TÜM masraf kayıtlarını çıkar ve SADECE aşağıdaki JSON formatında yanıtla:
-{
-  "tip": "tek" veya "cari",
-  "kayitlar": [
-    {"plaka":"42AKS976","tarih":"YYYY-MM-DD","tutar":5250,"tip":"Tamir","not":"yapılan işlem açıklaması"},
-    ...
-  ]
-}
-
-Önemli kurallar:
-- Plakalar büyük harf, boşluksuz olmalı (örn: 42AKS976, 34CPB097)
-- Tarihler YYYY-MM-DD formatında
-- Tutar sadece sayı (TL cinsinden)
-- Tip: "Tamir", "Bakım", "Lastik", "Sigorta", "Kasko" veya "Diğer"
-- Plaka bulunamazsa null bırak
-- Veri yoksa boş dizi döndür
-
-Filodaki araç plakaları: ${plakaList}`;
+Kurallar: plaka büyük harf boşluksuz, tarih YYYY-MM-DD, tutar TL sayı, tip: Tamir/Bakım/Lastik/Sigorta/Kasko/Diğer
+Filodaki plakalar: ${plakaList.slice(0,500)}`;
 
     const contentBlock = { source:{ type:'base64', media_type:mimeType, data:base64 } };
     const result = await callGeminiDirect(system, 'Bu belgeyi analiz et ve tüm masraf kayıtlarını çıkar.', contentBlock);
