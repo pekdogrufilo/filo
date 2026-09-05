@@ -473,17 +473,24 @@
   .sb-brand-text{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif;font-weight:700;font-size:13px;line-height:1.2;letter-spacing:.2px;color:#FFFFFF;}
   .sb-brand-sub{font-size:10px;color:rgba(255,255,255,.7);letter-spacing:.5px;margin-top:1px;}
   .sb-nav{flex:1;padding:6px 8px;}
-  .sb-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:7px;color:rgba(255,255,255,.5);font-size:13px;font-weight:500;cursor:pointer;margin-bottom:1px;transition:all .12s ease;position:relative;border:none;background:none;width:100%;text-align:left;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',Arial,sans-serif;}
+  .sb-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:7px;color:rgba(255,255,255,.75);font-size:13px;font-weight:500;cursor:pointer;margin-bottom:1px;transition:all .12s ease;position:relative;border:none;background:none;width:100%;text-align:left;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',Arial,sans-serif;}
   .sb-item svg{flex-shrink:0;width:15px;height:15px;}
   .sb-item:hover{background:rgba(255,255,255,.08);color:#fff;}
-  .sb-item.active{background:#1A1A1A;color:#EDEDED;border-left:2px solid #0070F3;}
-  .sb-item.active svg{color:#0070F3;}
+  .sb-item.active{background:rgba(37,99,235,.15);color:#fff;border-left:2px solid #2563EB;border-radius:0 7px 7px 0;}
+  .sb-item.active svg{color:#3B82F6;}
   .sb-item .sb-badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;min-width:16px;text-align:center;}
-  .sb-divider{height:1px;background:rgba(255,255,255,.1);margin:6px 8px;}
+  .sb-divider{height:1px;background:rgba(255,255,255,.08);margin:8px 8px;}
+  .sb-section{font-size:10px;font-weight:700;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.8px;padding:8px 10px 4px;margin-top:4px;}
   .sb-foot{padding:12px 14px 16px;border-top:1px solid rgba(255,255,255,.1);}
   .sb-foot-tag{font-size:10.5px;color:rgba(255,255,255,.55);text-align:center;}
   .sb-foot-brand{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:600;color:rgba(255,255,255,.8);margin-bottom:6px;}
   .sb-foot-brand img{width:20px;height:20px;object-fit:contain;border-radius:4px;}
+  .sb-user{display:flex;align-items:center;gap:9px;padding:10px 12px;border-top:1px solid rgba(255,255,255,.08);cursor:pointer;transition:background .12s ease;}
+  .sb-user:hover{background:rgba(255,255,255,.06);}
+  .sb-user-avatar{width:32px;height:32px;border-radius:50%;background:#2563EB;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;}
+  .sb-user-info{flex:1;min-width:0;}
+  .sb-user-name{font-size:12px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .sb-user-role{font-size:10px;color:rgba(255,255,255,.4);margin-top:1px;}
 
   /* Mobil alt tab bar */
   .bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(9,9,15,.97);border-top:1px solid var(--border);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);z-index:100;padding:6px 0 env(safe-area-inset-bottom,6px);}
@@ -769,22 +776,40 @@
       </div>
     </div>
     <nav class="sb-nav" id="sbNav">
+      <div class="sb-section">GENEL</div>
       <button class="sb-item active" data-page="genel-bakis"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M9 22V12h6v10"/></svg>Genel Bakış</button>
+
+      <div class="sb-section">OPERASYON</div>
       <button class="sb-item" data-page="arac-yonetimi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2v-6l-3-5H4l-3 5v6h2"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="16.5" cy="17.5" r="2.5"/></svg>Araç Yönetimi</button>
       <button class="sb-item" data-page="kiralama"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Kiralama İşlemleri</button>
-      <button class="sb-item" data-page="masraf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Masraf Yönetimi</button>
       <button class="sb-item" data-page="bakim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14.7 6.3-6.4 6.4a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l6.4-6.4a4 4 0 1 0-3-3Z"/><path d="M8 12 4 16l4 4 4-4"/></svg>Bakım &amp; Servis</button>
-      <button class="sb-item" data-page="belgeler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>Belgeler</button>
+
+      <div class="sb-section">FİNANS</div>
+      <button class="sb-item" data-page="masraf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Masraf Yönetimi</button>
       <button class="sb-item" data-page="raporlar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg>Raporlar</button>
+
+      <div class="sb-section">DOKÜMAN</div>
+      <button class="sb-item" data-page="belgeler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>Belgeler</button>
+      <button class="sb-item" data-page="excel-islemleri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="m8 13 2.5 5"/><path d="m13.5 13-2.5 5"/></svg>Veri Aktarımı</button>
+
+      <div class="sb-section">SİSTEM</div>
       <button class="sb-item" data-page="bildirimler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>Bildirimler<span class="sb-badge" id="sbBildirimBadge" style="display:none">0</span></button>
+      <button class="sb-item" data-page="ayarlar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.1 19.1a9 9 0 1 0-14.2 0M12 3v1M12 20v1M3 12h1M20 12h1"/></svg>Ayarlar</button>
       <button class="sb-item" data-page="excel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M9 13l3 4 3-4M12 13v6"/></svg>Excel İşlemleri</button>
       <button class="sb-item" data-page="ayarlar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.04 1.56V21a2 2 0 0 1-4 0v-.09A1.7 1.7 0 0 0 9 19.36a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.64 15a1.7 1.7 0 0 0-1.56-1.04H3a2 2 0 0 1 0-4h.09A1.7 1.7 0 0 0 4.64 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.64a1.7 1.7 0 0 0 1.04-1.56V3a2 2 0 0 1 4 0v.09a1.7 1.7 0 0 0 1.04 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.36 9a1.7 1.7 0 0 0 1.56 1.04H21a2 2 0 0 1 0 4h-.09a1.7 1.7 0 0 0-1.56 1.04Z"/></svg>Ayarlar</button>
     </nav>
     <div class="sb-foot">
       <div class="sb-foot-brand"><img src="data:image/png;base64,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" alt=""> PEKDOĞRU GROUP</div>
       <div class="sb-foot-tag">Güven veren çözümler.</div>
-      <div class="sb-help" id="sbHelpBtn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>Destek &amp; Yardım</div>
-      <div style="font-size:11px;color:var(--steel-600);text-align:center;margin-top:10px;">Sürüm: 2026-09-01 13:43</div>
+      <div class="sb-user" id="sbUserArea">
+        <div class="sb-user-avatar" id="sbUserAvatar">Y</div>
+        <div class="sb-user-info">
+          <div class="sb-user-name" id="sbUserName">Yönetici</div>
+          <div class="sb-user-role" id="sbUserRoleLabel">Admin</div>
+        </div>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </div>
+      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-05</div>
     </div>
   </aside>
 
@@ -3934,6 +3959,16 @@ function applyRoleVisibility(){
   // Kullanıcı bilgisi güncelle
   const roleEl = document.getElementById('thUserRole');
   if(roleEl) roleEl.textContent = role==='admin' ? 'Yönetici' : 'Personel';
+  // Sidebar kullanıcı alanı
+  const sbUserName = document.getElementById('sbUserName');
+  const sbUserRoleLabel = document.getElementById('sbUserRoleLabel');
+  const sbUserAvatar = document.getElementById('sbUserAvatar');
+  if(sbUserRoleLabel) sbUserRoleLabel.textContent = role==='admin' ? 'Yönetici' : 'Personel';
+  if(sbUserName){
+    const firmAdi = localStorage.getItem('filoPaneli_firmAdi') || 'Pekdoğru';
+    sbUserName.textContent = role==='admin' ? 'Yönetici' : 'Personel';
+  }
+  if(sbUserAvatar) sbUserAvatar.textContent = role==='admin' ? 'Y' : 'P';
   // Ayarlar sayfasındaki personel şifre kartını göster/gizle
   const staffCard = document.getElementById('staffPwCard');
   if(staffCard) staffCard.style.display = role==='admin' ? '' : 'none';
