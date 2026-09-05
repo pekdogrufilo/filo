@@ -4940,7 +4940,7 @@ async function fisOku(file){
     return;
   }
 
-  log.innerHTML = '<div style="color:var(--steel-300);font-size:13px;">⏳ Fiş okunuyor, lütfen bekleyin...</div>';
+  log.innerHTML = '<div style="color:var(--steel-300);font-size:13px;">⏳ Belge okunuyor, lütfen bekleyin...</div>';
 
   try{
     const base64 = await new Promise((res,rej)=>{
@@ -4953,12 +4953,30 @@ async function fisOku(file){
     const mimeType = file.type || 'image/jpeg';
     const plakaList = vehicles.map(v=>v.plaka).join(', ');
 
-    const system = `Sen bir tamir/bakim fisi okuma asistanisin. Gorseldeki fisten su bilgileri cikar ve SADECE JSON formatinda yanitla:
-{"plaka":"arac plakasi bos siz, buyuk harf ornk 42AKS976","tarih":"YYYY-MM-DD","tutar":sayi,"tip":"Tamir veya Bakim veya Lastik","not":"yapilan islemlerin ozeti"}
-Bilgi bulamazsan null birak. Filodaki plakalar: ` + plakaList + '`';
+    const system = `Sen bir filo yönetim sistemi için belge okuma asistanısın.
+Yüklenen belge tek bir tamir fişi, fatura veya çok satırlı cari ekstre/hareket raporu olabilir.
+
+Belgedeki TÜM masraf kayıtlarını çıkar ve SADECE aşağıdaki JSON formatında yanıtla:
+{
+  "tip": "tek" veya "cari",
+  "kayitlar": [
+    {"plaka":"42AKS976","tarih":"YYYY-MM-DD","tutar":5250,"tip":"Tamir","not":"yapılan işlem açıklaması"},
+    ...
+  ]
+}
+
+Önemli kurallar:
+- Plakalar büyük harf, boşluksuz olmalı (örn: 42AKS976, 34CPB097)
+- Tarihler YYYY-MM-DD formatında
+- Tutar sadece sayı (TL cinsinden)
+- Tip: "Tamir", "Bakım", "Lastik", "Sigorta", "Kasko" veya "Diğer"
+- Plaka bulunamazsa null bırak
+- Veri yoksa boş dizi döndür
+
+Filodaki araç plakaları: ${plakaList}`;
 
     const contentBlock = { source:{ type:'base64', media_type:mimeType, data:base64 } };
-    const result = await callGeminiDirect(system, 'Bu tamir fisini analiz et.', contentBlock);
+    const result = await callGeminiDirect(system, 'Bu belgeyi analiz et ve tüm masraf kayıtlarını çıkar.', contentBlock);
     const text = result?.content?.[0]?.text || '';
 
     let parsed;
@@ -4967,75 +4985,104 @@ Bilgi bulamazsan null birak. Filodaki plakalar: ` + plakaList + '`';
       parsed = match ? JSON.parse(match[0]) : null;
     }catch(e){ parsed = null; }
 
-    if(!parsed){
-      log.innerHTML = `<div style="color:var(--safety);font-size:13px;">Fis okunamadi: ${esc(text.slice(0,200))}</div>`;
+    if(!parsed || !parsed.kayitlar){
+      log.innerHTML = `<div style="color:var(--safety);font-size:13px;">Belge okunamadı. AI yanıtı: ${esc(text.slice(0,300))}</div>`;
       return;
     }
 
-    const plakaBul = parsed.plaka ? vehicles.find(v=>normPlaka(v.plaka)===normPlaka(parsed.plaka)) : null;
+    const kayitlar = parsed.kayitlar;
+    if(!kayitlar.length){
+      log.innerHTML = '<div style="color:var(--steel-300);font-size:13px;">Belgede masraf kaydı bulunamadı.</div>';
+      return;
+    }
+
+    // Plakaları eşleştir
+    const eslestirilmis = kayitlar.map(k=>{
+      const v = k.plaka ? vehicles.find(v=>normPlaka(v.plaka)===normPlaka(k.plaka)) : null;
+      return {...k, vehicleId: v?.id || null, aracAdi: v ? `${v.plaka} — ${[v.marka,v.model].filter(Boolean).join(' ')}` : (k.plaka||'Eşleşmedi')};
+    });
+
+    const eslesme = eslestirilmis.filter(k=>k.vehicleId).length;
+    const eslesmeyen = eslestirilmis.filter(k=>!k.vehicleId).length;
 
     log.innerHTML = `
       <div style="background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:16px;margin-top:4px;">
-        <div style="font-size:13px;font-weight:600;color:var(--paper);margin-bottom:12px;">✅ Fis Okundu — Kontrol Et ve Kaydet</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
-          <div>
-            <label style="font-size:12px;color:var(--steel-300);display:block;margin-bottom:5px;">Plaka</label>
-            <select id="fisPlakaSelect" style="width:100%;background:var(--surface-2);border:1px solid var(--line);color:var(--paper);padding:9px 11px;border-radius:8px;font-family:inherit;font-size:13px;">
-              <option value="">— Seçin —</option>
-              ${vehicles.map(v=>`<option value="${esc(v.id)}" ${plakaBul&&plakaBul.id===v.id?'selected':''}>${esc(v.plaka)} ${esc([v.marka,v.model].filter(Boolean).join(' '))}</option>`).join('')}
-            </select>
-          </div>
-          <div>
-            <label style="font-size:12px;color:var(--steel-300);display:block;margin-bottom:5px;">Tarih</label>
-            <input type="date" id="fisTarih" value="${parsed.tarih||''}" style="width:100%;background:var(--surface-2);border:1px solid var(--line);color:var(--paper);padding:9px 11px;border-radius:8px;font-family:inherit;font-size:13px;">
-          </div>
+        <div style="font-size:13px;font-weight:700;color:var(--paper);margin-bottom:6px;">✅ ${kayitlar.length} kayıt okundu</div>
+        <div style="font-size:12px;color:var(--steel-300);margin-bottom:12px;">
+          ${eslesme} araç eşleşti · ${eslesmeyen > 0 ? `<span style="color:var(--safety)">${eslesmeyen} eşleşmedi</span>` : 'Tümü eşleşti'}
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
-          <div>
-            <label style="font-size:12px;color:var(--steel-300);display:block;margin-bottom:5px;">Tutar (₺)</label>
-            <input type="number" id="fisTutar" value="${parsed.tutar||''}" style="width:100%;background:var(--surface-2);border:1px solid var(--line);color:var(--paper);padding:9px 11px;border-radius:8px;font-family:inherit;font-size:13px;">
-          </div>
-          <div>
-            <label style="font-size:12px;color:var(--steel-300);display:block;margin-bottom:5px;">Tip</label>
-            <select id="fisTip" style="width:100%;background:var(--surface-2);border:1px solid var(--line);color:var(--paper);padding:9px 11px;border-radius:8px;font-family:inherit;font-size:13px;">
-              <option ${parsed.tip==='Tamir'?'selected':''}>Tamir</option>
-              <option ${parsed.tip==='Bakım'?'selected':''}>Bakım</option>
-              <option ${parsed.tip==='Lastik'?'selected':''}>Lastik</option>
-            </select>
-          </div>
+        <div style="max-height:280px;overflow-y:auto;margin-bottom:12px;">
+          <table style="width:100%;border-collapse:collapse;font-size:12px;">
+            <thead>
+              <tr style="border-bottom:1px solid var(--line);">
+                <th style="text-align:left;padding:4px 8px;color:var(--steel-300);font-weight:600;">Araç</th>
+                <th style="text-align:left;padding:4px 8px;color:var(--steel-300);font-weight:600;">Tarih</th>
+                <th style="text-align:left;padding:4px 8px;color:var(--steel-300);font-weight:600;">Tip</th>
+                <th style="text-align:right;padding:4px 8px;color:var(--steel-300);font-weight:600;">Tutar</th>
+                <th style="padding:4px 8px;"></th>
+              </tr>
+            </thead>
+            <tbody id="fisKayitlariBody">
+              ${eslestirilmis.map((k,i)=>`
+                <tr style="border-bottom:1px solid var(--line);" id="fisRow_${i}">
+                  <td style="padding:5px 8px;color:${k.vehicleId?'var(--paper)':'var(--safety)'};">${esc(k.aracAdi)}</td>
+                  <td style="padding:5px 8px;color:var(--steel-300);">${esc(k.tarih||'—')}</td>
+                  <td style="padding:5px 8px;color:var(--steel-300);">${esc(k.tip||'Tamir')}</td>
+                  <td style="padding:5px 8px;text-align:right;font-weight:600;color:var(--paper);">${k.tutar ? k.tutar.toLocaleString('tr-TR')+'₺' : '—'}</td>
+                  <td style="padding:5px 8px;"><button onclick="fisRowSil(${i})" style="background:none;border:none;color:var(--safety);cursor:pointer;font-size:11px;">✕</button></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
         </div>
-        <div style="margin-bottom:12px;">
-          <label style="font-size:12px;color:var(--steel-300);display:block;margin-bottom:5px;">Yapılan İşlem</label>
-          <input type="text" id="fisNot" value="${esc(parsed.not||'')}" style="width:100%;background:var(--surface-2);border:1px solid var(--line);color:var(--paper);padding:9px 11px;border-radius:8px;font-family:inherit;font-size:13px;">
+        <div style="font-size:12px;color:var(--steel-300);margin-bottom:10px;">
+          Toplam: <strong style="color:var(--paper);">${eslestirilmis.reduce((s,k)=>s+(k.tutar||0),0).toLocaleString('tr-TR')} ₺</strong>
+          ${eslesmeyen>0 ? ' — Kırmızı satırlar eşleşmeyen araçlardır, kaydedilmez.' : ''}
         </div>
         <div style="display:flex;gap:8px;">
-          <button class="add-btn" onclick="fisMasrafKaydet()">💾 Kaydet</button>
+          <button class="add-btn" onclick="fisTopluKaydet()">💾 Tümünü Kaydet (${eslesme} kayıt)</button>
           <button class="settings-btn" onclick="document.getElementById('fisLog').innerHTML='';document.getElementById('fisInput').value=''">İptal</button>
         </div>
       </div>
     `;
+
+    // Kayıtları global olarak sakla
+    window.__fisKayitlari = eslestirilmis;
+
   }catch(e){
     log.innerHTML = `<div style="color:var(--safety);font-size:13px;">Hata: ${esc(e.message)}</div>`;
   }
 }
 
-async function fisMasrafKaydet(){
-  const vehicleId = document.getElementById('fisPlakaSelect')?.value;
-  const tutar = parseFloat(document.getElementById('fisTutar')?.value);
-  if(!vehicleId){ showToast('Lütfen araç seçin.',true); return; }
-  if(!tutar||isNaN(tutar)){ showToast('Lütfen geçerli tutar girin.',true); return; }
-  const v = vehicles.find(x=>x.id===vehicleId);
-  const masraf = {
-    id: cryptoId(), vehicleId, plaka:v?.plaka||'',
-    tip: document.getElementById('fisTip')?.value||'Tamir',
-    tarih: document.getElementById('fisTarih')?.value||todayISO(),
-    tutar, not: document.getElementById('fisNot')?.value||''
-  };
-  expenses.push(masraf);
+function fisRowSil(i){
+  if(window.__fisKayitlari) window.__fisKayitlari[i]._silindi = true;
+  const row = document.getElementById('fisRow_'+i);
+  if(row) row.style.opacity = '0.3';
+}
+
+async function fisTopluKaydet(){
+  const kayitlar = (window.__fisKayitlari||[]).filter(k=>k.vehicleId && !k._silindi);
+  if(!kayitlar.length){ showToast('Kaydedilecek eşleşen kayıt yok.', true); return; }
+
+  let eklenen = 0;
+  for(const k of kayitlar){
+    expenses.push({
+      id: cryptoId(),
+      vehicleId: k.vehicleId,
+      plaka: vehicles.find(v=>v.id===k.vehicleId)?.plaka||'',
+      tip: k.tip||'Tamir',
+      tarih: k.tarih||todayISO(),
+      tutar: Number(k.tutar)||0,
+      not: k.not||''
+    });
+    eklenen++;
+  }
+
   await persistExpenses();
   renderStatMasraf();
-  document.getElementById('fisLog').innerHTML = `<div style="color:#38A169;font-size:13px;font-weight:600;padding:10px;">✅ Masraf kaydedildi: ${esc(v?.plaka||'')} — ${fmtTL2(tutar)}</div>`;
-  document.getElementById('fisInput').value='';
+  window.__fisKayitlari = null;
+  document.getElementById('fisInput').value = '';
+  document.getElementById('fisLog').innerHTML = `<div style="color:#16A34A;font-size:13px;font-weight:600;padding:10px;">✅ ${eklenen} masraf kaydedildi.</div>`;
   renderBakimPage();
 }
 
