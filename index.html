@@ -4568,10 +4568,39 @@ function computeUpcomingExpirySeries(){
   return {values, labels: months.map(m=>m.label)};
 }
 
-function computeMasrafKategoriData(){
+function renderMasrafDonutHTML(donem){
+  const kategori = computeMasrafKategoriData(donem);
+  const toplam = kategori.reduce((s,k)=>s+k.value,0);
+  if(!kategori.length) return '<div class="log-empty">Bu dönemde masraf kaydedilmedi.</div>';
+  return `
+    <div class="donut-wrap">
+      ${svgDonut(kategori.map(k=>({value:k.value,color:k.color})), 110, 18, fmtCompactTL(toplam), 'Toplam')}
+      <div class="donut-legend">
+        ${kategori.map(k=>`<div class="donut-legend-item"><span class="sw" style="background:${k.color}"></span><span class="lbl">${esc(k.label)}</span><span class="val">${fmtTL2(k.value)}</span></div>`).join('')}
+      </div>
+    </div>`;
+}
+
+function renderMasrafDonut(donem){
+  const c = document.getElementById('masrafDonutContainer');
+  if(c) c.innerHTML = renderMasrafDonutHTML(donem);
+}
+
+function computeMasrafKategoriData(donem){
   const now = new Date();
-  const ym = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-  const thisMonth = expenses.filter(e=>(e.tarih||'').slice(0,7)===ym);
+  let filtered;
+  if(!donem || donem==='bu-ay'){
+    const ym = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    filtered = expenses.filter(e=>(e.tarih||'').slice(0,7)===ym);
+  } else if(donem==='3-ay'){
+    const bas = new Date(now.getFullYear(), now.getMonth()-2, 1).toISOString().slice(0,7);
+    filtered = expenses.filter(e=>(e.tarih||'').slice(0,7)>=bas);
+  } else if(donem==='6-ay'){
+    const bas = new Date(now.getFullYear(), now.getMonth()-5, 1).toISOString().slice(0,7);
+    filtered = expenses.filter(e=>(e.tarih||'').slice(0,7)>=bas);
+  } else {
+    filtered = expenses;
+  }
   const categories = [
     {label:'Yakıt',    color:'#2563EB'},
     {label:'Tamir',    color:'#DC2626'},
@@ -4586,7 +4615,7 @@ function computeMasrafKategoriData(){
   return categories.map(c=>({
     label: c.label,
     color: c.color,
-    value: thisMonth.filter(e=>e.tip===c.label).reduce((s,e)=>s+(Number(e.tutar)||0),0)
+    value: filtered.filter(e=>e.tip===c.label).reduce((s,e)=>s+(Number(e.tutar)||0),0)
   })).filter(x=>x.value>0);
 }
 
@@ -4810,15 +4839,18 @@ function renderDashboard(){
     </div>
     <div class="dash-grid" style="margin-top:16px;grid-template-columns:1fr 1fr;">
       <div class="dcard">
-        <h3>Masraf Dağılımı (Bu Ay)</h3>
-        ${masrafKategori.length ? `
-          <div class="donut-wrap">
-            ${svgDonut(masrafKategori.map(k=>({value:k.value,color:k.color})), 110, 18, fmtCompactTL(masrafKategori.reduce((s,k)=>s+k.value,0)), 'Bu ay')}
-            <div class="donut-legend">
-              ${masrafKategori.map(k=>`<div class="donut-legend-item"><span class="sw" style="background:${k.color}"></span><span class="lbl">${esc(k.label)}</span><span class="val">${fmtTL2(k.value)}</span></div>`).join('')}
-            </div>
-          </div>
-        ` : '<div class="log-empty">Bu ay henüz masraf kaydedilmedi.</div>'}
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <h3 style="margin:0;">Masraf Dağılımı</h3>
+          <select id="masrafDonemSec" onchange="renderMasrafDonut(this.value)" style="background:var(--surface-2);border:1px solid var(--line);color:var(--paper);padding:4px 8px;border-radius:7px;font-size:12px;font-family:inherit;cursor:pointer;">
+            <option value="bu-ay">Bu Ay</option>
+            <option value="3-ay">Son 3 Ay</option>
+            <option value="6-ay">Son 6 Ay</option>
+            <option value="tum">Tüm Zamanlar</option>
+          </select>
+        </div>
+        <div id="masrafDonutContainer">
+          ${renderMasrafDonutHTML('bu-ay')}
+        </div>
       </div>
       <div class="dcard">
         <h3>Yaklaşan Belge Bitişleri (6 Ay)</h3>
