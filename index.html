@@ -4950,7 +4950,8 @@ async function fisOku(file){
       r.readAsDataURL(file);
     });
 
-    const mimeType = file.type || 'image/jpeg';
+    // PDF için mime type düzelt — Gemini PDF destekler
+    const mimeType = file.type === 'application/pdf' ? 'application/pdf' : (file.type || 'image/jpeg');
     const plakaList = vehicles.map(v=>v.plaka).join(', ');
 
     const system = `Sen bir filo yönetim sistemi için belge okuma asistanısın.
@@ -5082,8 +5083,8 @@ async function fisTopluKaydet(){
   renderStatMasraf();
   window.__fisKayitlari = null;
   document.getElementById('fisInput').value = '';
-  document.getElementById('fisLog').innerHTML = `<div style="color:#16A34A;font-size:13px;font-weight:600;padding:10px;">✅ ${eklenen} masraf kaydedildi.</div>`;
-  renderBakimPage();
+  document.getElementById('fisLog').innerHTML = `<div style="color:#16A34A;font-size:13px;font-weight:600;padding:10px;background:rgba(22,163,74,.1);border-radius:8px;">✅ ${eklenen} masraf başarıyla kaydedildi.</div>`;
+  showToast(eklenen + ' masraf kaydedildi.');
 }
 
 function openStaffPwModal(){
