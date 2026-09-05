@@ -4284,9 +4284,9 @@ function smoothPath(coords){
   return d;
 }
 function fmtCompactTL(v){
-  if(v>=1000000) return (v/1000000).toFixed(v>=10000000?0:1).replace('.0','')+'M';
-  if(v>=1000) return (v/1000).toFixed(v>=10000?0:1).replace('.0','')+'B';
-  return String(Math.round(v));
+  if(v>=1000000) return (v/1000000).toLocaleString('tr-TR',{maximumFractionDigits:1})+' M';
+  if(v>=1000) return (v/1000).toLocaleString('tr-TR',{maximumFractionDigits:1})+' B';
+  return Math.round(v).toLocaleString('tr-TR');
 }
 let __chartIdCounter = 0;
 function svgDonut(segments, size, thickness, centerValue, centerLabel){
@@ -4452,28 +4452,35 @@ const DASH_ICONS = {
 };
 
 function renderKritikUyarilarList(urgent){
+  if(!urgent.length) return '<div class="log-empty" style="padding:12px 0;">✓ Yaklaşan kritik durum yok.</div>';
+
   const groups = {};
   urgent.forEach(u=>{ (groups[u.tip] = groups[u.tip]||[]).push(u); });
+
   const meta = {
-    'Sözleşme Bitişi': {ic:DASH_ICONS.doc, bg:'#153A29', fg:'#4FA88A', label:'Sözleşmesi bitecek araçlar'},
-    'Sigorta': {ic:DASH_ICONS.shield, bg:'#152C4A', fg:'#5B8FE0', label:'Sigortası bitecek araçlar'},
-    'Muayene': {ic:DASH_ICONS.wrench, bg:'#3D2E13', fg:'#C98A3E', label:'Muayenesi bitecek araçlar'},
-    'Kira Bitişi': {ic:DASH_ICONS.clock, bg:'#2E1F45', fg:'#8B6DD9', label:'Kirası bitecek araçlar'},
-    'Kasko Bitişi': {ic:DASH_ICONS.shield, bg:'#2E1F45', fg:'#B07FE0', label:'Kaskosu bitecek araçlar'},
+    'Muayene':       {emoji:'🔴', color:'#DC2626', bg:'rgba(220,38,38,.08)',  border:'rgba(220,38,38,.2)',  label:'Muayenesi yaklaşan araçlar'},
+    'Sigorta':       {emoji:'🟠', color:'#EA580C', bg:'rgba(234,88,12,.08)',  border:'rgba(234,88,12,.2)',  label:'Sigortası yaklaşan araçlar'},
+    'Kasko Bitişi':  {emoji:'🟠', color:'#D97706', bg:'rgba(217,119,6,.08)', border:'rgba(217,119,6,.2)',  label:'Kaskosu yaklaşan araçlar'},
+    'Sözleşme Bitişi':{emoji:'🟡', color:'#CA8A04', bg:'rgba(202,138,4,.08)', border:'rgba(202,138,4,.2)',  label:'Sözleşmesi yaklaşan araçlar'},
+    'Kira Bitişi':   {emoji:'🔵', color:'#2563EB', bg:'rgba(37,99,235,.08)', border:'rgba(37,99,235,.2)',  label:'Kirası bitecek araçlar'},
   };
-  const order = ['Sözleşme Bitişi','Muayene','Sigorta','Kasko Bitişi','Kira Bitişi'];
-  const items = order.filter(t=>groups[t]).map(t=>{
+  const order = ['Muayene','Sigorta','Kasko Bitişi','Sözleşme Bitişi','Kira Bitişi'];
+
+  return order.filter(t=>groups[t]).map(t=>{
     const list = groups[t];
     const minDl = Math.min(...list.map(x=>x.dl));
-    const dtxt = minDl<0 ? `${Math.abs(minDl)} gün gecikti` : (minDl===0?'bugün':`${minDl} gün içinde`);
-    const m = meta[t] || {ic:DASH_ICONS.warn, bg:'var(--asphalt-700)', fg:'var(--steel-300)', label:t};
-    return `<div class="alert-list-item" data-goto="bildirimler">
-      <div class="aic" style="background:${m.bg};color:${m.fg}">${m.ic}</div>
-      <div class="atxt"><div class="atitle">${esc(m.label)}</div><div class="asub">${list.length} araç · ${dtxt}</div></div>
-      <svg class="achev" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-    </div>`;
+    const dtxt = minDl<0 ? `${Math.abs(minDl)} gün gecikti!` : (minDl===0 ? 'Bugün!' : `${minDl} gün içinde`);
+    const m = meta[t] || {emoji:'⚠️', color:'#6B7280', bg:'rgba(107,114,128,.08)', border:'rgba(107,114,128,.2)', label:t};
+    return `
+      <div class="alert-list-item" data-goto="bildirimler" style="background:${m.bg};border:1px solid ${m.border};border-radius:8px;padding:10px 12px;margin-bottom:6px;cursor:pointer;transition:opacity .12s ease;">
+        <div style="font-size:18px;flex-shrink:0;line-height:1;">${m.emoji}</div>
+        <div class="atxt" style="flex:1;">
+          <div class="atitle" style="color:${m.color};font-weight:600;">${esc(m.label)}</div>
+          <div class="asub" style="margin-top:2px;">${list.length} araç · ${esc(dtxt)}</div>
+        </div>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${m.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      </div>`;
   }).join('');
-  return items || '<div class="log-empty">Yaklaşan bir durum yok.</div>';
 }
 function renderMiniVehicleTable(){
   const list = vehicles.slice(0,5);
@@ -4647,7 +4654,7 @@ function renderDashboard(){
         ${svgLineChart(series.values, series.labels, 380, 170, {fmt: fmtCompactTL})}
       </div>
       <div class="dcard">
-        <h3>Kritik Uyarılar <a data-goto="bildirimler">Tümünü Gör</a></h3>
+        <h3>⚡ Aksiyon Merkezi <a data-goto="bildirimler" style="font-size:12px;font-weight:400;color:var(--accent-blue);text-decoration:none;">Tümünü Gör →</a></h3>
         <div>${renderKritikUyarilarList(urgent)}</div>
       </div>
     </div>
@@ -4665,7 +4672,7 @@ function renderDashboard(){
       </div>
       <div class="dcard">
         <h3>Yaklaşan Belge Bitişleri (6 Ay)</h3>
-        ${svgBarChart(expirySeries.values, expirySeries.labels, 380, 170, 'var(--accent-blue)')}
+        ${svgBarChart(expirySeries.values, expirySeries.labels, 380, 170, '#2563EB')}
         <div style="font-size:12px;color:var(--steel-300);margin-top:6px;">* Sigorta, muayene, kira, sözleşme ve kasko tarihlerinin toplamıdır — bir araç birden fazla kez sayılabilir.</div>
       </div>
     </div>
