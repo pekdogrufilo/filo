@@ -3535,6 +3535,16 @@ async function saveIade(id){
   showToast(v.plaka+' başarıyla iade alındı, durum "Müsait" olarak güncellendi.');
 }
 
+async function detayMasrafSil(masrafId, vehicleId){
+  if(!confirm('Bu masraf kaydı silinecek. Emin misiniz?')) return;
+  expenses = expenses.filter(e=>e.id!==masrafId);
+  await persistExpenses();
+  renderStatMasraf();
+  // Detay modalı yenile
+  document.getElementById('vehicleDetailOverlay')?.remove();
+  openVehicleDetail(vehicleId);
+}
+
 function openVehicleDetail(id){
   const v = vehicles.find(x=>x.id===id);
   if(!v) return;
@@ -3644,9 +3654,14 @@ function openVehicleDetail(id){
                   <span style="font-size:12px;font-weight:600;color:var(--paper);">${esc(e.tip||'—')}</span>
                   ${e.not ? `<span style="font-size:11px;color:var(--steel-300);margin-left:8px;">${esc(e.not)}</span>` : ''}
                 </div>
-                <div style="text-align:right;flex-shrink:0;margin-left:12px;">
-                  <div style="font-size:13px;font-weight:700;color:#DC2626;">${fmtTL2(e.tutar||0)}</div>
-                  <div style="font-size:11px;color:var(--steel-500);">${fmtTarih(e.tarih)}</div>
+                <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;margin-left:12px;">
+                  <div style="text-align:right;">
+                    <div style="font-size:13px;font-weight:700;color:#DC2626;">${fmtTL2(e.tutar||0)}</div>
+                    <div style="font-size:11px;color:var(--steel-500);">${fmtTarih(e.tarih)}</div>
+                  </div>
+                  <button onclick="detayMasrafSil('${e.id}','${id}')" style="background:none;border:none;color:var(--steel-500);cursor:pointer;padding:4px;border-radius:4px;display:flex;" title="Sil">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+                  </button>
                 </div>
               </div>
             `).join('')}
