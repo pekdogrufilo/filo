@@ -5206,7 +5206,22 @@ async function fisTopluKaydet(){
   if(!kayitlar.length){ showToast('Kaydedilecek eşleşen kayıt yok.', true); return; }
 
   let eklenen = 0;
+  let atlanan = 0;
+  const uyarilar = [];
+
   for(const k of kayitlar){
+    // Duplicate kontrolü — aynı araç + tarih + tutar var mı?
+    const dupVar = expenses.some(e=>
+      (e.vehicleId===k.vehicleId || normPlaka(e.plaka)===normPlaka(k.plaka||'')) &&
+      e.tarih===k.tarih &&
+      Math.abs(Number(e.tutar)-Number(k.tutar))<1
+    );
+    if(dupVar){
+      atlanan++;
+      uyarilar.push(`${k.plaka} — ${k.tarih} — ${(k.tutar||0).toLocaleString('tr-TR')}₺ (zaten mevcut)`);
+      continue;
+    }
+
     expenses.push({
       id: cryptoId(),
       vehicleId: k.vehicleId,
@@ -5223,8 +5238,16 @@ async function fisTopluKaydet(){
   renderStatMasraf();
   window.__fisKayitlari = null;
   document.getElementById('fisInput').value = '';
-  document.getElementById('fisLog').innerHTML = `<div style="color:#16A34A;font-size:13px;font-weight:600;padding:10px;background:rgba(22,163,74,.1);border-radius:8px;">✅ ${eklenen} masraf başarıyla kaydedildi.</div>`;
-  showToast(eklenen + ' masraf kaydedildi.');
+
+  let msg = `<div style="padding:12px;border-radius:8px;font-size:13px;">`;
+  if(eklenen>0) msg += `<div style="color:#16A34A;font-weight:700;margin-bottom:4px;">✅ ${eklenen} masraf kaydedildi.</div>`;
+  if(atlanan>0){
+    msg += `<div style="color:#D97706;font-weight:600;margin-bottom:4px;">⚠️ ${atlanan} kayıt atlandı (zaten mevcut):</div>`;
+    msg += uyarilar.map(u=>`<div style="color:var(--steel-300);font-size:12px;margin-left:8px;">• ${esc(u)}</div>`).join('');
+  }
+  msg += `</div>`;
+  document.getElementById('fisLog').innerHTML = msg;
+  if(eklenen>0) showToast(eklenen + ' masraf kaydedildi.');
 }
 
 function openStaffPwModal(){
@@ -5944,6 +5967,25 @@ Tip tespiti: trafik/kasko/ferdi kaza poliçesi→sigorta veya kasko, muayene rap
 
       const v = vehicles.find(x=>normPlaka(x.plaka)===normPlaka(plaka));
       if(!v){ logSpan.style.color='var(--safety)'; logSpan.textContent=`Plakalı araç bulunamadı: ${esc(plaka)}`; basarisiz++; continue; }
+
+      // Geçmiş tarih kontrolü
+      const today = todayISO();
+      const bitisTarihi = (tip==='sigorta'?sigortaBitis:(tip==='kasko'?kaskoBitis:(tip==='muayene'?muayeneBitis:null)));
+      const normalizedBitis = bitisTarihi ? normalizeExtractedDate(bitisTarihi) : null;
+      if(normalizedBitis && normalizedBitis < today){
+        logSpan.style.color='#D97706';
+        logSpan.textContent=`⚠️ DİKKAT: Süresi geçmiş belge! ${esc(v.plaka)} — Bitiş: ${fmtTarih(normalizedBitis)}`;
+        // Yine de kaydet ama uyar
+      }
+
+      // Duplicate belge kontrolü — aynı tip belge zaten yüklüyse uyar
+      const mevcutBelge = tip==='sigorta'?v.policeAdi:(tip==='kasko'?v.kaskoBelgeAdi:(tip==='muayene'?v.muayeneBelgeAdi:null));
+      if(mevcutBelge && mevcutBelge === file.name){
+        logSpan.style.color='#D97706';
+        logSpan.textContent=`⚠️ Bu belge zaten yüklü: ${esc(v.plaka)}`;
+        basarisiz++;
+        continue;
+      }
 
       // Belgeyi storage'a kaydet
       const storageKey = (tip==='sigorta'?'police_':(tip==='kasko'?'kasko_':(tip==='muayene'?'muayenebelge_':(tip==='sozlesme'?'contract_':'ruhsat_'))))+v.id;
