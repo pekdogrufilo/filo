@@ -42,7 +42,7 @@
     --text:#EDEDED;
     --text-2:#888888;
     --text-3:#555555;
-    --blue:#0070F3;
+    --blue:#2563EB;
     --blue-dim:rgba(0,112,243,.12);
     --green:#00D084;
     --green-dim:rgba(0,208,132,.12);
@@ -76,7 +76,7 @@
     --glow:rgba(0,112,243,.08);
     --gold:#F5A623;
     --gold-dim:rgba(245,166,35,.12);
-    --accent-blue:#0070F3;
+    --accent-blue:#2563EB;
     --sidebar-bg:#0A0A0A;
     --fixed-light:#EDEDED;
     --fixed-dark:#0A0A0A;
@@ -91,7 +91,7 @@
     --text:#000000;
     --text-2:#444444;
     --text-3:#666666;
-    --blue:#0070F3;
+    --blue:#2563EB;
     --blue-dim:rgba(0,112,243,.08);
     --green:#00A86B;
     --green-dim:rgba(0,168,107,.08);
@@ -116,7 +116,7 @@
     --teal-dim:rgba(0,168,107,.08);
     --coral-dim:rgba(238,0,0,.08);
     --gold-dim:rgba(245,166,35,.08);
-    --accent-blue:#0070F3;
+    --accent-blue:#2563EB;
     --fixed-light:#FAFAFA;
     --fixed-dark:#111111;
   }
@@ -4573,11 +4573,60 @@ function renderDashboard(){
   const page = document.getElementById('page-genel-bakis');
   page.innerHTML = `
     <div class="dash-stats">
-      <div class="dstat" onclick="showVehicleQuickList('Toplam','Tüm Araçlar')" title="Tıkla — tüm araçları gör"><div class="dstat-ic" style="background:var(--accent-blue)">${DASH_ICONS.car}</div><div class="dstat-txt"><div class="n">${total}</div><div class="l">Toplam Araç</div></div></div>
-      <div class="dstat" onclick="showVehicleQuickList('Kirada','Kiradaki Araçlar')" title="Tıkla — kiradaki araçları gör"><div class="dstat-ic" style="background:#38A169">${DASH_ICONS.check}</div><div class="dstat-txt"><div class="n">${kirada}</div><div class="l">Kiradaki Araç</div><div class="d" style="color:#7FDFC4">%${pct(kirada)}</div></div></div>
-      <div class="dstat" onclick="showVehicleQuickList('Müsait','Müsait Araçlar')" title="Tıkla — müsait araçları gör"><div class="dstat-ic" style="background:#C9A961">${DASH_ICONS.clock}</div><div class="dstat-txt"><div class="n">${musait}</div><div class="l">Müsait Araç</div><div class="d" style="color:#E8D49A">%${pct(musait)}</div></div></div>
-      <div class="dstat" onclick="showVehicleQuickList('Serviste','Servisteki Araçlar')" title="Tıkla — servisteki araçları gör"><div class="dstat-ic" style="background:var(--safety)">${DASH_ICONS.wrench}</div><div class="dstat-txt"><div class="n">${serviste}</div><div class="l">Servisteki Araç</div><div class="d" style="color:#F3A392">%${pct(serviste)}</div></div></div>
-      <div class="dstat" style="cursor:default;"><div class="dstat-ic" style="background:var(--accent-blue)">${DASH_ICONS.trend}</div><div class="dstat-txt"><div class="n">${fmtTL_role(gelir)}</div><div class="l">Aylık Kira Geliri</div></div></div>
+      <div class="dstat" onclick="showVehicleQuickList('Toplam','Tüm Araçlar')">
+        <div class="dstat-ic" style="background:rgba(37,99,235,.12);color:#2563EB">${DASH_ICONS.car}</div>
+        <div class="dstat-txt">
+          <div class="l">Toplam Araç</div>
+          <div class="n">${total}</div>
+          <div class="d" style="color:var(--steel-300);font-weight:400;">${aktifMusteri} aktif müşteri</div>
+        </div>
+      </div>
+      <div class="dstat" onclick="showVehicleQuickList('Kirada','Kiradaki Araçlar')">
+        <div class="dstat-ic" style="background:rgba(22,163,74,.12);color:#16A34A">${DASH_ICONS.check}</div>
+        <div class="dstat-txt">
+          <div class="l">Kiradaki Araç</div>
+          <div class="n" style="color:#16A34A">${kirada} <span style="font-size:14px;font-weight:500;color:var(--steel-300)">/ ${total}</span></div>
+          <div class="d" style="color:#16A34A">%${pct(kirada)} doluluk</div>
+        </div>
+      </div>
+      <div class="dstat" onclick="showVehicleQuickList('Müsait','Müsait Araçlar')">
+        <div class="dstat-ic" style="background:rgba(217,119,6,.12);color:#D97706">${DASH_ICONS.clock}</div>
+        <div class="dstat-txt">
+          <div class="l">Müsait Araç</div>
+          <div class="n" style="color:#D97706">${musait}</div>
+          <div class="d" style="color:var(--steel-300);font-weight:400;">%${pct(musait)} boşta</div>
+        </div>
+      </div>
+      <div class="dstat" onclick="showVehicleQuickList('Serviste','Servisteki Araçlar')">
+        <div class="dstat-ic" style="background:rgba(220,38,38,.12);color:#DC2626">${DASH_ICONS.wrench}</div>
+        <div class="dstat-txt">
+          <div class="l">Serviste</div>
+          <div class="n" style="color:${serviste>0?'#DC2626':'var(--steel-100)'}">${serviste}</div>
+          <div class="d" style="color:var(--steel-300);font-weight:400;">${serviste>0?'Bakımda':'Tüm araçlar aktif'}</div>
+        </div>
+      </div>
+      <div class="dstat" style="cursor:default;">
+        <div class="dstat-ic" style="background:rgba(37,99,235,.12);color:#2563EB">${DASH_ICONS.trend}</div>
+        <div class="dstat-txt">
+          <div class="l">Aylık Kira Geliri</div>
+          <div class="n" style="color:#2563EB">${fmtTL_role(gelir)}</div>
+          <div class="d" style="color:var(--steel-300);font-weight:400;">${kirada} aktif kiralama</div>
+        </div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+      <div class="dcard" style="background:var(--surface-2);border-color:var(--line);">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <span style="font-size:12px;color:var(--steel-300);">Bu Ay Masraf</span>
+          <span style="font-size:18px;font-weight:700;color:var(--coral);">${isAdmin() ? fmtTL2(masrafBuAy) : '—'}</span>
+        </div>
+      </div>
+      <div class="dcard" style="background:var(--surface-2);border-color:var(--line);">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <span style="font-size:12px;color:var(--steel-300);">Tahmini Net</span>
+          <span style="font-size:18px;font-weight:700;color:${netKar>=0?'#16A34A':'#DC2626'}">${isAdmin() ? fmtTL2(netKar) : '—'}</span>
+        </div>
+      </div>
     </div>
     <div class="dash-grid">
       <div class="dcard">
@@ -4642,12 +4691,6 @@ function renderDashboard(){
           <button class="qbtn" data-act="yedekten-yukle"><div class="qic" style="background:var(--steel-600);color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg></div><span>Yedekten Geri Yükle</span></button>
         </div>
       </div>
-    </div>
-    <div class="bottom-stats">
-      <div class="bstat"><div class="bstat-ic">${DASH_ICONS.clock}</div><div><div class="n">${fmtTL(masrafBuAy)}</div><div class="l">Toplam Masraf (Bu Ay)</div></div></div>
-      <div class="bstat"><div class="bstat-ic">${DASH_ICONS.trend}</div><div><div class="n">${fmtTL(netKar)}</div><div class="l">Net Kâr (Bu Ay)</div></div></div>
-      <div class="bstat"><div class="bstat-ic">${DASH_ICONS.car}</div><div><div class="n">%${pct(kirada)}</div><div class="l">Filo Doluluk Oranı</div></div></div>
-      <div class="bstat"><div class="bstat-ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/></svg></div><div><div class="n">${aktifMusteri}</div><div class="l">Aktif Müşteri</div></div></div>
     </div>
   `;
   page.querySelectorAll('[data-goto]').forEach(el=>{ el.onclick = ()=>switchPage(el.dataset.goto); });
