@@ -2217,7 +2217,8 @@ function render(){
           ).join('')}
         </div>
       </div>
-      <div class="card-actions">
+      <div class="card-actions" style="grid-template-columns:1fr 1fr 1fr 1fr;">
+        <button onclick="openVehicleDetail('${v.id}')">Detay</button>
         <button class="masraf" data-id="${v.id}">Masraflar</button>
         <button class="edit" data-id="${v.id}">Düzenle</button>
         <button class="del" data-id="${v.id}">Sil</button>
@@ -3532,6 +3533,134 @@ async function saveIade(id){
   document.getElementById('iadeModal')?.remove();
   logActivity('edit', '<b>'+esc(v.plaka)+'</b> kiradan iade alındı — '+iadeTarih+(kmBit?', iade km: '+kmBit.toLocaleString('tr-TR'):''));
   showToast(v.plaka+' başarıyla iade alındı, durum "Müsait" olarak güncellendi.');
+}
+
+function openVehicleDetail(id){
+  const v = vehicles.find(x=>x.id===id);
+  if(!v) return;
+
+  // Araç masrafları
+  const vMasraf = expenses.filter(e=>e.vehicleId===id || normPlaka(e.plaka)===normPlaka(v.plaka));
+  const toplamMasraf = vMasraf.reduce((s,e)=>s+(Number(e.tutar)||0),0);
+  const toplamGelir = (Number(v.kira)||0) * 12; // yıllık tahmini
+
+  // Km geçmişi
+  const kmGecmisi = v.kmGecmisi || [];
+
+  // Durum rengi
+  const durumRenk = v.durum==='Kirada'?'#16A34A':v.durum==='Serviste'?'#DC2626':'#D97706';
+  const durumBg = v.durum==='Kirada'?'rgba(22,163,74,.1)':v.durum==='Serviste'?'rgba(220,38,38,.1)':'rgba(217,119,6,.1)';
+
+  // Belge durumları
+  const belgeler = [
+    {ad:'Sigorta', tarih:v.sigortaTarihi},
+    {ad:'Kasko', tarih:v.kaskoBitis},
+    {ad:'Muayene', tarih:v.muayeneTarihi},
+    {ad:'Sözleşme', tarih:v.sozlesmeBitis},
+    {ad:'Kira Bitişi', tarih:v.kiraBitis},
+  ].filter(b=>b.tarih);
+
+  const el = document.createElement('div');
+  el.className = 'overlay show';
+  el.id = 'vehicleDetailOverlay';
+  el.style.cssText = 'z-index:60;align-items:stretch;padding:0;';
+  el.innerHTML = `
+    <div style="background:var(--bg);width:100%;max-width:780px;height:100vh;overflow-y:auto;margin-left:auto;display:flex;flex-direction:column;">
+      <!-- Header -->
+      <div style="padding:16px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;background:var(--surface);position:sticky;top:0;z-index:2;">
+        <button onclick="document.getElementById('vehicleDetailOverlay').remove()" style="background:none;border:none;color:var(--steel-300);cursor:pointer;padding:4px;border-radius:6px;display:flex;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+        <div style="flex:1;">
+          <div style="font-size:16px;font-weight:700;color:var(--paper);">${esc(v.plaka)} <span style="font-size:13px;font-weight:400;color:var(--steel-300);">${esc([v.marka,v.model,v.versiyon].filter(Boolean).join(' '))}</span></div>
+          <div style="margin-top:3px;"><span style="background:${durumBg};color:${durumRenk};font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;">${esc(v.durum||'—')}</span></div>
+        </div>
+        <button onclick="document.getElementById('vehicleDetailOverlay').remove();openEdit('${id}')" style="background:var(--accent-blue);color:#fff;border:none;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Düzenle</button>
+      </div>
+
+      <div style="padding:16px 20px;flex:1;">
+
+        <!-- Özet kartlar -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">
+          <div style="background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;">
+            <div style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;">Çalıştığı Yer</div>
+            <div style="font-size:14px;font-weight:600;color:var(--paper);">${esc(v.yer||v.kiraciAdi||'—')}</div>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;">
+            <div style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;">Toplam Masraf</div>
+            <div style="font-size:14px;font-weight:700;color:#DC2626;">${fmtTL2(toplamMasraf)}</div>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;">
+            <div style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;">Aylık Kira</div>
+            <div style="font-size:14px;font-weight:700;color:#16A34A;">${fmtTL2(v.kira||0)}</div>
+          </div>
+        </div>
+
+        <!-- Belgeler -->
+        ${belgeler.length ? `
+        <div style="background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:14px;">
+          <div style="font-size:12px;font-weight:700;color:var(--paper);margin-bottom:10px;">📄 Belgeler</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            ${belgeler.map(b=>{
+              const dl = daysLeft(b.tarih);
+              const renk = dl===null?'var(--steel-300)':dl<0?'#DC2626':dl<=30?'#D97706':'#16A34A';
+              const dtxt = dl===null?'—':dl<0?`${Math.abs(dl)} gün gecikti!`:dl===0?'Bugün!':dl<=30?`${dl} gün kaldı`:`${dl} gün kaldı`;
+              return `<div style="display:flex;align-items:center;justify-content:space-between;">
+                <span style="font-size:13px;color:var(--steel-300);">${esc(b.ad)}</span>
+                <div style="text-align:right;">
+                  <span style="font-size:12px;color:${renk};font-weight:600;">${esc(dtxt)}</span>
+                  <span style="font-size:11px;color:var(--steel-500);margin-left:8px;">${fmtTarih(b.tarih)}</span>
+                </div>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>` : ''}
+
+        <!-- Km Geçmişi -->
+        ${kmGecmisi.length ? `
+        <div style="background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:14px;">
+          <div style="font-size:12px;font-weight:700;color:var(--paper);margin-bottom:10px;">🚗 Km Geçmişi</div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            ${kmGecmisi.slice().reverse().map(k=>`
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line);">
+                <span style="font-size:12px;color:var(--steel-300);">${esc(k.donem||'—')}</span>
+                <div>
+                  <span style="font-size:13px;font-weight:600;color:var(--accent-blue);">${(k.toplamKm||0).toLocaleString('tr-TR')} km</span>
+                  ${k.bitKm ? `<span style="font-size:11px;color:var(--steel-500);margin-left:8px;">Son: ${k.bitKm.toLocaleString('tr-TR')} km</span>` : ''}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>` : ''}
+
+        <!-- Masraf Geçmişi -->
+        <div style="background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:14px;">
+          <div style="font-size:12px;font-weight:700;color:var(--paper);margin-bottom:10px;">💸 Masraf Geçmişi ${vMasraf.length ? `<span style="font-weight:400;color:var(--steel-300);">(${vMasraf.length} kayıt)</span>` : ''}</div>
+          ${vMasraf.length ? `
+          <div style="display:flex;flex-direction:column;gap:0;">
+            ${vMasraf.sort((a,b)=>(b.tarih||'').localeCompare(a.tarih||'')).map(e=>`
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line);">
+                <div>
+                  <span style="font-size:12px;font-weight:600;color:var(--paper);">${esc(e.tip||'—')}</span>
+                  ${e.not ? `<span style="font-size:11px;color:var(--steel-300);margin-left:8px;">${esc(e.not)}</span>` : ''}
+                </div>
+                <div style="text-align:right;flex-shrink:0;margin-left:12px;">
+                  <div style="font-size:13px;font-weight:700;color:#DC2626;">${fmtTL2(e.tutar||0)}</div>
+                  <div style="font-size:11px;color:var(--steel-500);">${fmtTarih(e.tarih)}</div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+          <div style="padding-top:10px;font-size:13px;font-weight:700;color:var(--paper);text-align:right;">Toplam: <span style="color:#DC2626;">${fmtTL2(toplamMasraf)}</span></div>
+          ` : '<div style="color:var(--steel-500);font-size:13px;padding:8px 0;">Henüz masraf kaydı yok.</div>'}
+        </div>
+
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(el);
+  el.onclick = e=>{ if(e.target===el) el.remove(); };
 }
 
 function openEdit(id){
@@ -5017,10 +5146,13 @@ Filodaki plakalar: ${plakaList.slice(0,500)}`;
             <tbody id="fisKayitlariBody">
               ${eslestirilmis.map((k,i)=>`
                 <tr style="border-bottom:1px solid var(--line);" id="fisRow_${i}">
-                  <td style="padding:5px 8px;color:${k.vehicleId?'var(--paper)':'var(--safety)'};">${esc(k.aracAdi)}</td>
-                  <td style="padding:5px 8px;color:var(--steel-300);">${esc(k.tarih||'—')}</td>
-                  <td style="padding:5px 8px;color:var(--steel-300);">${esc(k.tip||'Tamir')}</td>
-                  <td style="padding:5px 8px;text-align:right;font-weight:600;color:var(--paper);">${k.tutar ? k.tutar.toLocaleString('tr-TR')+'₺' : '—'}</td>
+                  <td style="padding:5px 8px;">
+                    <input value="${esc(k.plaka||'')}" onchange="fisRowDüzenle(${i},'plaka',this.value)"
+                      style="background:${k.vehicleId?'transparent':'rgba(220,38,38,.08)'};border:1px solid ${k.vehicleId?'transparent':'rgba(220,38,38,.3)'};color:${k.vehicleId?'var(--paper)':'var(--safety)'};padding:3px 6px;border-radius:5px;font-size:12px;width:90px;font-family:monospace;">
+                  </td>
+                  <td style="padding:5px 8px;color:var(--steel-300);font-size:12px;">${esc(k.tarih||'—')}</td>
+                  <td style="padding:5px 8px;color:var(--steel-300);font-size:12px;">${esc(k.tip||'Tamir')}</td>
+                  <td style="padding:5px 8px;text-align:right;font-weight:600;color:var(--paper);font-size:12px;">${k.tutar ? k.tutar.toLocaleString('tr-TR')+'₺' : '—'}</td>
                   <td style="padding:5px 8px;"><button onclick="fisRowSil(${i})" style="background:none;border:none;color:var(--safety);cursor:pointer;font-size:11px;">✕</button></td>
                 </tr>
               `).join('')}
@@ -5050,6 +5182,23 @@ function fisRowSil(i){
   if(window.__fisKayitlari) window.__fisKayitlari[i]._silindi = true;
   const row = document.getElementById('fisRow_'+i);
   if(row) row.style.opacity = '0.3';
+}
+
+function fisRowDüzenle(i, alan, deger){
+  if(!window.__fisKayitlari) return;
+  window.__fisKayitlari[i][alan] = deger.trim().toUpperCase().replace(/\s+/g,'');
+  // Araç eşleştir
+  const plaka = window.__fisKayitlari[i].plaka;
+  const v = plaka ? vehicles.find(v=>normPlaka(v.plaka)===normPlaka(plaka)) : null;
+  window.__fisKayitlari[i].vehicleId = v?.id || null;
+  window.__fisKayitlari[i].aracAdi = v ? `${v.plaka} — ${[v.marka,v.model].filter(Boolean).join(' ')}` : (plaka||'Eşleşmedi');
+  // Satır rengini güncelle
+  const inp = document.querySelector(`#fisRow_${i} input`);
+  if(inp){
+    inp.style.background = v ? 'transparent' : 'rgba(220,38,38,.08)';
+    inp.style.borderColor = v ? 'transparent' : 'rgba(220,38,38,.3)';
+    inp.style.color = v ? 'var(--paper)' : 'var(--safety)';
+  }
 }
 
 async function fisTopluKaydet(){
