@@ -4980,10 +4980,16 @@ Filodaki araç plakaları: ${plakaList}`;
 
     let parsed;
     try{
-      // Markdown code block temizle
-      const clean = text.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
-      const match = clean.match(/\{[\s\S]*\}/);
-      parsed = match ? JSON.parse(match[0]) : null;
+      // Markdown code block ve fazla karakterleri temizle
+      let clean = text.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
+      // JSON objesini bul — en geniş eşleşmeyi al
+      const start = clean.indexOf('{');
+      const end = clean.lastIndexOf('}');
+      if(start !== -1 && end !== -1 && end > start){
+        parsed = JSON.parse(clean.slice(start, end+1));
+      } else {
+        parsed = null;
+      }
     }catch(e){ parsed = null; }
 
     if(!parsed || !parsed.kayitlar){
