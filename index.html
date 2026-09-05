@@ -4980,7 +4980,9 @@ Filodaki araç plakaları: ${plakaList}`;
 
     let parsed;
     try{
-      const match = text.match(/\{[\s\S]*\}/);
+      // Markdown code block temizle
+      const clean = text.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
+      const match = clean.match(/\{[\s\S]*\}/);
       parsed = match ? JSON.parse(match[0]) : null;
     }catch(e){ parsed = null; }
 
