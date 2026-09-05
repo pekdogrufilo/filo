@@ -5172,20 +5172,28 @@ Filodaki plakalar: ${plakaList.slice(0,500)}`;
       return;
     }
 
-    // Plakaları eşleştir
+    // Plakaları eşleştir ve duplicate kontrolü yap
     const eslestirilmis = kayitlar.map(k=>{
       const v = k.plaka ? vehicles.find(v=>normPlaka(v.plaka)===normPlaka(k.plaka)) : null;
-      return {...k, vehicleId: v?.id || null, aracAdi: v ? `${v.plaka} — ${[v.marka,v.model].filter(Boolean).join(' ')}` : (k.plaka||'Eşleşmedi')};
+      // Duplicate kontrolü
+      const dupVar = expenses.some(e=>
+        (e.vehicleId===v?.id || normPlaka(e.plaka)===normPlaka(k.plaka||'')) &&
+        e.tarih===k.tarih &&
+        Math.abs(Number(e.tutar)-Number(k.tutar))<1
+      );
+      return {...k, vehicleId: v?.id || null, aracAdi: v ? `${v.plaka} — ${[v.marka,v.model].filter(Boolean).join(' ')}` : (k.plaka||'Eşleşmedi'), _dupVar: dupVar};
     });
 
-    const eslesme = eslestirilmis.filter(k=>k.vehicleId).length;
+    const eslesme = eslestirilmis.filter(k=>k.vehicleId && !k._dupVar).length;
     const eslesmeyen = eslestirilmis.filter(k=>!k.vehicleId).length;
+    const dupSayisi = eslestirilmis.filter(k=>k._dupVar).length;
 
     log.innerHTML = `
       <div style="background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:16px;margin-top:4px;">
         <div style="font-size:13px;font-weight:700;color:var(--paper);margin-bottom:6px;">✅ ${kayitlar.length} kayıt okundu</div>
-        <div style="font-size:12px;color:var(--steel-300);margin-bottom:12px;">
-          ${eslesme} araç eşleşti · ${eslesmeyen > 0 ? `<span style="color:var(--safety)">${eslesmeyen} eşleşmedi</span>` : 'Tümü eşleşti'}
+        <div style="font-size:12px;color:var(--steel-300);margin-bottom:8px;">
+          ${eslesme} yeni kayıt · ${eslesmeyen > 0 ? `<span style="color:var(--safety)">${eslesmeyen} eşleşmedi</span>` : 'Tümü eşleşti'}
+          ${dupSayisi > 0 ? ` · <span style="color:#D97706;font-weight:600;">⚠️ ${dupSayisi} tekrar (zaten kayıtlı)</span>` : ''}
         </div>
         <div style="max-height:280px;overflow-y:auto;margin-bottom:12px;">
           <table style="width:100%;border-collapse:collapse;font-size:12px;">
@@ -5200,8 +5208,9 @@ Filodaki plakalar: ${plakaList.slice(0,500)}`;
             </thead>
             <tbody id="fisKayitlariBody">
               ${eslestirilmis.map((k,i)=>`
-                <tr style="border-bottom:1px solid var(--line);" id="fisRow_${i}">
+                <tr style="border-bottom:1px solid var(--line);${k._dupVar?'opacity:.6;':''};" id="fisRow_${i}">
                   <td style="padding:5px 8px;">
+                    ${k._dupVar ? '<span style="font-size:10px;background:rgba(217,119,6,.15);color:#D97706;padding:1px 5px;border-radius:4px;margin-right:4px;">TEKRAR</span>' : ''}
                     <input value="${esc(k.plaka||'')}" onchange="fisRowDüzenle(${i},'plaka',this.value)"
                       style="background:${k.vehicleId?'transparent':'rgba(220,38,38,.08)'};border:1px solid ${k.vehicleId?'transparent':'rgba(220,38,38,.3)'};color:${k.vehicleId?'var(--paper)':'var(--safety)'};padding:3px 6px;border-radius:5px;font-size:12px;width:90px;font-family:monospace;">
                   </td>
@@ -5219,7 +5228,7 @@ Filodaki plakalar: ${plakaList.slice(0,500)}`;
           ${eslesmeyen>0 ? ' — Kırmızı satırlar eşleşmeyen araçlardır, kaydedilmez.' : ''}
         </div>
         <div style="display:flex;gap:8px;">
-          <button class="add-btn" onclick="fisTopluKaydet()">💾 Tümünü Kaydet (${eslesme} kayıt)</button>
+          <button class="add-btn" onclick="fisTopluKaydet()">💾 Kaydet (${eslesme} yeni kayıt)</button>
           <button class="settings-btn" onclick="document.getElementById('fisLog').innerHTML='';document.getElementById('fisInput').value=''">İptal</button>
         </div>
       </div>
