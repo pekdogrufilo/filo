@@ -4248,7 +4248,7 @@ if(document.getElementById('sbOverlay')) document.getElementById('sbOverlay').on
   document.getElementById('sidebar')?.classList.remove('show');
   document.getElementById('sbOverlay')?.classList.remove('show');
 };
-document.getElementById('sbHelpBtn').onclick = ()=>{
+if(document.getElementById('sbHelpBtn')) document.getElementById('sbHelpBtn').onclick = ()=>{
   showToast('Destek için: bu paneli senin adına kuran kişiyle iletişime geç.');
 };
 
