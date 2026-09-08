@@ -755,6 +755,29 @@
   .chip.active{background:var(--accent-blue);color:#fff;border-color:var(--accent-blue);}
   /* Arama kutuları: iOS arama alanı */
   .search-wrap input{background:var(--surface-2);border:1px solid transparent;border-radius:10px;}
+  /* ===== Araç kartı tasarımı ===== */
+  .card{border-left:1px solid var(--border)!important;}
+  .card-band{display:none;}
+  .card-body{padding:14px 16px 12px;}
+  .card-top{margin-bottom:10px;}
+  .card-logo-plaka{gap:10px;}
+  .plaka{font-size:14px;padding:4px 11px;border-radius:8px;border:1px solid var(--border-2);box-shadow:0 1px 2px rgba(0,0,0,.08);}
+  .arac-adi{font-size:12px;font-weight:600;color:var(--text);margin-top:5px;}
+  .model{font-size:11.5px;color:var(--text-3);margin-top:2px;}
+  .badge{font-size:11px;font-weight:700;letter-spacing:.02em;padding:4px 11px;border-radius:20px;}
+  .card-meta{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 0;border-top:1px solid var(--border);}
+  .card-meta:has(.cm-loc:empty):has(.cm-val:empty){display:none;}
+  .cm-loc{font-size:12.5px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .cm-val{display:flex;align-items:center;gap:12px;flex-shrink:0;}
+  .cm-km{font-size:12px;font-weight:600;color:var(--accent-blue);font-variant-numeric:tabular-nums;}
+  .cm-price{font-size:13px;font-weight:700;color:var(--green);font-variant-numeric:tabular-nums;}
+  .card-actions{background:var(--surface);}
+  .card-actions button{color:var(--accent-blue);font-weight:600;font-size:12.5px;padding:11px 4px;}
+  .card-actions button:hover{background:var(--surface-2);color:var(--accent-blue);}
+  .card-actions .del{color:var(--text-3);}
+  .card-actions .del:hover{color:var(--red);}
+  .card{transition:transform .15s var(--ease),border-color .15s var(--ease);}
+  .card:hover{border-color:var(--border-2);}
   /* ===== Mobil rötuşlar ===== */
   @media(max-width:560px){
     /* iOS Safari'nin odaklanınca sayfayı zoomlamaması için girdi fontu en az 16px olmalı */
@@ -876,7 +899,7 @@
 
       <div class="sb-section">DOKÜMAN</div>
       <button class="sb-item" data-page="belgeler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>Belgeler</button>
-      <button class="sb-item" id="sbBelgeYukle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg>Belge Yükle</button>
+      <button class="sb-item" id="sbBelgeYukle" data-page="docupload"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg>Belge Yükleme</button>
       <button class="sb-item" data-page="excel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="m8 13 2.5 5"/><path d="m13.5 13-2.5 5"/></svg>Veri Aktarımı</button>
 
       <div class="sb-section">SİSTEM</div>
@@ -1070,6 +1093,7 @@
 <section class="page" data-page="masraf" id="page-masraf"></section>
 <section class="page" data-page="bakim" id="page-bakim"></section>
 <section class="page" data-page="belgeler" id="page-belgeler"></section>
+<section class="page" data-page="docupload" id="page-docupload"></section>
 <section class="page" data-page="raporlar" id="page-raporlar"></section>
 <section class="page" data-page="bildirimler" id="page-bildirimler"></section>
 <section class="page" data-page="excel" id="page-excel"></section>
@@ -2148,10 +2172,9 @@ function render(){
           <span class="badge ${badgeClass}">${v.durum}</span>
         </div>
 
-        <div class="card-meta" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;font-size:12.5px;color:var(--text-2);">
-          ${(v.yer||v.kiraciAdi) ? `<span title="${esc(v.sirket||'')}">📍 ${esc(v.yer||v.kiraciAdi)}</span>` : ''}
-          ${v.aykm ? `<span style="color:var(--accent-blue);font-weight:600">${v.aykm.toLocaleString('tr-TR')} km</span>` : ''}
-          ${isAdmin() && v.kira ? `<span style="color:var(--green);font-weight:600;font-variant-numeric:tabular-nums">${fmtTL2(v.kira)}</span>` : ''}
+        <div class="card-meta">
+          <span class="cm-loc">${(v.yer||v.kiraciAdi)?`📍 ${esc(v.yer||v.kiraciAdi)}`:''}</span>
+          <span class="cm-val">${v.aykm?`<span class="cm-km">${v.aykm.toLocaleString('tr-TR')} km</span>`:''}${isAdmin() && v.kira?`<span class="cm-price">${fmtTL2(v.kira)}</span>`:''}</span>
         </div>
 
         ${(()=>{
@@ -4569,6 +4592,7 @@ const PAGE_META = {
   'raporlar': {title:'Raporlar', sub:'Yazdırılabilir özet ve fatura raporları'},
   'bildirimler': {title:'Bildirimler', sub:'Yaklaşan ve geçmiş tarihli belgeler'},
   'excel': {title:'Excel İşlemleri', sub:'Excel ile içe / dışa aktarım'},
+  'docupload': {title:'Belge Yükleme', sub:'Poliçe, fiş ve raporları otomatik olarak araç kartına yükleyin'},
   'ai': {title:'AI Filo Asistanı', sub:'Filonuzu analiz edin, sorunları önceden görün'},
   'ayarlar': {title:'Ayarlar', sub:'Kilit, hatırlatma, bulut ve AI ayarları'},
 };
@@ -4607,6 +4631,7 @@ function renderCurrentPage(){
   else if(key==='bildirimler') renderBildirimlerPage();
   else if(key==='ai') renderAiPage();
   else if(key==='excel') renderExcelPage();
+  else if(key==='docupload') renderDocUploadPage();
   else if(key==='ayarlar') renderAyarlarPage();
   else if(key==='kiralama') renderKiralamaPage();
 }
@@ -6304,14 +6329,6 @@ function belgeYukleSecilen(){
     if(tab) tab.click();
   }, 80);
 }
-document.getElementById('sbBelgeYukle').onclick = ()=>{
-  switchPage('belgeler');
-  setTimeout(()=>{
-    const inp = document.getElementById('otoBelgeFile');
-    if(inp) inp.click();
-  }, 200);
-};
-
 // ===== Otomatik belge yükleme =====
 // Kullanıcı poliçe/fiş/rapor dosyasını seçer; Gemini belgeden plaka + belge türü
 // okur, dosyayı doğru aracın kartına kaydeder ve sonucu uyarıyla bildirir.
@@ -6325,11 +6342,10 @@ const OTO_BELGE_TURLERI = {
   ruhsat:   {label:'Ruhsat',           prefix:'ruhsat_',        adiF:'ruhsatBelgeAdi',  tipF:'ruhsatBelgeTip',  tarihF:null},
   sozlesme: {label:'Kira sözleşmesi',  prefix:'contract_',      adiF:'sozlesmeAdi',     tipF:'sozlesmeTip',     tarihF:'sozlesmeBitis'},
 };
-async function otoBelgeSec(file){
+async function otoBelgeSec(file, statusEl){
   if(!file) return;
   if(file.size > 3.5*1024*1024){ showToast('Dosya çok büyük (en fazla 3,5 MB).', true); return; }
-  const btnText = document.getElementById('otoBelgeBtnText');
-  const setBusy = t=>{ if(btnText) btnText.textContent = t; };
+  const setBusy = t=>{ [statusEl, document.getElementById('otoBelgeBtnText')].filter(Boolean).forEach(el=>{ el.textContent = t; }); };
   setBusy('Okunuyor…');
 
   try{
@@ -6414,6 +6430,107 @@ async function belgeAracaEkle(v, tur, adi, tip, dataUrl, tarih){
   if(!res) throw new Error('depolama kaydı başarısız');
   if(!Array.isArray(v.otoBelgeler)) v.otoBelgeler = [];
   v.otoBelgeler.push({key, adi, tip, tur, tarih: tarih||'', yukleme: new Date().toISOString()});
+}
+
+// ===== Belge Yükleme sayfası =====
+// Kendi başına bir sayfa: sürükle-bırak / dosya seç ile yükleme + son yüklenenler listesi.
+function renderDocUploadPage(){
+  const page = document.getElementById('page-docupload');
+  if(!page) return;
+  // Tüm araçlardaki otomatik yüklenen belgeler, en yeni önce
+  const tumu = [];
+  vehicles.forEach(v=>(v.otoBelgeler||[]).forEach(o=>tumu.push({v, o})));
+  tumu.sort((a,b)=>(b.o.yukleme||'').localeCompare(a.o.yukleme||''));
+  const sonN = tumu.slice(0, 40);
+
+  const turIco = t=>({sigorta:'🛡️',kasko:'🧾',muayene:'🔍',ruhsat:'📋',sozlesme:'📝',masraf:'💸',servis:'🔧',vize:'🌍',diger:'📄'}[t]||'📄');
+  const turAd  = t=>({sigorta:'Sigorta',kasko:'Kasko',muayene:'Muayene',ruhsat:'Ruhsat',sozlesme:'Sözleşme',masraf:'Masraf',servis:'Servis',vize:'Vize',diger:'Belge'}[t]||'Belge');
+
+  page.innerHTML = `
+    <div class="dcard" style="padding:18px;margin-bottom:16px;">
+      <div style="font-size:15px;font-weight:700;margin-bottom:4px;">Belge yükle</div>
+      <div style="font-size:12.5px;color:var(--text-2);margin-bottom:14px;">Poliçe, muayene raporu, ruhsat, masraf fişi, servis kağıdı… Dosyayı bırakın — sistem plakayı okur, doğru araç kartına kaydeder ve sizi uyarır.</div>
+      <div id="duDrop" style="border:2px dashed var(--border-2);border-radius:14px;padding:28px 16px;text-align:center;cursor:pointer;transition:all .15s ease;background:var(--surface-2);">
+        <div style="font-size:30px;margin-bottom:8px;">📤</div>
+        <div style="font-size:13.5px;font-weight:600;color:var(--text);">Sürükleip bırakın veya <span style="color:var(--accent-blue);">dosya seçin</span></div>
+        <div style="font-size:11.5px;color:var(--text-3);margin-top:4px;">PDF veya görsel · en fazla 3,5 MB · birden fazla dosya seçebilirsiniz</div>
+      </div>
+      <input type="file" id="duFile" accept=".pdf,image/*" multiple style="display:none">
+      <div id="duStatus" style="display:none;margin-top:12px;font-size:13px;color:var(--text-2);background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;"></div>
+    </div>
+
+    <div class="dcard" style="padding:18px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div style="font-size:15px;font-weight:700;">Son yüklenenler</div>
+        <span style="font-size:12px;color:var(--text-3);">${tumu.length} belge</span>
+      </div>
+      ${sonN.length ? `<div style="display:flex;flex-direction:column;gap:8px;">
+        ${sonN.map(({v,o})=>{
+          const d = o.yukleme ? new Date(o.yukleme) : null;
+          const dTxt = d ? d.toLocaleDateString('tr-TR')+' '+d.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'}) : '';
+          return `<div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;background:var(--surface-2);border:1px solid var(--border);">
+            <span style="font-size:18px;flex-shrink:0;">${turIco(o.tur)}</span>
+            <div style="flex:1;min-width:0;">
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                <span class="plaka" style="font-size:11.5px;padding:1px 7px;">${esc(v.plaka)}</span>
+                <span style="font-size:12.5px;font-weight:600;color:var(--text);">${turAd(o.tur)}</span>
+              </div>
+              <div style="font-size:11.5px;color:var(--text-3);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(o.adi)}${o.tarih?' · '+esc(fmtTarih(o.tarih)):''}${dTxt?' · '+dTxt:''}</div>
+            </div>
+            <button onclick="viewOtoDoc('${v.id}',${(v.otoBelgeler||[]).indexOf(o)})" style="background:var(--blue-dim);border:none;color:var(--accent-blue);padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0;">Gör</button>
+            <button onclick="otoBelgeSil('${v.id}','${o.key}')" style="background:none;border:none;color:var(--text-3);cursor:pointer;padding:6px;display:flex;flex-shrink:0;" title="Sil">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+            </button>
+          </div>`;
+        }).join('')}
+      </div>` : '<div style="color:var(--text-3);font-size:13px;padding:12px 0;">Henüz belge yüklenmedi. İlk belgenizi yukarıdaki alana bırakın.</div>'}
+    </div>
+  `;
+
+  const inp = document.getElementById('duFile');
+  const drop = document.getElementById('duDrop');
+  const status = document.getElementById('duStatus');
+  drop.onclick = ()=>inp.click();
+  inp.onchange = async ()=>{
+    if(!inp.files.length) return;
+    const files = Array.from(inp.files);
+    const sonuc = {ok:0, hata:0};
+    status.style.display = 'block';
+    for(let i=0;i<files.length;i++){
+      status.textContent = `Okunuyor… (${i+1}/${files.length}) — ${files[i].name}`;
+      try{
+        await otoBelgeSec(files[i], status);
+        sonuc.ok++;
+      }catch(e){ sonuc.hata++; }
+    }
+    status.textContent = `Tamamlandı: ${sonuc.ok} belge kaydedildi${sonuc.hata?`, ${sonuc.hata} dosya yüklenemedi`:''}.`;
+    setTimeout(()=>{ status.style.display='none'; }, 6000);
+    renderDocUploadPage();
+  };
+  ['dragover','dragenter'].forEach(ev=>drop.addEventListener(ev, e=>{ e.preventDefault(); drop.style.borderColor='var(--accent-blue)'; drop.style.background='var(--blue-dim)'; }));
+  ['dragleave','drop'].forEach(ev=>drop.addEventListener(ev, e=>{ e.preventDefault(); drop.style.borderColor='var(--border-2)'; drop.style.background='var(--surface-2)'; }));
+  drop.addEventListener('drop', async e=>{
+    const files = Array.from(e.dataTransfer.files||[]);
+    if(!files.length) return;
+    const sonuc = {ok:0, hata:0};
+    status.style.display = 'block';
+    for(let i=0;i<files.length;i++){
+      status.textContent = `Okunuyor… (${i+1}/${files.length}) — ${files[i].name}`;
+      try{ await otoBelgeSec(files[i], status); sonuc.ok++; }catch(err){ sonuc.hata++; }
+    }
+    status.textContent = `Tamamlandı: ${sonuc.ok} belge kaydedildi${sonuc.hata?`, ${sonuc.hata} dosya yüklenemedi`:''}.`;
+    setTimeout(()=>{ status.style.display='none'; }, 6000);
+    renderDocUploadPage();
+  });
+}
+async function otoBelgeSil(vehicleId, key){
+  const v = vehicles.find(x=>x.id===vehicleId);
+  if(!v || !Array.isArray(v.otoBelgeler)) return;
+  v.otoBelgeler = v.otoBelgeler.filter(o=>o.key!==key);
+  await storageAPI.set(key, '').catch(()=>{});
+  await persist();
+  showToast('Belge silindi.');
+  renderDocUploadPage();
 }
 
 // ===== Belgeler sayfası =====
