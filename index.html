@@ -2189,6 +2189,12 @@ function render(){
         <button class="del" data-id="${v.id}">Sil</button>
       </div>
     `;
+    // Kartın tamamı tıklanabilir → detay/geçmiş açılır (buton ve input tıklamaları hariç)
+    card.style.cursor = 'pointer';
+    card.onclick = e=>{
+      if(e.target.closest('button, input, select, a')) return;
+      openVehicleDetail(v.id);
+    };
     grid.appendChild(card);
   });
 
@@ -3618,6 +3624,19 @@ function openVehicleDetail(id){
   // Km geçmişi
   const kmGecmisi = v.kmGecmisi || [];
 
+  // Hasar/kaza kayıtları
+  const hasarlar = Array.isArray(v.hasarlar) ? v.hasarlar : [];
+
+  // Kronolojik geçmiş: masraflar + hasarlar + otomatik belgeler + km + teslim
+  const otoDocs = Array.isArray(v.otoBelgeler) ? v.otoBelgeler : [];
+  const gecmis = [
+    ...vMasraf.map(e=>({d:e.tarih||'', tip:e.tip==='tamir'||e.tip==='bakım'||e.tip==='lastik'?'servis':'masraf', baslik:(e.tip||'Masraf').charAt(0).toLocaleUpperCase('tr-TR')+(e.tip||'Masraf').slice(1), detay:e.aciklama||e.firma||'', tutar:e.tutar, tarihTxt:fmtTarih(e.tarih||''), onclick:e.hasFis?`fisBelgeGor('${e.id}')`:''})),
+    ...hasarlar.map(h=>({d:h.tarih||'', tip:'hasar', baslik:'Hasar / Kaza', detay:h.aciklama||'', tutar:h.tutar, tarihTxt:fmtTarih(h.tarih||''), onclick:h.fotoKey?`hasarFotoGor('${id}','${h.id}')`:''})),
+    ...otoDocs.map(o=>({d:(o.tarih||'').slice(0,10)||'', tip:o.tur==='servis'?'servis':'belge', baslik:o.tur==='diger'?'Belge yüklendi':(o.tur.charAt(0).toLocaleUpperCase('tr-TR')+o.tur.slice(1))+' belgesi', detay:o.adi, tutar:null, tarihTxt:fmtTarih((o.tarih||'').slice(0,10))||'tarih yok', onclick:`viewOtoDoc('${id}',${otoDocs.indexOf(o)})`})),
+    ...kmGecmisi.map(k=>({d:k.donem?k.donem+'-01':'', tip:'km', baslik:'Km raporu', detay:(k.toplamKm?Number(k.toplamKm).toLocaleString('tr-TR')+' km':''), tutar:null, tarihTxt:k.donem||'', onclick:''})),
+    ...(v.teslimTarih?[{d:v.teslimTarih, tip:'teslim', baslik:'Araç teslim edildi', detay:v.teslimKm?Number(v.teslimKm).toLocaleString('tr-TR')+' km':'', tutar:null, tarihTxt:fmtTarih(v.teslimTarih), onclick:''}]:[]),
+  ].filter(g=>g.d).sort((a,b)=>(b.d||'').localeCompare(a.d||''));
+
   // Durum rengi
   const durumRenk = v.durum==='Kirada'?'#16A34A':v.durum==='Serviste'?'#DC2626':'#D97706';
   const durumBg = v.durum==='Kirada'?'rgba(22,163,74,.1)':v.durum==='Serviste'?'rgba(220,38,38,.1)':'rgba(217,119,6,.1)';
@@ -3736,12 +3755,129 @@ function openVehicleDetail(id){
           ` : '<div style="color:var(--steel-500);font-size:13px;padding:8px 0;">Henüz masraf kaydı yok.</div>'}
         </div>
 
+        <!-- Hasar / Kaza Kayıtları -->
+        <div style="background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <div style="font-size:12px;font-weight:700;color:var(--paper);">💥 Hasar / Kaza Kayıtları ${hasarlar.length?`<span style="font-weight:400;color:var(--steel-300);">(${hasarlar.length})</span>`:''}</div>
+            <button onclick="document.getElementById('hasarForm').style.display=document.getElementById('hasarForm').style.display==='none'?'block':'none'" style="background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);color:var(--accent-blue);padding:5px 12px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;">+ Ekle</button>
+          </div>
+          <div id="hasarForm" style="display:none;background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:12px;margin-bottom:10px;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+              <input type="date" id="hasarTarih" style="background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:14px;color:var(--paper);font-family:inherit;">
+              <input type="number" id="hasarTutar" placeholder="Hasar tutarı (₺)" min="0" style="background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:14px;color:var(--paper);font-family:inherit;">
+            </div>
+            <input type="text" id="hasarAciklama" placeholder="Açıklama (ör. ön tampon hasarı, tramer kaydı…)" style="width:100%;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:14px;color:var(--paper);font-family:inherit;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+              <label style="font-size:12px;color:var(--accent-blue);cursor:pointer;font-weight:600;">
+                📷 Fotoğraf ekle<input type="file" id="hasarFoto" accept="image/*" style="display:none" onchange="document.getElementById('hasarFotoAd').textContent=this.files[0]?this.files[0].name:'Fotoğraf seçilmedi'">
+                <span id="hasarFotoAd" style="color:var(--steel-500);font-weight:400;margin-left:6px;">Fotoğraf seçilmedi</span>
+              </label>
+              <button onclick="hasarKaydet('${id}')" style="background:var(--accent-blue);color:#fff;border:none;padding:7px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Kaydet</button>
+            </div>
+          </div>
+          ${hasarlar.length ? `
+          <div style="display:flex;flex-direction:column;">
+            ${hasarlar.slice().sort((a,b)=>(b.tarih||'').localeCompare(a.tarih||'')).map(h=>`
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line);">
+                <div style="min-width:0;">
+                  <div style="font-size:12.5px;font-weight:600;color:var(--paper);">${esc(h.aciklama||'Hasar kaydı')}</div>
+                  <div style="font-size:11px;color:var(--steel-500);margin-top:2px;">${fmtTarih(h.tarih)}</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;margin-left:12px;">
+                  ${h.tutar!=null && h.tutar!=='' ? `<div style="font-size:12.5px;font-weight:700;color:#DC2626;">${fmtTL2(h.tutar)}</div>` : ''}
+                  ${h.fotoKey ? `<button onclick="hasarFotoGor('${id}','${h.id}')" style="background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);color:var(--accent-blue);cursor:pointer;padding:4px 8px;border-radius:6px;font-size:11px;font-weight:600;">📷 Foto</button>` : ''}
+                  <button onclick="hasarSil('${id}','${h.id}')" style="background:none;border:none;color:var(--steel-500);cursor:pointer;padding:4px;display:flex;" title="Sil">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+                  </button>
+                </div>
+              </div>`).join('')}
+          </div>` : '<div style="color:var(--steel-500);font-size:13px;padding:4px 0;">Hasar/kaza kaydı yok. ✅</div>'}
+        </div>
+
+        <!-- Araç Geçmişi — kronolojik zaman tüneli -->
+        ${gecmis.length ? `
+        <div style="background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:14px;">
+          <div style="font-size:12px;font-weight:700;color:var(--paper);margin-bottom:12px;">🕓 Araç Geçmişi <span style="font-weight:400;color:var(--steel-300);">(${gecmis.length} olay)</span></div>
+          <div style="display:flex;flex-direction:column;">
+            ${gecmis.map(g=>{
+              const stil = {
+                masraf:{ico:'💸', renk:'#DC2626'},
+                hasar: {ico:'💥', renk:'#DC2626'},
+                servis:{ico:'🔧', renk:'#D97706'},
+                belge: {ico:'📄', renk:'#2563EB'},
+                km:    {ico:'🚗', renk:'#2563EB'},
+                teslim:{ico:'🔑', renk:'#16A34A'},
+              }[g.tip]||{ico:'•',renk:'var(--steel-300)'};
+              return `<div style="display:flex;gap:12px;padding:7px 0;border-bottom:1px solid var(--line);align-items:flex-start;">
+                <span style="font-size:15px;line-height:1.3;flex-shrink:0;">${stil.ico}</span>
+                <div style="flex:1;min-width:0;">
+                  <div style="font-size:12.5px;color:var(--paper);"><b style="color:${stil.renk};">${esc(g.baslik)}</b>${g.detay?` <span style="color:var(--steel-300);font-size:11.5px;">${esc(g.detay)}</span>`:''}</div>
+                  <div style="font-size:11px;color:var(--steel-500);margin-top:1px;">${esc(g.tarihTxt)}</div>
+                </div>
+                ${g.tutar!=null&&g.tutar!==''&&g.tutar!==0?`<div style="font-size:12.5px;font-weight:700;color:#DC2626;flex-shrink:0;">${fmtTL2(g.tutar)}</div>`:''}
+                ${g.onclick?`<button onclick="${g.onclick}" style="background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);color:var(--accent-blue);cursor:pointer;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;flex-shrink:0;">Gör</button>`:''}
+              </div>`;
+            }).join('')}
+          </div>
+        </div>` : ''}
+
       </div>
     </div>
   `;
 
   document.body.appendChild(el);
   el.onclick = e=>{ if(e.target===el) el.remove(); };
+}
+
+// ===== Hasar / Kaza kayıtları =====
+async function hasarKaydet(id){
+  const v = vehicles.find(x=>x.id===id); if(!v) return;
+  const tarih = document.getElementById('hasarTarih').value;
+  const tutar = document.getElementById('hasarTutar').value;
+  const aciklama = document.getElementById('hasarAciklama').value.trim();
+  const fotoInp = document.getElementById('hasarFoto');
+  if(!tarih){ showToast('Hasar tarihi seçin.', true); return; }
+  if(!aciklama){ showToast('Açıklama girin.', true); return; }
+  if(fotoInp.files[0] && fotoInp.files[0].size > 3.5*1024*1024){ showToast('Fotoğraf çok büyük (en fazla 3,5 MB).', true); return; }
+  const h = {id:'h'+Date.now(), tarih, aciklama, tutar: tutar===''?null:Number(tutar), fotoKey:null};
+  try{
+    if(fotoInp.files[0]){
+      const dataUrl = await new Promise((res,rej)=>{ const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.onerror=()=>rej(new Error('Foto okunamadı')); fr.readAsDataURL(fotoInp.files[0]); });
+      h.fotoKey = 'hasar_'+h.id;
+      const ok = await storageAPI.set(h.fotoKey, dataUrl);
+      if(!ok) throw new Error('Depolama alanı dolu — fotoğraf kaydedilemedi.');
+    }
+    if(!Array.isArray(v.hasarlar)) v.hasarlar = [];
+    v.hasarlar.push(h);
+    await persist();
+    logActivity('Hasar kaydı', `${v.plaka} — ${aciklama}`).catch(()=>{});
+    showToast('Hasar kaydı eklendi.');
+    document.getElementById('vehicleDetailOverlay')?.remove();
+    openVehicleDetail(id);
+  }catch(e){ showToast('Kaydedilemedi: '+(e.message||'hata'), true); }
+}
+async function hasarSil(id, hid){
+  const v = vehicles.find(x=>x.id===id); if(!v||!Array.isArray(v.hasarlar)) return;
+  const h = v.hasarlar.find(x=>x.id===hid);
+  v.hasarlar = v.hasarlar.filter(x=>x.id!==hid);
+  if(h && h.fotoKey) await storageAPI.set(h.fotoKey, '').catch(()=>{});
+  await persist();
+  showToast('Hasar kaydı silindi.');
+  document.getElementById('vehicleDetailOverlay')?.remove();
+  openVehicleDetail(id);
+}
+async function hasarFotoGor(id, hid){
+  const v = vehicles.find(x=>x.id===id);
+  const h = v && Array.isArray(v.hasarlar) ? v.hasarlar.find(x=>x.id===hid) : null;
+  if(!h || !h.fotoKey){ showToast('Fotoğraf bulunamadı.', true); return; }
+  const r = await storageAPI.get(h.fotoKey).catch(()=>null);
+  if(!r || !r.value){ showToast('Fotoğraf bulunamadı.', true); return; }
+  try{
+    const res = await fetch(r.value);
+    const url = URL.createObjectURL(await res.blob());
+    window.open(url, '_blank');
+    setTimeout(()=>URL.revokeObjectURL(url), 60000);
+  }catch(e){ window.open(r.value, '_blank'); }
 }
 
 function openEdit(id){
