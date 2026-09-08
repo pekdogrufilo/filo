@@ -3249,9 +3249,9 @@ function wireDocType(d){
 // Gemini API'ye direkt istek — Cloud Run bypass
 const GEMINI_MODELS = [
   'gemini-3.5-flash-lite',
-  'gemini-2.0-flash',
-  'gemini-1.5-flash',
-  'gemini-1.5-flash-8b',
+  'gemini-3.5-flash',
+  'gemini-3.1-flash-lite',
+  'gemini-2.5-flash',
 ];
 
 function getGeminiKey(){
@@ -3315,6 +3315,50 @@ async function callGeminiDirect(system, userText, contentBlock, modelIdx=0, retr
     if(e.name==='AbortError') throw new Error('Zaman aşımı — belge çok büyük olabilir, daha küçük bir dosya deneyin.');
     throw e;
   }
+}
+
+// Sohbet/şartname istekleri için ortak Gemini çağrısı: zaman aşımı + model yedeği + boş yanıt teşhisi
+async function geminiChatFetch(system, contents, generationConfig){
+  const key = getGeminiKey();
+  if(!key) throw new Error('Gemini API anahtarı gerekli. Ayarlar → AI bölümünden girin.');
+  let lastErr = 'Yanıt alınamadı.';
+  for(let i=0;i<GEMINI_MODELS.length;i++){
+    const MODEL = GEMINI_MODELS[i];
+    const controller = new AbortController();
+    const timeout = setTimeout(()=>controller.abort(), 60000);
+    try{
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${key}`,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          system_instruction:{parts:[{text:system}]},
+          contents,
+          generationConfig
+        }),
+        signal: controller.signal
+      });
+      clearTimeout(timeout);
+      if(!res.ok){
+        const err = await res.json().catch(()=>({}));
+        lastErr = `Gemini hatası (${res.status}): ${err?.error?.message||''}`;
+        // 404 model bulunamadı / 503 yoğunluk → sıradaki modeli dene
+        if(res.status===404 || res.status===503) continue;
+        throw new Error(lastErr);
+      }
+      const data = await res.json();
+      const cand = data?.candidates?.[0];
+      const text = (cand?.content?.parts||[]).map(p=>p.text||'').join('');
+      if(text) return text;
+      lastErr = data?.promptFeedback?.blockReason
+        ? `İstek güvenlik filtresine takıldı (${data.promptFeedback.blockReason}).`
+        : `Model yanıt döndürmedi (${cand?.finishReason||'bilinmeyen'}). Tekrar deneyin.`;
+    }catch(e){
+      clearTimeout(timeout);
+      if(e.name==='AbortError'){ lastErr = 'Zaman aşımı — istek 60 saniyede yanıtlanmadı.'; continue; }
+      throw e;
+    }
+  }
+  throw new Error(lastErr);
 }
 
 async function runDocAutoFill(d){
@@ -4435,6 +4479,7 @@ const PAGE_META = {
   'raporlar': {title:'Raporlar', sub:'Yazdırılabilir özet ve fatura raporları'},
   'bildirimler': {title:'Bildirimler', sub:'Yaklaşan ve geçmiş tarihli belgeler'},
   'excel': {title:'Excel İşlemleri', sub:'Excel ile içe / dışa aktarım'},
+  'ai': {title:'AI Filo Asistanı', sub:'Filonuzu analiz edin, sorunları önceden görün'},
   'ayarlar': {title:'Ayarlar', sub:'Kilit, hatırlatma, bulut ve AI ayarları'},
 };
 
@@ -4471,6 +4516,7 @@ function renderCurrentPage(){
   else if(key==='raporlar') renderRaporlarPage();
   else if(key==='bildirimler') renderBildirimlerPage();
   else if(key==='ai') renderAiPage();
+  else if(key==='excel') renderExcelPage();
   else if(key==='ayarlar') renderAyarlarPage();
   else if(key==='kiralama') renderKiralamaPage();
 }
@@ -6591,23 +6637,10 @@ GÖREV:
 FİLO VERİSİ:
 ${JSON.stringify(filoAraclar, null, 1)}`;
 
-    const MODEL = GEMINI_MODELS[0];
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${key}`,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        system_instruction:{parts:[{text:sartnameSystem}]},
-        contents:[{role:'user', parts:[
-          {inline_data:{mime_type:window.__sartnameMime, data:window.__sartnameBase64}},
-          {text:'Bu teknik şartnameyi analiz et ve filomdan uygun araçları belirle. Türkçe yanıt ver.'}
-        ]}],
-        generationConfig:{temperature:0.3, maxOutputTokens:4096}
-      })
-    });
-
-    const data = await res.json();
-    if(data.error) throw new Error(data.error.message);
-    const yanit = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Yanıt alınamadı.';
+    const yanit = await geminiChatFetch(sartnameSystem, [{role:'user', parts:[
+      {inline_data:{mime_type:window.__sartnameMime, data:window.__sartnameBase64}},
+      {text:'Bu teknik şartnameyi analiz et ve filomdan uygun araçları belirle. Türkçe yanıt ver.'}
+    ]}], {temperature:0.3, maxOutputTokens:8192});
 
     const html = yanit
       .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
@@ -6769,20 +6802,7 @@ ${JSON.stringify(filoOzet, null, 1)}`;
     }
     geminiMessages.push({role:'user', parts:[{text:mesaj}]});
 
-    const MODEL = GEMINI_MODELS[0];
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${key}`,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        system_instruction:{parts:[{text:system}]},
-        contents: geminiMessages,
-        generationConfig:{temperature:0.7, maxOutputTokens:2048}
-      })
-    });
-
-    const data = await res.json();
-    if(data.error) throw new Error(data.error.message);
-    const yanit = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Yanıt alınamadı.';
+    const yanit = await geminiChatFetch(system, geminiMessages, {temperature:0.7, maxOutputTokens:8192});
 
     // Markdown'ı basit HTML'e çevir
     const html = yanit
