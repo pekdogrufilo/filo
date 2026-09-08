@@ -3473,6 +3473,24 @@ async function viewDoc(prefix, id, label){
   }
 }
 
+// Otomatik yüklenen belgeleri (masraf fişi, servis, vize vb.) görüntüle
+async function viewOtoDoc(vehicleId, index){
+  const v = vehicles.find(x=>x.id===vehicleId);
+  const o = v && Array.isArray(v.otoBelgeler) ? v.otoBelgeler[index] : null;
+  if(!o){ showToast('Belge bulunamadı.', true); return; }
+  const r = await storageAPI.get(o.key).catch(()=>null);
+  if(!r || !r.value){ showToast(`"${o.adi}" dosyası bulunamadı.`, true); return; }
+  try{
+    const res = await fetch(r.value);
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+    setTimeout(()=>URL.revokeObjectURL(url), 60000);
+  }catch(e){
+    window.open(r.value, '_blank');
+  }
+}
+
 function clearForm(){
   ['fPlaka','fCins','fMarka','fModel','fVersiyon','fDonanim','fYil','fSirket','fSofor','fYer','fKira','fTarih','fMuayene','fSigorta','fRuhsatSeri','fMuayeneSeri','fSigortaNo','fKaskoNo','fKaskoBitis','fSozlesmeBitis','fKiraciAdi','fKiraciTel','fTeslimTarih','fTeslimKm','fSoforUcreti'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('fKiralamaTuru').value='soförsüz';
@@ -6245,10 +6263,114 @@ function belgeYukleSecilen(){
 document.getElementById('sbBelgeYukle').onclick = ()=>{
   switchPage('belgeler');
   setTimeout(()=>{
-    const sel = document.getElementById('belgeYukleArac');
-    if(sel){ sel.focus(); if(window.innerWidth<=900){ sel.click(); } }
-  }, 150);
+    const inp = document.getElementById('otoBelgeFile');
+    if(inp) inp.click();
+  }, 200);
 };
+
+// ===== Otomatik belge yükleme =====
+// Kullanıcı poliçe/fiş/rapor dosyasını seçer; Gemini belgeden plaka + belge türü
+// okur, dosyayı doğru aracın kartına kaydeder ve sonucu uyarıyla bildirir.
+function plakaNormalize(s){
+  return (s||'').toLocaleUpperCase('tr-TR').replace(/[^0-9A-ZÇĞİÖŞÜ]/g,'');
+}
+const OTO_BELGE_TURLERI = {
+  sigorta:  {label:'Sigorta poliçesi', prefix:'police_',        adiF:'policeAdi',       tipF:'policeTip',       tarihF:'sigortaTarihi'},
+  kasko:    {label:'Kasko poliçesi',   prefix:'kasko_',         adiF:'kaskoBelgeAdi',   tipF:'kaskoBelgeTip',   tarihF:'kaskoBitis'},
+  muayene:  {label:'Muayene belgesi',  prefix:'muayenebelge_',  adiF:'muayeneBelgeAdi', tipF:'muayeneBelgeTip', tarihF:'muayeneTarihi'},
+  ruhsat:   {label:'Ruhsat',           prefix:'ruhsat_',        adiF:'ruhsatBelgeAdi',  tipF:'ruhsatBelgeTip',  tarihF:null},
+  sozlesme: {label:'Kira sözleşmesi',  prefix:'contract_',      adiF:'sozlesmeAdi',     tipF:'sozlesmeTip',     tarihF:'sozlesmeBitis'},
+};
+async function otoBelgeSec(file){
+  if(!file) return;
+  if(file.size > 3.5*1024*1024){ showToast('Dosya çok büyük (en fazla 3,5 MB).', true); return; }
+  const btnText = document.getElementById('otoBelgeBtnText');
+  const setBusy = t=>{ if(btnText) btnText.textContent = t; };
+  setBusy('Okunuyor…');
+
+  try{
+    const dataUrl = await new Promise((res,rej)=>{
+      const fr = new FileReader();
+      fr.onload = ()=>res(fr.result);
+      fr.onerror = ()=>rej(new Error('Dosya okunamadı'));
+      fr.readAsDataURL(file);
+    });
+
+    // Araç seçimi: önce belgeden plaka okunacak; okunamazsa yandaki seçim fallback.
+    const fallbackId = (document.getElementById('belgeYukleArac')||{}).value || '';
+
+    if(!getGeminiKey()){
+      // Anahtar yoksa otomatik okuma yapılamaz — seçilmiş araca "diğer belge" olarak kaydet
+      if(fallbackId){
+        await belgeAracaEkle(vehicles.find(v=>v.id===fallbackId), 'diger', file.name, file.type, dataUrl, null);
+        await persist();
+        showToast(`Kaydedildi: ${esc(vehicles.find(v=>v.id===fallbackId).plaka)} aracına "${esc(file.name)}" eklendi (otomatik okuma için Gemini anahtarı gerekir).`);
+        renderBelgelerPage();
+      }else{
+        showToast('Kaydedilmedi: Otomatik okuma için Ayarlar → AI bölümünden Gemini anahtarı girin veya soldan araç seçip tekrar deneyin.', true);
+      }
+      setBusy('Belge Yükle');
+      return;
+    }
+
+    // 1) Gemini'den plaka + tür + tarih oku
+    const mime = file.type || 'application/pdf';
+    const b64 = dataUrl.split(',')[1];
+    const system = 'Sen bir araç belgesi (poliçe, ruhsat, muayene raporu, kira sözleşmesi, masraf fişi, servis kaydı vb.) okuyan asistansın. SADECE şu JSON nesnesini döndür, başka hiçbir metin veya kod bloğu ekleme:\n{"plaka": string|null, "belgeTuru": "sigorta"|"kasko"|"muayene"|"ruhsat"|"sozlesme"|"masraf"|"servis"|"vize"|"diger", "tarih": "YYYY-MM-DD"|null, "belgeNo": string|null}\nKurallar: "plaka" belgedeki araç plakası (Türk formatı: 2 rakam + 2-3 harf + 2-4 rakam, ör. 42 ABC 123). "belgeTuru" belgenin türü — sigorta poliçesi ise "sigorta", kasko ise "kasko", muayene raporu ise "muayene", tescil/ruhsat ise "ruhsat", kira sözleşmesi ise "sozlesme", masraf/yakıt fişi ise "masraf", servis/bakım kaydı ise "servis", vize/uluslararası belge ise "vize", hiçbiri değilse "diger". "tarih" belgenin geçerlilik bitiş tarihi (poliçe/muayene/sözleşme) ya da fiş/rapor tarihi — YYYY-MM-DD formatında; bulamazsan null. Emin değilsen null yaz, tahmin yürütme.';
+    const yanit = await geminiChatFetch(system, [{role:'user', parts:[
+      {inline_data:{mime_type:mime, data:b64}},
+      {text:'Bu belgeyi oku ve istenen JSON formatında yanıtla.'}
+    ]}], {temperature:0, maxOutputTokens:1024});
+
+    let bilgi = {};
+    try{ bilgi = JSON.parse(yanit.replace(/```json|```/g,'').trim()); }catch(e){ bilgi = {}; }
+    const tur = (bilgi.belgeTuru||'diger').toLowerCase();
+    const okunanPlaka = plakaNormalize(bilgi.plaka);
+    const okunanTarih = normalizeExtractedDate(bilgi.tarih||'');
+
+    // 2) Plakadan aracı bul (yandaki seçim de yedek)
+    let v = null;
+    if(okunanPlaka){
+      v = vehicles.find(x=>plakaNormalize(x.plaka)===okunanPlaka)
+        || vehicles.find(x=>plakaNormalize(x.plaka).includes(okunanPlaka));
+    }
+    if(!v && fallbackId) v = vehicles.find(x=>x.id===fallbackId);
+    if(!v){
+      showToast(`Kaydedilmedi: Belgedeki plaka okundu (${esc(bilgi.plaka||'?')}) ama filoda böyle bir araç yok. Soldan araç seçerek elle ekleyebilirsin.`, true);
+      setBusy('Belge Yükle');
+      return;
+    }
+
+    // 3) Doğru kart yuvasına kaydet
+    const std = OTO_BELGE_TURLERI[tur];
+    if(std){
+      const res = await storageAPI.set(std.prefix+v.id, dataUrl);
+      if(!res) throw new Error('depolama kaydı başarısız');
+      v[std.adiF] = file.name;
+      v[std.tipF] = mime;
+      if(std.tarihF && okunanTarih) v[std.tarihF] = okunanTarih;
+    }else{
+      await belgeAracaEkle(v, tur, file.name, mime, dataUrl, okunanTarih);
+    }
+    await persist();
+    logActivity('Belge yüklendi', `${v.plaka} — ${std?std.label:(tur==='diger'?'Belge':tur)} (${file.name})`).catch(()=>{});
+    const tarihMsg = okunanTarih && std && std.tarihF ? `, tarih ${fmtTarih(okunanTarih)} olarak güncellendi` : '';
+    showToast(`Kaydedildi: ${esc(v.plaka)} — ${std?std.label:esc(tur)} "${esc(file.name)}"${tarihMsg}.`);
+    renderBelgelerPage();
+  }catch(e){
+    console.error(e);
+    showToast('Kaydedilmedi: ' + (e.message==='depolama kaydı başarısız' ? 'Depolama alanı dolu olabilir, eski belgeleri temizleyin.' : (e.message||'Bilinmeyen hata')), true);
+  }
+  setBusy('Belge Yükle');
+}
+// Standart yuvası olmayan belgeler (masraf fişi, servis, vize, diğer) araca ek liste olarak kaydedilir
+async function belgeAracaEkle(v, tur, adi, tip, dataUrl, tarih){
+  const key = 'otobelge_'+v.id+'_'+Date.now();
+  const res = await storageAPI.set(key, dataUrl);
+  if(!res) throw new Error('depolama kaydı başarısız');
+  if(!Array.isArray(v.otoBelgeler)) v.otoBelgeler = [];
+  v.otoBelgeler.push({key, adi, tip, tur, tarih: tarih||'', yukleme: new Date().toISOString()});
+}
 
 // ===== Belgeler sayfası =====
 function renderBelgelerPage(){
@@ -6301,10 +6423,11 @@ function renderBelgelerPage(){
           <option value="">Araç seç…</option>
           ${vehicles.map(v=>`<option value="${v.id}">${esc(v.plaka)}</option>`).join('')}
         </select>
-        <button onclick="belgeYukleSecilen()" style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:var(--accent-blue);color:#fff;font-family:inherit;">
+        <button id="otoBelgeBtn" onclick="document.getElementById('otoBelgeFile').click()" style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:var(--accent-blue);color:#fff;font-family:inherit;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg>
-          Belge Yükle
+          <span id="otoBelgeBtnText">Belge Yükle</span>
         </button>
+        <input type="file" id="otoBelgeFile" accept=".pdf,image/*" style="display:none" onchange="if(this.files[0]) otoBelgeSec(this.files[0]); this.value='';">
       </div>
       ${[
         {k:'hepsi', l:'Tümü', c:'var(--text-2)'},
@@ -6319,7 +6442,8 @@ function renderBelgelerPage(){
       ${filtered.length===0 ? `<div class="log-empty">Bu filtrede belge bulunamadı.</div>` :
         filtered.map(({v, docs})=>{
           const ilgiliDocs = docs.filter(d=>d.belgeAdi || d.tarih);
-          if(!ilgiliDocs.length) return '';
+          const otoDocs = Array.isArray(v.otoBelgeler) ? v.otoBelgeler : [];
+          if(!ilgiliDocs.length && !otoDocs.length) return '';
           return `
           <div class="dcard" style="padding:14px 16px;">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
@@ -6343,6 +6467,14 @@ function renderBelgelerPage(){
                   </div>
                 </div>`;
               }).join('')}
+              ${otoDocs.map((o,i)=>`
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-radius:8px;background:var(--surface-2);border:1px solid var(--border);">
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <span style="font-size:13px;font-weight:600;color:var(--text);">${esc(o.tur==='diger'?'Belge':(o.tur.charAt(0).toLocaleUpperCase('tr-TR')+o.tur.slice(1)))}</span>
+                    <span style="font-size:11px;color:var(--text-3);">${esc(o.adi)}</span>
+                  </div>
+                  <button onclick="viewOtoDoc('${v.id}',${i})" style="background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);color:var(--accent-blue);padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Gör</button>
+                </div>`).join('')}
             </div>
           </div>`;
         }).join('')
