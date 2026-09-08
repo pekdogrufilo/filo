@@ -2121,78 +2121,17 @@ function render(){
     const aracAdi = [v.marka, v.model, v.versiyon].filter(Boolean).join(' ');
     const modelTxt = [v.aracCinsi, v.modelYili].filter(Boolean).join(' · ');
     const markaLogo = getMarkaLogo(v.marka);
-    const donanimBadge = v.donanim ? `<span style="display:inline-block;background:rgba(66,153,225,.12);color:var(--accent-blue);font-size:11px;font-weight:600;padding:2px 8px;border-radius:5px;margin-top:4px;">${esc(v.donanim)}</span>` : '';
+    const donanimBadge = '';
 
-    let kiraGauge = '';
-    if(v.kiraBitis){
-      const dl = daysLeft(v.kiraBitis);
-      const pct = Math.max(4, Math.min(100, 100 - (dl/30*100)));
-      let color = 'var(--teal)';
-      if(dl<=3) color='var(--coral)'; else if(dl<=7) color='var(--safety)';
-      const dtxt = dl<0 ? `${Math.abs(dl)} gün gecikti` : (dl===0 ? 'Bugün bitiyor' : `${dl} gün kaldı`);
-      kiraGauge = `<div class="gauge-wrap"><div class="gauge-label"><span>Kira bitişine</span><span style="color:${color}">${dtxt}</span></div>
-        <div class="gauge-track"><div class="gauge-fill" style="width:${pct}%;background:${color}"></div></div></div>`;
-    }
-
-    const dateRow = (label, field, dateStr, typeColor, iconPath)=>{
-      const dl = daysLeft(dateStr);
-      let color = 'var(--steel-300)';
-      if(dl!==null){
-        if(dl<=0) color='var(--coral)'; else if(dl<=30) color='var(--safety)'; else color='var(--teal)';
-      }
-      const txt = dl===null ? '' : (dl<0 ? `${Math.abs(dl)}g gecikti` : (dl===0?'bugün':`${dl}g kaldı`));
-      return `<div class="row datefield">
-        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="${typeColor}" stroke-width="2">${iconPath}</svg>
-        <span class="dlabel" style="color:${typeColor};font-weight:600">${label}:</span>
-        <input type="date" class="inline-date" data-id="${v.id}" data-field="${field}" value="${dateStr||''}">
-        <span class="ddays" style="color:${color}">${txt}</span>
-      </div>`;
-    };
-    const sigortaIco = '<path d="M12 3 4 6v6c0 5 3.4 8.4 8 9 4.6-.6 8-4 8-9V6l-8-3Z"/>';
-    const muayeneIco = '<circle cx="12" cy="12" r="9"/><path d="m9 12 2 2 4-4"/>';
-    const sozlesmeIco = '<path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z"/><path d="M14 2v6h6"/>';
-    const pills = dateRow('Sigorta','sigortaTarihi', v.sigortaTarihi, '#5B8FE0', sigortaIco)
-      + dateRow('Muayene','muayeneTarihi', v.muayeneTarihi, '#C98A3E', muayeneIco)
-      + (v.sozlesmeBitis ? dateRow('Sözleşme','sozlesmeBitis', v.sozlesmeBitis, '#4FA88A', sozlesmeIco) : '')
-      + (v.kaskoBitis ? dateRow('Kasko','kaskoBitis', v.kaskoBitis, '#B07FE0', sozlesmeIco) : '');
+    // Sadeleştirilmiş kart: yalnızca kritik belge uyarıları gösterilir (<=30 gün),
+    // diğer tüm bilgiler "Detay" görünümünde. Tarih çubukları ve belge çipleri
+    // karttan kaldırıldı — liste temiz kalır, tarama hızlanır.
 
     const card = document.createElement('div');
     card.className = 'card';
     card.style.borderLeftColor = accentColor;
     card.style.animationDelay = (Math.min(idx,10)*30)+'ms';
     card.dataset.vehicleId = v.id;
-    // Tarih gauge hesapla
-    const muayeneDl = daysLeft(v.muayeneTarihi);
-    const sigortaDl = daysLeft(v.sigortaTarihi);
-    const kaskoDl = daysLeft(v.kaskoBitis);
-
-    function gaugeColor(dl){
-      if(dl===null) return '#4A5568';
-      if(dl<0) return '#F3A392';
-      if(dl<=30) return '#C98A3E';
-      if(dl<=90) return '#C9A961';
-      return '#4FD1A5';
-    }
-    function gaugeWidth(dl){
-      if(dl===null) return 0;
-      if(dl<0) return 100;
-      return Math.min(100, Math.max(5, 100 - (dl/365*100)));
-    }
-    function dlText(dl){
-      if(dl===null) return '—';
-      if(dl<0) return `${Math.abs(dl)}g geçti`;
-      if(dl===0) return 'Bugün!';
-      return `${dl} gün`;
-    }
-
-    // Belgeler
-    const docList = [
-      {label:'Sigorta', has:!!v.policeAdi, prefix:'police_'},
-      {label:'Kasko', has:!!v.kaskoBelgeAdi, prefix:'kasko_'},
-      {label:'Muayene', has:!!v.muayeneBelgeAdi, prefix:'muayenebelge_'},
-      {label:'Ruhsat', has:!!v.ruhsatBelgeAdi, prefix:'ruhsat_'},
-      {label:'Sözleşme', has:!!v.sozlesmeAdi, prefix:'contract_'},
-    ];
 
     card.innerHTML = `
       <div class="card-band ${badgeClass}"></div>
@@ -2203,76 +2142,45 @@ function render(){
             <div class="card-plaka-wrap">
               <div class="plaka">${esc(v.plaka)}${v.muayeneRandevu?` <span class="randevu-badge" title="Muayene randevusu alındı">📅</span>`:''}</div>
               ${aracAdi ? `<div class="arac-adi">${esc(aracAdi)}</div>` : ''}
-              ${v.donanim ? `<div style="margin-top:3px"><span style="background:rgba(66,153,225,.12);color:var(--accent-blue);font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:4px;letter-spacing:.3px">${esc(v.donanim)}</span></div>` : ''}
               <div class="model">${esc(modelTxt||'—')}</div>
             </div>
           </div>
           <span class="badge ${badgeClass}">${v.durum}</span>
         </div>
 
-        <div class="card-info">
-          <div class="ci">
-            <div class="ci-label">Şirket</div>
-            <div class="ci-val">${esc(v.sirket||'—')}</div>
-          </div>
-          <div class="ci">
-            <div class="ci-label">Çalıştığı Yer</div>
-            <div class="ci-val">${esc(v.yer||'—')}</div>
-          </div>
-          ${v.sofor ? `<div class="ci">
-            <div class="ci-label">Şoför</div>
-            <div class="ci-val">${esc(v.sofor)}</div>
-          </div>` : ''}
-          ${v.aykm ? `<div class="ci">
-            <div class="ci-label">Bu Ay km</div>
-            <div class="ci-val mono" style="color:var(--blue)">${v.aykm.toLocaleString('tr-TR')} km</div>
-          </div>` : ''}
-          ${v.kira ? `<div class="ci" ${!isAdmin()?'style="display:none"':''}>
-            <div class="ci-label">Aylık Kira</div>
-            <div class="ci-val mono">${fmtTL2(v.kira)}</div>
-          </div>` : ''}
-          ${v.kiraciAdi ? `<div class="ci">
-            <div class="ci-label">Kiracı</div>
-            <div class="ci-val">${esc(v.kiraciAdi)}</div>
-          </div>` : ''}
-          ${v.kiralamaTuru==='şoförlü' ? `<div class="ci">
-            <div class="ci-label">Tür</div>
-            <div class="ci-val ok">Şoförlü</div>
-          </div>` : ''}
-          ${v.ruhsatSeriNo ? `<div class="ci">
-            <div class="ci-label">Ruhsat No</div>
-            <div class="ci-val mono" style="color:var(--accent-blue);font-weight:600;cursor:pointer;" onclick="navigator.clipboard&&navigator.clipboard.writeText('${esc(v.ruhsatSeriNo)}').then(()=>showToast('Ruhsat no kopyalandı'))" title="Kopyalamak için tıkla">📋 ${esc(v.ruhsatSeriNo)}</div>
-          </div>` : ''}
-          ${v.sasiNo ? `<div class="ci">
-            <div class="ci-label">Şasi No</div>
-            <div class="ci-val mono" style="font-size:10px;">${esc(v.sasiNo)}</div>
-          </div>` : ''}
+        <div class="card-meta" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;font-size:12.5px;color:var(--text-2);">
+          ${(v.yer||v.kiraciAdi) ? `<span title="${esc(v.sirket||'')}">📍 ${esc(v.yer||v.kiraciAdi)}</span>` : ''}
+          ${v.aykm ? `<span style="color:var(--accent-blue);font-weight:600">${v.aykm.toLocaleString('tr-TR')} km</span>` : ''}
+          ${isAdmin() && v.kira ? `<span style="color:var(--green);font-weight:600;font-variant-numeric:tabular-nums">${fmtTL2(v.kira)}</span>` : ''}
         </div>
 
-        <div class="card-gauges">
-          <div class="gauge-row">
-            <div class="gauge-lbl">Muayene</div>
-            <div class="gauge-track"><div class="gauge-fill" style="width:${gaugeWidth(muayeneDl)}%;background:${gaugeColor(muayeneDl)}"></div></div>
-            <div class="gauge-days" style="color:${gaugeColor(muayeneDl)}">${dlText(muayeneDl)}</div>
-          </div>
-          <div class="gauge-row">
-            <div class="gauge-lbl">Sigorta</div>
-            <div class="gauge-track"><div class="gauge-fill" style="width:${gaugeWidth(sigortaDl)}%;background:${gaugeColor(sigortaDl)}"></div></div>
-            <div class="gauge-days" style="color:${gaugeColor(sigortaDl)}">${dlText(sigortaDl)}</div>
-          </div>
-          ${v.kaskoBitis ? `<div class="gauge-row">
-            <div class="gauge-lbl">Kasko</div>
-            <div class="gauge-track"><div class="gauge-fill" style="width:${gaugeWidth(kaskoDl)}%;background:${gaugeColor(kaskoDl)}"></div></div>
-            <div class="gauge-days" style="color:${gaugeColor(kaskoDl)}">${dlText(kaskoDl)}</div>
-          </div>` : ''}
-        </div>
-
-        <div class="card-docs">
-          ${docList.map(d=>d.has
-            ? `<button class="doc-chip has doc-link" data-id="${v.id}" data-prefix="${d.prefix}" data-label="${d.label}">${d.label}</button>`
-            : `<span class="doc-chip missing">${d.label}</span>`
-          ).join('')}
-        </div>
+        ${(()=>{
+          const kontroller = [
+            ['Sigorta', daysLeft(v.sigortaTarihi)],
+            ['Muayene', daysLeft(v.muayeneTarihi)],
+            ['Kasko', daysLeft(v.kaskoBitis)],
+            ['Sözleşme', daysLeft(v.sozlesmeBitis)],
+          ];
+          const kritik = kontroller.filter(([,dl])=>dl!==null && dl<=30);
+          if(!kritik.length){
+            const enYakin = kontroller.filter(([,dl])=>dl!==null).sort((a,b)=>a[1]-b[1])[0];
+            return `<div style="display:flex;align-items:center;gap:6px;margin-top:8px;font-size:11.5px;color:var(--text-3);">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              Belgeler geçerli${enYakin?` — en yakın bitiş ${enYakin[0]} ${enYakin[1]} gün sonra`:''}
+            </div>`;
+          }
+          return `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
+            ${kritik.map(([lbl,dl])=>{
+              const aciliyet = dl<0 ? 2 : (dl<=7 ? 1 : 0);
+              const renk = aciliyet===2 ? 'var(--red)' : (aciliyet===1 ? 'var(--red)' : 'var(--amber)');
+              const zemin = aciliyet>0 ? 'var(--red-dim)' : 'var(--amber-dim)';
+              const txt = dl<0 ? `${Math.abs(dl)} gün gecikti` : (dl===0 ? 'bugün bitiyor' : `${dl} gün kaldı`);
+              return `<span style="display:inline-flex;align-items:center;gap:4px;background:${zemin};color:${renk};font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;">
+                <span style="width:6px;height:6px;border-radius:50%;background:${renk}"></span>${lbl} — ${txt}
+              </span>`;
+            }).join('')}
+          </div>`;
+        })()}
       </div>
       <div class="card-actions" style="grid-template-columns:1fr 1fr 1fr 1fr;">
         <button onclick="openVehicleDetail('${v.id}')">Detay</button>
