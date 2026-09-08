@@ -822,9 +822,9 @@
     <header class="top-header">
       <div style="display:flex;align-items:center;gap:14px;">
         <button class="bell-btn" id="sbToggleBtn" style="display:none;" title="Menü">
-        <button class="bell-btn" id="themeToggleBtn" title="Açık / koyu tema"></button>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
         </button>
+        <button class="bell-btn" id="themeToggleBtn" title="Açık / koyu tema"></button>
         <div>
           <div class="th-title" id="thTitle">Genel Bakış</div>
           <div class="th-sub" id="thSub">Filo performansını anlık olarak takip edin</div>
@@ -889,7 +889,7 @@
           </button>
           <button id="menuAiSettings">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>
-            AI otomatik doldurma
+            AI ayarları (Gemini anahtarı)
           </button>
         </div>
       </div>
@@ -1063,26 +1063,6 @@
       <button class="save" id="cloudConnect">Bağlan</button>
     </div>
     <button class="lock-forgot" id="cloudDisconnect" style="display:none;margin-top:10px">Bulut bağlantısını kaldır (bu cihazda)</button>
-  </div>
-</div>
-
-<div class="overlay" id="aiOverlay">
-  <div class="modal" style="max-width:460px">
-    <h2>AI otomatik doldurma</h2>
-    <div id="aiStatusBox"></div>
-    <p style="font-size:13px;color:var(--steel-100);line-height:1.6;margin:0 0 10px">
-      Yüklediğin sözleşme/poliçe/rapor belgelerinden tarih ve numara bilgilerini otomatik okutmak için, API anahtarını güvenle saklayan küçük bir "aracı" fonksiyona ihtiyaç var. Bu fonksiyonu senin adına ben hazırladım, sadece dağıtman (deploy) gerekiyor — kod ve adımları sana ayrıca dosya olarak vereceğim.
-    </p>
-    <div class="field">
-      <label>Fonksiyon adresi</label>
-      <input type="text" id="aiProxyUrlInput" placeholder="https://us-central1-projen.cloudfunctions.net/extractDocument">
-    </div>
-    <div class="err" id="aiErr" style="display:none"></div>
-    <div class="modal-actions">
-      <button class="cancel" id="aiCancel">Kapat</button>
-      <button class="save" id="aiSave">Kaydet</button>
-    </div>
-    <button class="lock-forgot" id="aiDisconnect" style="display:none;margin-top:10px">Bağlantıyı kaldır (bu cihazda)</button>
   </div>
 </div>
 
@@ -1304,7 +1284,7 @@
 </div>
 
 <script>
-const IMPORTED_DATA = [{"id": "v42AKS976", "plaka": "42AKS976", "modelYili": 2021, "aracCinsi": "KAMYONET", "sirket": "PEKDOĞRU GRUP", "sofor": "", "yer": "Anadolu Ecza (6)", "kira": 25000, "kiraBitis": "", "muayeneTarihi": "2027-04-14", "sigortaTarihi": "2026-12-16", "durum": "Kirada"}, {"id": "v34CPB097", "plaka": "34CPB097", "modelYili": 2020, "aracCinsi": "OTOMOBİL", "sirket": "PEKDOĞRU GRUP", "sofor": "", "yer": "Özel Kiralama", "kira": 36000, "kiraBitis": "", "muayeneTarihi": "2027-03-17", "sigortaTarihi": "2026-09-08", "durum": "Kirada"}, {"id": "v34DSA057", "plaka": "34DSA057", "modelYili": 2020, "aracCinsi": "OTOMOBİL", "sirket": "PEKDOĞRU GRUP", "sofor": "", "yer": "Antalya Çevre Şehircilik", "kira": 32500, "kiraBitis": "", "muayeneTarihi": "2028-01-19", "sigortaTarihi": "2027-04-18", "durum": "Kirada"}, {"id": "v42AKU766", "plaka": "42AKU766", "modelYili": 2021, "aracCinsi": "KAMYONET", "sirket": "PEKDOĞRU GRUP", "sofor": "", "yer": "Antalya Çevre Şehircilik", "kira": 18500, "kiraBitis": "", "muayeneTarihi": "2026-09-08", "sigortaTarihi": "2026-12-20", "durum": "Kirada"}, {"id": "v42AGH297", "plaka": "42AGH297", "modelYili": 2020, "aracCinsi": "KAMYONET", "sirket": "PEKDOĞRU GRUP", "sofor": "", "yer": "Eskişehir", "kira": 25000, "kiraBitis": "", "muayeneTarihi": "2026-09-08", "sigortaTarihi": "2026-12-20", "durum": "Kirada"}, {"id": "v42AGH296", "plaka": "42AGH296", "modelYili": 2020, "aracCinsi": "KAMYONET", "sirket": "PEKDOĞRU GRUP", "sofor": "", "yer": "Eskişehir", "kira": 25000, "kiraBitis": "", "muayeneTarihi": "2026-09-08", "sigortaTarihi": "2026-12-20", "durum": "Kirada"}, {"id": "v42AKU776", "plaka": "42AKU776", "modelYili": 2021, "aracCinsi": "KAMYONET", "sirket": "PEKDOĞRU GRUP", "sofor": "", "yer": "Anadolu Ecza (6)", "kira": 25000, "kiraBitis": "", "muayeneTarihi": "2026-09-08", "sigortaTarihi": "2026-12-20", "durum": "Kirada"}, {"id": "v34GED940", "plaka": "34GED940", "modelYili": 2022, "aracCinsi": "KAMYONET", "sirket": "PEKDOĞRU GRUP", "sofor": "", "yer": "Anadolu Ecza (6)", "kira": 25000, "kiraBitis": "", "muayeneTarihi": "2026-12-28", "sigortaTarihi": "2026-11-03", "durum": "Kirada"}, {"id": "v34BBN577", "plaka": "34BBN577", "modelYili": 2018, "aracCinsi": "OTOMOBİL", "sirket": "PEKDOĞRU GRUP", "sofor": "", "yer": "", "kira": 45000, "kiraBitis": "", "muayeneTarihi": "2027-03-22", "sigortaTarihi": "2026-09-27", "durum": "Müsait"}, {"id": "v42ARD966", "plaka": "42ARD966", "modelYili": 2023, "aracCinsi": "OTOMOBİL", "sirket": "PEKDOĞRU GRUP", "sofor": "", "yer": "Özel Kiralama", "kira": 30000, "kiraBitis": "", "muayeneTarihi": "2028-04-28", "sigortaTarihi": "2027-05-16", "durum": "Kirada"}, {"id": "v42ARD967", "plaka": "42ARD967", "modelYili": 2023, "aracCinsi": "OTOMOBİL", "sirket": "PEKDOĞRU GRUP", "sofor": "", "yer": "Özel Kiralama", "kira": 30000, "kiraBitis": "", "muayeneTarihi": "2028-04-28", "sigortaTarihi": "2027-05-16", "durum": "Kirada"}, {"id": "v42AER749", "plaka": "42AER749", "modelYili": 2023, "aracCinsi": "OTOMOBİL", "sirket": "PEKDOĞRU GRUP", "sofor": "", "yer": "Özel Kiralama", "kira": 40000, "kiraBitis": "", "muayeneTarihi": "2028-03-18", "sigortaTarihi": "2026-10-03", "durum": "Kirada"}, {"id": "v42AKT668", "plaka": "42AKT668", "modelYili": 2021, "aracCinsi": "KAMYONET", "sirket": "PEKDOĞRU GRUP", "sofor": "", "yer": "Anadolu Ecza (6)", "kira": 25000, "kiraBitis": "", "muayeneTarihi": "2026-09-08", "sigortaTarihi": "2026-12-15", "durum": "Kirada"}, {"id": "v42AKT302", "plaka": "42AKT302", "modelYili": 2021, "aracCinsi": "KAMYONET", "sirket": "PEKDOĞRU GRUP", "sofor": "", "yer": "Antalya Çevre Şehircilik", "kira": 18500, "kiraBitis": "", "muayeneTarihi": "2027-03-17", "sigortaTarihi": "2026-12-14", "durum": "Kirada"}, {"id": "v42AKT301", "plaka": "42AKT301", "modelYili": 2021, "aracCinsi": "KAMYONET", "sirket": "PEKDOĞRU GRUP", "sofor": "", "yer": "Antalya Çevre Şehircilik", "kira": 18500, "kiraBitis": "", "muayeneTarihi": "2026-09-08", "sigortaTarihi": "2026-12-14", "durum": "Kirada"}, {"id": "v42AJE758", "plaka": "42AJE758", "modelYili": 2021, "aracCinsi": "KAMYONET", "sirket": "SÖZDEMİR A.Ş", "sofor": "", "yer": "Karayolları", "kira": 45000, "kiraBitis": "", "muayeneTarihi": "2026-09-09", "sigortaTarihi": "2026-10-27", "durum": "Kirada"}, {"id": "v42AJE757", "plaka": "42AJE757", "modelYili": 2021, "aracCinsi": "KAMYONET", "sirket": "PEKDOĞRU GRUP", "sofor": "", "yer": "Konya İl Sağlık Müdürlüğü", "kira": 22500, "kiraBitis": "", "muayeneTarihi": "2026-09-08", "sigortaTarihi": "2026-10-29", "durum": "Kirada"}, {"id": "v42AJA846", "plaka": "42AJA846", "modelYili": 2019, "aracCinsi": "KAMYONET", "sirket": "SÖZDEMİR A.Ş", "sofor": "", "yer": "Karayolları", "kira": 45000, "kiraBitis": "", "muayeneTarihi": "2026-12-09", "sigortaTarihi": "2026-10-27", "durum": "Kirada"}, {"id": "v42AIV609", "plaka": "42AIV609", "modelYili": 2021, "aracCinsi": "KAMYONET", "sirket": "PEKDOĞRU GRUP", "sofor": "", "yer": "Özel Kiralama", "kira": 27500, "kiraBitis": "", "muayeneTarihi": "2026-09-09", "sigortaTarihi": "2026-09-24", "durum": "Kirada"}, {"id": "v42AIT617", "plaka": "42AIT617", "modelYili": 2020, "aracCinsi": "KAMYONET", "sirket": "PEKDOĞRU GRUP", "sofor": "", "yer": "Konya Hastane", "kira": 22000, "kiraBitis": "", "muayeneTarihi": "2026-09-09", "sigortaTarihi": "2026-09-15", "durum": "Kirada"}, {"id": "v06AFF833", "plaka": "06AFF833", "modelYili": 2017, "aracCinsi": "KAMYONET", "sirket": "PEKDOĞRU GRUP", "sofor": "", "yer": "Konya Hastane", "kira": 22000, "kiraBitis": "", "muayeneTarihi": "2026-09-08", "sigortaTarihi": "2026-10-24", "durum": "Kirada"}, {"id": "v06AGJ149", "plaka": "06AGJ149", "modelYili": 2017, "aracCinsi": "KAMYONET", "sirket": "PEKDOĞRU GRUP", "sofor": "", "yer": "Konya Hastane", "kira": 22000, "kiraBitis": "", "muayeneTarihi": "2026-12-25", "sigortaTarihi": "2026-10-27", "durum": "Kirada"}, {"id": "v42AFB793", "plaka": "42AFB793", "modelYili": 2017, "aracCinsi": "KAMYONET", "sirket": "PEKDOĞRU GRUP", "sofor": "", "yer": "Eskişehir", "kira": 22000, "kiraBitis": "", "muayeneTarihi": "2027-06-04", "sigortaTarihi": "2026-10-27", "durum": "Kirada"}, {"id": "v01ABH87", "plaka": "01ABH87", "modelYili": 2017, "aracCinsi": "KAMYONET", "sirket": "PEKDOĞRU GRUP", "sofor": "", "yer": "Eskişehir", "kira": 22000, "kiraBitis": "", "muayeneTarihi": "2026-10-30", "sigortaTarihi": "2026-10-27", "durum": "Kirada"}, {"id": "v32NE643", "plaka": "32NE643", "modelYili": 2017, "aracCinsi": "KAMYONET", "sirket": "PEKDOĞRU GRUP", "sofor": "", "yer": "Eskişehir", "kira": 22000, "kiraBitis": "", "muayeneTarihi": "2026-10-03", "sigortaTarihi": "2026-10-27", "durum": "Kirada"}, {"id": "v06AFF944", "plaka": "06AFF944", "modelYili": 2017, "aracCinsi": "KAMYONET", "sirket": "PEKDOĞRU GRUP", "sofor": "", "yer": "Konya İl Sağlık Müdürlüğü", "kira": 22500, "kiraBitis": "", "muayeneTarihi": "2026-11-28", "sigortaTarihi": "2026-09-30", "durum": "Kirada"}, {"id": "v06AFF961", "plaka": "06AFF961", "modelYili": 2017, "aracCinsi": "KAMYONET", "sirket": "PEKDOĞRU GRUP", "sofor": "", "yer": "Konya İl Sağlık Müdürlüğü", "kira": 22500, "kiraBitis": "", "muayeneTarihi": "2026-11-10", "sigortaTarihi": "2026-09-30", "durum": "Kirada"}, {"id": "v42AKS958", "plaka": "42AKS958", "modelYili": 2021, "aracCinsi": "KAMYONET", "sirket": "ÖZDEMİR İTHALAT", "sofor": "", "yer": "Konya İl Sağlık Müdürlüğü", "kira": 22500, "kiraBitis": "", "muayeneTarihi": "2026-09-09", "sigortaTarihi": "2026-12-13", "durum": "Kirada"}, {"id": "v42AKS970", "plaka": "42AKS970", "modelYili": 2021, "aracCinsi": "KAMYONET", "sirket": "ÖZDEMİR İTHALAT", "sofor": "", "yer": "Anadolu Ecza (6)", "kira": 25000, "kiraBitis": "", "muayeneTarihi": "2026-09-09", "sigortaTarihi": "2026-12-13", "durum": "Kirada"}, {"id": "v42AKS963", "plaka": "42AKS963", "modelYili": 2021, "aracCinsi": "KAMYONET", "sirket": "ÖZDEMİR İTHALAT", "sofor": "", "yer": "Anadolu Ecza (6)", "kira": 25000, "kiraBitis": "", "muayeneTarihi": "2026-09-10", "sigortaTarihi": "2026-12-13", "durum": "Kirada"}, {"id": "v42AKS972", "plaka": "42AKS972", "modelYili": 2021, "aracCinsi": "KAMYONET", "sirket": "ÖZDEMİR İTHALAT", "sofor": "", "yer": "Konya İl Sağlık Müdürlüğü", "kira": 22500, "kiraBitis": "", "muayeneTarihi": "2026-09-10", "sigortaTarihi": "2026-12-13", "durum": "Kirada"}, {"id": "v34HVN532", "plaka": "34HVN532", "modelYili": 2023, "aracCinsi": "KAMYONET", "sirket": "SÖZDEMİR A.Ş", "sofor": "", "yer": "Eskişehir", "kira": 40000, "kiraBitis": "", "muayeneTarihi": "2026-10-15", "sigortaTarihi": "2026-12-31", "durum": "Kirada"}, {"id": "v06CIG357", "plaka": "06CIG357", "modelYili": 2021, "aracCinsi": "KAMYONET", "sirket": "SÖZDEMİR A.Ş", "sofor": "", "yer": "Fethiye Belediyesi", "kira": 55000, "kiraBitis": "", "muayeneTarihi": "2026-11-29", "sigortaTarihi": "2026-12-31", "durum": "Kirada"}, {"id": "v06CUC833", "plaka": "06CUC833", "modelYili": 2021, "aracCinsi": "OTOMOBİL", "sirket": "SÖZDEMİR A.Ş", "sofor": "", "yer": "Antalya Çevre Şehircilik", "kira": 32500, "kiraBitis": "", "muayeneTarihi": "2026-10-21", "sigortaTarihi": "2027-02-07", "durum": "Kirada"}, {"id": "v06BDY606", "plaka": "06BDY606", "modelYili": 2018, "aracCinsi": "KAMYONET", "sirket": "SÖZDEMİR A.Ş", "sofor": "", "yer": "Konya Hastane", "kira": 22000, "kiraBitis": "", "muayeneTarihi": "2026-09-28", "sigortaTarihi": "2027-02-07", "durum": "Kirada"}, {"id": "v34GKK579", "plaka": "34GKK579", "modelYili": 2023, "aracCinsi": "KAMYONET", "sirket": "PEKDOĞRU GRUP", "sofor": "", "yer": "Konya Hastane", "kira": 22000, "kiraBitis": "", "muayeneTarihi": "2027-04-16", "sigortaTarihi": "2026-10-04", "durum": "Kirada"}, {"id": "v34HJB129", "plaka": "34HJB129", "modelYili": 2023, "aracCinsi": "OTOMOBİL", "sirket": "PEKDOĞRU GRUP", "sofor": "", "yer": "Özel Kiralama", "kira": 30000, "kiraBitis": "", "muayeneTarihi": "2028-06-22", "sigortaTarihi": "2026-12-23", "durum": "Kirada"}, {"id": "v34EVE660", "plaka": "34EVE660", "modelYili": 2021, "aracCinsi": "MİNÜBÜS 16+1", "sirket": "PEKDOĞRU GRUP", "sofor": "", "yer": "", "kira": 0, "kiraBitis": "", "muayeneTarihi": "2027-01-16", "sigortaTarihi": "2026-12-22", "durum": "Müsait"}, {"id": "v34GGU274", "plaka": "34GGU274", "modelYili": 2022, "aracCinsi": "OTOMOBİL", "sirket": "PEKDOĞRU GRUP", "sofor": "", "yer": "Fethiye Belediyesi", "kira": 18000, "kiraBitis": "", "muayeneTarihi": "2027-12-24", "sigortaTarihi": "2026-12-26", "durum": "Kirada"}, {"id": "v06DAH266", "plaka": "06DAH266", "modelYili": 2022, "aracCinsi": "KAMYONET", "sirket": "PEKDOĞRU GRUP", "sofor": "", "yer": "Konya Hastane", "kira": 22000, "kiraBitis": "", "muayeneTarihi": "2027-03-27", "sigortaTarihi": "2026-09-15", "durum": "Kirada"}, {"id": "v34KKN046", "plaka": "34KKN046", "modelYili": 2024, "aracCinsi": "OTOMOBİL", "sirket": "PEKDOĞRU GRUP", "sofor": "", "yer": "", "kira": 37500, "kiraBitis": "", "muayeneTarihi": "2027-02-22", "sigortaTarihi": "2026-10-01", "durum": "Müsait"}, {"id": "v34EAP722", "plaka": "34EAP722", "modelYili": 2021, "aracCinsi": "OTOMOBİL", "sirket": "SÖZDEMİR A.Ş", "sofor": "", "yer": "Antalya Çevre Şehircilik", "kira": 32500, "kiraBitis": "", "muayeneTarihi": "2028-04-01", "sigortaTarihi": "2026-10-26", "durum": "Kirada"}, {"id": "v34HM2314", "plaka": "34HM2314", "modelYili": 2011, "aracCinsi": "OTOMOBİL", "sirket": "PEKDOĞRU GRUP", "sofor": "", "yer": "", "kira": 0, "kiraBitis": "", "muayeneTarihi": "2028-06-19", "sigortaTarihi": "2026-09-21", "durum": "Müsait"}, {"id": "v42BCT916", "plaka": "42BCT916", "modelYili": 2023, "aracCinsi": "OTOMOBİL", "sirket": "SÖZDEMİR A.Ş", "sofor": "", "yer": "", "kira": 0, "kiraBitis": "", "muayeneTarihi": "2028-07-24", "sigortaTarihi": "2026-10-21", "durum": "Müsait"}, {"id": "v34NDM596", "plaka": "34NDM596", "modelYili": 2025, "aracCinsi": "KAMYONET", "sirket": "PEKDOĞRU GRUP", "sofor": "", "yer": "Isparta İŞKUR", "kira": 34000, "kiraBitis": "", "muayeneTarihi": "2027-02-12", "sigortaTarihi": "2026-09-13", "durum": "Kirada"}, {"id": "v34MEY865", "plaka": "34MEY865", "modelYili": 2024, "aracCinsi": "KAMYONET(ÇİFTKABİN)", "sirket": "ÖZDEMİR İTHALAT", "sofor": "", "yer": "Fethiye Belediyesi", "kira": 48500, "kiraBitis": "", "muayeneTarihi": "2026-11-05", "sigortaTarihi": "2026-10-14", "durum": "Kirada"}, {"id": "v06CIH495", "plaka": "06CIH495", "modelYili": 2021, "aracCinsi": "OTOMOBİL", "sirket": "ÖZDEMİR İTHALAT", "sofor": "", "yer": "Antalya Çevre Şehircilik", "kira": 11250, "kiraBitis": "", "muayeneTarihi": "2028-04-21", "sigortaTarihi": "2026-10-14", "durum": "Kirada"}, {"id": "v34HMV774", "plaka": "34HMV774", "modelYili": 2023, "aracCinsi": "OTOMOBİL", "sirket": "ÖZDEMİR İTHALAT", "sofor": "", "yer": "Özel Kiralama", "kira": 37500, "kiraBitis": "", "muayeneTarihi": "2028-08-07", "sigortaTarihi": "2026-10-14", "durum": "Kirada"}, {"id": "v34GYH194", "plaka": "34GYH194", "modelYili": 2023, "aracCinsi": "KAMYONET", "sirket": "PEKDOĞRU GRUP", "sofor": "", "yer": "Eskişehir (Dirim Tıp)", "kira": 50000, "kiraBitis": "", "muayeneTarihi": "2027-05-22", "sigortaTarihi": "2026-10-25", "durum": "Kirada"}, {"id": "v34HGU649", "plaka": "34HGU649", "modelYili": 2023, "aracCinsi": "KAMYONET", "sirket": "PEKDOĞRU GRUP", "sofor": "", "yer": "Eskişehir (Dirim Tıp)", "kira": 50000, "kiraBitis": "", "muayeneTarihi": "2027-06-30", "sigortaTarihi": "2026-09-05", "durum": "Kirada"}, {"id": "v34HGV059", "plaka": "34HGV059", "modelYili": 2023, "aracCinsi": "KAMYONET", "sirket": "PEKDOĞRU GRUP", "sofor": "", "yer": "Eskişehir (Dirim Tıp)", "kira": 50000, "kiraBitis": "", "muayeneTarihi": "2027-07-14", "sigortaTarihi": "2026-09-05", "durum": "Kirada"}, {"id": "v34GHY322", "plaka": "34GHY322", "modelYili": 2023, "aracCinsi": "KAMYONET", "sirket": "PEKDOĞRU GRUP", "sofor": "", "yer": "Konya Hastane", "kira": 22000, "kiraBitis": "", "muayeneTarihi": "2027-02-03", "sigortaTarihi": "2026-10-08", "durum": "Kirada"}, {"id": "v34HBJ187", "plaka": "34HBJ187", "modelYili": 2023, "aracCinsi": "KAMYONET", "sirket": "PEKDOĞRU GRUP", "sofor": "", "yer": "Konya İl Sağlık Müdürlüğü", "kira": 22500, "kiraBitis": "", "muayeneTarihi": "2027-05-06", "sigortaTarihi": "2026-10-14", "durum": "Kirada"}, {"id": "v34GJM427", "plaka": "34GJM427", "modelYili": 2023, "aracCinsi": "OTOMOBİL", "sirket": "SÖZDEMİR A.Ş", "sofor": "", "yer": "çorum", "kira": 0, "kiraBitis": "", "muayeneTarihi": "2028-01-20", "sigortaTarihi": "2026-10-09", "durum": "Kirada"}, {"id": "v34FFD081", "plaka": "34FFD081", "modelYili": 2022, "aracCinsi": "OTOMOBİL", "sirket": "PEKDOĞRU GRUP", "sofor": "", "yer": "", "kira": 0, "kiraBitis": "", "muayeneTarihi": "2027-03-03", "sigortaTarihi": "2026-10-28", "durum": "Müsait"}, {"id": "v34S2069", "plaka": "34S2069", "modelYili": 2021, "aracCinsi": "OTOMOBİL", "sirket": "SÖZDEMİR A.Ş", "sofor": "", "yer": "", "kira": 0, "kiraBitis": "", "muayeneTarihi": "2028-04-27", "sigortaTarihi": "2026-10-23", "durum": "Müsait"}, {"id": "v34GSM917", "plaka": "34GSM917", "modelYili": 2023, "aracCinsi": "OTOMOBİL", "sirket": "PEKDOĞRU GRUP", "sofor": "", "yer": "", "kira": 0, "kiraBitis": "", "muayeneTarihi": "2028-03-13", "sigortaTarihi": "2026-09-25", "durum": "Müsait"}, {"id": "v34GJP752", "plaka": "34GJP752", "modelYili": 2023, "aracCinsi": "OTOMOBİL", "sirket": "PEKDOĞRU GRUP", "sofor": "", "yer": "", "kira": 0, "kiraBitis": "", "muayeneTarihi": "2028-03-06", "sigortaTarihi": "2026-09-29", "durum": "Müsait"}];
+const IMPORTED_DATA = []; // Gercek filo verisi artik HTML icine gomulmez — veriler Excel'den yuklenir veya buluttan gelir
 
 // Bazı ortamlarda (dosya doğrudan bilgisayardan açıldığında) window.storage
 // bulunmayabilir. Böyle durumlarda localStorage'a otomatik geçiyoruz ki
@@ -1377,20 +1357,8 @@ function clearCloudConfig(){
   localStorage.removeItem(CLOUD_CFG_KEY);
 }
 
-// ===== AI otomatik doldurma fonksiyon adresi =====
-// Bu adres, kullanıcının kendi dağıttığı ve API anahtarını güvenle sakladığı
-// Firebase Cloud Function'a işaret eder. Bağlı değilse otomatik doldurma çalışmaz,
-// ama uygulamanın geri kalanı normal şekilde işlemeye devam eder.
-const AI_PROXY_KEY = 'filoPaneli_aiProxyUrl';
-function getAiProxyUrl(){
-  try{ return localStorage.getItem(AI_PROXY_KEY) || ''; }catch(e){ return ''; }
-}
-function saveAiProxyUrl(url){
-  localStorage.setItem(AI_PROXY_KEY, url);
-}
-function clearAiProxyUrl(){
-  localStorage.removeItem(AI_PROXY_KEY);
-}
+// ===== AI ayarları =====
+// Gemini API anahtarı Ayarlar sayfasından yönetilir; eski proxy adresi sistemi kaldırıldı.
 
 function loadScriptOnce(src){
   return new Promise((resolve, reject)=>{
@@ -1819,45 +1787,11 @@ document.getElementById('cloudDisconnect').onclick = ()=>{
   location.reload();
 };
 
-// ===== AI otomatik doldurma ayarları =====
-function renderAiStatus(){
-  const box = document.getElementById('aiStatusBox');
-  const url = getAiProxyUrl();
-  const disconnectBtn = document.getElementById('aiDisconnect');
-  if(url){
-    box.innerHTML = `<div class="cloud-status ok"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg><span>AI otomatik doldurma bağlı. Belge yüklediğinde otomatik okunacak.</span></div>`;
-    disconnectBtn.style.display = 'block';
-  }else{
-    box.innerHTML = `<div class="cloud-status off"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span>Henüz bağlı değil. Belgeler yine yüklenip saklanır, sadece otomatik okuma çalışmaz.</span></div>`;
-    disconnectBtn.style.display = 'none';
-  }
-}
+// ===== AI ayarları =====
 document.getElementById('menuAiSettings').onclick = ()=>{
   document.getElementById('settingsMenu').classList.remove('show');
-  document.getElementById('aiErr').style.display = 'none';
-  document.getElementById('aiProxyUrlInput').value = getAiProxyUrl();
-  renderAiStatus();
-  document.getElementById('aiOverlay').classList.add('show');
-};
-document.getElementById('aiCancel').onclick = ()=>document.getElementById('aiOverlay').classList.remove('show');
-document.getElementById('aiSave').onclick = ()=>{
-  const url = document.getElementById('aiProxyUrlInput').value.trim();
-  const errEl = document.getElementById('aiErr');
-  if(url && !/^https:\/\/.+/.test(url)){
-    errEl.textContent = 'Bu geçerli bir adres gibi görünmüyor (https:// ile başlamalı).';
-    errEl.style.display = 'block';
-    return;
-  }
-  saveAiProxyUrl(url);
-  errEl.style.display = 'none';
-  showToast('AI ayarları kaydedildi.');
-  document.getElementById('aiOverlay').classList.remove('show');
-};
-document.getElementById('aiDisconnect').onclick = ()=>{
-  clearAiProxyUrl();
-  document.getElementById('aiProxyUrlInput').value = '';
-  renderAiStatus();
-  showToast('AI bağlantısı bu cihazda kaldırıldı.');
+  switchPage('ayarlar');
+  showToast('Gemini API anahtarını Ayarlar → AI bölümünden yönetebilirsiniz.');
 };
 
 function renderReminderModal(list){
@@ -1949,8 +1883,19 @@ function fireUrgentNotification(){
     });
   }catch(e){}
 }
+let __persistWarnTs = 0;
 async function persist(){
-  try{ await storageAPI.set('vehicles', JSON.stringify(vehicles)); }catch(e){}
+  try{
+    await storageAPI.set('vehicles', JSON.stringify(vehicles));
+  }catch(e){
+    console.error('Veri kaydetme hatası:', e);
+    // Uyarıyı en fazla 30 saniyede bir göster — toplu işlemlerde spam olmasın
+    const now = Date.now();
+    if(now - __persistWarnTs > 30000){
+      __persistWarnTs = now;
+      showToast('UYARI: Değişiklikler kaydedilemedi (depolama alanı dolu olabilir). Lütfen Excel yedeği alıp gereksiz belge/fotoğrafları silin.', true);
+    }
+  }
 }
 function cryptoId(){return 'v'+Math.random().toString(36).slice(2,10);}
 
@@ -3224,12 +3169,12 @@ function wireDocType(d){
       showDocName(d, file.name + ' (yeni)');
       const isPdfOrImage = file.type==='application/pdf' || file.type.startsWith('image/');
       const btn = document.getElementById(d.autoBtnId);
-      if(isPdfOrImage && getAiProxyUrl()){
+      if(isPdfOrImage && getGeminiKey()){
         btn.style.display = 'flex';
-        runDocAutoFill(d); // AI bağlıysa dosya yüklenir yüklenmez otomatik olarak bilgileri çıkar
+        runDocAutoFill(d); // Gemini anahtarı varsa dosya yüklenir yüklenmez otomatik olarak bilgileri çıkar
       }else{
-        // AI bağlı değilse buton hiç gösterilmez — kullanıcı elle dolduruyor demektir,
-        // gereksiz bir "bağlı değil" uyarısıyla rahatsız etmeyelim.
+        // Anahtar yoksa buton hiç gösterilmez — kullanıcı elle dolduruyor demektir,
+        // gereksiz bir uyarıyla rahatsız etmeyelim.
         btn.style.display = 'none';
       }
     };
@@ -3266,7 +3211,7 @@ async function callGeminiDirect(system, userText, contentBlock, modelIdx=0, retr
   const GEMINI_MODEL = GEMINI_MODELS[modelIdx] || GEMINI_MODELS[0];
   const base64 = contentBlock?.source?.data;
   const mimeType = contentBlock?.source?.media_type || 'application/pdf';
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
   const body = {
     system_instruction: { parts: [{ text: system }] },
     contents: [{
@@ -3283,7 +3228,7 @@ async function callGeminiDirect(system, userText, contentBlock, modelIdx=0, retr
   try{
     const res = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_API_KEY },
       body: JSON.stringify(body),
       signal: controller.signal
     });
@@ -3327,9 +3272,9 @@ async function geminiChatFetch(system, contents, generationConfig){
     const controller = new AbortController();
     const timeout = setTimeout(()=>controller.abort(), 60000);
     try{
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${key}`,{
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,{
         method:'POST',
-        headers:{'Content-Type':'application/json'},
+        headers:{'Content-Type':'application/json','x-goog-api-key':key},
         body: JSON.stringify({
           system_instruction:{parts:[{text:system}]},
           contents,
@@ -6642,7 +6587,8 @@ ${JSON.stringify(filoAraclar, null, 1)}`;
       {text:'Bu teknik şartnameyi analiz et ve filomdan uygun araçları belirle. Türkçe yanıt ver.'}
     ]}], {temperature:0.3, maxOutputTokens:8192});
 
-    const html = yanit
+    // Önce escape edilir — AI çıktısındaki HTML enjeksiyonu engellenir, sonra güvenli markdown dönüşümü uygulanır
+    const html = esc(yanit)
       .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
       .replace(/\*(.+?)\*/g,'<em>$1</em>')
       .replace(/^### (.+)$/gm,'<div style="font-size:13px;font-weight:700;color:var(--paper);margin:8px 0 4px;">$1</div>')
@@ -6805,7 +6751,8 @@ ${JSON.stringify(filoOzet, null, 1)}`;
     const yanit = await geminiChatFetch(system, geminiMessages, {temperature:0.7, maxOutputTokens:8192});
 
     // Markdown'ı basit HTML'e çevir
-    const html = yanit
+    // Önce escape edilir — AI çıktısındaki HTML enjeksiyonu engellenir, sonra güvenli markdown dönüşümü uygulanır
+    const html = esc(yanit)
       .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
       .replace(/\*(.+?)\*/g,'<em>$1</em>')
       .replace(/^### (.+)$/gm,'<div style="font-size:13px;font-weight:700;color:var(--paper);margin:8px 0 4px;">$1</div>')
