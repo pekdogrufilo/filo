@@ -659,6 +659,9 @@
     .filters{flex-direction:column;align-items:stretch;}
     .search-wrap{min-width:0;}
     .field-row{grid-template-columns:1fr;}
+    /* Mobilde tek kalan istatistik kartı tam genişlikte dengeli görünür */
+    .dash-stats > .dstat:last-child{grid-column:1/-1;}
+    .stats > .stat:last-child{grid-column:1/-1;}
   }
   @media (max-width:480px){
     .dash-stats{grid-template-columns:1fr 1fr;}
@@ -6450,7 +6453,7 @@ function renderAiPage(){
             'Sözleşmesi yakında bitecek araçlar',
             'En kârlı araçlarımı göster',
             'Filom için öneriler oluştur',
-          ].map(k=>`<button onclick="aiSend(${JSON.stringify(k)})" style="background:var(--surface);border:1px solid var(--line);color:var(--text-2);padding:6px 12px;border-radius:20px;font-size:12px;cursor:pointer;transition:all .12s ease;font-family:inherit;" onmouseover="this.style.borderColor='var(--accent-blue)';this.style.color='var(--accent-blue)'" onmouseout="this.style.borderColor='var(--line)';this.style.color='var(--text-2)'">${esc(k)}</button>`).join('')}
+          ].map(k=>`<button onclick="aiSend(${JSON.stringify(k)})" style="background:var(--surface-2);border:1px solid var(--border);color:var(--text-2);padding:7px 13px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;transition:all .12s ease;font-family:inherit;" onmouseover="this.style.borderColor='var(--accent-blue)';this.style.color='var(--accent-blue)';this.style.background='var(--surface-3)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-2)';this.style.background='var(--surface-2)'">${esc(k)}</button>`).join('')}
         </div>
       </div>` : ''}
 
