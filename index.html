@@ -103,7 +103,7 @@
     --amber-dim:rgba(255,149,0,.1);
     --red:#FF3B30;
     --red-dim:rgba(255,59,48,.1);
-    --sidebar-bg:#FFFFFF;
+    --sidebar-bg:#1D1D1F;
     --asphalt-900:#F5F5F7;
     --asphalt-800:#FFFFFF;
     --asphalt-700:#F2F2F7;
@@ -755,6 +755,19 @@
   .chip.active{background:var(--accent-blue);color:#fff;border-color:var(--accent-blue);}
   /* Arama kutuları: iOS arama alanı */
   .search-wrap input{background:var(--surface-2);border:1px solid transparent;border-radius:10px;}
+  /* ===== Mobil rötuşlar ===== */
+  @media(max-width:560px){
+    /* iOS Safari'nin odaklanınca sayfayı zoomlamaması için girdi fontu en az 16px olmalı */
+    .field input,.field select,.search-wrap input,.cloud-textarea,
+    .iade-field input,.iade-field select,.iade-field textarea,
+    .masraf-add-row select,.masraf-add-row input{font-size:16px;}
+    .field input,.field select{padding:11px 12px;}
+    /* iPhone alt güvenlik alanı — alt navigasyon home çubuğunun altına girmesin */
+    .bottom-nav{padding-bottom:env(safety-area-inset-bottom,0);padding-bottom:env(safe-area-inset-bottom,0);}
+    .dcard,.card{border-radius:14px;}
+    /* Araç kartı aksiyon butonları parmakla rahat basılır olsun */
+    .v-actions button{min-height:42px;}
+  }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -863,6 +876,7 @@
 
       <div class="sb-section">DOKÜMAN</div>
       <button class="sb-item" data-page="belgeler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>Belgeler</button>
+      <button class="sb-item" id="sbBelgeYukle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg>Belge Yükle</button>
       <button class="sb-item" data-page="excel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="m8 13 2.5 5"/><path d="m13.5 13-2.5 5"/></svg>Veri Aktarımı</button>
 
       <div class="sb-section">SİSTEM</div>
@@ -6215,6 +6229,27 @@ function renderKiralamaPage(){
   `;
 }
 
+// ===== Belge yükleme kısayolu =====
+// Soldaki "Belge Yükle" butonları: araç seçilmişse doğrudan o aracın
+// düzenleme penceresini Belgeler sekmesinde açar, seçilmemişse uyarır.
+function belgeYukleSecilen(){
+  const sel = document.getElementById('belgeYukleArac');
+  const id = sel ? sel.value : '';
+  if(!id){ showToast('Önce listeden araç seçin.'); if(sel) sel.focus(); return; }
+  openEdit(id);
+  setTimeout(()=>{
+    const tab = document.querySelector('.modal-tab[data-tab="tab-belgeler"]');
+    if(tab) tab.click();
+  }, 80);
+}
+document.getElementById('sbBelgeYukle').onclick = ()=>{
+  switchPage('belgeler');
+  setTimeout(()=>{
+    const sel = document.getElementById('belgeYukleArac');
+    if(sel){ sel.focus(); if(window.innerWidth<=900){ sel.click(); } }
+  }, 150);
+};
+
 // ===== Belgeler sayfası =====
 function renderBelgelerPage(){
   const page = document.getElementById('page-belgeler');
@@ -6260,7 +6295,17 @@ function renderBelgelerPage(){
         <span style="font-size:13px;color:var(--text-3);">${vehicles.length} araç · ${kritikSayi>0?`<span style="color:#D97706">${kritikSayi} kritik</span>`:' Tümü geçerli'}</span>
       </div>
     </div>
-    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">
+      <div style="display:flex;gap:6px;align-items:center;margin-right:8px;">
+        <select id="belgeYukleArac" style="background:var(--surface-2);border:1px solid transparent;border-radius:10px;color:var(--text);padding:8px 10px;font-size:13px;max-width:150px;font-family:inherit;">
+          <option value="">Araç seç…</option>
+          ${vehicles.map(v=>`<option value="${v.id}">${esc(v.plaka)}</option>`).join('')}
+        </select>
+        <button onclick="belgeYukleSecilen()" style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:var(--accent-blue);color:#fff;font-family:inherit;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg>
+          Belge Yükle
+        </button>
+      </div>
       ${[
         {k:'hepsi', l:'Tümü', c:'var(--text-2)'},
         {k:'kritik', l:`⚠️ Kritik (${kritikSayi})`, c:'#D97706'},
