@@ -917,6 +917,7 @@
   html[data-theme="light"] .card-actions button{color:var(--accent-blue);font-weight:600;}
   html[data-theme="light"] .card-actions .del{color:var(--text-3);}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
@@ -3885,6 +3886,72 @@ async function detayMasrafSil(masrafId, vehicleId){
   openVehicleDetail(vehicleId);
 }
 
+// ===== Evrak indirme =====
+function dataUrlToBlob(dataUrl){
+  const [head, b64] = dataUrl.split(',');
+  const mime = (head.match(/data:(.*?)(;|$)/)||[])[1]||'application/octet-stream';
+  const bin = atob(b64);
+  const arr = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+  return new Blob([arr], {type:mime});
+}
+async function belgeIndir(key, dosyaAdi){
+  const r = await storageAPI.get(key).catch(()=>null);
+  if(!r || !r.value){ showToast('Dosya bulunamadı (bu cihaza yüklenmemiş olabilir).', true); return; }
+  try{
+    const blob = r.value.startsWith('data:') ? dataUrlToBlob(r.value) : await (await fetch(r.value)).blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = dosyaAdi || 'belge';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 10000);
+  }catch(e){ showToast('İndirilemedi: '+(e.message||'hata'), true); }
+}
+function aracEvrakListesi(v){
+  const turAd = t=>({sigorta:'Sigorta belgesi',kasko:'Kasko belgesi',muayene:'Muayene raporu',ruhsat:'Ruhsat',sozlesme:'Sözleşme',masraf:'Masraf fişi',servis:'Servis kaydı',vize:'Vize belgesi',diger:'Belge'}[t]||'Belge');
+  return [
+    {ad:'Sigorta poliçesi', key:'police_'+v.id, adi:v.policeAdi},
+    {ad:'Kasko poliçesi', key:'kasko_'+v.id, adi:v.kaskoBelgeAdi},
+    {ad:'Muayene belgesi', key:'muayenebelge_'+v.id, adi:v.muayeneBelgeAdi},
+    {ad:'Ruhsat', key:'ruhsat_'+v.id, adi:v.ruhsatBelgeAdi},
+    {ad:'Kira sözleşmesi', key:'contract_'+v.id, adi:v.sozlesmeAdi},
+    ...(Array.isArray(v.otoBelgeler)?v.otoBelgeler:[]).map(o=>({ad: turAd(o.tur), key:o.key, adi:o.adi})),
+  ].filter(e=>e.adi);
+}
+async function tumEvraklariIndir(id){
+  const v = vehicles.find(x=>x.id===id); if(!v) return;
+  const liste = aracEvrakListesi(v);
+  if(!liste.length){ showToast('İndirilecek evrak yok.', true); return; }
+  if(typeof JSZip === 'undefined'){
+    showToast('ZIP paketi yüklenemedi — dosyalar tek tek indirilecek.');
+    for(const e of liste){ await belgeIndir(e.key, e.adi); await new Promise(r=>setTimeout(r,400)); }
+    return;
+  }
+  try{
+    const zip = new JSZip();
+    let eklenen = 0;
+    const sayilan = {};
+    for(const e of liste){
+      const r = await storageAPI.get(e.key).catch(()=>null);
+      if(r && r.value){
+        sayilan[e.adi] = (sayilan[e.adi]||0)+1;
+        const ad = (sayilan[e.adi]>1 ? sayilan[e.adi]+'-' : '') + e.adi;
+        if(r.value.startsWith('data:')) zip.file(ad, r.value.split(',')[1], {base64:true});
+        else zip.file(ad, await (await fetch(r.value)).blob());
+        eklenen++;
+      }
+    }
+    if(!eklenen){ showToast('Dosyalar bu cihazda bulunamadı.', true); return; }
+    const blob = await zip.generateAsync({type:'blob'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `evraklar-${v.plaka}.zip`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 10000);
+    showToast(`${eklenen} evrak ZIP olarak indirildi.`);
+  }catch(e){ showToast('ZIP oluşturulamadı: '+(e.message||'hata'), true); }
+}
+
 function openVehicleDetail(id){
   const v = vehicles.find(x=>x.id===id);
   if(!v) return;
@@ -3982,6 +4049,25 @@ function openVehicleDetail(id){
             }).join('')}
           </div>
         </div>` : ''}
+
+        <!-- Evraklar (indirilebilir) -->
+        ${(()=>{ const evraklar = aracEvrakListesi(v); if(!evraklar.length) return ''; return `
+        <div style="background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px;">
+            <div style="font-size:12px;font-weight:700;color:var(--paper);">📎 Evraklar <span style="font-weight:400;color:var(--steel-300);">(${evraklar.length})</span></div>
+            <button onclick="tumEvraklariIndir('${id}')" style="background:var(--accent-blue);color:#fff;border:none;padding:6px 12px;border-radius:8px;font-size:11.5px;font-weight:600;cursor:pointer;white-space:nowrap;">⬇ Tümünü ZIP indir</button>
+          </div>
+          <div style="display:flex;flex-direction:column;">
+            ${evraklar.map(e=>`
+            <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);">
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:12.5px;font-weight:600;color:var(--paper);">${esc(e.ad)}</div>
+                <div style="font-size:11px;color:var(--steel-500);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(e.adi)}</div>
+              </div>
+              <button onclick="belgeIndir('${e.key}','${esc(e.adi).replace(/'/g,'')}')" style="background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);color:var(--accent-blue);cursor:pointer;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;white-space:nowrap;">⬇ İndir</button>
+            </div>`).join('')}
+          </div>
+        </div>`;})()}
 
         <!-- Km Geçmişi -->
         ${kmGecmisi.length ? `
@@ -6757,6 +6843,7 @@ function renderDocUploadPage(){
               <div style="font-size:11.5px;color:var(--text-3);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(o.adi)}${o.tarih?' · '+esc(fmtTarih(o.tarih)):''}${dTxt?' · '+dTxt:''}</div>
             </div>
             <button onclick="viewOtoDoc('${v.id}',${(v.otoBelgeler||[]).indexOf(o)})" style="background:var(--blue-dim);border:none;color:var(--accent-blue);padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0;">Gör</button>
+            <button onclick="belgeIndir('${o.key}','${esc(o.adi).replace(/'/g,'')}')" style="background:var(--blue-dim);border:none;color:var(--accent-blue);padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0;" title="İndir">⬇</button>
             <button onclick="otoBelgeSil('${v.id}','${o.key}')" style="background:none;border:none;color:var(--text-3);cursor:pointer;padding:6px;display:flex;flex-shrink:0;" title="Sil">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
             </button>
