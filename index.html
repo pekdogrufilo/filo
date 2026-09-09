@@ -1488,6 +1488,11 @@
           <div class="field"><label>Kiracı adı</label><input type="text" id="fKiraciAdi" placeholder="Kiracı / firma yetkilisi adı"></div>
         </div>
         <div class="field"><label>Kiracı telefonu</label><input type="tel" id="fKiraciTel" placeholder="05xx xxx xx xx"></div>
+        <div class="field-row">
+          <div class="field"><label>TC / Vergi No</label><input type="text" id="fKiraciVergi" placeholder="TC veya vergi no"></div>
+          <div class="field"><label>Ehliyet No</label><input type="text" id="fKiraciEhliyet" placeholder="Varsa ehliyet seri no"></div>
+        </div>
+        <div class="field"><label>Kiracı adresi</label><input type="text" id="fKiraciAdres" placeholder="Sözleşmede görünecek adres"></div>
         <div class="field">
           <label>Kira sözleşmesi (PDF veya görsel, en fazla 3,5MB)</label>
           <input type="file" id="fSozlesme" accept="application/pdf,image/*">
@@ -2607,6 +2612,8 @@ function updateFromExcel(file){
               else if(key.includes('KASKO')){ /* zaten yukarıda ele alındı, kira ile karışmasın */ }
               else if(key.includes('KİRA BEDEL') || key.includes('AYLIK KİRA') || key==='KİRA') colMap.kira=ci;
               else if(key.includes('KİRA BİTİŞ')) colMap.kiraBitis=ci;
+              else if(key.includes('KASKO BİTİŞ')) colMap.kaskoBitis=ci;
+              else if(key.includes('SÖZLEŞME BİTİŞ')) colMap.sozlesmeBitis=ci;
               else if(key.includes('ŞOFÖR') || key.includes('SÜRÜCÜ')) colMap.sofor=ci;
               else if(key==='DURUM') colMap.durum=ci;
             });
@@ -2645,6 +2652,8 @@ function updateFromExcel(file){
           if(colMap.sigortaNo!==undefined && r[colMap.sigortaNo]!==undefined) patch.sigortaNo = String(r[colMap.sigortaNo]||'').trim();
           if(colMap.kaskoNo!==undefined && r[colMap.kaskoNo]!==undefined) patch.kaskoNo = String(r[colMap.kaskoNo]||'').trim();
           if(colMap.kiraBitis!==undefined){ const d=excelCellDate(r[colMap.kiraBitis]); if(d) patch.kiraBitis = d; }
+          if(colMap.kaskoBitis!==undefined){ const d=excelCellDate(r[colMap.kaskoBitis]); if(d) patch.kaskoBitis = d; }
+          if(colMap.sozlesmeBitis!==undefined){ const d=excelCellDate(r[colMap.sozlesmeBitis]); if(d) patch.sozlesmeBitis = d; }
           if(colMap.sofor!==undefined && r[colMap.sofor]!==undefined && String(r[colMap.sofor]||'').trim()) patch.sofor = String(r[colMap.sofor]).trim();
           if(colMap.kira!==undefined && r[colMap.kira]!==undefined && r[colMap.kira]!=='' && !isNaN(Number(r[colMap.kira]))) patch.kira = Number(r[colMap.kira]);
           if(colMap.yer!==undefined){
@@ -3627,7 +3636,7 @@ async function viewOtoDoc(vehicleId, index){
 }
 
 function clearForm(){
-  ['fPlaka','fCins','fMarka','fModel','fVersiyon','fDonanim','fYil','fSirket','fSofor','fYer','fKira','fTarih','fMuayene','fSigorta','fRuhsatSeri','fMuayeneSeri','fSigortaNo','fKaskoNo','fKaskoBitis','fSozlesmeBitis','fKiraciAdi','fKiraciTel','fTeslimTarih','fTeslimKm','fBakimKm','fBakimPeriyot','fSoforUcreti'].forEach(id=>document.getElementById(id).value='');
+  ['fPlaka','fCins','fMarka','fModel','fVersiyon','fDonanim','fYil','fSirket','fSofor','fYer','fKira','fTarih','fMuayene','fSigorta','fRuhsatSeri','fMuayeneSeri','fSigortaNo','fKaskoNo','fKaskoBitis','fSozlesmeBitis','fKiraciAdi','fKiraciTel','fKiraciVergi','fKiraciEhliyet','fKiraciAdres','fTeslimTarih','fTeslimKm','fBakimKm','fBakimPeriyot','fSoforUcreti'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('fKiralamaTuru').value='soförsüz';
   document.getElementById('fDurum').value='Kirada';
   document.getElementById('fMuayeneRandevu').checked=false;
@@ -4295,6 +4304,7 @@ async function hasarSil(id, hid){
   const anahtarlar = h ? [...(h.fotolar||[]), ...(h.fotoKey&&!(h.fotolar||[]).includes(h.fotoKey)?[h.fotoKey]:[])] : [];
   for(const k of anahtarlar){ await storageAPI.set(k, '').catch(()=>{}); }
   await persist();
+  logActivity('del', `Hasar kaydı silindi: <b>${esc(v.plaka)}</b> · ${esc(h?.aciklama||'')}`).catch(()=>{});
   showToast('Hasar kaydı silindi.');
   document.getElementById('vehicleDetailOverlay')?.remove();
   openVehicleDetail(id);
@@ -4357,6 +4367,9 @@ function openEdit(id){
   document.getElementById('fSozlesmeBitis').value=v.sozlesmeBitis||'';
   document.getElementById('fKiraciAdi').value=v.kiraciAdi||'';
   document.getElementById('fKiraciTel').value=v.kiraciTel||'';
+  document.getElementById('fKiraciVergi').value=v.kiraciVergi||'';
+  document.getElementById('fKiraciEhliyet').value=v.kiraciEhliyet||'';
+  document.getElementById('fKiraciAdres').value=v.kiraciAdres||'';
   document.getElementById('fTeslimTarih').value=v.teslimTarih||'';
   document.getElementById('fTeslimKm').value=v.teslimKm||'';
   document.getElementById('fBakimKm').value=v.sonBakimKm||'';
@@ -4678,6 +4691,9 @@ document.getElementById('saveBtn').onclick = async ()=>{
       sozlesmeBitis: document.getElementById('fSozlesmeBitis').value,
       kiraciAdi: document.getElementById('fKiraciAdi').value.trim(),
       kiraciTel: document.getElementById('fKiraciTel').value.trim(),
+      kiraciVergi: document.getElementById('fKiraciVergi').value.trim(),
+      kiraciEhliyet: document.getElementById('fKiraciEhliyet').value.trim(),
+      kiraciAdres: document.getElementById('fKiraciAdres').value.trim(),
       teslimTarih: document.getElementById('fTeslimTarih').value,
       teslimKm: Number(document.getElementById('fTeslimKm').value)||undefined,
       sonBakimKm: Number(document.getElementById('fBakimKm').value)||undefined,
@@ -5172,6 +5188,57 @@ function computeMonthlyExpenseSeries(){
   const values = months.map(m=> expenses.filter(e=>(e.tarih||'').slice(0,7)===m.key).reduce((s,e)=>s+(Number(e.tutar)||0),0));
   return {values, labels: months.map(m=>m.label)};
 }
+function computeMonthlyIncomeSeries(){
+  const months = [];
+  const now = new Date();
+  for(let i=5;i>=0;i--){
+    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    months.push({
+      key: `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`,
+      sonGun: new Date(d.getFullYear(), d.getMonth()+1, 0).toISOString().slice(0,10),
+    });
+  }
+  const values = months.map(m=> vehicles.filter(v=>v.durum==='Kirada' && Number(v.kira)>0 && (!v.teslimTarih || v.teslimTarih<=m.sonGun)).reduce((s,v)=>s+Number(v.kira),0));
+  return {values, labels: months.map(m=>m.key.slice(5)+' ay')};
+}
+function svgDualLineChart(a, b, labels, width, height){
+  const idA='da'+(__chartIdCounter++), idB='db'+(__chartIdCounter++);
+  const pad={l:52,r:10,t:14,b:24};
+  const w=width-pad.l-pad.r, h=height-pad.t-pad.b;
+  const tum=[...a,...b];
+  const max=Math.max(...tum,1);
+  const niceMax = max<=0?1:Math.ceil(max/ (max>100000?50000: max>10000?5000: max>1000?500:50)) * (max>100000?50000: max>10000?5000: max>1000?500:50);
+  const fmt=v=> v>=1000000 ? (v/1000000).toFixed(1).replace('.',',')+' M' : v>=1000 ? Math.round(v/1000)+' B' : String(Math.round(v));
+  const coordsA=a.map((v,i)=>[pad.l+(a.length===1?w/2:(i*w/(a.length-1))), pad.t+h-(v/niceMax)*h]);
+  const coordsB=b.map((v,i)=>[pad.l+(b.length===1?w/2:(i*w/(b.length-1))), pad.t+h-(v/niceMax)*h]);
+  const pathOf=cs=>cs.map((c,i)=>(i?'L':'M')+c[0].toFixed(1)+' '+c[1].toFixed(1)).join(' ');
+  const areaA=pathOf(coordsA)+` L ${coordsA[coordsA.length-1][0].toFixed(1)} ${(pad.t+h).toFixed(1)} L ${coordsA[0][0].toFixed(1)} ${(pad.t+h).toFixed(1)} Z`;
+  const grid=[0,0.5,1].map(f=>{
+    const y=(pad.t+h-f*h).toFixed(1);
+    return `<line x1="${pad.l}" y1="${y}" x2="${width-pad.r}" y2="${y}" stroke="var(--line)" stroke-width="1" stroke-dasharray="${f===0?'0':'3 4'}"/>
+      <text x="${pad.l-7}" y="${Number(y)+3}" font-size="9.5" fill="var(--steel-500)" text-anchor="end">${esc(fmt(niceMax*f))}</text>`;
+  }).join('');
+  const dotsA=coordsA.slice(0,-1).map(c=>`<circle cx="${c[0].toFixed(1)}" cy="${c[1].toFixed(1)}" r="3.4" fill="var(--surface)" stroke="#34C759" stroke-width="2.2"/>`).join('');
+  const dotsB=coordsB.slice(0,-1).map(c=>`<circle cx="${c[0].toFixed(1)}" cy="${c[1].toFixed(1)}" r="3.4" fill="var(--surface)" stroke="#FF9F0A" stroke-width="2.2"/>`).join('');
+  const sonA=coordsA[coordsA.length-1];
+  const labelEls=labels.map((lb,i)=>`<text x="${coordsA[i][0].toFixed(1)}" y="${height-5}" font-size="9.5" fill="var(--steel-500)" text-anchor="middle">${esc(lb)}</text>`).join('');
+  return `<svg width="100%" height="${height}" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" style="overflow:visible;display:block">
+    <defs>
+      <linearGradient id="${idA}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#34C759" stop-opacity="0.22"/><stop offset="100%" stop-color="#34C759" stop-opacity="0"/></linearGradient>
+    </defs>
+    ${grid}
+    <path class="chart-area" d="${areaA}" fill="url(#${idA})"/>
+    <path class="chart-line-path" d="${pathOf(coordsA)}" pathLength="1" fill="none" stroke="#34C759" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <path class="chart-line-path2" d="${pathOf(coordsB)}" fill="none" stroke="#FF9F0A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="1 0"/>
+    ${dotsA}${dotsB}
+    <circle cx="${sonA[0].toFixed(1)}" cy="${sonA[1].toFixed(1)}" r="4" fill="#34C759" stroke="var(--surface)" stroke-width="2"/>
+    ${labelEls}
+  </svg>
+  <div style="display:flex;gap:16px;margin-top:6px;font-size:11px;color:var(--text-3);">
+    <span style="display:flex;align-items:center;gap:5px;"><span style="width:14px;height:3px;border-radius:2px;background:#34C759;display:inline-block;"></span>Aylık Kira Geliri (tahmini)</span>
+    <span style="display:flex;align-items:center;gap:5px;"><span style="width:14px;height:3px;border-radius:2px;background:#FF9F0A;display:inline-block;"></span>Masraf</span>
+  </div>`;
+}
 
 function svgBarChart(values, labels, width, height, color){
   const id = 'bg'+(__chartIdCounter++);
@@ -5504,6 +5571,10 @@ function renderDashboard(){
       <div class="dcard">
         <h3>Aylık Masraf (Son 6 Ay)</h3>
         ${svgLineChart(series.values, series.labels, 380, 170, {fmt: fmtCompactTL})}
+      </div>
+      <div class="dcard">
+        <h3>Gelir vs Masraf (Son 6 Ay)</h3>
+        ${(()=>{ const inc=computeMonthlyIncomeSeries(); return svgDualLineChart(inc.values, series.values, series.labels, 380, 170); })()}
       </div>
       <div class="dcard">
         <h3>⚡ Aksiyon Merkezi <a data-goto="bildirimler" style="font-size:12px;font-weight:400;color:var(--accent-blue);text-decoration:none;">Tümünü Gör →</a></h3>
@@ -6159,7 +6230,7 @@ async function sozlesmeOlustur(format){
     firmaTelefon: localStorage.getItem('filoPaneli_firmaTelefon')||'',
     firmaVergiNo: localStorage.getItem('filoPaneli_firmaVergiNo')||'',
     sozlesmeTip: tip,
-    kiraci, kiraciAdres:'', kiraciVKN:'',
+    kiraci, kiraciVergi: v.kiraciVergi||'', kiraciAdres: v.kiraciAdres||'', kiraciTel: v.kiraciTel||'', kiraciEhliyet: v.kiraciEhliyet||'', kiraciVKN: v.kiraciVergi||'',
     bas: bas.split('-').reverse().join('.'),
     bitis: bitis.split('-').reverse().join('.'),
     plaka: v.plaka, marka: v.marka||'', model: v.model||'',
@@ -6242,7 +6313,7 @@ function sozlesmeHtml(d){
   <tr><th>KİRAYA VEREN</th><th>KİRACI</th></tr>
   <tr>
     <td><strong>${d.firmaAdi}</strong><br>${d.firmaAdres}${d.firmaTelefon?'<br>Tel: '+d.firmaTelefon:''}</td>
-    <td><strong>${d.kiraci}</strong></td>
+    <td><strong>${d.kiraci}</strong>${d.kiraciVergi?`<br>TC/Vergi No: ${d.kiraciVergi}`:''}${d.kiraciAdres?`<br>${d.kiraciAdres}`:''}${d.kiraciTel?'<br>Tel: '+d.kiraciTel:''}${d.kiraciEhliyet?`<br>Ehliyet No: ${d.kiraciEhliyet}`:''}</td>
   </tr>
 </table>
 
@@ -6950,6 +7021,7 @@ async function otoBelgeSil(vehicleId, key){
   v.otoBelgeler = v.otoBelgeler.filter(o=>o.key!==key);
   await storageAPI.set(key, '').catch(()=>{});
   await persist();
+  logActivity('del', `Belge silindi: <b>${esc(v.plaka)}</b> · ${esc(o.adi||'')}`).catch(()=>{});
   showToast('Belge silindi.');
   renderDocUploadPage();
 }
@@ -8323,6 +8395,7 @@ function backupToJson(){
   a.click();
   setTimeout(()=>URL.revokeObjectURL(url), 5000);
   sonYedekKaydet();
+  logActivity('backup', 'Yedek alındı (JSON indirildi).').catch(()=>{});
   const info = document.getElementById('sonYedekInfo');
   if(info) info.innerHTML = sonYedekMetni(window.__sonYedek);
   showToast('Yedek dosyası indirildi.');

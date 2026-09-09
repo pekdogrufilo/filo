@@ -1,0 +1,9 @@
+{
+  "name": "pekdogru-filo-panel",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PEKDOĞRU Filo Kontrol Paneli — statik site + hatırlatma fonksiyonu",
+  "dependencies": {
+    "firebase-admin": "^12.0.0"
+  }
+}
