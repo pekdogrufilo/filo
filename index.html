@@ -1178,7 +1178,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-09.11</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-09.12</div>
     </div>
   </aside>
 
@@ -5761,6 +5761,11 @@ function switchPage(key){
   document.getElementById('thSub').textContent = PAGE_META[key].sub;
   window.__currentPage = key;
   renderCurrentPage();
+  // Mobilde sayfa değişince açık hamburger menüsünü otomatik kapat
+  if(window.innerWidth<=900){
+    document.getElementById('sidebar')?.classList.remove('show');
+    document.getElementById('sbOverlay')?.classList.remove('show');
+  }
 }
 document.querySelectorAll('.sb-item').forEach(b=>{ b.onclick = ()=>switchPage(b.dataset.page); });
 document.querySelectorAll('.bn-item').forEach(b=>{ b.onclick = ()=>switchPage(b.dataset.page); });
@@ -7814,6 +7819,15 @@ function belgeYukleSecilen(){
     if(tab) tab.click();
   }, 80);
 }
+// Belirli bir araca belge yüklemek için doğrudan arama (Belgeler sayfası kartından)
+function belgeYukleSecilenId(id){
+  if(!id){ showToast('Araç bulunamadı.', true); return; }
+  openEdit(id);
+  setTimeout(()=>{
+    const tab = document.querySelector('.modal-tab[data-tab="tab-belgeler"]');
+    if(tab) tab.click();
+  }, 80);
+}
 // ===== Otomatik belge yükleme =====
 // Kullanıcı poliçe/fiş/rapor dosyasını seçer; Gemini belgeden plaka + belge türü
 // okur, dosyayı doğru aracın kartına kaydeder ve sonucu uyarıyla bildirir.
@@ -8162,9 +8176,8 @@ function renderBelgelerPage(){
     <div style="display:flex;flex-direction:column;gap:8px;">
       ${filtered.length===0 ? `<div class="log-empty">Bu filtrede belge bulunamadı.</div>` :
         filtered.map(({v, docs})=>{
-          const ilgiliDocs = docs.filter(d=>d.belgeAdi || d.tarih);
           const otoDocs = Array.isArray(v.otoBelgeler) ? v.otoBelgeler : [];
-          if(!ilgiliDocs.length && !otoDocs.length) return '';
+          const toplamBelge = docs.filter(d=>d.belgeAdi).length + otoDocs.length;
           return `
           <div class="dcard" style="padding:14px 16px;">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
@@ -8174,8 +8187,12 @@ function renderBelgelerPage(){
               </div>
               <span style="font-size:12px;color:var(--text-3);">${esc(v.yer||v.kiraciAdi||'')}</span>
             </div>
+            ${toplamBelge===0 ? `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:8px;background:var(--surface-2);border:1px dashed var(--border);">
+              <span style="font-size:13px;color:var(--text-3);">Bu araçta henüz belge yüklenmemiş.</span>
+              <button onclick="belgeYukleSecilenId('${v.id}')" style="background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);color:var(--accent-blue);padding:4px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Belge Yükle</button>
+            </div>` : `
             <div style="display:flex;flex-direction:column;gap:6px;">
-              ${ilgiliDocs.map(d=>{
+              ${docs.map(d=>{
                 const dur = belgeDurum(d.tarih);
                 return `<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-radius:8px;background:${dur?dur.bg:'var(--surface-2)'};border:1px solid ${dur?dur.renk+'30':'var(--border)'};">
                   <div style="display:flex;align-items:center;gap:8px;">
@@ -8196,7 +8213,7 @@ function renderBelgelerPage(){
                   </div>
                   <button onclick="viewOtoDoc('${v.id}',${i})" style="background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);color:var(--accent-blue);padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Gör</button>
                 </div>`).join('')}
-            </div>
+            </div>`}
           </div>`;
         }).join('')
       }
