@@ -1178,7 +1178,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-09.9</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-09.10</div>
     </div>
   </aside>
 
@@ -6990,27 +6990,9 @@ async function sozlesmeOlustur(format){
     sozNo: 'SOZ-'+new Date().getFullYear()+'-'+Date.now().toString().slice(-4),
   };
 
-  // Sunucuya gönder — Python ile oluştur
-  const form = new FormData();
-  form.append('format', format);
-  form.append('data', JSON.stringify(sozData));
-
-  try{
-    const response = await fetch('/api/sozlesme', {method:'POST', body:form});
-    if(response.ok){
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `sozlesme_${v.plaka}_${bas}.${format}`;
-      a.click();
-      if(log) log.innerHTML = '<div style="color:#16A34A;font-size:13px;font-weight:600;">✅ Sözleşme indirildi.</div>';
-      return;
-    }
-  }catch(e){}
-
-  // API yoksa — HTML sözleşme oluştur ve indir
+  // Doğrudan oluştur — GitHub Pages'te /api olmadığından sunucu denemesi yapılmaz
   if(format==='pdf'){
+    if(log) log.innerHTML = '<div style="color:var(--text-3);font-size:13px;">✅ PDF sözleşme açıldı — yazdır penceresinden kaydedin.</div>';
     sozlesmeHtmlPdf(sozData);
   } else {
     sozlesmeDocx(sozData);
@@ -7048,12 +7030,31 @@ function sozMaddeListesi(d){
 function sozlesmeHtmlPdf(d){
   const log = document.getElementById('sozlesmeLog');
   const html = sozlesmeHtml(d);
-  const w = window.open('','_blank');
-  if(!w){ showToast('Popup engellendi. Tarayıcı ayarlarından izin verin.',true); return; }
-  w.document.write(html);
-  w.document.close();
-  setTimeout(()=>{ w.print(); }, 500);
-  if(log) log.innerHTML = '<div style="color:#16A34A;font-size:13px;font-weight:600;">✅ Yazdır penceresinden PDF olarak kaydedin.</div>';
+  let w = null;
+  try{ w = window.open('','_blank'); }catch(e){}
+  if(w && w.document){
+    w.document.open('text/html');
+    w.document.write(html);
+    w.document.close();
+    setTimeout(()=>{ try{ w.focus(); w.print(); }catch(e){} }, 600);
+    if(log) log.innerHTML = '<div style="color:#16A34A;font-size:13px;font-weight:600;">✅ Yazdır penceresi açıldı — PDF olarak kaydedin.</div>';
+  }else{
+    // Pop-up engellendi → HTML dosyası olarak indir
+    try{
+      const blob = new Blob([html], {type:'text/html'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `sozlesme_${(d.plaka||'arac').replace(/\s+/g,'-')}_${(d.tarih||'').replace(/\./g,'-')}.html`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url), 5000);
+      showToast('Tarayıcı pencere açmayı engelledi — sözleşme HTML dosyası olarak indirildi. Dosyayı açıp Ctrl+P ile PDF yapabilirsiniz.', true);
+      if(log) log.innerHTML = '<div style="color:#D97706;font-size:13px;font-weight:600;">⚠️ Pencere engellendi — sözleşme HTML dosyası olarak indirildi. Açıp Ctrl+P ile PDF yapabilirsiniz.</div>';
+    }catch(e){
+      showToast('Sözleşme oluşturulamadı: '+e.message, true);
+      if(log) log.innerHTML = '<div style="color:#DC2626;font-size:13px;font-weight:600;">❌ Hata: '+esc(e.message)+'</div>';
+    }
+  }
 }
 
 function sozlesmeHtml(d){
@@ -7174,13 +7175,24 @@ async function sozlesmeDocx(d){
   if(log) log.innerHTML = '<div style="color:var(--text-3);font-size:13px;">⏳ Word dosyası oluşturuluyor...</div>';
 
   try{
-    // docx.js CDN
+    // docx.js — sırayla birden fazla CDN denenir
     if(!window.docx){
+      const cdnler = [
+        'https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js',
+        'https://unpkg.com/docx@8.5.0/build/index.umd.js',
+        'https://cdn.jsdelivr.net/npm/docx@8.0.0/build/index.umd.js'
+      ];
       await new Promise((res,rej)=>{
-        const s = document.createElement('script');
-        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/docx/8.5.0/docx.umd.min.js';
-        s.onload = res; s.onerror = rej;
-        document.head.appendChild(s);
+        let i = 0;
+        const dene = ()=>{
+          if(i >= cdnler.length){ rej(new Error('docx kütüphanesi yüklenemedi (CDN erişilemez)')); return; }
+          const s = document.createElement('script');
+          s.src = cdnler[i++];
+          s.onload = res;
+          s.onerror = ()=>{ s.remove(); dene(); };
+          document.head.appendChild(s);
+        };
+        dene();
       });
     }
 
@@ -7375,8 +7387,13 @@ async function sozlesmeDocx(d){
       }]
     });
 
-    const buffer = await Packer.toBuffer(doc);
-    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+    // NOT: docx 8.5.0 UMD'de Packer.toBlob()/toBuffer() tarayıcıda 'nodebuffer' hatası verir;
+    // bu yüzden base64 üzerinden Blob üretilir.
+    const b64 = await Packer.toBase64String(doc);
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
+    const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -7385,6 +7402,7 @@ async function sozlesmeDocx(d){
     if(log) log.innerHTML = '<div style="color:#16A34A;font-size:13px;font-weight:600;">✅ Word sözleşmesi indirildi.</div>';
 
   }catch(e){
+    window.__sozDocxHata = (e && (e.stack||e.message)) || String(e);
     console.error(e);
     // Fallback — HTML olarak indir
     const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>${sozlesmeHtml(d).split('<body>')[1].split('</body>')[0]}</body></html>`;
