@@ -955,8 +955,11 @@
   .seri-copy{width:22px;height:22px;border:none;border-radius:6px;background:rgba(37,99,235,.12);color:var(--accent-blue,#2563eb);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;transition:transform .12s;}
   .seri-copy:active{transform:scale(.88);}
   .seri-copy.copied{background:rgba(52,199,89,.18);color:#1d8a4e;}
-  html[data-theme="light"] .seri-chip{background:#F5F5F7;}
-  html[data-theme="light"] .seri-copy{background:#E8F2FD;}
+  /* Seri no çipleri artık her zaman lacivert kart gövdesinde */
+  .vk-body-pad .seri-chip{background:rgba(255,255,255,.10);color:rgba(255,255,255,.78);}
+  .vk-body-pad .seri-chip .sc-v{color:#fff;}
+  .vk-body-pad .seri-copy{background:rgba(124,184,255,.18);color:#7cb8ff;}
+  .vk-body-pad .seri-copy.copied{background:rgba(74,222,128,.22);color:#4ade80;}
   /* ===== Premium Wallet araç kartı (A tasarımı) ===== */
   .card.vk{padding:0;overflow:hidden;border-radius:20px;}
   .vk-head{
@@ -980,35 +983,44 @@
   .vk-head .arac-adi{margin-top:9px;font-size:14.5px;font-weight:700;color:#fff;letter-spacing:.1px;}
   .vk-head .model{font-size:11.5px;color:rgba(255,255,255,.62);margin-top:2px;letter-spacing:.2px;}
   .vk-head-row{display:flex;align-items:center;gap:10px;position:relative;z-index:1;}
-  .vk-logo > div{width:32px !important;height:32px !important;border-radius:9px !important;
-    box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.92), 0 2px 6px rgba(0,0,0,.32);}
-  .vk-seg .gun{font-size:9.5px;text-align:center;margin-top:2px;color:var(--text-3);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .vk-seg.kotu .gun{color:var(--red,#e04038);font-weight:700;}
-  .vk-seg.uyari .gun{color:#d97706;font-weight:700;}
-  .vk-foot{border-top:1px solid var(--line);}
-  .vk-seg-row{display:flex;gap:10px;padding:13px 16px 3px;}
+  .vk-logo .marka-logo{width:34px;height:34px;border-radius:9px;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+    box-shadow:0 2px 6px rgba(0,0,0,.32), inset 0 0 0 1px rgba(255,255,255,.65);}
+  .vk-logo .marka-logo img{width:26px;height:26px;object-fit:contain;display:block;}
+  .vk-logo .ml-fb{display:none;width:100%;height:100%;border-radius:9px;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#fff;}
+  .vk-logo .marka-logo.ml-err .ml-fb{display:flex;}
+  .vk-seg .gun{font-size:9.5px;text-align:center;margin-top:2px;color:rgba(255,255,255,.45);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .vk-seg.ok .gun{color:#4ade80;font-weight:700;}
+  .vk-seg.kotu .gun{color:#f87171;font-weight:700;}
+  .vk-seg.uyari .gun{color:#fbbf24;font-weight:700;}
+  /* Seçenek 3 — Tam Wallet: gövde ve alt bar lacivert */
+  .vk-seg-row{display:flex;gap:10px;padding:13px 16px 14px;background:#16283e;}
   .vk-seg{flex:1;min-width:0;}
-  .vk-seg .bar{height:5px;border-radius:3px;background:var(--surface-2);overflow:hidden;}
+  .vk-seg .bar{height:5px;border-radius:3px;background:rgba(255,255,255,.14);overflow:hidden;}
   .vk-seg .bar span{display:block;height:100%;border-radius:3px;transition:width .5s ease;}
-  .vk-seg .lbl{font-size:9.5px;font-weight:600;color:var(--text-3);margin-top:5px;text-align:center;letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .vk-body-pad{padding:8px 16px 14px;}
-  .vk-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 16px 14px;}
-  .vk-price{font-size:16.5px;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums;}
-  .vk-price small{font-size:11px;font-weight:500;color:var(--text-3);}
+  .vk-seg .lbl{font-size:9.5px;font-weight:600;color:rgba(255,255,255,.75);margin-top:5px;text-align:center;letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .vk-body-pad{padding:8px 16px 14px;background:#16283e;}
+  .vk-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 16px 14px;background:#1d3557;border-top:1px solid rgba(255,255,255,.08);}
+  .vk-price{font-size:16.5px;font-weight:800;color:#fff;font-variant-numeric:tabular-nums;}
+  .vk-price small{font-size:11px;font-weight:500;color:rgba(255,255,255,.55);}
   .vk-acts{display:flex;gap:7px;flex-shrink:0;}
   .vk-acts button{
     width:34px;height:34px;border-radius:11px;border:none;cursor:pointer;
     display:flex;align-items:center;justify-content:center;
-    background:var(--surface-2);color:var(--text-2);
+    background:rgba(255,255,255,.13);color:#fff;
     transition:transform .12s ease, background .15s ease;
   }
   .vk-acts button:active{transform:scale(.9);}
-  .vk-acts button.vk-det{background:var(--accent-blue-dim,rgba(37,99,235,.12));color:var(--accent-blue,#2563eb);}
-  .vk-acts button.vk-sil{color:var(--coral,#d64545);}
+  .vk-acts button.vk-det{background:#fff;color:#1d3557;}
+  .vk-acts button.vk-sil{color:#fff;}
   .card.vk .card-actions{grid-template-columns:1fr 1fr 1fr 1fr;border-top:1px solid var(--line);padding:10px 16px;gap:8px;}
   .card.vk .card-actions button{font-size:12px;font-weight:600;padding:8px 6px;border-radius:9px;}
   .ch-price{margin-left:auto;display:flex;align-items:baseline;gap:3px;}
-  html[data-theme="light"] .vk-seg .bar{background:#ECECF1;}
+  /* Kritik uyarı hapları (lacivert gövde üstünde) */
+  .vk-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;}
+  .vk-chip::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;}
+  .vk-chip.red{background:rgba(248,113,113,.16);color:#fca5a5;}
+  .vk-chip.amber{background:rgba(251,191,36,.16);color:#fcd34d;}
+  .vk-ok-line{display:flex;align-items:center;gap:6px;margin-top:8px;font-size:11.5px;color:rgba(255,255,255,.6);}
   html[data-theme="dark"] .vk-head{background:linear-gradient(135deg,#0f1c2e 0%,#16283e 45%,#1d3a5f 100%);}
   /* Aksiyon çubuğu: hairline ayırıcılar */
   .card-actions button{border-right:none;}
@@ -1162,7 +1174,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-09</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-09.2</div>
     </div>
   </aside>
 
@@ -2509,7 +2521,7 @@ function render(){
     const aracAdi = [v.marka, v.model, v.versiyon].filter(Boolean).join(' ');
     const trTitle = s => String(s).toLocaleLowerCase('tr-TR').replace(/(^|[\s·\-\/(])(\p{L})/gu, (m,a,b)=>a+b.toLocaleUpperCase('tr-TR'));
     const modelTxt = [trTitle(v.aracCinsi||''), v.modelYili].filter(Boolean).join(' · ');
-    const markaLogo = getMarkaLogo(v.marka);
+    const markaLogo = getMarkaLogo(v.marka, [v.marka, v.model, v.versiyon].filter(Boolean).join(' '));
     const donanimBadge = '';
 
     // Sadeleştirilmiş kart: yalnızca kritik belge uyarıları gösterilir (<=30 gün),
@@ -2541,9 +2553,9 @@ function render(){
       let subTxt='—', subCls='';
       if(dl!==null){
         tip=`${fmtTarih(t)} · ${dl<0?Math.abs(dl)+' gün geçti':dl+' gün kaldı'}`;
-        if(dl<0){ renk='#ff3b30'; w=14; subTxt=Math.abs(dl)+' gün geçti'; subCls='kotu'; }
-        else if(dl<=30){ renk='#ff9f0a'; w=22; subTxt=dl+' gün'; subCls='uyari'; }
-        else { renk='#34c759'; w=Math.min(100, Math.max(26, Math.round(dl/365*100))); subTxt=dl+' gün'; }
+        if(dl<0){ renk='#f87171'; w=14; subTxt=Math.abs(dl)+' gün geçti'; subCls='kotu'; }
+        else if(dl<=30){ renk='#fbbf24'; w=22; subTxt=dl+' gün'; subCls='uyari'; }
+        else { renk='#4ade80'; w=Math.min(100, Math.max(26, Math.round(dl/365*100))); subTxt=dl+' gün'; subCls='ok'; }
       }
       return `<div class="vk-seg ${subCls}" title="${lbl}: ${tip}"><div class="bar"><span style="width:${w}%;background:${renk}"></span></div><div class="lbl">${lbl}</div><div class="gun">${subTxt}</div></div>`;
     }).join('')}</div>`;
@@ -2592,30 +2604,22 @@ function render(){
           let bakimChip = '';
           if(bakimKalan!==null && bakimKalan<=1000){
             const gecti = bakimKalan<=0;
-            const renk = gecti ? 'var(--red)' : 'var(--amber)';
-            const zemin = gecti ? 'var(--red-dim)' : 'var(--amber-dim)';
             const txt = gecti ? (Math.abs(bakimKalan).toLocaleString('tr-TR')+' km gecikti') : (bakimKalan.toLocaleString('tr-TR')+' km kaldı');
-            bakimChip = `<span style="display:inline-flex;align-items:center;gap:4px;background:${zemin};color:${renk};font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;">
-              <span style="width:6px;height:6px;border-radius:50%;background:${renk}"></span>Bakım — ${txt}
-            </span>`;
+            bakimChip = `<span class="vk-chip ${gecti?'red':'amber'}">Bakım — ${txt}</span>`;
           }
           if(!kritik.length){
             if(bakimChip) return `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">${bakimChip}</div>`;
             const enYakin = kontroller.filter(([,dl])=>dl!==null).sort((a,b)=>a[1]-b[1])[0];
-            return `<div style="display:flex;align-items:center;gap:6px;margin-top:8px;font-size:11.5px;color:var(--text-3);">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            return `<div class="vk-ok-line">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
               Belgeler geçerli${enYakin?` — en yakın bitiş ${enYakin[0]} ${enYakin[1]} gün sonra`:''}
             </div>`;
           }
           return `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
             ${kritik.map(([lbl,dl])=>{
-              const aciliyet = dl<0 ? 2 : (dl<=7 ? 1 : 0);
-              const renk = aciliyet===2 ? 'var(--red)' : (aciliyet===1 ? 'var(--red)' : 'var(--amber)');
-              const zemin = aciliyet>0 ? 'var(--red-dim)' : 'var(--amber-dim)';
+              const cls = dl<0 || dl<=7 ? 'red' : 'amber';
               const txt = dl<0 ? `${Math.abs(dl)} gün gecikti` : (dl===0 ? 'bugün bitiyor' : `${dl} gün kaldı`);
-              return `<span style="display:inline-flex;align-items:center;gap:4px;background:${zemin};color:${renk};font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;">
-                <span style="width:6px;height:6px;border-radius:50%;background:${renk}"></span>${lbl} — ${txt}
-              </span>`;
+              return `<span class="vk-chip ${cls}">${lbl} — ${txt}</span>`;
             }).join('')}${bakimChip}
           </div>`;
         })()}
@@ -4808,10 +4812,49 @@ async function delVehicle(id){
 }
 
 // ===== Veri doğrulama =====
-// Marka logoları — SVG veya harf bazlı fallback
-function getMarkaLogo(marka){
-  if(!marka) return '';
-  const m = marka.toLocaleLowerCase('tr-TR').trim();
+// Marka logoları — gerçek logo (Clearbit → DuckDuckGo fallback) → harf rozeti
+// Marka alanı boşsa model/ad metninden marka tahmin edilir.
+const MARKA_MODEL_IPUCU = {
+  'doblo':'fiat','egea':'fiat','linea':'fiat','fiorino':'fiat','panda':'fiat','tipo':'fiat','ducato':'fiat','scudo':'fiat',
+  'megane':'renault','clio':'renault','symbol':'renault','taliant':'renault','kangoo':'renault','fluence':'renault','captur':'renault','master':'renault','trafic':'renault',
+  'duster':'dacia','sandero':'dacia','logan':'dacia','jogger':'dacia','dokker':'dacia','lodgy':'dacia',
+  'a3':'audi','a4':'audi','bora':'volkswagen','passat':'volkswagen','golf':'volkswagen','jetta':'volkswagen','caddy':'volkswagen','transporter':'volkswagen','crafter':'volkswagen',
+  'focus':'ford','fiesta':'ford','mondeo':'ford','ranger':'ford','transit':'ford','courier':'ford','escort':'ford',
+  'corolla':'toyota','auris':'toyota','yaris':'toyota','hilux':'toyota','c-hr':'toyota',
+  'elantra':'hyundai','i20':'hyundai','accent':'hyundai','tucson':'hyundai','bayon':'hyundai','aura':'hyundai',
+  'cerato':'kia','cee':'kia','sportage':'kia','rio':'kia',
+  'corsa':'opel','astra':'opel','vectra':'opel','combo':'opel','vivaro':'opel',
+  'c4':'citroen','berlingo':'citroen','jumpy':'citroen',' c3':'citroen',' c5':'citroen',
+  '208':'peugeot','301':'peugeot','partner':'peugeot','expert':'peugeot','boxer':'peugeot',' 308':'peugeot',
+  'c-class':'mercedes','e-class':'mercedes','sprinter':'mercedes','vito':'mercedes','clk':'mercedes',
+  '3.20':'bmw','3.16':'bmw','3.18':'bmw','5.20':'bmw','320i':'bmw','316i':'bmw','525i':'bmw',
+  'l200':'mitsubishi','swace':'suzuki','vitara':'suzuki','swift':'suzuki','jimny':'suzuki',
+  'civic':'honda','city':'honda','crv':'honda','cr-v':'honda',
+  'daily':'iveco','vektra':'man','trl':'man',
+};
+function getMarkaLogo(marka, ipucuMetni){
+  if(!marka && !ipucuMetni) return '';
+  // NOT: 'tr-TR' locale'de I→ı olur, 'FIAT'→'fıat' eşleşmeyi bozar. Marka eşleşmesi en-US ile yapılır.
+  const norm = s => String(s||'').toLocaleLowerCase('en-US').replace(/\s+/g,' ').trim();
+  let m = norm(marka);
+  if(!m){
+    const hint = norm(ipucuMetni);
+    for(const [model, mrk] of Object.entries(MARKA_MODEL_IPUCU)){
+      if(hint.includes(model)){ m = mrk; break; }
+    }
+  }
+  if(!m) return '';
+  const markaDomain = {
+    'renault':'renault','dacia':'dacia','fiat':'fiat','ford':'ford',
+    'volkswagen':'volkswagen','vw':'volkswagen','mercedes':'mercedes-benz','mercedes-benz':'mercedes-benz','mercedes benz':'mercedes-benz',
+    'bmw':'bmw','toyota':'toyota','hyundai':'hyundai','kia':'kia','kia türkiye':'kia',
+    'peugeot':'peugeot','citroen':'citroen','citroën':'citroen','opel':'opel',
+    'nissan':'nissan','isuzu':'isuzu','man':'man','iveco':'iveco',
+    'volvo':'volvo','skoda':'skoda','škoda':'skoda','audi':'audi',
+    'seat':'seat','mitsubishi':'mitsubishi','honda':'honda','suzuki':'suzuki',
+    'land rover':'land-rover','jeep':'jeep','mazda':'mazda','alfa romeo':'alfa-romeo',
+    'abarth':'abarth','fiat profesyonel':'fiat','fiat professional':'fiat',
+  };
   const markaRenk = {
     'renault':'#FFCC00','fiat':'#8B0000','ford':'#003478','volkswagen':'#001E50','vw':'#001E50',
     'mercedes':'#222222','mercedes-benz':'#222222','mercedes benz':'#222222',
@@ -4824,7 +4867,12 @@ function getMarkaLogo(marka){
   };
   const renk = markaRenk[m] || '#4F8EF7';
   const harf = esc(marka.charAt(0).toLocaleUpperCase('tr-TR'));
-  return '<div style="width:34px;height:34px;border-radius:8px;background:'+renk+';display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#fff;flex-shrink:0;">'+harf+'</div>';
+  const fallback = `<div class="ml-fb" style="background:${renk}">${harf}</div>`;
+  const domain = markaDomain[m];
+  if(!domain) return `<div class="marka-logo">${fallback}</div>`;
+  // 1) jsdelivr araç-logo veri seti (yüksek kalite, şeffaf PNG) → hata olursa harf rozeti
+  const img = `<img src="https://cdn.jsdelivr.net/gh/filippofilip95/car-logos-dataset@master/logos/optimized/${domain}.png" alt="${esc(marka)}" onerror="this.parentElement.classList.add('ml-err');this.remove();">`;
+  return `<div class="marka-logo">${img}${fallback}</div>`;
 }
 
 function normPlaka(p){ return String(p||'').trim().toLocaleUpperCase('tr-TR').replace(/\s+/g,''); }
