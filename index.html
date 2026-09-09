@@ -511,7 +511,8 @@
 
   /* Mobil alt tab bar */
   .bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(9,9,15,.97);border-top:1px solid var(--border);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);z-index:100;padding:6px 0 env(safe-area-inset-bottom,6px);}
-  .bottom-nav-items{display:flex;align-items:stretch;}
+  .bottom-nav-items{display:flex;align-items:stretch;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+  .bottom-nav-items::-webkit-scrollbar{display:none;}
   .bn-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:6px 2px;border:none;background:none;color:rgba(255,255,255,.4);font-size:10px;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',Arial,sans-serif;font-weight:500;cursor:pointer;position:relative;transition:color .15s ease;}
   .bn-item svg{width:22px;height:22px;transition:transform .15s ease;}
   .bn-item.active{color:var(--accent-blue);}
@@ -5522,6 +5523,7 @@ const DASH_ICONS = {
   clock:'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
   wrench:'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14.7 6.3-6.4 6.4a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l6.4-6.4a4 4 0 1 0-3-3Z"/></svg>',
   trend:'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 17 6-6 4 4 8-8"/><path d="M17 7h4v4"/></svg>',
+  users:'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
   warn:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg>',
   doc:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z"/><path d="M14 2v6h6"/></svg>',
   shield:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>',
@@ -5665,6 +5667,8 @@ function renderDashboard(){
   const yakindaBitecekPlakalar = new Set(urgent.filter(u=>u.dl<=30).map(u=>u.plaka));
   const toplamKm = 0; // gerçek veri kaynağımız yok; bu alanı henüz takip etmiyoruz
   const aktifMusteri = new Set(vehicles.filter(v=>v.kiraciAdi).map(v=>v.kiraciAdi)).size;
+  const musteriSayisi = new Set(vehicles.filter(v=>(v.kiraciAdi||v.yer)).map(v=>(v.kiraciAdi||v.yer).trim().toLocaleLowerCase('tr-TR'))).size;
+  const hasarSayisi = vehicles.reduce((s,v)=>s+((v.hasarlar&&v.hasarlar.length)||0),0);
 
   const page = document.getElementById('page-genel-bakis');
   page.innerHTML = `
@@ -5699,6 +5703,22 @@ function renderDashboard(){
           <div class="l">Serviste</div>
           <div class="n" style="color:${serviste>0?'#DC2626':'var(--steel-100)'}">${serviste}</div>
           <div class="d" style="color:var(--steel-300);font-weight:400;">${serviste>0?'Bakımda':'Tüm araçlar aktif'}</div>
+        </div>
+      </div>
+      <div class="dstat" onclick="switchPage('musteriler')">
+        <div class="dstat-ic" style="background:rgba(88,86,214,.12);color:#5856D6">${DASH_ICONS.users}</div>
+        <div class="dstat-txt">
+          <div class="l">Müşteri</div>
+          <div class="n" style="color:#5856D6">${musteriSayisi}</div>
+          <div class="d" style="color:var(--steel-300);font-weight:400;">${aktifMusteri} kiracı aktif</div>
+        </div>
+      </div>
+      <div class="dstat" style="cursor:default;">
+        <div class="dstat-ic" style="background:rgba(255,159,10,.14);color:#FF9F0A">${DASH_ICONS.warn}</div>
+        <div class="dstat-txt">
+          <div class="l">Hasar Kaydı</div>
+          <div class="n" style="color:${hasarSayisi>0?'#FF9F0A':'var(--steel-100)'}">${hasarSayisi}</div>
+          <div class="d" style="color:var(--steel-300);font-weight:400;">tüm zamanlar</div>
         </div>
       </div>
       <div class="dstat" style="cursor:default;">
@@ -6371,6 +6391,14 @@ function sozlesmeAracSecildi(){
   if(kiraDl && v.kira) kiraDl.value = v.kira;
   if(v.kiraciAdi) document.getElementById('sozKiraci').value = v.kiraciAdi;
   if(v.kiraBitis) document.getElementById('sozBitis').value = v.kiraBitis;
+  const vknEl = document.getElementById('sozKiraciVKN');
+  if(vknEl) vknEl.value = v.kiraciVergi||'';
+  const adrEl = document.getElementById('sozKiraciAdres');
+  if(adrEl) adrEl.value = v.kiraciAdres||'';
+  const renkEl = document.getElementById('sozRenk');
+  if(renkEl) renkEl.value = v.renk||'';
+  const dpzEl = document.getElementById('sozDepozito');
+  if(dpzEl && v.kira) dpzEl.value = v.kira;
 }
 
 async function sozlesmeOlustur(format){
@@ -6382,6 +6410,11 @@ async function sozlesmeOlustur(format){
   const km = document.getElementById('sozKm')?.value;
   const tip = document.getElementById('sozTip')?.value;
   const kmLimit = document.getElementById('sozKmLimit')?.value;
+  const kmAsim = document.getElementById('sozKmAsim')?.value;
+  const depozito = document.getElementById('sozDepozito')?.value;
+  const renk = document.getElementById('sozRenk')?.value?.trim();
+  const kiraciVKNInp = document.getElementById('sozKiraciVKN')?.value?.trim();
+  const kiraciAdresInp = document.getElementById('sozKiraciAdres')?.value?.trim();
   const notlar = document.getElementById('sozNotlar')?.value?.trim();
   const log = document.getElementById('sozlesmeLog');
 
@@ -6401,19 +6434,19 @@ async function sozlesmeOlustur(format){
     firmaTelefon: localStorage.getItem('filoPaneli_firmaTelefon')||'',
     firmaVergiNo: localStorage.getItem('filoPaneli_firmaVergiNo')||'',
     sozlesmeTip: tip,
-    kiraci, kiraciVergi: v.kiraciVergi||'', kiraciAdres: v.kiraciAdres||'', kiraciTel: v.kiraciTel||'', kiraciEhliyet: v.kiraciEhliyet||'', kiraciVKN: v.kiraciVergi||'',
+    kiraci, kiraciVergi: kiraciVKNInp||v.kiraciVergi||'', kiraciAdres: kiraciAdresInp||v.kiraciAdres||'', kiraciTel: v.kiraciTel||'', kiraciEhliyet: v.kiraciEhliyet||'', kiraciVKN: kiraciVKNInp||v.kiraciVergi||'',
     bas: bas.split('-').reverse().join('.'),
     bitis: bitis.split('-').reverse().join('.'),
     plaka: v.plaka, marka: v.marka||'', model: v.model||'',
     versiyon: v.versiyon||'', aracCinsi: v.aracCinsi||'',
-    modelYili: v.modelYili||'', renk: v.renk||'',
+    modelYili: v.modelYili||'', renk: renk||v.renk||'',
     ruhsatNo: v.ruhsatSeriNo||'', sasiNo: v.sasiNo||'', motorNo: v.motorNo||'',
     teslimKm: km ? Number(km).toLocaleString('tr-TR') : '—',
     aylikKira: kira ? Number(kira).toLocaleString('tr-TR',{minimumFractionDigits:2}) : '—',
     yillikKira: kira ? (Number(kira)*12).toLocaleString('tr-TR',{minimumFractionDigits:2}) : '—',
     kmLimit: kmLimit ? Number(kmLimit).toLocaleString('tr-TR') : '3.000',
-    kmAsimFiyat: '3,00',
-    depozito: kira ? Number(kira).toLocaleString('tr-TR',{minimumFractionDigits:2}) : '—',
+    kmAsimFiyat: kmAsim!==undefined && kmAsim!=='' ? Number(kmAsim).toLocaleString('tr-TR',{minimumFractionDigits:2}) : '3,00',
+    depozito: depozito!==undefined && depozito!=='' ? Number(depozito).toLocaleString('tr-TR',{minimumFractionDigits:2}) : (kira ? Number(kira).toLocaleString('tr-TR',{minimumFractionDigits:2}) : '—'),
     sure: bas&&bitis ? (() => { const g=Math.round((new Date(bitis)-new Date(bas))/86400000); return g>=30?Math.round(g/30)+' ay':g+' gün'; })() : '—',
     notlar: notlar||'',
     tarih: new Date().toLocaleDateString('tr-TR'),
@@ -6493,6 +6526,7 @@ function sozlesmeHtml(d){
   <tr><th>Plaka</th><td>${d.plaka}</td><th>Marka / Model</th><td>${d.marka} ${d.model} ${d.versiyon}</td></tr>
   <tr><th>Araç Cinsi</th><td>${d.aracCinsi||'—'}</td><th>Model Yılı</th><td>${d.modelYili||'—'}</td></tr>
   <tr><th>Ruhsat Seri No</th><td>${d.ruhsatNo||'—'}</td><th>Şasi No</th><td>${d.sasiNo||'—'}</td></tr>
+  <tr><th>Renk</th><td>${d.renk||'—'}</td><th>Model Yılı</th><td>${d.modelYili||'—'}</td></tr>
   ${d.motorNo?`<tr><th>Motor No</th><td colspan="3">${d.motorNo}</td></tr>`:''}
 </table>
 
@@ -6501,16 +6535,24 @@ function sozlesmeHtml(d){
   <tr><th>Başlangıç Tarihi</th><td>${d.bas}</td><th>Bitiş Tarihi</th><td>${d.bitis}</td></tr>
   <tr><th>Süre</th><td>${d.sureDays} gün</td><th>Teslim KM</th><td>${d.teslimKm} km</td></tr>
   <tr><th>Aylık Kira Bedeli</th><td><strong>${d.aylikKira} ₺ (KDV Hariç)</strong></td><th>Aylık KM Limiti</th><td>${d.kmLimit} km</td></tr>
+  <tr><th>KM Aşım Ücreti</th><td>${d.kmAsimFiyat} ₺/km</td><th>Depozito</th><td>${d.depozito} ₺</td></tr>
 </table>
 
 <h2>4. Sözleşme Maddeleri</h2>
-<div class="madde"><span class="madde-no">MADDE 1 — TESLİM:</span> Araç yukarıda belirtilen tarihte ${d.teslimKm} km ile teslim edilmiştir. Araç dolu yakıtla teslim edilip dolu yakıtla iade edilecektir.</div>
-<div class="madde"><span class="madde-no">MADDE 2 — BAKIM:</span> Periyodik bakımlar kiralayan tarafından yapılacak olup, kiracı zamanında bakım yaptırmakla yükümlüdür. Bakım ücretleri kirayı verene aittir.</div>
-<div class="madde"><span class="madde-no">MADDE 3 — SİGORTA:</span> Araç zorunlu mali mesuliyet sigortası ve kasko sigortası kiralayan tarafından yapılacaktır. Kaza durumunda kiracı derhal kiralayana bilgi verecektir.</div>
-<div class="madde"><span class="madde-no">MADDE 4 — HASAR:</span> Kiracı kusurlu olduğu hasarlardan sorumludur. Muafiyet tutarları kiracıya aittir.</div>
-<div class="madde"><span class="madde-no">MADDE 5 — KM LİMİTİ:</span> Aylık ${d.kmLimit} km limit olup aşım durumunda km başına ek ücret tahakkuk ettirilir.</div>
-<div class="madde"><span class="madde-no">MADDE 6 — İADE:</span> Kiracı, kira süresi sonunda aracı sözleşme başlangıcındaki durumunda iade etmekle yükümlüdür.</div>
-<div class="madde"><span class="madde-no">MADDE 7 — ÖDEME:</span> Kira bedeli her ayın başında peşin ödenecektir. Gecikmeli ödemelere yasal faiz uygulanır.</div>
+<div class="madde"><span class="madde-no">MADDE 1 — TESLİM VE İADE:</span> Araç yukarıda belirtilen tarihte ${d.teslimKm} km ile teslim edilmiştir. Araç dolu yakıtla teslim edilip dolu yakıtla iade edilecektir. İade sırasında araç birlikte kontrol edilerek tutanak düzenlenecektir.</div>
+<div class="madde"><span class="madde-no">MADDE 2 — BAKIM VE ONARIM:</span> Periyodik bakımlar kiralayan tarafından yapılacak olup, kiracı zamanında bakım yaptırmakla yükümlüdür. Kiracının kusuru veya ihmali nedeniyle oluşan arıza ve hasarların bedeli kiracıya aittir. Yetkisiz servislerde bakım/onarım yaptırılamaz.</div>
+<div class="madde"><span class="madde-no">MADDE 3 — SİGORTA VE HASAR:</span> Araç zorunlu mali mesuliyet ve kasko sigortası kiralayan tarafından yapılacaktır. Kaza durumunda kiracı derhal kiralayana bilgi verecektir. Kasko muafiyetleri, iç mekan/lastik/cam hasarları ve alkol-uyuşturucu etkisi altındaki kullanımdan doğan hasarlar kiracıya aittir.</div>
+<div class="madde"><span class="madde-no">MADDE 4 — KM LİMİTİ:</span> Aylık ${d.kmLimit} km limit olup aşım durumunda km başına ${d.kmAsimFiyat} ₺ + KDV ek ücret tahakkuk ettirilir. Kullanılmayan km sonraki döneme devredilmez.</div>
+<div class="madde"><span class="madde-no">MADDE 5 — ÖDEME:</span> Kira bedeli her ayın 1. günü peşin, banka havalesi/EFT ile ödenecektir. Gecikmeli ödemelere yasal faiz uygulanır. Depozito (${d.depozito} ₺) sözleşme imzalanmadan önce tahsil edilir, sorunsuz iadede iade edilir.</div>
+<div class="madde"><span class="madde-no">MADDE 6 — KULLANIM KURALLARI:</span> Araç yalnızca sözleşmede belirtilen amaçla kullanılacaktır; üçüncü kişilere kiralanamaz, devredilemez, rehin verilemez. Yurt dışına çıkış kiralayanın yazılı onayına tabidir. Yetkisiz değişiklik (LPG, renk vb.) yapılamaz.</div>
+<div class="madde"><span class="madde-no">MADDE 7 — FESİH VE ERKEN İADE:</span> Erken fesih için 30 gün önceden yazılı bildirim zorunludur; kalan süreye ait kira bedelinin %20'si cezai şart olarak tahsil edilir. Sözleşme ihlalinde kiralayan derhal fesih hakkına sahiptir.</div>
+<div class="madde"><span class="madde-no">MADDE 8 — TRAFİK CEZALARI:</span> Kira süresinde kiracının kullanımından kaynaklanan tüm trafik cezaları, OGS/HGS geçiş ücretleri, çekici ve otopark bedelleri kiracıya aittir.</div>
+<div class="madde"><span class="madde-no">MADDE 9 — CEZAİ ŞART VE TAZMİNAT:</span> Sözleşmeye aykırı davranışta kiralayanın tüm zararları ile kaybedilen kira gelirleri kiracıdan tazmin edilir. İzinsiz devir veya kötüye kullanımda sözleşme bedelinin %50'si cezai şart olarak tahsil edilir.</div>
+<div class="madde"><span class="madde-no">MADDE 10 — GİZLİLİK VE KVKK:</span> Taraflar, 6698 sayılı KVKK kapsamında kişisel verileri korumakla yükümlüdür; sözleşme konusu bilgileri yetkisiz üçüncü kişilerle paylaşamaz.</div>
+<div class="madde"><span class="madde-no">MADDE 11 — TEMİNAT VE HACİZ YASAĞI:</span> Kiracı, ${d.depozito} ₺ teminat vermiştir. Kiralanan araç üzerine haciz, rehin veya ihtiyati tedbir koyduramaz; kiracı nedeniyle üçüncü kişilerce haciz halinde doğacak zararlar kiracıya aittir.</div>
+<div class="madde"><span class="madde-no">MADDE 12 — MÜCBİR SEBEP:</span> Deprem, sel, yangın, savaş, grev, salgın gibi kontrol dışı sebeplerden doğan ifa imkânsızlığında taraflar sorumlu tutulamaz; mücbir sebep 30 günü aşarsa sözleşme feshedilebilir.</div>
+<div class="madde"><span class="madde-no">MADDE 13 — UYUŞMAZLIK VE YETKİLİ MAHKEME:</span> Bu sözleşmeden doğacak uyuşmazlıklarda KONYA Mahkemeleri ve İcra Daireleri yetkilidir. Bu sözleşme 2 (iki) nüsha olarak tanzim edilip imzalanmıştır.</div>
+<div class="madde"><span class="madde-no">MADDE 14 — GENEL HÜKÜMLER:</span> Yazılı olmayan hallerde Türk Borçlar Kanunu ve ilgili mevzuat uygulanır. Bir maddenin geçersizliği diğer maddeleri etkilemez.</div>
 ${d.notlar?`<div class="madde"><span class="madde-no">ÖZEL ŞARTLAR:</span> ${d.notlar}</div>`:''}
 
 <div class="imza">
@@ -6683,9 +6725,49 @@ async function sozlesmeDocx(d){
           ]),
           bos(),
 
-          ...madde(11,'UYUŞMAZLIK VE YETKİLİ MAHKEME',[
-            '11.1. Bu sözleşmeden doğacak uyuşmazlıklarda KONYA Mahkemeleri ve İcra Daireleri yetkilidir.',
-            '11.2. Bu sözleşme 2 (iki) nüsha olarak tanzim edilmiş ve taraflarca imzalanmıştır.',
+          ...madde(11,'TRAFİK CEZALARI',[
+            '11.1. Kira süresi içinde kiracının kullanımından kaynaklanan tüm trafik idari para cezaları, OGS/HGS geçiş ücretleri, çekici ve otopark bedelleri kiracıya aittir.',
+            '11.2. Kiralayan tarafından tebliğ edilen cezalar, kiracıdan ayrıca tahsil edilir.',
+          ]),
+          bos(),
+
+          ...madde(12,'CEZAİ ŞART VE TAZMİNAT',[
+            '12.1. Kiracının sözleşme hükümlerine aykırı davranması halinde, kiralayanın uğradığı tüm zararlar ile kaybedilen kira gelirleri kiracıdan tazmin edilir.',
+            '12.2. Erken iade veya fesihte, kalan süreye ait kira bedelinin %20’si cezai şart olarak tahsil edilir.',
+            '12.3. Aracın izinsiz devri veya kötüye kullanımı halinde sözleşme bedelinin %50’si cezai şart olarak tahsil edilir.',
+          ]),
+          bos(),
+
+          ...madde(13,'GİZLİLİK VE KVKK',[
+            '13.1. Taraflar, bu sözleşmenin kurulması ve ifası kapsamında öğrenmiş oldukları kişisel verileri 6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) kapsamında korunacak şekilde işler ve saklar.',
+            '13.2. Taraflar, sözleşme konusu bilgileri üçüncü kişilerle yetkisiz olarak paylaşmayacaktır.',
+            '13.3. Kiracı, verilerinin işlenmesi konusunda kiralayanı 6698 sayılı Kanun çerçevesinde bilgilendirmesi halinde yazılı onay vermiş sayılır.',
+          ]),
+          bos(),
+
+          ...madde(14,'TEMİNAT VE HACİZ YASAĞI',[
+            `14.1. Kiracı, sözleşmenin güvenli ifası için ${d.depozito} ₺ teminat/depozito vermiştir.`,
+            '14.2. Kiracı, kiralanan araç üzerine haciz, rehin veya ihtiyati tedbir koyduramaz; kiralayana yazılı bildirimde bulunmaksızın aracı devredemez.',
+            '14.3. Aracın kiracı nedeniyle üçüncü kişilerce hacz edilmesi halinde doğacak zararlar kiracıya aittir.',
+          ]),
+          bos(),
+
+          ...madde(15,'MÜCBİR SEBEP',[
+            '15.1. Deprem, sel, yangın, savaş, grev, salgın ve benzeri tarafların kontrolü dışındaki mücbir sebeplerden doğan ifa imkânsızlığında taraflar sorumlu tutulamaz.',
+            '15.2. Mücbir sebebin 30 günden fazla sürmesi halinde taraflardan her biri sözleşmeyi feshedebilir; o ana kadar kullanılan sürelerin kirası tahsil edilir.',
+          ]),
+          bos(),
+
+          ...madde(16,'UYUŞMAZLIK VE YETKİLİ MAHKEME',[
+            '16.1. Bu sözleşmeden doğacak uyuşmazlıklarda KONYA Mahkemeleri ve İcra Daireleri yetkilidir.',
+            '16.2. Bu sözleşme 2 (iki) nüsha olarak tanzim edilmiş ve taraflarca imzalanmıştır.',
+          ]),
+          bos(),
+
+          ...madde(17,'GENEL HÜKÜMLER',[
+            '17.1. Bu sözleşmede yazılı olmayan hallerde Türk Borçlar Kanunu ve ilgili mevzuat hükümleri uygulanır.',
+            '17.2. Sözleşmenin bir maddesinin geçersiz sayılması, diğer maddelerin geçerliliğini etkilemez.',
+            '17.3. Taraflar, sözleşme şartlarını okuduğunu, anladığını ve kabul ettiğini beyan eder.',
           ]),
 
           ...(d.notlar ? [bos(), new Paragraph({ spacing: { before: 200, after: 100 }, children: [
@@ -6934,6 +7016,26 @@ function renderKiralamaPage(){
         <div class="field">
           <label>Aylık KM Limiti</label>
           <input type="number" id="sozKmLimit" placeholder="3000">
+        </div>
+        <div class="field">
+          <label>Kiracı TC / VKN</label>
+          <input type="text" id="sozKiraciVKN" placeholder="11 haneli TC veya 10 haneli VKN">
+        </div>
+        <div class="field">
+          <label>Kiracı Adresi</label>
+          <input type="text" id="sozKiraciAdres" placeholder="Kiracının açık adresi">
+        </div>
+        <div class="field">
+          <label>Araç Rengi</label>
+          <input type="text" id="sozRenk" placeholder="Beyaz, Gri, Siyah...">
+        </div>
+        <div class="field">
+          <label>KM Aşım Ücreti (₺/km)</label>
+          <input type="number" id="sozKmAsim" step="0.50" min="0" placeholder="3.00" value="3">
+        </div>
+        <div class="field">
+          <label>Depozito (₺)</label>
+          <input type="number" id="sozDepozito" placeholder="Aylık kiraya eşit önerilir">
         </div>
       </div>
       <div class="field">
@@ -7404,11 +7506,26 @@ function renderRaporlarPage(){
   const page = document.getElementById('page-raporlar');
 
   // Araç bazlı karlılık hesapla
+  // Aylık masraf: artık yıllık toplamın 12'ye bölümü DEĞİL — masraf kaydı olan
+  // en güncel ayın gerçek toplamı kullanılır (bu ay kayıt yoksa önceki aya düşer).
+  const _now = new Date();
+  const _buAy = `${_now.getFullYear()}-${String(_now.getMonth()+1).padStart(2,'0')}`;
+  const _ayToplamlari = {};
+  let _sonAy = null;
+  expenses.forEach(e=>{
+    const k = (e.tarih||'').slice(0,7);
+    if(!k) return;
+    _ayToplamlari[k] = (_ayToplamlari[k]||0)+(Number(e.tutar)||0);
+    if(!_sonAy || k>_sonAy) _sonAy = k;
+  });
+  const hedefAy = _ayToplamlari[_buAy]!==undefined ? _buAy : _sonAy;
+  const hedefAyEtiket = hedefAy ? (hedefAy===_buAy?'bu ay':hedefAy.split('-').reverse().join('.')) : '';
+
   const karlilik = vehicles.map(v=>{
     const aylikGelir = Number(v.kira)||0;
     const toplamMasraf = expenses.filter(e=>normPlaka(e.plaka)===normPlaka(v.plaka)).reduce((s,e)=>s+(Number(e.tutar)||0),0);
     const masrafSayisi = expenses.filter(e=>normPlaka(e.plaka)===normPlaka(v.plaka)).length;
-    const aylikMasrafTahmini = toplamMasraf / Math.max(1, 12); // yıllık masrafı aylığa böl (basit tahmin)
+    const aylikMasrafTahmini = hedefAy ? expenses.filter(e=>normPlaka(e.plaka)===normPlaka(v.plaka) && (e.tarih||'').slice(0,7)===hedefAy).reduce((s,e)=>s+(Number(e.tutar)||0),0) : 0;
     const aylikKar = aylikGelir - aylikMasrafTahmini;
     return { v, aylikGelir, toplamMasraf, masrafSayisi, aylikMasrafTahmini, aylikKar };
   }).filter(x=>x.aylikGelir>0 || x.toplamMasraf>0)
@@ -7428,7 +7545,7 @@ function renderRaporlarPage(){
         </div>
         <div class="dstat" style="cursor:default;">
           <div class="dstat-ic" style="background:var(--safety)">${DASH_ICONS.wrench}</div>
-          <div class="dstat-txt"><div class="n">${fmtTL(toplamMasraf)}</div><div class="l">Aylık Masraf (tahmini)</div></div>
+          <div class="dstat-txt"><div class="n">${fmtTL(toplamMasraf)}</div><div class="l">Aylık Masraf${hedefAyEtiket?` (${hedefAyEtiket})`:''}</div></div>
         </div>
         <div class="dstat" style="cursor:default;">
           <div class="dstat-ic" style="background:${toplamKar>=0?'#38A169':'var(--safety)'}">${DASH_ICONS.check}</div>
@@ -7456,7 +7573,7 @@ function renderRaporlarPage(){
           </tr>`;
         }).join('')}</tbody>
       </table></div>` : '<div class="log-empty">Karlılık analizi için araçlara kira tutarı ve masraf ekleyin.</div>'}
-      <div style="margin-top:12px;font-size:12px;color:var(--steel-100)">* Aylık masraf tahmini: toplam masraf ÷ 12 ay. Daha doğru analiz için masrafları düzenli girin.</div>
+      <div style="margin-top:12px;font-size:12px;color:var(--steel-100)">* Aylık masraf: masraf kaydı olan en güncel ayın gerçek toplamı baz alınır (bu ay kayıt yoksa önceki ay). Geçmiş ayların toplamı dahil edilmez.</div>
     </div>
 
     <div class="dcard">
@@ -8716,9 +8833,17 @@ initInstallPrompt();
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14.7 6.3-6.4 6.4a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l6.4-6.4a4 4 0 1 0-3-3Z"/><path d="M8 12 4 16l4 4 4-4"/></svg>
       Bakım
     </button>
+    <button class="bn-item" data-page="musteriler">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Müşteri
+    </button>
     <button class="bn-item" data-page="ayarlar">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.04 1.56V21a2 2 0 0 1-4 0v-.09A1.7 1.7 0 0 0 9 19.36a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.64 15a1.7 1.7 0 0 0-1.56-1.04H3a2 2 0 0 1 0-4h.09A1.7 1.7 0 0 0 4.64 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.64a1.7 1.7 0 0 0 1.04-1.56V3a2 2 0 0 1 4 0v.09a1.7 1.7 0 0 0 1.04 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.36 9a1.7 1.7 0 0 0 1.56 1.04H21a2 2 0 0 1 0 4h-.09a1.7 1.7 0 0 0-1.56 1.04Z"/></svg>
       Ayarlar
+    </button>
+    <button class="bn-item" data-page="ai">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="7" width="16" height="12" rx="3"/><path d="M12 3v4"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg>
+      AI
     </button>
   </div>
 </nav>
