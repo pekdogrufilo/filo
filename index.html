@@ -891,6 +891,7 @@
       <div class="sb-section">OPERASYON</div>
       <button class="sb-item" data-page="arac-yonetimi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2v-6l-3-5H4l-3 5v6h2"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="16.5" cy="17.5" r="2.5"/></svg>Araç Yönetimi</button>
       <button class="sb-item" data-page="kiralama"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Kiralama İşlemleri</button>
+      <button class="sb-item" data-page="musteriler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Müşteriler</button>
       <button class="sb-item" data-page="bakim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14.7 6.3-6.4 6.4a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l6.4-6.4a4 4 0 1 0-3-3Z"/><path d="M8 12 4 16l4 4 4-4"/></svg>Bakım &amp; Servis</button>
 
       <div class="sb-section">FİNANS</div>
@@ -1090,6 +1091,7 @@
 </section>
 
 <section class="page" data-page="kiralama" id="page-kiralama"></section>
+<section class="page" data-page="musteriler" id="page-musteriler"></section>
 <section class="page" data-page="masraf" id="page-masraf"></section>
 <section class="page" data-page="bakim" id="page-bakim"></section>
 <section class="page" data-page="belgeler" id="page-belgeler"></section>
@@ -4702,6 +4704,7 @@ const PAGE_META = {
   'genel-bakis': {title:'Genel Bakış', sub:'Filo performansını anlık olarak takip edin'},
   'arac-yonetimi': {title:'Araç Yönetimi', sub:'Tüm araçları görüntüle, ekle ve düzenle'},
   'kiralama': {title:'Kiralama İşlemleri', sub:'Kiradaki araçlar ve kiracı bilgileri'},
+  'musteriler': {title:'Müşteriler', sub:'Kiracı ve kurumlar: araçlar, kira toplamı ve geçmiş'},
   'masraf': {title:'Masraf Yönetimi', sub:'Tüm araçlardaki masrafları görüntüle ve ekle'},
   'bakim': {title:'Bakım & Servis', sub:'Serviste olan araçlar ve yaklaşan muayeneler'},
   'belgeler': {title:'Belgeler', sub:'Yüklenen sözleşme, poliçe ve raporlar'},
@@ -4750,6 +4753,7 @@ function renderCurrentPage(){
   else if(key==='docupload') renderDocUploadPage();
   else if(key==='ayarlar') renderAyarlarPage();
   else if(key==='kiralama') renderKiralamaPage();
+  else if(key==='musteriler') renderMusterilerPage();
 }
 
 // ---- Basit SVG grafik yardımcıları (dış kütüphaneye bağımlı değil) ----
@@ -6862,6 +6866,153 @@ function renderRaporlarPage(){
 }
 
 // ===== Bildirimler sayfası =====
+// ===== Müşteriler sayfası =====
+function musteriListesiOlustur(){
+  const mapa = new Map();
+  function kaydet(ad){
+    const key = ad.toLocaleLowerCase('tr-TR');
+    if(!mapa.has(key)) mapa.set(key, {ad: ad, araclar: [], tel: '', sehirler: new Set()});
+    return mapa.get(key);
+  }
+  vehicles.forEach(v=>{
+    const ad = (v.yer||'').trim() || (v.kiraciAdi||'').trim();
+    if(!ad) return;
+    const m = kaydet(ad);
+    m.araclar.push(v);
+    if(!m.tel && v.kiraciTel) m.tel = v.kiraciTel;
+    const sehir = ad.split('(')[0].trim();
+    if(sehir) m.sehirler.add(sehir);
+  });
+  // Sadece kira geçmişinde görünen (şu an aracı olmayan) müşteriler de listelensin
+  vehicles.forEach(v=>{
+    (v.kiraGecmisi||[]).forEach(k=>{
+      const ad = (k.kiraci||'').trim();
+      if(ad) kaydet(ad);
+    });
+  });
+  return [...mapa.values()].map(m=>{
+    m.kirada = m.araclar.filter(v=>v.durum==='Kirada').length;
+    m.toplamKira = m.araclar.filter(v=>v.durum==='Kirada').reduce((s,v)=>s+(Number(v.kira)||0),0);
+    const key = m.ad.toLocaleLowerCase('tr-TR');
+    m.gecmisSayi = vehicles.reduce((s,v)=>s+(v.kiraGecmisi||[]).filter(k=>(k.kiraci||'').trim().toLocaleLowerCase('tr-TR')===key).length,0);
+    return m;
+  }).sort((a,b)=>b.toplamKira-a.toplamKira || b.araclar.length-a.araclar.length || a.ad.localeCompare(b.ad,'tr'));
+}
+
+function musteriDurumRenk(durum){
+  return durum==='Kirada' ? '#16A34A' : durum==='Serviste' ? '#DC2626' : '#6B7280';
+}
+
+function renderMusterilerPage(){
+  const page = document.getElementById('page-musteriler');
+  const q = (window.__musteriArama||'').toLocaleLowerCase('tr-TR');
+  const tumu = musteriListesiOlustur();
+  window.__musteriList = tumu;
+  const musteriler = tumu.filter(m=>!q || m.ad.toLocaleLowerCase('tr-TR').includes(q));
+  const aktif = musteriler.filter(m=>m.kirada>0).length;
+  const toplamKira = musteriler.reduce((s,m)=>s+m.toplamKira,0);
+  const cokAracli = musteriler.filter(m=>m.araclar.length>1).length;
+  const acik = (typeof window.__musteriAcik==='number') ? window.__musteriAcik : null;
+
+  page.innerHTML = `
+    <div class="topbar">
+      <div class="topbar-left">
+        <h1>Müşteriler</h1>
+        <span style="font-size:13px;color:var(--text-3);">${tumu.length} kayıt</span>
+      </div>
+    </div>
+
+    <div class="dash-stats" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:16px;">
+      <div class="dstat" style="cursor:default;">
+        <div class="dstat-ic" style="background:rgba(37,99,235,.15);color:#2563EB;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <div class="dstat-txt"><div class="l">Müşteri / Kurum</div><div class="n">${musteriler.length}</div></div>
+      </div>
+      <div class="dstat" style="cursor:default;">
+        <div class="dstat-ic" style="background:rgba(22,163,74,.15);color:#16A34A;">${DASH_ICONS.check}</div>
+        <div class="dstat-txt"><div class="l">Aktif Müşteri</div><div class="n" style="color:#16A34A;">${aktif}</div><div class="d" style="color:#16A34A;">kirada aracı var</div></div>
+      </div>
+      <div class="dstat" style="cursor:default;">
+        <div class="dstat-ic" style="background:rgba(217,119,6,.15);color:#D97706;">${DASH_ICONS.trend}</div>
+        <div class="dstat-txt"><div class="l">Aylık Kira Toplamı</div><div class="n">${fmtCompactTL(toplamKira)}</div><div class="d">aktif kiralamalar</div></div>
+      </div>
+      <div class="dstat" style="cursor:default;">
+        <div class="dstat-ic" style="background:rgba(124,58,237,.15);color:#7C3AED;">${DASH_ICONS.clock}</div>
+        <div class="dstat-txt"><div class="l">Çok Araçlı Müşteri</div><div class="n">${cokAracli}</div><div class="d">2+ araç</div></div>
+      </div>
+    </div>
+
+    <div class="search-wrap" style="margin-bottom:14px;">
+      <input id="musteriAramaInput" type="text" placeholder="Müşteri veya kurum adına göre ara..." value="${esc(window.__musteriArama||'')}"
+        oninput="window.__musteriArama=this.value;window.__musteriFokus=true;renderMusterilerPage()">
+    </div>
+
+    ${musteriler.length===0 ? `
+      <div class="dcard"><div class="log-empty">${q?'Bu aramaya uygun müşteri yok.':'Henüz müşteri kaydı yok. Araç kartlarında "Çalıştığı Yer" veya "Kiracı" alanını doldurun.'}</div></div>
+    ` : musteriler.map((m,i)=>{
+      const acikMi = acik===i;
+      const initial = m.ad.trim().charAt(0).toLocaleUpperCase('tr-TR');
+      const renkler = ['#2563EB','#16A34A','#D97706','#7C3AED','#DC2626','#0891B2'];
+      const avRenk = renkler[i % renkler.length];
+      return `
+      <div class="dcard" style="padding:0;overflow:hidden;margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:pointer;" onclick="musteriAcKapa(${i})">
+          <div style="width:38px;height:38px;border-radius:50%;background:${avRenk};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex-shrink:0;">${esc(initial)}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:14px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(m.ad)}</div>
+            <div style="font-size:12px;color:var(--text-3);margin-top:2px;">
+              ${m.araclar.length} araç · ${m.kirada} kirada${m.tel?' · 📞 '+esc(m.tel):''}${m.sehirler.size?' · '+esc([...m.sehirler].slice(0,2).join(', ')):''}
+            </div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;">
+            <div style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace;font-weight:700;font-size:13px;color:var(--text);">${m.toplamKira?fmtCompactTL(m.toplamKira)+' ₺/ay':'—'}</div>
+            <div style="font-size:11px;color:var(--text-3);">${acikMi?'kapat':'detay'}</div>
+          </div>
+        </div>
+        ${acikMi ? musteriDetayHtml(m) : ''}
+      </div>`;
+    }).join('')}
+  `;
+
+  if(window.__musteriFokus){
+    delete window.__musteriFokus;
+    const inp = document.getElementById('musteriAramaInput');
+    if(inp){ inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
+  }
+}
+
+function musteriDetayHtml(m){
+  const satirlar = m.araclar.slice().sort((a,b)=>(b.durum==='Kirada')-(a.durum==='Kirada') || (Number(b.kira)||0)-(Number(a.kira)||0)).map(v=>{
+    const dl = daysLeft(v.kiraBitis||v.sozlesmeBitis);
+    const bitis = dl===null ? '—' : (dl<0 ? `<span style="color:#DC2626;font-weight:700;">${Math.abs(dl)} gün geçti</span>` : `${fmtTarih(v.kiraBitis||v.sozlesmeBitis)}`);
+    return `
+      <div onclick="openVehicleDetail('${v.id}')" style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border);cursor:pointer;">
+        <span style="font-family:monospace;font-weight:700;font-size:12.5px;color:var(--text);min-width:82px;">${esc(v.plaka)}</span>
+        <span style="font-size:12px;color:var(--text-3);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc([v.marka,v.model,v.modelYili].filter(Boolean).join(' ')||'—')}</span>
+        <span style="font-size:11px;font-weight:700;color:${musteriDurumRenk(v.durum)};white-space:nowrap;">${esc(v.durum)}</span>
+        <span style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace;font-size:12px;color:var(--text-2);white-space:nowrap;">${v.kira?fmtTL2_role(v.kira):'—'}</span>
+        <span style="font-size:11.5px;color:var(--text-3);white-space:nowrap;">${bitis}</span>
+      </div>`;
+  }).join('');
+  return `
+    <div style="border-top:1px solid var(--border);background:var(--surface-2);">
+      ${m.tel ? `
+      <div style="display:flex;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border);">
+        <a href="tel:${esc(m.tel)}" style="background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);color:var(--accent-blue);padding:5px 12px;border-radius:7px;font-size:12px;font-weight:600;text-decoration:none;">📞 ${esc(m.tel)}</a>
+      </div>` : ''}
+      <div style="padding:8px 14px 4px;font-size:12px;font-weight:700;color:var(--text-2);">Araçlar (${m.araclar.length})</div>
+      ${satirlar || '<div style="padding:6px 14px 10px;font-size:12px;color:var(--text-3);">Şu an kayıtlı aracı yok (yalnızca geçmiş kayıtlardan biliniyor).</div>'}
+      <div style="display:flex;gap:16px;padding:10px 14px;font-size:12px;color:var(--text-3);border-top:1px solid var(--border);">
+        <span>Geçmiş kira kaydı: <b style="color:var(--text-2);">${m.gecmisSayi}</b></span>
+        ${m.toplamKira?`<span>Aktif aylık kira: <b style="color:var(--text-2);">${fmtTL2_role(m.toplamKira)}</b></span>`:''}
+      </div>
+    </div>`;
+}
+
+function musteriAcKapa(i){
+  window.__musteriAcik = (window.__musteriAcik===i) ? null : i;
+  renderMusterilerPage();
+}
+
 function renderBildirimlerPage(){
   const page = document.getElementById('page-bildirimler');
   const list = urgentList().sort((a,b)=>a.dl-b.dl);
