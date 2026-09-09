@@ -6621,6 +6621,7 @@ const OTO_BELGE_TURLERI = {
   ruhsat:   {label:'Ruhsat',           prefix:'ruhsat_',        adiF:'ruhsatBelgeAdi',  tipF:'ruhsatBelgeTip',  tarihF:null},
   sozlesme: {label:'Kira sözleşmesi',  prefix:'contract_',      adiF:'sozlesmeAdi',     tipF:'sozlesmeTip',     tarihF:'sozlesmeBitis'},
 };
+const OTO_BELGE_SYSTEM = 'Sen bir araç belgesi (poliçe, ruhsat, muayene raporu, kira sözleşmesi, masraf fişi, servis kaydı vb.) okuyan asistansın. SADECE şu JSON nesnesini döndür, başka hiçbir metin veya kod bloğu ekleme:\n{"plaka": string|null, "belgeTuru": "sigorta"|"kasko"|"muayene"|"ruhsat"|"sozlesme"|"masraf"|"servis"|"vize"|"diger", "tarih": "YYYY-MM-DD"|null, "belgeNo": string|null}\nKurallar: "plaka" belgedeki araç plakası (Türk formatı: 2 rakam + 2-3 harf + 2-4 rakam, ör. 42 ABC 123). "belgeTuru" belgenin türü — sigorta poliçesi ise "sigorta", kasko ise "kasko", muayene raporu ise "muayene", tescil/ruhsat ise "ruhsat", kira sözleşmesi ise "sozlesme", masraf/yakıt fişi ise "masraf", servis/bakım kaydı ise "servis", vize/uluslararası belge ise "vize", hiçbiri değilse "diger". "tarih" belgenin geçerlilik bitiş tarihi (poliçe/muayene/sözleşme) ya da fiş/rapor tarihi — YYYY-MM-DD formatında; bulamazsan null. Emin değilsen null yaz, tahmin yürütme.';
 async function otoBelgeSec(file, statusEl){
   if(!file) return;
   if(file.size > 3.5*1024*1024){ showToast('Dosya çok büyük (en fazla 3,5 MB).', true); return; }
@@ -6652,20 +6653,12 @@ async function otoBelgeSec(file, statusEl){
       return;
     }
 
-    // 1) Gemini'den plaka + tür + tarih oku
-    const mime = file.type || 'application/pdf';
-    const b64 = dataUrl.split(',')[1];
-    const system = 'Sen bir araç belgesi (poliçe, ruhsat, muayene raporu, kira sözleşmesi, masraf fişi, servis kaydı vb.) okuyan asistansın. SADECE şu JSON nesnesini döndür, başka hiçbir metin veya kod bloğu ekleme:\n{"plaka": string|null, "belgeTuru": "sigorta"|"kasko"|"muayene"|"ruhsat"|"sozlesme"|"masraf"|"servis"|"vize"|"diger", "tarih": "YYYY-MM-DD"|null, "belgeNo": string|null}\nKurallar: "plaka" belgedeki araç plakası (Türk formatı: 2 rakam + 2-3 harf + 2-4 rakam, ör. 42 ABC 123). "belgeTuru" belgenin türü — sigorta poliçesi ise "sigorta", kasko ise "kasko", muayene raporu ise "muayene", tescil/ruhsat ise "ruhsat", kira sözleşmesi ise "sozlesme", masraf/yakıt fişi ise "masraf", servis/bakım kaydı ise "servis", vize/uluslararası belge ise "vize", hiçbiri değilse "diger". "tarih" belgenin geçerlilik bitiş tarihi (poliçe/muayene/sözleşme) ya da fiş/rapor tarihi — YYYY-MM-DD formatında; bulamazsan null. Emin değilsen null yaz, tahmin yürütme.';
-    const yanit = await geminiChatFetch(system, [{role:'user', parts:[
-      {inline_data:{mime_type:mime, data:b64}},
-      {text:'Bu belgeyi oku ve istenen JSON formatında yanıtla.'}
-    ]}], {temperature:0, maxOutputTokens:1024});
-
-    let bilgi = {};
-    try{ bilgi = JSON.parse(yanit.replace(/```json|```/g,'').trim()); }catch(e){ bilgi = {}; }
-    const tur = (bilgi.belgeTuru||'diger').toLowerCase();
-    const okunanPlaka = plakaNormalize(bilgi.plaka);
-    const okunanTarih = normalizeExtractedDate(bilgi.tarih||'');
+    // 1) Gemini'den plaka + tür + tarih oku (başarısızsa seçili araca genel belge olarak kaydet)
+    const onceden = await belgeVeriOku(file);
+    const bilgi = getGeminiKey() ? await belgeAnalizEt(onceden) : null;
+    const tur = ((bilgi&&bilgi.belgeTuru)||'diger').toLowerCase();
+    const okunanPlaka = bilgi ? plakaNormalize(bilgi.plaka) : null;
+    const okunanTarih = bilgi ? normalizeExtractedDate(bilgi.tarih||'') : '';
 
     // 2) Plakadan aracı bul (yandaki seçim de yedek)
     let v = null;
@@ -6683,13 +6676,13 @@ async function otoBelgeSec(file, statusEl){
     // 3) Doğru kart yuvasına kaydet
     const std = OTO_BELGE_TURLERI[tur];
     if(std){
-      const res = await storageAPI.set(std.prefix+v.id, dataUrl);
+      const res = await storageAPI.set(std.prefix+v.id, onceden.dataUrl);
       if(!res) throw new Error('depolama kaydı başarısız');
       v[std.adiF] = file.name;
-      v[std.tipF] = mime;
+      v[std.tipF] = onceden.mime;
       if(std.tarihF && okunanTarih) v[std.tarihF] = okunanTarih;
     }else{
-      await belgeAracaEkle(v, tur, file.name, mime, dataUrl, okunanTarih);
+      await belgeAracaEkle(v, tur, file.name, onceden.mime, onceden.dataUrl, okunanTarih);
     }
     await persist();
     logActivity('Belge yüklendi', `${v.plaka} — ${std?std.label:(tur==='diger'?'Belge':tur)} (${file.name})`).catch(()=>{});
@@ -6728,14 +6721,21 @@ function renderDocUploadPage(){
   page.innerHTML = `
     <div class="dcard" style="padding:18px;margin-bottom:16px;">
       <div style="font-size:15px;font-weight:700;margin-bottom:4px;">Belge yükle</div>
-      <div style="font-size:12.5px;color:var(--text-2);margin-bottom:14px;">Poliçe, muayene raporu, ruhsat, masraf fişi, servis kağıdı… Dosyayı bırakın — sistem plakayı okur, doğru araç kartına kaydeder ve sizi uyarır.</div>
+      <div style="font-size:12.5px;color:var(--text-2);margin-bottom:14px;">Poliçe, muayene raporu, ruhsat, masraf fişi, servis kağıdı… Dosyayı bırakın — sistem plakayı okur, doğru araç kartına kaydeder ve sizi uyarır. Çoklu seçim desteklenir; plakası okunamayan dosyalar aşağıda seçtiğiniz araca kaydedilir.</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+        <span style="font-size:12px;color:var(--text-3);">Okunamayan belgeler bu araca kaydedilsin:</span>
+        <select id="duAracSec" style="background:var(--surface-2);border:1px solid transparent;border-radius:10px;color:var(--text);padding:7px 10px;font-size:13px;max-width:170px;font-family:inherit;">
+          <option value="">Araç seç… (zorunlu değil)</option>
+          ${vehicles.map(v=>`<option value="${v.id}">${esc(v.plaka)}</option>`).join('')}
+        </select>
+      </div>
       <div id="duDrop" style="border:2px dashed var(--border-2);border-radius:14px;padding:28px 16px;text-align:center;cursor:pointer;transition:all .15s ease;background:var(--surface-2);">
         <div style="font-size:30px;margin-bottom:8px;">📤</div>
         <div style="font-size:13.5px;font-weight:600;color:var(--text);">Sürükleip bırakın veya <span style="color:var(--accent-blue);">dosya seçin</span></div>
         <div style="font-size:11.5px;color:var(--text-3);margin-top:4px;">PDF veya görsel · en fazla 3,5 MB · birden fazla dosya seçebilirsiniz</div>
       </div>
       <input type="file" id="duFile" accept=".pdf,image/*" multiple style="display:none">
-      <div id="duStatus" style="display:none;margin-top:12px;font-size:13px;color:var(--text-2);background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;"></div>
+      <div id="duStatus" style="display:none;margin-top:12px;font-size:13px;color:var(--text-2);background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;white-space:pre-line;"></div>
     </div>
 
     <div class="dcard" style="padding:18px;">
@@ -6773,33 +6773,15 @@ function renderDocUploadPage(){
   inp.onchange = async ()=>{
     if(!inp.files.length) return;
     const files = Array.from(inp.files);
-    const sonuc = {ok:0, hata:0};
-    status.style.display = 'block';
-    for(let i=0;i<files.length;i++){
-      status.textContent = `Okunuyor… (${i+1}/${files.length}) — ${files[i].name}`;
-      try{
-        await otoBelgeSec(files[i], status);
-        sonuc.ok++;
-      }catch(e){ sonuc.hata++; }
-    }
-    status.textContent = `Tamamlandı: ${sonuc.ok} belge kaydedildi${sonuc.hata?`, ${sonuc.hata} dosya yüklenemedi`:''}.`;
-    setTimeout(()=>{ status.style.display='none'; }, 6000);
-    renderDocUploadPage();
+    inp.value = '';
+    await belgeTopluIsle(files, status);
   };
   ['dragover','dragenter'].forEach(ev=>drop.addEventListener(ev, e=>{ e.preventDefault(); drop.style.borderColor='var(--accent-blue)'; drop.style.background='var(--blue-dim)'; }));
   ['dragleave','drop'].forEach(ev=>drop.addEventListener(ev, e=>{ e.preventDefault(); drop.style.borderColor='var(--border-2)'; drop.style.background='var(--surface-2)'; }));
   drop.addEventListener('drop', async e=>{
     const files = Array.from(e.dataTransfer.files||[]);
     if(!files.length) return;
-    const sonuc = {ok:0, hata:0};
-    status.style.display = 'block';
-    for(let i=0;i<files.length;i++){
-      status.textContent = `Okunuyor… (${i+1}/${files.length}) — ${files[i].name}`;
-      try{ await otoBelgeSec(files[i], status); sonuc.ok++; }catch(err){ sonuc.hata++; }
-    }
-    status.textContent = `Tamamlandı: ${sonuc.ok} belge kaydedildi${sonuc.hata?`, ${sonuc.hata} dosya yüklenemedi`:''}.`;
-    setTimeout(()=>{ status.style.display='none'; }, 6000);
-    renderDocUploadPage();
+    await belgeTopluIsle(files, status);
   });
 }
 async function otoBelgeSil(vehicleId, key){
@@ -6809,6 +6791,88 @@ async function otoBelgeSil(vehicleId, key){
   await storageAPI.set(key, '').catch(()=>{});
   await persist();
   showToast('Belge silindi.');
+  renderDocUploadPage();
+}
+
+// ===== Toplu belge işleme motoru =====
+function otoBelgeFallbackId(){
+  const du = document.getElementById('duAracSec');
+  const bl = document.getElementById('belgeYukleArac');
+  return (du&&du.value) || (bl&&bl.value) || '';
+}
+async function belgeVeriOku(file){
+  const dataUrl = await new Promise((res,rej)=>{
+    const fr = new FileReader();
+    fr.onload = ()=>res(fr.result);
+    fr.onerror = ()=>rej(new Error('Dosya okunamadı'));
+    fr.readAsDataURL(file);
+  });
+  return {dataUrl, mime: file.type || 'application/pdf', b64: dataUrl.split(',')[1]};
+}
+async function belgeAnalizEt(onceden){
+  // Gemini plaka+tür+tarih okuma — başarısızlıkta 1 kez yeniden dener, olmazsa null döner
+  for(let deneme=0; deneme<2; deneme++){
+    try{
+      const yanit = await geminiChatFetch(OTO_BELGE_SYSTEM, [{role:'user', parts:[
+        {inline_data:{mime_type:onceden.mime, data:onceden.b64}},
+        {text:'Bu belgeyi oku ve istenen JSON formatında yanıtla.'}
+      ]}], {temperature:0, maxOutputTokens:1024});
+      const bilgi = JSON.parse(yanit.replace(/```json|```/g,'').trim());
+      if(bilgi && typeof bilgi==='object') return bilgi;
+    }catch(e){
+      if(deneme===0) await new Promise(r=>setTimeout(r,3000));
+    }
+  }
+  return null;
+}
+async function belgeTopluTek(file, fallbackId){
+  try{
+    if(file.size > 3.5*1024*1024) return {durum:'hata', mesaj:'3,5 MB sınırı aşıldı'};
+    const onceden = await belgeVeriOku(file);
+    const bilgi = getGeminiKey() ? await belgeAnalizEt(onceden) : null;
+    const tur = ((bilgi&&bilgi.belgeTuru)||'diger').toLowerCase();
+    const okunanPlaka = bilgi ? plakaNormalize(bilgi.plaka) : null;
+    const okunanTarih = bilgi ? normalizeExtractedDate(bilgi.tarih||'') : '';
+    let v = null;
+    if(okunanPlaka){
+      v = vehicles.find(x=>plakaNormalize(x.plaka)===okunanPlaka)
+        || vehicles.find(x=>plakaNormalize(x.plaka).includes(okunanPlaka));
+    }
+    if(!v && fallbackId) v = vehicles.find(x=>x.id===fallbackId);
+    if(!v) return {durum:'hata', mesaj: okunanPlaka ? `plaka ${okunanPlaka} okundu ama filoda yok` : 'plaka okunamadı ve araç seçilmedi'};
+    const std = OTO_BELGE_TURLERI[tur];
+    if(std){
+      const res = await storageAPI.set(std.prefix+v.id, onceden.dataUrl);
+      if(!res) throw new Error('Depolama alanı dolu');
+      v[std.adiF] = file.name;
+      v[std.tipF] = onceden.mime;
+      if(std.tarihF && okunanTarih) v[std.tarihF] = okunanTarih;
+    }else{
+      await belgeAracaEkle(v, tur, file.name, onceden.mime, onceden.dataUrl, okunanTarih);
+    }
+    await persist();
+    logActivity('Belge yüklendi', `${v.plaka} — ${std?std.label:tur} (${file.name})`).catch(()=>{});
+    return {durum:'ok', plaka:v.plaka, etiket: std?std.label:(tur==='diger'?'Genel belge':tur), tarih: okunanTarih};
+  }catch(e){ return {durum:'hata', mesaj: e.message||'bilinmeyen hata'}; }
+}
+async function belgeTopluIsle(files, status){
+  const fallbackId = otoBelgeFallbackId();
+  status.style.display='block';
+  let bitti=0, ok=0, kurtarilan=0, hata=0;
+  const toplam = files.length;
+  const kuyruk = files.slice();
+  const isle = async (file)=>{
+    const r = await belgeTopluTek(file, fallbackId);
+    bitti++;
+    if(r.durum==='ok'){ ok++; if(r.etiket==='Genel belge') kurtarilan++; }
+    else hata++;
+    status.textContent = `${bitti}/${toplam} işlendi · ${ok} kaydedildi${hata?` · ${hata} hata`:''}\nSon: ${file.name} — ${r.durum==='ok'?('✓ '+r.plaka+' ('+r.etiket+')'):('✗ '+r.mesaj)}`;
+  };
+  const isci = async ()=>{ let f; while((f=kuyruk.shift())!==undefined){ await isle(f); } };
+  await Promise.all(Array.from({length: Math.min(3, toplam)}, isci));
+  status.textContent = `Tamamlandı: ${ok}/${toplam} belge kaydedildi${kurtarilan?` (${kurtarilan} plaka okunamayıp seçili araca kaydedildi)`:''}${hata?`, ${hata} dosya yüklenemedi`:''}.`;
+  showToast(`${ok} belge kaydedildi${hata?`, ${hata} başarısız`:''}.`);
+  setTimeout(()=>{ status.style.display='none'; }, 8000);
   renderDocUploadPage();
 }
 
