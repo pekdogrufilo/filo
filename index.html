@@ -1080,7 +1080,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-05</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-09</div>
     </div>
   </aside>
 
@@ -2470,6 +2470,14 @@ function render(){
 
         ${healthHtml}
 
+        ${v.ruhsatSeriNo ? `<div style="margin-top:8px;">
+          <button class="ruhsat-copy" data-serial="${esc(v.ruhsatSeriNo)}" title="Muayene/vize randevusu için ruhsat seri no kopyala" style="display:inline-flex;align-items:center;gap:6px;background:rgba(37,99,235,.08);color:var(--accent-blue,#2563eb);border:1px dashed rgba(37,99,235,.4);font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:8px;cursor:copy;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+            Ruhsat <span class="mono" style="font-weight:700;letter-spacing:.3px;">${esc(v.ruhsatSeriNo)}</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+          </button>
+        </div>` : ''}
+
         ${(()=>{
           const kontroller = [
             ['Sigorta', daysLeft(v.sigortaTarihi)],
@@ -2545,6 +2553,26 @@ function render(){
   grid.querySelectorAll('.edit').forEach(b=>b.onclick=()=>openEdit(b.dataset.id));
   grid.querySelectorAll('.del').forEach(b=>b.onclick=()=>delVehicle(b.dataset.id));
   grid.querySelectorAll('.masraf').forEach(b=>b.onclick=()=>openMasrafDrawer(b.dataset.id));
+  grid.querySelectorAll('.ruhsat-copy').forEach(b=>{
+    b.onclick = async e=>{
+      e.stopPropagation();
+      const serial = b.dataset.serial || '';
+      let ok = false;
+      try{ await navigator.clipboard.writeText(serial); ok = true; }
+      catch(_){
+        try{
+          const ta = document.createElement('textarea');
+          ta.value = serial; ta.style.position='fixed'; ta.style.opacity='0';
+          document.body.appendChild(ta); ta.select();
+          ok = document.execCommand('copy'); ta.remove();
+        }catch(_2){}
+      }
+      const eski = b.innerHTML;
+      b.innerHTML = '<span style="font-weight:700;">✓ Kopyalandı</span>';
+      setTimeout(()=>{ b.innerHTML = eski; }, 1400);
+      showToast(ok ? `Ruhsat seri no kopyalandı: ${serial}` : 'Kopyalanamadı — numarayı elle seçin', !ok);
+    };
+  });
   grid.querySelectorAll('.doc-link, .doc-chip.has').forEach(b=>b.onclick=()=>viewDoc(b.dataset.prefix, b.dataset.id, b.dataset.label));
   grid.querySelectorAll('.inline-date').forEach(inp=>{
     inp.onclick = e=>e.stopPropagation();
