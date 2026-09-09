@@ -1178,7 +1178,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-09.10</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-09.11</div>
     </div>
   </aside>
 
@@ -1954,6 +1954,7 @@ async function initCloudSync(){
 let vehicles = [];
 let activityLog = [];
 let expenses = [];
+let sozlesmeler = [];
 let activeFilter = 'hepsi';
 let activeSirket = 'hepsi';
 let belgeFilterType = null; // null | 'sigorta' | 'muayene' | 'kira'
@@ -1985,6 +1986,10 @@ async function load(){
     const er = await storageAPI.get('expenses').catch(()=>null);
     expenses = (er && er.value) ? JSON.parse(er.value) : [];
   }catch(e){ expenses = []; }
+  try{
+    const sr = await storageAPI.get('sozlesmeler').catch(()=>null);
+    sozlesmeler = (sr && sr.value) ? JSON.parse(sr.value) : [];
+  }catch(e){ sozlesmeler = []; }
   buildSirketFilter();
   render();
   updateShellChrome();
@@ -2389,6 +2394,57 @@ async function persist(){
   }
 }
 function cryptoId(){return 'v'+Math.random().toString(36).slice(2,10);}
+
+// ===== Kayıtlı Sözleşmeler =====
+async function persistSozlesmeler(){
+  await storageAPI.set('sozlesmeler', JSON.stringify(sozlesmeler)).catch(()=>showToast('Sözleşme kaydedilemedi.', true));
+}
+// Sözleşmeyi sisteme kaydeder; aynı kiracı+tarihler+araç seti daha önce kaydedildiyse
+// aynı kaydı günceller (PDF + Word ayrı kayıt açmaz) ve orijinal sözleşme nosunu korur.
+async function sozKaydet(d, basISO, bitisISO){
+  try{
+    const plakalar = (d.araclar && d.araclar.length ? d.araclar : [{plaka:d.plaka}]).map(a=>a.plaka||'').filter(Boolean);
+    const key = [(d.kiraci||''), basISO||'', bitisISO||'', plakalar.slice().sort().join(',')].join('|');
+    let rec = sozlesmeler.find(r=>r.key===key);
+    if(!rec){
+      rec = {
+        id: 'sz'+Math.random().toString(36).slice(2,10),
+        key, sozNo: d.sozNo, tarih: d.tarih,
+        kiraci: d.kiraci||'', kiraciVKN: d.kiraciVKN||'',
+        plakalar, aracOzet: plakalar.length ? plakalar.join(', ') : (d.plaka||'—'),
+        basISO: basISO||'', bitisISO: bitisISO||'',
+        data: d,
+      };
+      sozlesmeler.push(rec);
+    }else{
+      d.sozNo = rec.sozNo; // aynı sözleşme yeniden üretiliyorsa numara sabit kalsın
+      rec.data = d;
+      rec.tarih = d.tarih;
+    }
+    await persistSozlesmeler();
+    return rec;
+  }catch(e){ console.error('Sözleşme kaydı hatası:', e); return null; }
+}
+function sozKayitPdf(id){
+  const rec = sozlesmeler.find(r=>r.id===id);
+  if(!rec){ showToast('Sözleşme kaydı bulunamadı.', true); return; }
+  sozlesmeHtmlPdf(rec.data);
+}
+function sozKayitDocx(id){
+  const rec = sozlesmeler.find(r=>r.id===id);
+  if(!rec){ showToast('Sözleşme kaydı bulunamadı.', true); return; }
+  sozlesmeDocx(rec.data);
+}
+async function sozKayitSil(id){
+  if(!requireAdmin()) return;
+  const rec = sozlesmeler.find(r=>r.id===id);
+  if(!rec) return;
+  if(!confirm(rec.sozNo+' numaralı sözleşme kaydı silinsin mi?')) return;
+  sozlesmeler = sozlesmeler.filter(r=>r.id!==id);
+  await persistSozlesmeler();
+  renderCurrentPage();
+  showToast('Sözleşme kaydı silindi.');
+}
 
 function daysLeft(dateStr){
   if(!dateStr) return null;
@@ -4398,6 +4454,7 @@ async function kirayaVerVeSozlesme(format){
     tarih: new Date().toLocaleDateString('tr-TR'),
     sozNo: 'SOZ-'+new Date().getFullYear()+'-'+Date.now().toString().slice(-4),
   };
+  await sozKaydet(sozData, bas, bitis);
   if(format==='pdf') sozlesmeHtmlPdf(sozData);
   else sozlesmeDocx(sozData);
 }
@@ -6991,6 +7048,7 @@ async function sozlesmeOlustur(format){
   };
 
   // Doğrudan oluştur — GitHub Pages'te /api olmadığından sunucu denemesi yapılmaz
+  await sozKaydet(sozData, bas, bitis);
   if(format==='pdf'){
     if(log) log.innerHTML = '<div style="color:var(--text-3);font-size:13px;">✅ PDF sözleşme açıldı — yazdır penceresinden kaydedin.</div>';
     sozlesmeHtmlPdf(sozData);
@@ -7647,6 +7705,58 @@ function renderKiralamaPage(){
         </button>
       </div>
       <div id="sozlesmeLog" style="margin-top:10px;"></div>
+    </div>
+
+    <div class="dcard" style="margin-bottom:16px;">
+      <h3>📁 Kayıtlı Sözleşmeler <span style="font-weight:400;font-size:13px;color:var(--steel-100)">${sozlesmeler.length} kayıt</span></h3>
+      <p style="font-size:13px;color:var(--text-2);margin-bottom:12px;">Oluşturulan her sözleşme otomatik kaydedilir; istediğiniz zaman PDF/Word olarak yeniden indirebilirsiniz.</p>
+      ${sozlesmeler.length ? `
+      <div class="table-scroll"><table class="mini-table">
+        <thead><tr><th>Sözleşme No</th><th>Tarih</th><th>Kiracı</th><th>Araç(lar)</th><th>Dönem</th><th>Durum</th><th style="white-space:nowrap;">İşlem</th></tr></thead>
+        <tbody>${[...sozlesmeler].reverse().map(r=>{
+          const dl = daysLeft(r.bitisISO);
+          const durum = dl===null ? '<span style="color:var(--steel-300);">—</span>'
+            : (dl<0 ? '<span style="color:#DC2626;font-weight:600;">Süresi geçti</span>'
+                    : `<span style="color:#16A34A;font-weight:600;">Aktif${dl<=7?' · '+dl+' gün kaldı':''}</span>`);
+          return `<tr>
+            <td style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace;font-weight:700;">${esc(r.sozNo)}</td>
+            <td>${esc(r.tarih||'—')}</td>
+            <td>${esc(r.kiraci||'—')}${r.kiraciVKN?`<div style="font-size:11px;color:var(--steel-300);">VKN/TC: ${esc(r.kiraciVKN)}</div>`:''}</td>
+            <td style="font-size:12px;">${esc(r.aracOzet||'—')}</td>
+            <td style="font-size:12px;">${r.basISO?fmtTarih(r.basISO):'—'} → ${r.bitisISO?fmtTarih(r.bitisISO):'—'}</td>
+            <td>${durum}</td>
+            <td style="white-space:nowrap;">
+              <button onclick="sozKayitPdf('${r.id}')" style="background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);color:var(--accent-blue);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">PDF</button>
+              <button onclick="sozKayitDocx('${r.id}')" style="background:rgba(22,163,74,.1);border:1px solid rgba(22,163,74,.2);color:#16A34A;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Word</button>
+              <button onclick="sozKayitSil('${r.id}')" style="background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.2);color:#DC2626;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Sil</button>
+            </td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table></div>
+      <div class="m-card-list">${[...sozlesmeler].reverse().map(r=>{
+        const dl = daysLeft(r.bitisISO);
+        const durum = dl===null ? '<span style="color:var(--steel-300);">—</span>'
+          : (dl<0 ? '<span style="color:#DC2626;font-weight:600;">Süresi geçti</span>'
+                  : '<span style="color:#16A34A;font-weight:600;">Aktif</span>');
+        return `<div class="m-card">
+          <div class="m-card-head">
+            <span style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace;font-weight:700;font-size:13px;">${esc(r.sozNo)}</span>
+            ${durum}
+          </div>
+          <div class="m-card-rows">
+            <div class="m-card-row"><span class="m-card-label">Kiracı</span><span class="m-card-val">${esc(r.kiraci||'—')}</span></div>
+            <div class="m-card-row"><span class="m-card-label">Araç</span><span class="m-card-val" style="font-size:12px;">${esc(r.aracOzet||'—')}</span></div>
+            <div class="m-card-row"><span class="m-card-label">Dönem</span><span class="m-card-val" style="font-size:12px;">${r.basISO?fmtTarih(r.basISO):'—'} → ${r.bitisISO?fmtTarih(r.bitisISO):'—'}</span></div>
+            <div class="m-card-row"><span class="m-card-label">Tarih</span><span class="m-card-val">${esc(r.tarih||'—')}</span></div>
+          </div>
+          <div style="display:flex;gap:6px;margin-top:10px;">
+            <button onclick="sozKayitPdf('${r.id}')" style="flex:1;background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);color:var(--accent-blue);padding:7px 0;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">PDF</button>
+            <button onclick="sozKayitDocx('${r.id}')" style="flex:1;background:rgba(22,163,74,.1);border:1px solid rgba(22,163,74,.2);color:#16A34A;padding:7px 0;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Word</button>
+            <button onclick="sozKayitSil('${r.id}')" style="background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.2);color:#DC2626;padding:7px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Sil</button>
+          </div>
+        </div>`;
+      }).join('')}</div>
+      ` : '<div class="log-empty">Henüz kayıtlı sözleşme yok. "Kira Sözleşmesi Oluştur" veya "Araç Kirala" ile ilk sözleşmenizi üretin — otomatik olarak burada saklanır.</div>'}
     </div>
 
     <div class="dcard" style="margin-bottom:16px;">
