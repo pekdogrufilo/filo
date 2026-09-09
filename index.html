@@ -1178,7 +1178,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-09.3</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-09.4</div>
     </div>
   </aside>
 
@@ -4840,8 +4840,8 @@ const MARKA_MODEL_IPUCU = {
 };
 function getMarkaLogo(marka, ipucuMetni){
   if(!marka && !ipucuMetni) return '';
-  // NOT: 'tr-TR' locale'de I→ı olur, 'FIAT'→'fıat' eşleşmeyi bozar. Marka eşleşmesi en-US ile yapılır.
-  const norm = s => String(s||'').toLocaleLowerCase('en-US').replace(/\s+/g,' ').trim();
+  // Türkçe 'FİAT' → 'fiat', 'DOBLÒ' → 'doblo' eşleşsin: noktalı İ düz I'ya, aksanlar da temizlenir
+  const norm = s => String(s||'').replace(/İ/g,'I').replace(/\u0307/g,'').toLocaleLowerCase('en-US').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim();
   let m = norm(marka);
   if(!m){
     const hint = norm(ipucuMetni);
@@ -4933,7 +4933,7 @@ const MODEL_GORSEL = {
   'jumpy':'https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d4/2016_Citroen_Dispatch_1000_BlueHDi_X_S_1.6_Front.jpg/330px-2016_Citroen_Dispatch_1000_BlueHDi_X_S_1.6_Front.jpg',
 };
 function getAracGorsel(hint){
-  const h = String(hint||'').toLocaleLowerCase('en-US');
+  const h = String(hint||'').replace(/İ/g,'I').replace(/\u0307/g,'').toLocaleLowerCase('en-US').normalize('NFD').replace(/[\u0300-\u036f]/g,'');
   if(!h) return '';
   const keys = Object.keys(MODEL_GORSEL).sort((a,b)=>b.length-a.length);
   for(const k of keys){ if(h.includes(k)) return MODEL_GORSEL[k]; }
