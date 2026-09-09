@@ -1352,6 +1352,10 @@
           <div class="field"><label>Teslim tarihi</label><input type="date" id="fTeslimTarih"></div>
           <div class="field"><label>Teslim km</label><input type="number" id="fTeslimKm" min="0" placeholder="0"></div>
         </div>
+        <div class="field-row">
+          <div class="field"><label>Son bakım km</label><input type="number" id="fBakimKm" min="0" placeholder="0"></div>
+          <div class="field"><label>Bakım periyodu (km)</label><input type="number" id="fBakimPeriyot" min="0" placeholder="10000"></div>
+        </div>
         <div class="field">
           <label>Teslim fotoğrafı 1 (ön/genel, en fazla 3,5MB)</label>
           <input type="file" id="fTeslimFoto1" accept="image/*">
@@ -1677,6 +1681,16 @@ function urgentList(){
       const dl = daysLeft(tarih);
       if(dl<=7) rows.push({plaka:v.plaka, tip, dl});
     });
+    // Km bazlı bakım uyarısı
+    if(v.sonBakimKm && v.bakimPeriyotKm){
+      const mevcutKm = Math.max(
+        Number(v.sonKm)||0,
+        Number(v.teslimKm)||0,
+        ...(v.kmGecmisi||[]).map(k=>Number(k.bitKm)||0)
+      );
+      const kalan = Math.round(v.sonBakimKm + v.bakimPeriyotKm - mevcutKm);
+      if(kalan<=500) rows.push({plaka:v.plaka, tip:'Bakım (km)', dl: kalan<=0 ? 0 : 5, km: kalan});
+    }
   });
   return rows;
 }
@@ -2185,7 +2199,25 @@ function render(){
             ['Sözleşme', daysLeft(v.sozlesmeBitis)],
           ];
           const kritik = kontroller.filter(([,dl])=>dl!==null && dl<=30);
+          // Km bazlı bakım uyarısı (son bakım km + periyot dolmuşsa/yaklaşıyorsa)
+          const mevcutKm = Math.max(
+            Number(v.sonKm)||0,
+            Number(v.teslimKm)||0,
+            ...(v.kmGecmisi||[]).map(k=>Number(k.bitKm)||0)
+          );
+          const bakimKalan = (v.sonBakimKm && v.bakimPeriyotKm) ? Math.round(v.sonBakimKm + v.bakimPeriyotKm - mevcutKm) : null;
+          let bakimChip = '';
+          if(bakimKalan!==null && bakimKalan<=1000){
+            const gecti = bakimKalan<=0;
+            const renk = gecti ? 'var(--red)' : 'var(--amber)';
+            const zemin = gecti ? 'var(--red-dim)' : 'var(--amber-dim)';
+            const txt = gecti ? (Math.abs(bakimKalan).toLocaleString('tr-TR')+' km gecikti') : (bakimKalan.toLocaleString('tr-TR')+' km kaldı');
+            bakimChip = `<span style="display:inline-flex;align-items:center;gap:4px;background:${zemin};color:${renk};font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;">
+              <span style="width:6px;height:6px;border-radius:50%;background:${renk}"></span>Bakım — ${txt}
+            </span>`;
+          }
           if(!kritik.length){
+            if(bakimChip) return `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">${bakimChip}</div>`;
             const enYakin = kontroller.filter(([,dl])=>dl!==null).sort((a,b)=>a[1]-b[1])[0];
             return `<div style="display:flex;align-items:center;gap:6px;margin-top:8px;font-size:11.5px;color:var(--text-3);">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
@@ -2201,7 +2233,7 @@ function render(){
               return `<span style="display:inline-flex;align-items:center;gap:4px;background:${zemin};color:${renk};font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;">
                 <span style="width:6px;height:6px;border-radius:50%;background:${renk}"></span>${lbl} — ${txt}
               </span>`;
-            }).join('')}
+            }).join('')}${bakimChip}
           </div>`;
         })()}
       </div>
@@ -3429,7 +3461,7 @@ async function viewOtoDoc(vehicleId, index){
 }
 
 function clearForm(){
-  ['fPlaka','fCins','fMarka','fModel','fVersiyon','fDonanim','fYil','fSirket','fSofor','fYer','fKira','fTarih','fMuayene','fSigorta','fRuhsatSeri','fMuayeneSeri','fSigortaNo','fKaskoNo','fKaskoBitis','fSozlesmeBitis','fKiraciAdi','fKiraciTel','fTeslimTarih','fTeslimKm','fSoforUcreti'].forEach(id=>document.getElementById(id).value='');
+  ['fPlaka','fCins','fMarka','fModel','fVersiyon','fDonanim','fYil','fSirket','fSofor','fYer','fKira','fTarih','fMuayene','fSigorta','fRuhsatSeri','fMuayeneSeri','fSigortaNo','fKaskoNo','fKaskoBitis','fSozlesmeBitis','fKiraciAdi','fKiraciTel','fTeslimTarih','fTeslimKm','fBakimKm','fBakimPeriyot','fSoforUcreti'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('fKiralamaTuru').value='soförsüz';
   document.getElementById('fDurum').value='Kirada';
   document.getElementById('fMuayeneRandevu').checked=false;
@@ -3590,6 +3622,86 @@ async function saveIade(id){
   document.getElementById('iadeModal')?.remove();
   logActivity('edit', '<b>'+esc(v.plaka)+'</b> kiradan iade alındı — '+iadeTarih+(kmBit?', iade km: '+kmBit.toLocaleString('tr-TR'):''));
   showToast(v.plaka+' başarıyla iade alındı, durum "Müsait" olarak güncellendi.');
+}
+
+// ===== Sözleşme uzatma =====
+function isoPlusYil(iso, yil){
+  yil = yil||1;
+  const p = String(iso||'').split('-').map(Number);
+  let y,m,d;
+  if(p.length===3 && !p.some(isNaN)){ y=p[0]+yil; m=p[1]; d=Math.min(p[2], new Date(y, p[1], 0).getDate()); }
+  else { const n=new Date(); y=n.getFullYear()+yil; m=n.getMonth()+1; d=n.getDate(); }
+  return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+}
+function openUzatForm(id){
+  const v = vehicles.find(x=>x.id===id);
+  if(!v) return;
+  const eski = v.kiraBitis||v.sozlesmeBitis||'';
+  const el = document.createElement('div');
+  el.className = 'iade-modal';
+  el.id = 'uzatModal';
+  const dl = eski ? daysLeft(eski) : null;
+  const dlTxt = dl===null ? '' : (dl<0 ? `<span style="color:var(--safety);font-weight:600;">${Math.abs(dl)} gün geçti</span>` : `${dl} gün kaldı`);
+  el.innerHTML = `
+    <div class="iade-card">
+      <div class="iade-head">
+        <h3>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C9A961" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+          Sözleşme Uzat — <span class="mini-plaka" style="font-size:13px;">${esc(v.plaka)}</span>
+        </h3>
+        <button class="vqm-close" onclick="document.getElementById('uzatModal').remove()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="iade-body">
+        ${eski?`<div class="iade-section">Mevcut bitiş: ${fmtTarih(eski)} · ${dlTxt}</div>`:''}
+        <div class="iade-row">
+          <div class="iade-field">
+            <label>Yeni sözleşme bitişi</label>
+            <input type="date" id="uzatYeniBitis" value="${isoPlusYil(eski)}">
+          </div>
+          <div class="iade-field">
+            <label>Aylık kira (₺)</label>
+            <input type="number" id="uzatKira" min="0" placeholder="0" value="${v.kira||''}">
+          </div>
+        </div>
+        <div class="iade-field">
+          <label>Not (opsiyonel)</label>
+          <input type="text" id="uzatNot" placeholder="Örn. 1 yıl uzatma, aynı koşullar">
+        </div>
+      </div>
+      <div class="iade-foot">
+        <button class="iade-btn-cancel" onclick="document.getElementById('uzatModal').remove()">İptal</button>
+        <button class="iade-btn-save" onclick="saveUzatma('${v.id}')">Uzatmayı Kaydet</button>
+      </div>
+    </div>
+  `;
+  el.addEventListener('click', e=>{ if(e.target===el) el.remove(); });
+  document.body.appendChild(el);
+}
+async function saveUzatma(id){
+  const v = vehicles.find(x=>x.id===id);
+  if(!v) return;
+  const yeni = document.getElementById('uzatYeniBitis')?.value;
+  if(!yeni){ showToast('Yeni bitiş tarihi seçin.', true); return; }
+  const eski = v.kiraBitis||v.sozlesmeBitis||'';
+  if(eski && yeni<=eski){ showToast('Yeni bitiş, mevcut bitişten sonra olmalı.', true); return; }
+  const kira = Number(document.getElementById('uzatKira')?.value)||0;
+  const not = document.getElementById('uzatNot')?.value?.trim()||'';
+  const idx = vehicles.findIndex(x=>x.id===id);
+  vehicles[idx] = {
+    ...v,
+    kira: kira||v.kira||0,
+    sozlesmeBitis: yeni,
+    kiraBitis: v.kiraBitis ? yeni : v.kiraBitis,
+    uzatmalar: [...(v.uzatmalar||[]), {tarih: todayISO(), eskiBitis: eski, yeniBitis: yeni, kira: kira||v.kira||0, not}],
+  };
+  await persist();
+  render();
+  if(window.__currentPage && window.__currentPage!=='arac-yonetimi') renderCurrentPage();
+  document.getElementById('uzatModal')?.remove();
+  logActivity('edit', `Sözleşme uzatıldı: <b>${esc(v.plaka)}</b> · ${fmtTarih(eski)} → ${fmtTarih(yeni)}${not?' · '+esc(not):''}`);
+  showToast(v.plaka+' sözleşmesi '+fmtTarih(yeni)+' tarihine kadar uzatıldı.');
 }
 
 async function fisBelgeGor(masrafId){
@@ -3933,6 +4045,8 @@ function openEdit(id){
   document.getElementById('fKiraciTel').value=v.kiraciTel||'';
   document.getElementById('fTeslimTarih').value=v.teslimTarih||'';
   document.getElementById('fTeslimKm').value=v.teslimKm||'';
+  document.getElementById('fBakimKm').value=v.sonBakimKm||'';
+  document.getElementById('fBakimPeriyot').value=v.bakimPeriyotKm||'';
   document.getElementById('fKiralamaTuru').value=v.kiralamaTuru||'soförsüz';
   document.getElementById('fSoforUcreti').value=v.soforUcreti||'';
   document.getElementById('formErr').style.display='none';
@@ -4252,6 +4366,8 @@ document.getElementById('saveBtn').onclick = async ()=>{
       kiraciTel: document.getElementById('fKiraciTel').value.trim(),
       teslimTarih: document.getElementById('fTeslimTarih').value,
       teslimKm: Number(document.getElementById('fTeslimKm').value)||undefined,
+      sonBakimKm: Number(document.getElementById('fBakimKm').value)||undefined,
+      bakimPeriyotKm: Number(document.getElementById('fBakimPeriyot').value)||undefined,
       kiralamaTuru: document.getElementById('fKiralamaTuru').value||'soförsüz',
       soforUcreti: Number(document.getElementById('fSoforUcreti').value)||undefined,
       ...docFields,
@@ -6136,6 +6252,8 @@ function renderKiralamaPage(){
             </div>
             <div style="display:flex;align-items:center;gap:8px;">
               <span style="font-size:12px;font-weight:700;color:#DC2626;">${Math.abs(dl||0)} gün geçti</span>
+              <button onclick="openVehicleDetail('${v.id}')" style="background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);color:var(--accent-blue);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Detay</button>
+              <button onclick="openUzatForm('${v.id}')" style="background:rgba(217,119,6,.15);border:1px solid rgba(217,119,6,.3);color:#D97706;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Uzat</button>
               <button onclick="switchPage('arac-yonetimi');setTimeout(()=>{const v=vehicles.find(x=>x.id==='${v.id}');if(v)openIadeForm(v.id);},100);" style="background:rgba(220,38,38,.15);border:1px solid rgba(220,38,38,.3);color:#DC2626;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">İade Al</button>
             </div>
           </div>`;
@@ -6160,6 +6278,7 @@ function renderKiralamaPage(){
               <span style="font-size:12px;font-weight:700;color:${renk};">${dl} gün kaldı</span>
               <span style="font-size:11px;color:var(--text-3);">${fmtTarih(v.kiraBitis||v.sozlesmeBitis)}</span>
               <button onclick="openVehicleDetail('${v.id}')" style="background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);color:var(--accent-blue);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Detay</button>
+              <button onclick="openUzatForm('${v.id}')" style="background:rgba(217,119,6,.15);border:1px solid rgba(217,119,6,.3);color:#D97706;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Uzat</button>
             </div>
           </div>`;
         }).join('')}
@@ -6783,7 +6902,9 @@ function renderBildirimlerPage(){
         const okundu = okunmuslar.includes(key);
         const bad = u.dl<0;
         const renk = u.dl<0?'#DC2626':u.dl<=7?'#DC2626':u.dl<=30?'#D97706':'#16A34A';
-        const dtxt = u.dl<0?`${Math.abs(u.dl)} gün gecikti!`:u.dl===0?'Bugün!':u.dl<=7?`${u.dl} gün kaldı ⚠️`:`${u.dl} gün kaldı`;
+        const dtxt = u.km!==undefined
+          ? (u.km<=0 ? `${Math.abs(u.km).toLocaleString('tr-TR')} km gecikti!` : `${u.km.toLocaleString('tr-TR')} km kaldı`)
+          : (u.dl<0?`${Math.abs(u.dl)} gün gecikti!`:u.dl===0?'Bugün!':u.dl<=7?`${u.dl} gün kaldı ⚠️`:`${u.dl} gün kaldı`);
         return `
           <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);opacity:${okundu?'.5':'1'};">
             <div style="width:8px;height:8px;border-radius:50%;background:${okundu?'var(--border)':renk};flex-shrink:0;"></div>
