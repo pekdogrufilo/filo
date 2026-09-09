@@ -957,6 +957,59 @@
   .seri-copy.copied{background:rgba(52,199,89,.18);color:#1d8a4e;}
   html[data-theme="light"] .seri-chip{background:#F5F5F7;}
   html[data-theme="light"] .seri-copy{background:#E8F2FD;}
+  /* ===== Premium Wallet araç kartı (A tasarımı) ===== */
+  .card.vk{padding:0;overflow:hidden;border-radius:20px;}
+  .vk-head{
+    background:linear-gradient(135deg,#16283e 0%,#1d3557 45%,#2a5384 100%);
+    padding:16px 16px 14px;position:relative;color:#fff;
+  }
+  .vk-head::after{content:'';position:absolute;top:-40px;right:-30px;width:140px;height:140px;border-radius:50%;
+    background:radial-gradient(circle,rgba(255,255,255,.10),transparent 65%);pointer-events:none;}
+  .vk-st{
+    position:absolute;top:13px;right:13px;z-index:2;
+    display:inline-flex;align-items:center;gap:6px;
+    background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);
+    backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+    padding:4px 11px;border-radius:20px;font-size:11.5px;font-weight:700;color:#fff;
+  }
+  .vk-st .n{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+  .vk-st.kirada .n{background:#4ade80;box-shadow:0 0 8px #4ade80;}
+  .vk-st.musait .n{background:#fbbf24;box-shadow:0 0 8px #fbbf24;}
+  .vk-st.serviste .n{background:#f87171;box-shadow:0 0 8px #f87171;}
+  .vk-head .plaka-tr{border-color:#0c2340;box-shadow:0 2px 8px rgba(0,0,0,.3);position:relative;z-index:1;}
+  .vk-head .arac-adi{margin-top:9px;font-size:14.5px;font-weight:700;color:#fff;letter-spacing:.1px;}
+  .vk-head .model{font-size:11.5px;color:rgba(255,255,255,.62);margin-top:2px;letter-spacing:.2px;}
+  .vk-head-row{display:flex;align-items:center;gap:10px;position:relative;z-index:1;}
+  .vk-logo > div{width:32px !important;height:32px !important;border-radius:9px !important;
+    box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.92), 0 2px 6px rgba(0,0,0,.32);}
+  .vk-seg .gun{font-size:9.5px;text-align:center;margin-top:2px;color:var(--text-3);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .vk-seg.kotu .gun{color:var(--red,#e04038);font-weight:700;}
+  .vk-seg.uyari .gun{color:#d97706;font-weight:700;}
+  .vk-foot{border-top:1px solid var(--line);}
+  .vk-seg-row{display:flex;gap:10px;padding:13px 16px 3px;}
+  .vk-seg{flex:1;min-width:0;}
+  .vk-seg .bar{height:5px;border-radius:3px;background:var(--surface-2);overflow:hidden;}
+  .vk-seg .bar span{display:block;height:100%;border-radius:3px;transition:width .5s ease;}
+  .vk-seg .lbl{font-size:9.5px;font-weight:600;color:var(--text-3);margin-top:5px;text-align:center;letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .vk-body-pad{padding:8px 16px 14px;}
+  .vk-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 16px 14px;}
+  .vk-price{font-size:16.5px;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums;}
+  .vk-price small{font-size:11px;font-weight:500;color:var(--text-3);}
+  .vk-acts{display:flex;gap:7px;flex-shrink:0;}
+  .vk-acts button{
+    width:34px;height:34px;border-radius:11px;border:none;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    background:var(--surface-2);color:var(--text-2);
+    transition:transform .12s ease, background .15s ease;
+  }
+  .vk-acts button:active{transform:scale(.9);}
+  .vk-acts button.vk-det{background:var(--accent-blue-dim,rgba(37,99,235,.12));color:var(--accent-blue,#2563eb);}
+  .vk-acts button.vk-sil{color:var(--coral,#d64545);}
+  .card.vk .card-actions{grid-template-columns:1fr 1fr 1fr 1fr;border-top:1px solid var(--line);padding:10px 16px;gap:8px;}
+  .card.vk .card-actions button{font-size:12px;font-weight:600;padding:8px 6px;border-radius:9px;}
+  .ch-price{margin-left:auto;display:flex;align-items:baseline;gap:3px;}
+  html[data-theme="light"] .vk-seg .bar{background:#ECECF1;}
+  html[data-theme="dark"] .vk-head{background:linear-gradient(135deg,#0f1c2e 0%,#16283e 45%,#1d3a5f 100%);}
   /* Aksiyon çubuğu: hairline ayırıcılar */
   .card-actions button{border-right:none;}
   .card-actions button:not(:first-child){border-left:1px solid var(--line);}
@@ -2454,7 +2507,8 @@ function render(){
     const badgeClass = v.durum==='Kirada'?'kirada':(v.durum==='Müsait'?'musait':'serviste');
     const accentColor = v.durum==='Kirada' ? '#2E8C63' : (v.durum==='Müsait' ? '#6E6867' : '#8C3430');
     const aracAdi = [v.marka, v.model, v.versiyon].filter(Boolean).join(' ');
-    const modelTxt = [v.aracCinsi, v.modelYili].filter(Boolean).join(' · ');
+    const trTitle = s => String(s).toLocaleLowerCase('tr-TR').replace(/(^|[\s·\-\/(])(\p{L})/gu, (m,a,b)=>a+b.toLocaleUpperCase('tr-TR'));
+    const modelTxt = [trTitle(v.aracCinsi||''), v.modelYili].filter(Boolean).join(' · ');
     const markaLogo = getMarkaLogo(v.marka);
     const donanimBadge = '';
 
@@ -2463,7 +2517,7 @@ function render(){
     // karttan kaldırıldı — liste temiz kalır, tarama hızlanır.
 
     const card = document.createElement('div');
-    card.className = 'card';
+    card.className = 'card vk';
     card.style.animationDelay = (Math.min(idx,10)*30)+'ms';
     card.dataset.vehicleId = v.id;
 
@@ -2479,25 +2533,36 @@ function render(){
       ['Muayene', v.muayeneTarihi],
       ['Sözleşme', v.sozlesmeBitis],
     ];
-    const healthHtml = `<div class="card-health">${belgeKontroller.map(([lbl,t])=>{
+    // Belge sağlık göstergesi (segment çubuklar): her belge tek bakışta
+    const healthHtml = `<div class="vk-seg-row">${belgeKontroller.map(([lbl,t])=>{
       const dl = daysLeft(t);
-      const sinif = dl===null?'yok':(dl<0?'kotu':(dl<=30?'uyari':'iyi'));
-      const ipucu = dl===null?'Tarih girilmemiş':`${fmtTarih(t)} · ${dl<0?Math.abs(dl)+' gün geçti':dl+' gün kaldı'}`;
-      return `<div class="ch ${sinif}" title="${ipucu}"><span class="ch-dot"></span><span class="ch-l">${lbl}</span></div>`;
-    }).join('')}${(isAdmin() && v.kira)?`<div class="ch-price"><span class="mono">${fmtTL2(v.kira)}</span><span class="ch-per">/ay</span></div>`:''}</div>`;
+      let w=8, renk='var(--steel-300,#b9b9c0)';
+      let tip='Tarih girilmemiş';
+      let subTxt='—', subCls='';
+      if(dl!==null){
+        tip=`${fmtTarih(t)} · ${dl<0?Math.abs(dl)+' gün geçti':dl+' gün kaldı'}`;
+        if(dl<0){ renk='#ff3b30'; w=14; subTxt=Math.abs(dl)+' gün geçti'; subCls='kotu'; }
+        else if(dl<=30){ renk='#ff9f0a'; w=22; subTxt=dl+' gün'; subCls='uyari'; }
+        else { renk='#34c759'; w=Math.min(100, Math.max(26, Math.round(dl/365*100))); subTxt=dl+' gün'; }
+      }
+      return `<div class="vk-seg ${subCls}" title="${lbl}: ${tip}"><div class="bar"><span style="width:${w}%;background:${renk}"></span></div><div class="lbl">${lbl}</div><div class="gun">${subTxt}</div></div>`;
+    }).join('')}</div>`;
+    const stKlas = v.durum==='Kirada'?'kirada':(v.durum==='Müsait'?'musait':'serviste');
 
     card.innerHTML = `
-      <div class="card-body">
-        <div class="card-top">
-          <div class="card-plaka-wrap">
-            <div class="plaka-tr"><span class="ptr-band">TR</span><span class="ptr-no">${esc(plakaFmt)}${v.muayeneRandevu?' <span class="randevu-badge" title="Muayene randevusu alındı">📅</span>':''}</span></div>
-            ${aracAdi ? `<div class="arac-adi">${esc(aracAdi)}</div>` : ''}
-            <div class="model">${esc(modelTxt||'')}</div>
-          </div>
-          <span class="badge ${badgeClass}">${esc(v.durum)}</span>
+      <div class="vk-head">
+        <span class="vk-st ${stKlas}"><span class="n"></span>${esc(v.durum)}</span>
+        <div class="vk-head-row">
+          ${markaLogo?`<div class="vk-logo">${markaLogo}</div>`:''}
+          <div class="plaka-tr"><span class="ptr-band">TR</span><span class="ptr-no">${esc(plakaFmt)}${v.muayeneRandevu?' <span class="randevu-badge" title="Muayene randevusu alındı">📅</span>':''}</span></div>
         </div>
+        ${aracAdi ? `<div class="arac-adi">${esc(aracAdi)}</div>` : ''}
+        <div class="model">${esc(modelTxt||'')}</div>
+      </div>
 
-        ${healthHtml}
+      ${healthHtml}
+
+      <div class="vk-body-pad">
 
         ${(()=>{
           const seriler = [
@@ -2555,11 +2620,15 @@ function render(){
           </div>`;
         })()}
       </div>
-      <div class="card-actions" style="grid-template-columns:1fr 1fr 1fr 1fr;">
-        <button onclick="openVehicleDetail('${v.id}')">Detay</button>
-        <button class="masraf" data-id="${v.id}">Masraflar</button>
-        <button class="edit" data-id="${v.id}">Düzenle</button>
-        <button class="del" data-id="${v.id}">Sil</button>
+
+      <div class="vk-foot">
+        <div class="vk-price">${(isAdmin() && v.kira)?`${fmtTL2(v.kira)} <small>/ay</small>`:'&nbsp;'}</div>
+        <div class="vk-acts">
+          <button class="vk-det" title="Detay / Geçmiş" onclick="openVehicleDetail('${v.id}')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5"/><path d="M15 12H3"/></svg></button>
+          <button class="masraf" data-id="${v.id}" title="Masraflar"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></button>
+          <button class="edit" data-id="${v.id}" title="Düzenle"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>
+          <button class="del vk-sil" data-id="${v.id}" title="Sil"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+        </div>
       </div>
     `;
     // Kartın tamamı tıklanabilir → detay/geçmiş açılır (buton ve input tıklamaları hariç)
