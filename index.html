@@ -982,6 +982,10 @@
   .vk-head .plaka-tr{border-color:#0c2340;box-shadow:0 2px 8px rgba(0,0,0,.3);position:relative;z-index:1;}
   .vk-head .arac-adi{margin-top:9px;font-size:14.5px;font-weight:700;color:#fff;letter-spacing:.1px;}
   .vk-head .model{font-size:11.5px;color:rgba(255,255,255,.62);margin-top:2px;letter-spacing:.2px;}
+  .vk-head .arac-adi,.vk-head .model{max-width:calc(100% - 104px);}
+  .vk-head .vk-car{position:absolute;right:14px;bottom:10px;width:92px;height:60px;object-fit:cover;
+    border-radius:10px;border:1.5px solid rgba(255,255,255,.28);
+    box-shadow:0 4px 10px rgba(0,0,0,.35);z-index:1;background:rgba(255,255,255,.08);}
   .vk-head-row{display:flex;align-items:center;gap:10px;position:relative;z-index:1;}
   .vk-logo .marka-logo{width:34px;height:34px;border-radius:9px;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;
     box-shadow:0 2px 6px rgba(0,0,0,.32), inset 0 0 0 1px rgba(255,255,255,.65);}
@@ -1174,7 +1178,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-09.2</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-09.3</div>
     </div>
   </aside>
 
@@ -2522,6 +2526,7 @@ function render(){
     const trTitle = s => String(s).toLocaleLowerCase('tr-TR').replace(/(^|[\s·\-\/(])(\p{L})/gu, (m,a,b)=>a+b.toLocaleUpperCase('tr-TR'));
     const modelTxt = [trTitle(v.aracCinsi||''), v.modelYili].filter(Boolean).join(' · ');
     const markaLogo = getMarkaLogo(v.marka, [v.marka, v.model, v.versiyon].filter(Boolean).join(' '));
+    const aracGorsel = getAracGorsel([v.model, v.versiyon].filter(Boolean).join(' '));
     const donanimBadge = '';
 
     // Sadeleştirilmiş kart: yalnızca kritik belge uyarıları gösterilir (<=30 gün),
@@ -2570,6 +2575,7 @@ function render(){
         </div>
         ${aracAdi ? `<div class="arac-adi">${esc(aracAdi)}</div>` : ''}
         <div class="model">${esc(modelTxt||'')}</div>
+        ${aracGorsel?`<img class="vk-car" src="${aracGorsel}" alt="" onerror="this.remove();">`:''}
       </div>
 
       ${healthHtml}
@@ -4873,6 +4879,65 @@ function getMarkaLogo(marka, ipucuMetni){
   // 1) jsdelivr araç-logo veri seti (yüksek kalite, şeffaf PNG) → hata olursa harf rozeti
   const img = `<img src="https://cdn.jsdelivr.net/gh/filippofilip95/car-logos-dataset@master/logos/optimized/${domain}.png" alt="${esc(marka)}" onerror="this.parentElement.classList.add('ml-err');this.remove();">`;
   return `<div class="marka-logo">${img}${fallback}</div>`;
+}
+
+// Model görselleri — Wikimedia Commons'tan küçük araç fotoğrafları (kart başlığında gösterilir)
+const MODEL_GORSEL = {
+  'doblo':'https://thumb.wikimedia.org/wikipedia/commons/thumb/a/aa/Fiat_Doblo_%2822707961995%29.jpg/330px-Fiat_Doblo_%2822707961995%29.jpg',
+  'megane':'https://thumb.wikimedia.org/wikipedia/commons/thumb/0/04/Renault_Megane_IV_Sedan_1X7A0225.jpg/330px-Renault_Megane_IV_Sedan_1X7A0225.jpg',
+  'duster':'https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ab/Dacia_Duster_TCe_130_Extreme_%28III%29_%E2%80%93_f_13102024.jpg/330px-Dacia_Duster_TCe_130_Extreme_%28III%29_%E2%80%93_f_13102024.jpg',
+  'logan':'https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d4/Dacia_Logan_2023_Front_2_%28cropped%29.jpg/330px-Dacia_Logan_2023_Front_2_%28cropped%29.jpg',
+  'sandero':'https://thumb.wikimedia.org/wikipedia/commons/thumb/e/eb/Dacia_Sandero_Stepway_III_IMG_3693.jpg/330px-Dacia_Sandero_Stepway_III_IMG_3693.jpg',
+  'albea':'https://thumb.wikimedia.org/wikipedia/commons/thumb/8/8d/Fiat_Albea.jpg/330px-Fiat_Albea.jpg',
+  'ducato':'https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d2/Fiat_e-Ducato_1X7A0350.jpg/330px-Fiat_e-Ducato_1X7A0350.jpg',
+  'egea':'https://thumb.wikimedia.org/wikipedia/commons/thumb/1/10/Fiat_Tipo_Sedan_Facelift_Leonberg_2022_1X7A0412.jpg/330px-Fiat_Tipo_Sedan_Facelift_Leonberg_2022_1X7A0412.jpg',
+  'fiorino':'https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f5/Fiat_Fiorino_III_20090808_front.JPG/330px-Fiat_Fiorino_III_20090808_front.JPG',
+  'linea':'https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d7/Fiat_Linea_Emotion_Fire_1.4_Petrol.jpg/330px-Fiat_Linea_Emotion_Fire_1.4_Petrol.jpg',
+  'panda':'https://thumb.wikimedia.org/wikipedia/commons/thumb/6/6a/2013_Fiat_Panda_Easy_1.2.jpg/330px-2013_Fiat_Panda_Easy_1.2.jpg',
+  'scudo':'https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7b/Fiat_Scudo_-2008_front.jpg/330px-Fiat_Scudo_-2008_front.jpg',
+  'tipo':'https://thumb.wikimedia.org/wikipedia/commons/thumb/8/83/Fiat_tipo_f.jpg/330px-Fiat_tipo_f.jpg',
+  'focus':'https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f1/2018_Ford_Focus_ST-Line_EcoBoost_1.0_%281%29.jpg/330px-2018_Ford_Focus_ST-Line_EcoBoost_1.0_%281%29.jpg',
+  'transit':'https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b5/NA_Transit_2013.JPG/330px-NA_Transit_2013.JPG',
+  'ranger':'https://thumb.wikimedia.org/wikipedia/commons/thumb/2/28/Ford_Ranger_%28T6%2C_P703%29_Wildtrak_IMG_7320.jpg/330px-Ford_Ranger_%28T6%2C_P703%29_Wildtrak_IMG_7320.jpg',
+  'courier':'https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e6/Ford_Courier_Dimasur.JPG/330px-Ford_Courier_Dimasur.JPG',
+  'accent':'https://thumb.wikimedia.org/wikipedia/commons/thumb/3/32/2012_Hyundai_Accent_GLS_sedan_--_06-29-2011.jpg/330px-2012_Hyundai_Accent_GLS_sedan_--_06-29-2011.jpg',
+  'tucson':'https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c6/2022_Hyundai_Tucson_Preferred%2C_Front_Right%2C_05-24-2021.jpg/330px-2022_Hyundai_Tucson_Preferred%2C_Front_Right%2C_05-24-2021.jpg',
+  'i20':'https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ad/Hyundai_i20_%28BC3%29_IMG_3552.jpg/330px-Hyundai_i20_%28BC3%29_IMG_3552.jpg',
+  'd-max':'https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ac/ISUZU_D-MAX%2C_2nd_Gen%2C_Front_Perspective_View.jpg/330px-ISUZU_D-MAX%2C_2nd_Gen%2C_Front_Perspective_View.jpg',
+  'sportage':'https://thumb.wikimedia.org/wikipedia/commons/thumb/a/aa/2018_Kia_Sportage_GT-Line_ISG_1.6.jpg/330px-2018_Kia_Sportage_GT-Line_ISG_1.6.jpg',
+  'vito':'https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ef/2023_Mercedes-Benz_V-Class_300d_%28W447%29_IMG_9812.jpg/330px-2023_Mercedes-Benz_V-Class_300d_%28W447%29_IMG_9812.jpg',
+  'l200':'https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ec/2008_Mitsubishi_Triton_%28ML%29_GLS_Fastback_4-door_utility_04.jpg/330px-2008_Mitsubishi_Triton_%28ML%29_GLS_Fastback_4-door_utility_04.jpg',
+  'navara':'https://thumb.wikimedia.org/wikipedia/commons/thumb/c/ca/2015_Nissan_NP300_Navara_%28D23%29_ST_4-door_utility_%2817841084089%29.jpg/330px-2015_Nissan_NP300_Navara_%28D23%29_ST_4-door_utility_%2817841084089%29.jpg',
+  'astra':'https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c0/Opel_Astra_L_1X7A6738.jpg/330px-Opel_Astra_L_1X7A6738.jpg',
+  'combo':'https://thumb.wikimedia.org/wikipedia/commons/thumb/c/ce/2023_Opel_Combo_E_IMG_9753.jpg/330px-2023_Opel_Combo_E_IMG_9753.jpg',
+  'corsa':'https://thumb.wikimedia.org/wikipedia/commons/thumb/6/6e/Opel_Corsa_F_IMG_8196.jpg/330px-Opel_Corsa_F_IMG_8196.jpg',
+  'expert':'https://thumb.wikimedia.org/wikipedia/commons/thumb/0/01/Peugeot_Expert_front_20080326.jpg/330px-Peugeot_Expert_front_20080326.jpg',
+  'partner':'https://thumb.wikimedia.org/wikipedia/commons/thumb/c/cc/Peugeot_Partner_front_20071205.jpg/330px-Peugeot_Partner_front_20071205.jpg',
+  '301':'https://thumb.wikimedia.org/wikipedia/commons/thumb/3/36/Peugeot_301_%282012%29_IMG_8110.jpg/330px-Peugeot_301_%282012%29_IMG_8110.jpg',
+  'clio':'https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3b/Renault_Clio_%28V%2C_Facelift%29_%E2%80%93_f_02092025.jpg/330px-Renault_Clio_%28V%2C_Facelift%29_%E2%80%93_f_02092025.jpg',
+  'fluence':'https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ee/Renault_Fluence_front_20100918.jpg/330px-Renault_Fluence_front_20100918.jpg',
+  'kangoo':'https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3b/2024_Renault_Kangoo_in_Mineral_White%2C_front_left%2C_06-12-2025.jpg/330px-2024_Renault_Kangoo_in_Mineral_White%2C_front_left%2C_06-12-2025.jpg',
+  'master':'https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5e/Renault_Master_III_%282019%29_IMG_4211.jpg/330px-Renault_Master_III_%282019%29_IMG_4211.jpg',
+  'symbol':'https://thumb.wikimedia.org/wikipedia/commons/thumb/5/59/Renault_Symbol_1.6_Expression_2014_%2814499276955%29.jpg/330px-Renault_Symbol_1.6_Expression_2014_%2814499276955%29.jpg',
+  'taliant':'https://thumb.wikimedia.org/wikipedia/commons/thumb/7/79/2021_Renault_Taliant_1.0_Joy_%28Turkey%29_front_view.png/330px-2021_Renault_Taliant_1.0_Joy_%28Turkey%29_front_view.png',
+  'trafic':'https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e4/2018_Renault_Trafic_SL27_Business%2B_Energy_1.6_Front.jpg/330px-2018_Renault_Trafic_SL27_Business%2B_Energy_1.6_Front.jpg',
+  'corolla':'https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f6/Toyota_Corolla_Limousine_Hybrid_Genf_2019_1Y7A5576.jpg/330px-Toyota_Corolla_Limousine_Hybrid_Genf_2019_1Y7A5576.jpg',
+  'hilux':'https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9c/2008_Toyota_Hilux_%28GGN25R%29_SR5_4-door_utility_01.jpg/330px-2008_Toyota_Hilux_%28GGN25R%29_SR5_4-door_utility_01.jpg',
+  'c-hr':'https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a8/Toyota_C-HR_Hybrid_%28AX20%29_DSC_7239.jpg/330px-Toyota_C-HR_Hybrid_%28AX20%29_DSC_7239.jpg',
+  'caddy':'https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a8/Volkswagen_Caddy_V_Maxi_California_1X7A0245.jpg/330px-Volkswagen_Caddy_V_Maxi_California_1X7A0245.jpg',
+  'crafter':'https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c9/2017_Volkswagen_Crafter_CR35_Trendline_TD_2.0_Front.jpg/330px-2017_Volkswagen_Crafter_CR35_Trendline_TD_2.0_Front.jpg',
+  'golf':'https://thumb.wikimedia.org/wikipedia/commons/thumb/9/90/Volkswagen_Golf_VIII_GTE_1X7A6487.jpg/330px-Volkswagen_Golf_VIII_GTE_1X7A6487.jpg',
+  'passat':'https://thumb.wikimedia.org/wikipedia/commons/thumb/1/11/Volkswagen_Passat_B8_GTE_%282019%29_IMG_0384.jpg/330px-Volkswagen_Passat_B8_GTE_%282019%29_IMG_0384.jpg',
+  'transporter':'https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0b/VW_Transporter_TDI_%28T5%29_Facelift_front_20100902.jpg/330px-VW_Transporter_TDI_%28T5%29_Facelift_front_20100902.jpg',
+  'berlingo':'https://thumb.wikimedia.org/wikipedia/commons/thumb/2/2a/Citro%C3%ABn_Berlingo_XL_BlueHDi_130_EAT8_Shine_XTR_%28III%29_%E2%80%93_f_02012021.jpg/330px-Citro%C3%ABn_Berlingo_XL_BlueHDi_130_EAT8_Shine_XTR_%28III%29_%E2%80%93_f_02012021.jpg',
+  'jumpy':'https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d4/2016_Citroen_Dispatch_1000_BlueHDi_X_S_1.6_Front.jpg/330px-2016_Citroen_Dispatch_1000_BlueHDi_X_S_1.6_Front.jpg',
+};
+function getAracGorsel(hint){
+  const h = String(hint||'').toLocaleLowerCase('en-US');
+  if(!h) return '';
+  const keys = Object.keys(MODEL_GORSEL).sort((a,b)=>b.length-a.length);
+  for(const k of keys){ if(h.includes(k)) return MODEL_GORSEL[k]; }
+  return '';
 }
 
 function normPlaka(p){ return String(p||'').trim().toLocaleUpperCase('tr-TR').replace(/\s+/g,''); }
