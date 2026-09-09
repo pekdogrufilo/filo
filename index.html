@@ -443,6 +443,12 @@
   .log-ic.del{color:#F3A392;background:var(--coral-dim);}
   .log-ic.pw{color:var(--steel-100);}
   .log-ic.sofor{color:#8FB6E8;background:#1A2B3D;}
+  .log-ic.login{color:#8FB6E8;background:#1A2B3D;}
+  .log-ic.backup{color:var(--steel-100);}
+  html[data-theme="light"] .log-ic.login{background:#EAF2FB;}
+  html[data-theme="light"] .log-ic.add{background:#E4F6F0;}
+  html[data-theme="light"] .log-ic.edit{background:#F7EEDD;}
+  html[data-theme="light"] .log-ic.sofor{background:#EAF2FB;}
   .log-txt{font-size:13px;line-height:1.4;color:var(--steel-100);}
   .log-txt b{color:var(--paper);}
   .log-time{font-size:13px;color:var(--steel-300);margin-top:3px;}
@@ -1607,7 +1613,109 @@ function makeLocalAdapter(){
   };
 }
 
-let storageAPI = makeLocalAdapter();
+// ===== IndexedDB yerel depolama =====
+// localStorage ~5MB ile sınırlı; belge/fotoğraflar bu sınırı kolayca aşabiliyor.
+// IndexedDB yüzlerce MB saklayabildiği için ana yerel depo artık IndexedDB.
+// Eski localStorage verileri ilk açılışta otomatik olarak taşınır; IndexedDB
+// açılamazsa davranış eski localStorage yoluna döner.
+function makeIdbAdapter(){
+  const DB_NAME = 'filoPaneliDB', STORE = 'kv', PFX = 'filoPaneli_';
+  let dbPromise = null;
+  function openDb(){
+    if(dbPromise) return dbPromise;
+    dbPromise = new Promise((res, rej)=>{
+      try{
+        const req = indexedDB.open(DB_NAME, 1);
+        req.onupgradeneeded = ()=>{
+          const db = req.result;
+          if(!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE);
+        };
+        req.onsuccess = ()=>res(req.result);
+        req.onerror = ()=>rej(req.error);
+      }catch(e){ rej(e); }
+    });
+    return dbPromise;
+  }
+  function onceReq(r){
+    return new Promise((res, rej)=>{ r.onsuccess = ()=>res(r.result); r.onerror = ()=>rej(r.error); });
+  }
+  // Tek seferlik geçiş: localStorage'daki eski filoPaneli_* verilerini IndexedDB'ye kopyala
+  const ready = openDb().then(db=>new Promise((res)=>{
+    try{
+      const localKeys = Object.keys(localStorage).filter(k=>k.startsWith(PFX));
+      if(!localKeys.length){ res(); return; }
+      const tx = db.transaction(STORE, 'readwrite');
+      const store = tx.objectStore(STORE);
+      let pending = localKeys.length;
+      localKeys.forEach(k=>{
+        const shortKey = k.slice(PFX.length);
+        const greq = store.get(shortKey);
+        greq.onsuccess = ()=>{
+          if(greq.result === undefined){
+            try{ store.put(localStorage.getItem(k), shortKey); }catch(e){}
+          }
+          if(--pending <= 0) res();
+        };
+        greq.onerror = ()=>{ if(--pending <= 0) res(); };
+      });
+    }catch(e){ res(); }
+  }));
+  async function run(fnIdb, fnLocal){
+    try{ await ready; return await fnIdb(); }
+    catch(e){ return fnLocal(); }
+  }
+  return {
+    get(key){
+      return run(
+        async ()=>{
+          const db = await openDb();
+          const v = await onceReq(db.transaction(STORE,'readonly').objectStore(STORE).get(key));
+          if(v === undefined) throw new Error('bulunamadı');
+          return {key, value: v};
+        },
+        ()=>{
+          const v = localStorage.getItem(PFX+key);
+          if(v === null) throw new Error('bulunamadı');
+          return {key, value: v};
+        }
+      );
+    },
+    set(key, value){
+      return run(
+        async ()=>{
+          const db = await openDb();
+          await onceReq(db.transaction(STORE,'readwrite').objectStore(STORE).put(value, key));
+          return {key, value};
+        },
+        ()=>{ localStorage.setItem(PFX+key, value); return {key, value}; }
+      );
+    },
+    delete(key){
+      return run(
+        async ()=>{
+          const db = await openDb();
+          await onceReq(db.transaction(STORE,'readwrite').objectStore(STORE).delete(key));
+          return {key, deleted: true};
+        },
+        ()=>{ localStorage.removeItem(PFX+key); return {key, deleted: true}; }
+      );
+    },
+    list(prefix){
+      return run(
+        async ()=>{
+          const db = await openDb();
+          const keys = await onceReq(db.transaction(STORE,'readonly').objectStore(STORE).getAllKeys());
+          return {keys: keys.filter(k=>String(k).startsWith(prefix||''))};
+        },
+        ()=>({keys: Object.keys(localStorage).filter(k=>k.startsWith(PFX+(prefix||''))).map(k=>k.slice(PFX.length))})
+      );
+    }
+  };
+}
+
+let storageAPI = (window.storage && typeof window.storage.get === 'function')
+  ? window.storage
+  : (('indexedDB' in window) ? makeIdbAdapter() : makeLocalAdapter());
 
 // ===== Bulut senkronizasyonu (Firebase Firestore) =====
 // Cihaz-bazlı localStorage yerine paylaşımlı bir buluta yazıp okumak için.
@@ -2527,6 +2635,7 @@ document.getElementById('billGenerate').onclick = ()=>{
   printBilling(donem, isNaN(kdv)?0:kdv);
 };
 document.getElementById('excelInput').onchange = (e)=>{
+  if(!requireAdmin()){ e.target.value=''; return; }
   const file = e.target.files[0];
   if(file) updateFromExcel(file);
   e.target.value = '';
@@ -3855,6 +3964,7 @@ function openUzatForm(id){
   document.body.appendChild(el);
 }
 async function saveUzatma(id){
+  if(!requireAdmin()) return;
   const v = vehicles.find(x=>x.id===id);
   if(!v) return;
   const yeni = document.getElementById('uzatYeniBitis')?.value;
@@ -3913,6 +4023,7 @@ async function fisBelgeGor(masrafId){
 }
 
 async function detayMasrafSil(masrafId, vehicleId){
+  if(!requireAdmin()) return;
   if(!confirm('Bu masraf kaydı silinecek. Emin misiniz?')) return;
   expenses = expenses.filter(e=>e.id!==masrafId);
   await persistExpenses();
@@ -4266,6 +4377,7 @@ function openVehicleDetail(id){
 
 // ===== Hasar / Kaza kayıtları =====
 async function hasarKaydet(id){
+  if(!requireAdmin()) return;
   const v = vehicles.find(x=>x.id===id); if(!v) return;
   const tarih = document.getElementById('hasarTarih').value;
   const tutar = document.getElementById('hasarTutar').value;
@@ -4298,6 +4410,7 @@ async function hasarKaydet(id){
   }catch(e){ showToast('Kaydedilemedi: '+(e.message||'hata'), true); }
 }
 async function hasarSil(id, hid){
+  if(!requireAdmin()) return;
   const v = vehicles.find(x=>x.id===id); if(!v||!Array.isArray(v.hasarlar)) return;
   const h = v.hasarlar.find(x=>x.id===hid);
   v.hasarlar = v.hasarlar.filter(x=>x.id!==hid);
@@ -4408,6 +4521,8 @@ const LOG_ICONS = {
   edit:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>',
   del:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg>',
   pw:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>',
+  login:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5"/><path d="M15 12H3"/></svg>',
+  backup:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>',
   sofor:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.2"/><path d="M5 21c0-4 3.2-6.5 7-6.5s7 2.5 7 6.5"/></svg>',
 };
 function renderLogList(){
@@ -4475,6 +4590,7 @@ function renderMasrafDrawer(vehicleId){
     </div>
   `).join('');
   el.querySelectorAll('.mdel').forEach(b=>b.onclick=async ()=>{
+    if(!requireAdmin()) return;
     const exp = expenses.find(x=>x.id===b.dataset.id);
     expenses = expenses.filter(x=>x.id!==b.dataset.id);
     await persistExpenses();
@@ -4502,6 +4618,7 @@ function closeMasrafDrawer(){
 document.getElementById('masrafCloseBtn').onclick = closeMasrafDrawer;
 document.getElementById('masrafOverlay').onclick = closeMasrafDrawer;
 document.getElementById('mEkleBtn').onclick = async ()=>{
+  if(!requireAdmin()) return;
   const vehicleId = document.getElementById('masrafVehicleId').value;
   const v = vehicles.find(x=>x.id===vehicleId); if(!v) return;
   const tutar = Number(document.getElementById('mTutar').value);
@@ -4544,6 +4661,7 @@ function renderStatMasraf(){
 }
 
 async function delVehicle(id){
+  if(!requireAdmin()) return;
   const v = vehicles.find(x=>x.id===id);
   vehicles = vehicles.filter(v=>v.id!==id);
   await persist(); buildSirketFilter(); render();
@@ -4597,6 +4715,7 @@ function fieldErr(id, msg){
 }
 
 document.getElementById('saveBtn').onclick = async ()=>{
+  if(!requireAdmin()) return;
   clearFieldErrors();
   const plakaRaw = document.getElementById('fPlaka').value.trim();
   const id = document.getElementById('editId').value;
@@ -4761,6 +4880,13 @@ let appLoaded = false;
 window.currentRole = sessionStorage.getItem('filoRole') || 'admin';
 
 function isAdmin(){ return window.currentRole === 'admin'; }
+
+// Personel rolü yalnızca görüntüleme: değişiklik isteklerini reddet
+function requireAdmin(){
+  if(isAdmin()) return true;
+  showToast('Görüntüleme modundasınız. Değişiklik yapmak için yönetici girişi gerekir.', true);
+  return false;
+}
 
 function applyRoleVisibility(){
   const role = window.currentRole;
@@ -4928,8 +5054,9 @@ async function onLoginSubmit(){
       sessionStorage.setItem('filoRole','admin');
       window.currentRole = 'admin';
       lockScreenHide();
-      if(!appLoaded){ appLoaded=true; load(); }
+      if(!appLoaded){ appLoaded=true; await load(); }
       else { applyRoleVisibility(); }
+      logActivity('login', `<b>Yönetici</b> panele giriş yaptı — ${new Date().toLocaleString('tr-TR')}`).catch(()=>{});
     } else {
       failedAttempts++;
       err.textContent = 'Şifre yanlış.';
@@ -4948,8 +5075,9 @@ async function onLoginSubmit(){
       sessionStorage.setItem('filoRole','staff');
       window.currentRole = 'staff';
       lockScreenHide();
-      if(!appLoaded){ appLoaded=true; load(); }
+      if(!appLoaded){ appLoaded=true; await load(); }
       else { applyRoleVisibility(); }
+      logActivity('login', `<b>Personel</b> panele giriş yaptı (görüntüleme) — ${new Date().toLocaleString('tr-TR')}`).catch(()=>{});
     } else {
       failedAttempts++;
       err.textContent = 'Şifre yanlış.';
@@ -5728,6 +5856,7 @@ function renderMasrafPage(){
     logActivity('add', `Masraf eklendi: <b>${esc(v.plaka)}</b> · ${esc(entry.tip)} · ${fmtTL2(tutar)}`);
   };
   page.querySelectorAll('.mdel').forEach(b=>b.onclick = async ()=>{
+    if(!requireAdmin()) return;
     const exp = expenses.find(x=>x.id===b.dataset.id);
     expenses = expenses.filter(x=>x.id!==b.dataset.id);
     await persistExpenses();
@@ -7016,6 +7145,7 @@ function renderDocUploadPage(){
   });
 }
 async function otoBelgeSil(vehicleId, key){
+  if(!requireAdmin()) return;
   const v = vehicles.find(x=>x.id===vehicleId);
   if(!v || !Array.isArray(v.otoBelgeler)) return;
   v.otoBelgeler = v.otoBelgeler.filter(o=>o.key!==key);
@@ -8141,6 +8271,7 @@ function renderAyarlarPage(){
 
 // ===== Triomobil / N2 Mobil Km Raporu Yükleme =====
 async function kmRaporuYukle(file){
+  if(!requireAdmin()) return;
   if(!file) return;
   const log = document.getElementById('kmYuklemeLog');
   if(!log) return;
@@ -8257,6 +8388,7 @@ async function kmRaporuYukle(file){
 
 // ===== Toplu poliçe yükleme =====
 async function topluYuklemeHandle(files){
+  if(!requireAdmin()) return;
   if(!files || !files.length) return;
   const log = document.getElementById('topluYuklemeLog');
   if(!log) return;
@@ -8401,6 +8533,7 @@ function backupToJson(){
   showToast('Yedek dosyası indirildi.');
 }
 document.getElementById('restoreJsonInput')?.addEventListener('change', async (e)=>{
+  if(!requireAdmin()){ e.target.value=''; return; }
   const file = e.target.files[0];
   if(!file) return;
   try{
