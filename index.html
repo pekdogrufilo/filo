@@ -1178,7 +1178,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-09.5</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-09.9</div>
     </div>
   </aside>
 
@@ -1299,6 +1299,10 @@
       <button class="add-btn" id="openAdd">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
         Araç ekle
+      </button>
+      <button class="export-btn" id="kiralaBtn" style="background:#C98A3E;color:#fff;border-color:#C98A3E;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8v8h6l4 4V4L9 8H3Z"/></svg>
+        Araç Kirala
       </button>
     </div>
   </div>
@@ -2741,6 +2745,7 @@ document.getElementById('alertHead').onclick = ()=>{
 
 const overlay = document.getElementById('overlay');
 document.getElementById('openAdd').onclick = ()=>openAdd();
+document.getElementById('kiralaBtn').onclick = ()=>openAracKirala();
 document.getElementById('exportBtn').onclick = ()=>exportExcel();
 document.getElementById('updateBtn').onclick = ()=>document.getElementById('excelInput').click();
 document.getElementById('reportBtn').onclick = (e)=>{
@@ -4127,6 +4132,274 @@ async function saveUzatma(id){
   document.getElementById('uzatModal')?.remove();
   logActivity('edit', `Sözleşme uzatıldı: <b>${esc(v.plaka)}</b> · ${fmtTarih(eski)} → ${fmtTarih(yeni)}${not?' · '+esc(not):''}`);
   showToast(v.plaka+' sözleşmesi '+fmtTarih(yeni)+' tarihine kadar uzatıldı.');
+}
+
+// ===== Araç Kirala — hızlı kiralama + otomatik sözleşme =====
+function openAracKirala(vehicleId){
+  if(!requireAdmin()){ showToast('Araç kiralamak için yönetici girişi gerekir.', true); return; }
+  if(!vehicles.length){ showToast('Önce araç ekleyin.', true); return; }
+  const el = document.createElement('div');
+  el.className = 'iade-modal';
+  el.id = 'kiralaModal';
+  const secili = vehicleId && vehicles.find(v=>v.id===vehicleId) ? vehicleId : '';
+  el.innerHTML = `
+    <div class="iade-card" style="max-width:640px;">
+      <div class="iade-head">
+        <h3>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C9A961" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8v8h6l4 4V4L9 8H3Z"/></svg>
+          Araç Kirala — Otomatik Sözleşme
+        </h3>
+        <button class="vqm-close" onclick="document.getElementById('kiralaModal').remove()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="iade-body" style="max-height:64vh;overflow-y:auto;">
+        <div class="iade-row">
+          <div class="iade-field" style="grid-column:1/-1;">
+            <label>1 — Araç(lar)ı seç <span id="krSecimSayisi" style="color:#C98A3E;font-weight:700;"></span></label>
+            <input type="text" id="krAra" placeholder="Plaka veya model ara..." oninput="krListeFiltrele()" style="margin-bottom:6px;">
+            <div id="krListe" style="max-height:170px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;">
+              ${vehicles.map(v=>{
+                const st = v.durum==='Kirada'?'🔴':(v.durum==='Serviste'?'🟡':'🟢');
+                return `<label class="kr-item" data-ara="${esc((v.plaka+' '+(v.marka||'')+' '+(v.model||'')).toLocaleLowerCase('tr-TR'))}" style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-bottom:1px solid var(--line);cursor:pointer;font-size:13px;">
+                  <input type="checkbox" class="krCheck" value="${v.id}" onchange="krSecimGuncelle()" style="width:16px;height:16px;accent-color:#C98A3E;">
+                  <span class="mini-plaka" style="font-size:12px;">${esc(v.plaka)}</span>
+                  <span style="color:var(--text-2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc([v.marka,v.model].filter(Boolean).join(' ')||'Araç')}</span>
+                  <span title="${v.durum}">${st}</span>
+                </label>`;
+              }).join('')}
+            </div>
+          </div>
+        </div>
+        <div id="krSecilenAraclar"></div>
+        <div class="iade-section" style="font-weight:600;font-size:13px;color:var(--text);margin-bottom:8px;">2 — Kiracı bilgileri</div>
+        <div class="iade-row">
+          <div class="iade-field">
+            <label>Kiracı / Kurum adı *</label>
+            <input type="text" id="krKiraci" placeholder="Ad Soyad veya Kurum">
+          </div>
+          <div class="iade-field">
+            <label>Kiracı TC / VKN</label>
+            <input type="text" id="krVKN" placeholder="11 haneli TC veya 10 haneli VKN">
+          </div>
+        </div>
+        <div class="iade-row">
+          <div class="iade-field">
+            <label>Telefon</label>
+            <input type="tel" id="krTel" placeholder="05xx xxx xx xx">
+          </div>
+          <div class="iade-field">
+            <label>Araç rengi</label>
+            <input type="text" id="krRenk" placeholder="Beyaz, Gri...">
+          </div>
+        </div>
+        <div class="iade-field">
+          <label>Kiracı adresi</label>
+          <input type="text" id="krAdres" placeholder="Kiracının açık adresi">
+        </div>
+        <div class="iade-section" style="font-weight:600;font-size:13px;color:var(--text);margin:10px 0 8px;">3 — Kira koşulları</div>
+        <div class="iade-row">
+          <div class="iade-field">
+            <label>Başlangıç *</label>
+            <input type="date" id="krBas" value="${todayISO()}">
+          </div>
+          <div class="iade-field">
+            <label>Bitiş *</label>
+            <input type="date" id="krBitis" value="${isoPlusYil(todayISO(),1)}">
+          </div>
+        </div>
+        <div class="iade-row">
+          <div class="iade-field">
+            <label>Depozito (₺)</label>
+            <input type="number" id="krDepozito" min="0" placeholder="Toplam aylık kiraya eşit önerilir">
+          </div>
+          <div class="iade-field">
+            <label>Aylık KM limiti (araç başına)</label>
+            <input type="number" id="krKmLimit" value="3000" min="0">
+          </div>
+        </div>
+        <div class="iade-row">
+          <div class="iade-field">
+            <label>KM aşım ücreti (₺/km)</label>
+            <input type="number" id="krKmAsim" value="3" step="0.50" min="0">
+          </div>
+          <div class="iade-field">
+            <label>Sözleşme tipi</label>
+            <select id="krTip">
+              <option>Operasyonel Kiralama</option>
+              <option>Uzun Dönem Kiralama</option>
+              <option>İhale Kapsamı Kiralama</option>
+              <option>Kısa Dönem Kiralama</option>
+            </select>
+          </div>
+        </div>
+        <div class="iade-row">
+          <div class="iade-field">
+            <label>Teslim yakıt seviyesi</label>
+            <select id="krYakit">
+              <option>Dolu</option>
+              <option>3/4</option>
+              <option>Yarım</option>
+              <option>1/4</option>
+              <option>Boş</option>
+            </select>
+          </div>
+          <div class="iade-field">
+            <label>Teslim yeri</label>
+            <input type="text" id="krTeslimYer" placeholder="Konya merkez (varsayılan)">
+          </div>
+        </div>
+        <div class="iade-field">
+          <label>Özel şartlar / notlar</label>
+          <input type="text" id="krNotlar" placeholder="Varsa özel koşullar...">
+        </div>
+        <div style="background:rgba(201,138,62,.08);border:1px solid rgba(201,138,62,.25);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--text-2);margin-top:4px;">
+          <b>Not:</b> Kaydet'te araç otomatik <b>"Kirada"</b> olur, kiracı bilgileri araç kartına işlenir ve 19 maddelik kapsamlı sözleşme (Ekler dahil) hazırlanır.
+        </div>
+      </div>
+      <div class="iade-foot">
+        <button class="iade-btn-cancel" onclick="document.getElementById('kiralaModal').remove()">İptal</button>
+        <button class="iade-btn-save" onclick="kirayaVerVeSozlesme('docx')">Kiraya Ver &amp; Word</button>
+        <button class="iade-btn-save" style="background:#C98A3E;" onclick="kirayaVerVeSozlesme('pdf')">Kiraya Ver &amp; PDF</button>
+      </div>
+    </div>
+  `;
+  el.addEventListener('click', e=>{ if(e.target===el) el.remove(); });
+  document.body.appendChild(el);
+  if(secili){ const cb=document.querySelector(`.krCheck[value="${secili}"]`); if(cb) cb.checked=true; krSecimGuncelle(); }
+}
+
+function krListeFiltrele(){
+  const q = (document.getElementById('krAra')?.value||'').toLocaleLowerCase('tr-TR').trim();
+  document.querySelectorAll('#krListe .kr-item').forEach(it=>{
+    it.style.display = !q || it.dataset.ara.includes(q) ? 'flex' : 'none';
+  });
+}
+
+function krSecimGuncelle(){
+  const ids = [...document.querySelectorAll('.krCheck:checked')].map(c=>c.value);
+  const sayiEl = document.getElementById('krSecimSayisi');
+  if(sayiEl) sayiEl.textContent = ids.length ? `(${ids.length} araç)` : '';
+  const kutu = document.getElementById('krSecilenAraclar');
+  if(!kutu) return;
+  if(!ids.length){ kutu.innerHTML=''; return; }
+  const kiraciVar = (document.getElementById('krKiraci')?.value||'').trim();
+  kutu.innerHTML = `
+    <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:12px;">
+      <div style="font-size:12.5px;font-weight:600;color:var(--text-2);margin-bottom:8px;">Seçilen araçlar — kira ve teslim KM araç bazında:</div>
+      ${ids.map((id,i)=>{
+        const v = vehicles.find(x=>x.id===id);
+        if(!v) return '';
+        return `<div style="display:grid;grid-template-columns:auto 1fr 1fr;gap:8px;align-items:center;margin-bottom:6px;">
+          <span style="font-size:12.5px;white-space:nowrap;"><span class="mini-plaka" style="font-size:11.5px;">${esc(v.plaka)}</span> ${esc([v.marka,v.model].filter(Boolean).join(' ')||'')}</span>
+          <input type="number" id="krKira_${i}" data-vid="${v.id}" min="0" placeholder="Aylık kira" value="${v.kira||''}" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:13px;" title="Aylık kira (₺)">
+          <input type="number" id="krTkm_${i}" data-vid="${v.id}" min="0" placeholder="Teslim KM" value="${v.mevcutKm||''}" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:13px;" title="Teslim KM">
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+async function kirayaVerVeSozlesme(format){
+  if(!requireAdmin()) return;
+  const ids = [...document.querySelectorAll('.krCheck:checked')].map(c=>c.value);
+  const kiraci = document.getElementById('krKiraci')?.value?.trim();
+  const bas = document.getElementById('krBas')?.value;
+  const bitis = document.getElementById('krBitis')?.value;
+  if(!ids.length){ showToast('Lütfen en az bir araç seçin.', true); return; }
+  if(!kiraci){ showToast('Lütfen kiracı adını girin.', true); return; }
+  if(!bas || !bitis){ showToast('Lütfen tarih aralığını girin.', true); return; }
+  if(bitis<=bas){ showToast('Bitiş tarihi başlangıçtan sonra olmalı.', true); return; }
+  const secilen = ids.map(id=>vehicles.find(x=>x.id===id)).filter(Boolean);
+  if(!secilen.length) return;
+
+  const depozito = document.getElementById('krDepozito')?.value;
+  const kmLimit = document.getElementById('krKmLimit')?.value;
+  const kmAsim = document.getElementById('krKmAsim')?.value;
+  const renk = document.getElementById('krRenk')?.value?.trim();
+  const kiraciVKN = document.getElementById('krVKN')?.value?.trim();
+  const kiraciTel = document.getElementById('krTel')?.value?.trim();
+  const kiraciAdres = document.getElementById('krAdres')?.value?.trim();
+  const tip = document.getElementById('krTip')?.value;
+  const notlar = document.getElementById('krNotlar')?.value?.trim();
+
+  // Araç bazlı kira ve teslim KM
+  const aracVerileri = secilen.map((v,i)=>{
+    const kira = Number(document.getElementById('krKira_'+i)?.value)||v.kira||0;
+    const teslimKm = document.getElementById('krTkm_'+i)?.value;
+    return { v, kira, teslimKm: teslimKm!=='' && teslimKm!=null ? Number(teslimKm) : (v.teslimKm||0) };
+  });
+  const toplamKira = aracVerileri.reduce((s,a)=>s+a.kira,0);
+
+  // 1) Tüm araçları kiraya ver
+  aracVerileri.forEach(({v, kira, teslimKm})=>{
+    const idx = vehicles.findIndex(x=>x.id===v.id);
+    vehicles[idx] = {
+      ...v,
+      durum: 'Kirada',
+      kiraciAdi: kiraci,
+      kiraciVergi: kiraciVKN||v.kiraciVergi||'',
+      kiraciTel: kiraciTel||v.kiraciTel||'',
+      kiraciAdres: kiraciAdres||v.kiraciAdres||'',
+      kira: kira||v.kira||0,
+      kiraBitis: bitis,
+      sozlesmeBitis: bitis,
+      teslimKm: teslimKm||v.teslimKm||0,
+      renk: renk||v.renk||'',
+      kiraGecmisi: [...(v.kiraGecmisi||[]), {bas, bitis, yer: kiraci, teslimKm: teslimKm||v.teslimKm||0, iadeKm:0, yakit:'', hasar:'', not: notlar||''}],
+    };
+  });
+  await persist();
+  render();
+  if(window.__currentPage && window.__currentPage!=='arac-yonetimi') renderCurrentPage();
+  document.getElementById('kiralaModal')?.remove();
+  const plakalar = secilen.map(v=>esc(v.plaka)).join(', ');
+  logActivity('edit', secilen.length===1
+    ? `<b>${plakalar}</b> kiraya verildi — ${esc(kiraci)} · ${fmtTarih(bas)} → ${fmtTarih(bitis)} · sözleşme oluşturuldu`
+    : `<b>${secilen.length} araç kiraya verildi</b> (${plakalar}) — ${esc(kiraci)} · ${fmtTarih(bas)} → ${fmtTarih(bitis)} · toplu sözleşme oluşturuldu`);
+  showToast(secilen.length===1 ? secilen[0].plaka+' kiraya verildi, sözleşme hazırlanıyor...' : secilen.length+' araç kiraya verildi, toplu sözleşme hazırlanıyor...');
+
+  // 2) Sözleşme verisi — çoklu araç desteği
+  const araclar = aracVerileri.map(({v, kira, teslimKm})=>({
+    plaka: v.plaka, marka: v.marka||'', model: v.model||'', versiyon: v.versiyon||'',
+    aracCinsi: v.aracCinsi||'', modelYili: v.modelYili||'', renk: renk||v.renk||'',
+    ruhsatNo: v.ruhsatSeriNo||'', sasiNo: v.sasiNo||'', motorNo: v.motorNo||'',
+    teslimKm: teslimKm ? teslimKm.toLocaleString('tr-TR') : '—',
+    aylikKira: kira ? kira.toLocaleString('tr-TR',{minimumFractionDigits:2}) : '—',
+  }));
+  const ilk = araclar[0]||{};
+  const sozData = {
+    firmaAdi: 'PEKDOĞRU OTOMOTİV TURİZM TAŞIMACILIK NAKLİYE HAYVANCILIK TİCARET LİMİTED ŞİRKETİ',
+    firmaAdres: localStorage.getItem('filoPaneli_firmaAdres')||'Ferhuniye Mah. Sultanşah Cad. No:24B Selçuklu / KONYA',
+    firmaTelefon: localStorage.getItem('filoPaneli_firmaTelefon')||'',
+    firmaVergiNo: localStorage.getItem('filoPaneli_firmaVergiNo')||'',
+    firmaEposta: localStorage.getItem('filoPaneli_firmaEposta')||'',
+    sozlesmeTip: tip,
+    kiraci, kiraciVergi: kiraciVKN||'', kiraciAdres: kiraciAdres||'', kiraciTel: kiraciTel||'', kiraciEhliyet: '', kiraciVKN: kiraciVKN||'',
+    yakit: (document.getElementById('krYakit')||{}).value||'Dolu',
+    teslimYer: (document.getElementById('krTeslimYer')||{}).value?.trim()||'',
+    bas: bas.split('-').reverse().join('.'),
+    bitis: bitis.split('-').reverse().join('.'),
+    // Tek araç uyumluluğu (ilk araç)
+    plaka: ilk.plaka||'', marka: ilk.marka||'', model: ilk.model||'',
+    versiyon: ilk.versiyon||'', aracCinsi: ilk.aracCinsi||'',
+    modelYili: ilk.modelYili||'', renk: ilk.renk||'',
+    ruhsatNo: ilk.ruhsatNo||'', sasiNo: ilk.sasiNo||'', motorNo: ilk.motorNo||'',
+    teslimKm: ilk.teslimKm||'—',
+    aylikKira: ilk.aylikKira||'—',
+    yillikKira: toplamKira ? (toplamKira*12).toLocaleString('tr-TR',{minimumFractionDigits:2}) : '—',
+    kmLimit: kmLimit ? Number(kmLimit).toLocaleString('tr-TR') : '3.000',
+    kmAsimFiyat: kmAsim!==undefined && kmAsim!=='' ? Number(kmAsim).toLocaleString('tr-TR',{minimumFractionDigits:2}) : '3,00',
+    depozito: depozito!==undefined && depozito!=='' ? Number(depozito).toLocaleString('tr-TR',{minimumFractionDigits:2}) : (toplamKira ? toplamKira.toLocaleString('tr-TR',{minimumFractionDigits:2}) : '—'),
+    araclar,
+    toplamAylikKira: toplamKira ? toplamKira.toLocaleString('tr-TR',{minimumFractionDigits:2}) : '—',
+    aracSayisi: araclar.length,
+    sure: (() => { const g=Math.round((new Date(bitis)-new Date(bas))/86400000); return g>=30?Math.round(g/30)+' ay':g+' gün'; })(),
+    notlar: notlar||'',
+    tarih: new Date().toLocaleDateString('tr-TR'),
+    sozNo: 'SOZ-'+new Date().getFullYear()+'-'+Date.now().toString().slice(-4),
+  };
+  if(format==='pdf') sozlesmeHtmlPdf(sozData);
+  else sozlesmeDocx(sozData);
 }
 
 async function fisBelgeGor(masrafId){
@@ -6019,6 +6292,7 @@ function renderDashboard(){
           <button class="qbtn" data-act="arac-ara"><div class="qic" style="background:#2E8C63;color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></div><span>Araç Ara</span></button>
           <button class="qbtn" data-act="masraf-ekle"><div class="qic" style="background:var(--coral);color:#fff">${DASH_ICONS.clock}</div><span>Masraf Ekle</span></button>
           <button class="qbtn" data-act="yeni-sozlesme"><div class="qic" style="background:#C98A3E;color:#fff">${DASH_ICONS.doc}</div><span>Yeni Sözleşme</span></button>
+          <button class="qbtn" data-act="arac-kirala"><div class="qic" style="background:#C98A3E;color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8v8h6l4 4V4L9 8H3Z"/></svg></div><span>Araç Kirala</span></button>
           <button class="qbtn" data-act="rapor-olustur"><div class="qic" style="background:var(--accent-blue);color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg></div><span>Rapor Oluştur</span></button>
           <button class="qbtn" data-act="excele-aktar"><div class="qic" style="background:#2E8C63;color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 19h16"/></svg></div><span>Excel'e Aktar</span></button>
           <button class="qbtn" data-act="yedekle"><div class="qic" style="background:var(--steel-600);color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg></div><span>Yedekle (JSON)</span></button>
@@ -6032,6 +6306,7 @@ function renderDashboard(){
     btn.onclick = ()=>{
       const act = btn.dataset.act;
       if(act==='yeni-arac' || act==='yeni-sozlesme'){ switchPage('arac-yonetimi'); setTimeout(()=>openAdd(), 80); }
+      else if(act==='arac-kirala'){ openAracKirala(); }
       else if(act==='arac-ara'){ switchPage('arac-yonetimi'); setTimeout(()=>document.getElementById('search').focus(), 100); }
       else if(act==='masraf-ekle'){ switchPage('masraf'); }
       else if(act==='rapor-olustur'){ switchPage('raporlar'); }
@@ -6742,6 +7017,34 @@ async function sozlesmeOlustur(format){
   }
 }
 
+// Sözleşme maddeleri — 19 maddelik koruyucu şablon; PDF ve Word aynı kaynağı kullanır
+function sozMaddeListesi(d){
+  const coklu = d.araclar && d.araclar.length>1;
+  const aracKelime = coklu ? (d.aracSayisi+' adet aracın') : 'aracın';
+  const A = coklu ? 'Araçlar' : 'Araç';
+  return [
+  {no:1, b:'SÖZLEŞMENİN KONUSU VE KAPSAMI', t:`İşbu sözleşmenin konusu, yukarıda nitelikleri belirtilen ${aracKelime} mülkiyeti KİRAYA VEREN'de kalmak kaydıyla, işbu sözleşmede belirlenen süre, bedel ve şartlarla KİRACI'ya operasyonel kiralama esasına göre kullanım hakkının devredilmesidir. Sözleşme, Araç Teslim Tutanağı (Ek-1) ve varsa diğer ekleriyle birlikte bir bütündür; ekler ile sözleşme metni arasında çelişki halinde sözleşme metni esas alınır. Kiracı, işbu sözleşmede belirttiği temsil yetkisinin geçerli ve tam olduğunu, temsilcisinin şirketi bağlayıcı şekilde imza atmaya yetkili olduğunu beyan ve taahhüt eder; yetkisiz temsilden doğan tüm zararlardan Kiracı ve temsilcisi müştereken ve müteselsilen sorumludur.`},
+  {no:2, b:'TESLİM VE İADE', t:`${A}, ${d.bas} tarihinde, Madde 2'de belirtilen kilometre ve <strong>${d.yakit||'Dolu'}</strong> yakıt seviyesiyle, ${d.teslimYer||'KİRAYA VEREN merkezi'} yerinde, taraflarca birlikte düzenlenip imzalanacak Araç Teslim Tutanağı (Ek-1) ile KİRACI'ya teslim edilmiştir; tutanakta aracın o anki hasar durumu, lastik/aksesuar bilgileri ve varsa fotoğrafları yer alır. ${A} dolu yakıtla teslim edilip dolu yakıtla iade edilecek, eksik yakıt bedeli KİRACI'dan piyasa fiyatı üzerinden tahsil edilecektir. Kira süresi sonunda ${A}, KİRAYA VEREN'in belirteceği yer ve tarihte, teslim alındığı hal ve donanımla, normal yıpranma payı dışında hasarsız olarak iade edilir; iade sırasında ${A.toLowerCase()} birlikte kontrol edilip Araç İade Tutanağı (Ek-2) düzenlenir. KİRACI'nın iade sırasında hazır bulunmaması veya tutanağı imzalamaktan kaçınması halinde KİRAYA VEREN'in tek taraflı düzenleyeceği tutanak taraflar arasında bağlayıcıdır.`},
+  {no:3, b:'KULLANIM KOŞULLARI VE YASAKLAR', t:`${A} yalnızca işbu sözleşmede belirtilen amaçla ve KİRACI tarafından kullanılır; KİRAYA VEREN'in önceden yazılı onayı olmaksızın üçüncü kişilere kiralanamaz, alt kiraya konu edilemez, ödünç verilemez, devredilemez veya rehin/teminat olarak gösterilemez. ${A}nın yurt dışına çıkarılması KİRAYA VEREN'in önceden yazılı onayına tabidir. ${A} üzerinde LPG dönüşümü, renk değişikliği, marka/logo yapıştırması, mekanik/elektronik modifikasyon dahil hiçbir yetkisiz değişiklik yapılamaz. ${A}nın yarışta, sürüş eğitiminde, test amaçlı, başka bir aracı çekmede/kurtarmada, ruhsatında belirtilenden fazla yükleme ile veya trafik güvenliğini tehlikeye atacak şekilde kullanılması yasaktır. Bu maddeye aykırılıktan doğan her türlü zarar, ceza ve üçüncü kişi talepleri KİRACI'ya aittir ve KİRAYA VEREN bu hallerde sözleşmeyi derhal feshederek ${A.toLowerCase()} geri alma hakkına sahiptir. Aylık ${d.kmLimit} km kullanım limitini aşan her kilometre için ${d.kmAsimFiyat} ₺ + KDV ek ücret tahakkuk eder; kullanılmayan km sonraki döneme devredilmez.`},
+  {no:4, b:'SÜRÜCÜ VE EHLİYET ŞARTI', t:`${A}yı yalnızca KİRACI ile önceden KİRAYA VEREN'e bildirilmiş, aracın sınıfına uygun geçerli sürücü belgesine sahip kişiler kullanabilir. KİRACI, ek sürücü bilgilerini (varsa) yazılı olarak bildirmekle yükümlüdür; bildirilmemiş bir sürücünün kullanımından doğan hasar, ceza ve sigorta reddi dahil tüm sonuçlar KİRACI'ya aittir. Ehliyetsiz, ehliyeti geçici/sürekli iptal edilmiş veya aracın sınıfına uygun olmayan ehliyetle yapılan kullanımdan doğan tüm hukuki ve cezai sonuçlar ile hasarlar münhasıran KİRACI'ya aittir; bu hallerde sigorta şirketinin ödeme yapmaması durumunda dahi KİRAYA VEREN'in zararı KİRACI'dan tazmin edilir.`},
+  {no:5, b:'BAKIM, ONARIM VE PERİYODİK SERVİS', t:`${A}nın üretici tarafından öngörülen periyodik bakımları KİRAYA VEREN tarafından, KİRAYA VEREN'in yönlendireceği yetkili servislerde yaptırılır; KİRACI, ${A.toLowerCase()} bakım zamanı geldiğinde gecikmeksizin belirtilen servise götürmek ve arıza/uyarı ışıklarını derhal KİRAYA VEREN'e bildirmekle yükümlüdür. KİRACI'nın bu yükümlülüğü ihmal etmesi sonucu oluşan arıza büyümesi, motor/şanzıman hasarı gibi zararlar KİRACI'ya aittir. KİRAYA VEREN'in yazılı onayı olmaksızın yetkisiz servislerde bakım/onarım yaptırılamaz; aksi halde doğacak garanti kaybı ve hasarlardan KİRACI sorumludur. Bakım/onarım süresince ikame araç sağlanmaz.`},
+  {no:6, b:'SİGORTA, KAZA VE HASAR', t:`${A} için zorunlu mali mesuliyet sigortası ve kasko poliçesi KİRAYA VEREN tarafından yaptırılır. Kaza, çalınma, yanma veya üçüncü kişi zararı halinde KİRACI; olayı gecikmeksizin (en geç 24 saat içinde) KİRAYA VEREN'e ve yetkili kolluk kuvvetlerine bildirmek, kaza tespit tutanağı düzenletmek, gerektiğinde alkol/uyuşturucu raporu aldırmak ve ilgili tüm belgeleri KİRAYA VEREN'e iletmekle yükümlüdür. Bu yükümlülüklerin yerine getirilmemesi (tutanaksız araç bırakma, olay yerinden ayrılma, geç bildirim) nedeniyle sigortanın hasarı kısmen veya tamamen karşılamaması halinde karşılanmayan tutar KİRACI'dan tahsil edilir. KİRACI'nın kusurlu olduğu hasarlarda kasko muafiyet bedeli, değer kaybı ve onarım süresince oluşan gelir kaybı KİRACI'ya aittir. Kasko teminatı dışında kalan iç döşeme, lastik, jant, cam, far/stop, alt kaporta hasarları ile alkol, uyuşturucu/uyarıcı madde etkisi altında veya ehliyetsiz kullanımdan doğan hasarların tamamı, sigorta tazmin etse dahi rücu edilmek suretiyle, KİRACI'ya aittir.`},
+  {no:7, b:'TRAFİK CEZALARI VE GEÇİŞ ÜCRETLERİ', t:`Kira süresi içinde ${A.toLowerCase()}nın kullanımından kaynaklanan tüm trafik idari para cezaları, OGS/HGS/köprü-otoyol geçiş ücretleri, park/otopark bedelleri, çekici ücretleri ve benzeri her türlü mali yükümlülük KİRACI'ya aittir. KİRAYA VEREN adına tebliğ edilen bu tür cezalar/ücretler, KİRAYA VEREN tarafından ödendikten sonra varsa uygulanan idari işlem/dosya ücreti ile birlikte KİRACI'dan tahsil edilir; KİRACI bu tutarları ilk yazılı bildirimde, ihtara gerek kalmaksızın öder.`},
+  {no:8, b:'ÖDEME KOŞULLARI VE TEMERRÜT', t:`Kira bedeli, işbu sözleşmede belirtilen tutar ve tarihte, her ayın 1. gününde peşin olarak, banka havalesi/EFT ile KİRAYA VEREN'in bildireceği hesaba ödenir. Ödemenin vadesinde yapılmaması halinde, ödenmeyen tutara 3095 sayılı Kanuni Faiz ve Temerrüt Faizine İlişkin Kanun uyarınca uygulanan ticari temerrüt faizi işletilir. Kira bedelinin 10 (on) günden fazla gecikmesi halinde KİRAYA VEREN, ayrıca ihtar çekmeye gerek olmaksızın sözleşmeyi feshedip ${A.toLowerCase()} geri alma hakkına sahiptir; bu durumda KİRACI'nın işbu sözleşmeden doğan tüm borçları muaccel hale gelir.`},
+  {no:9, b:'DEPOZİTO / TEMİNAT', t:`KİRACI, sözleşme imzalanmadan önce ${d.depozito} ₺ depozito/teminat tutarını KİRAYA VEREN'e öder. KİRAYA VEREN, KİRACI'nın işbu sözleşmeden doğan ödenmemiş borçlarını, tahsil edilemeyen trafik cezalarını, hasar bedellerini ve cezai şart alacaklarını depozitodan mahsup etme hakkına sahiptir; mahsup sonrası kalan tutar ${A.toLowerCase()} sorunsuz iade edildikten ve tüm hesaplar kapatıldıktan sonra KİRACI'ya iade edilir. Depozito, KİRACI'nın ${A.toLowerCase()} üzerindeki kullanımına ilişkin herhangi bir mülkiyet veya rehin hakkı doğurmaz.`},
+  {no:10, b:'DEVİR, ALT KİRA VE HACİZ YASAĞI', t:`KİRACI, işbu sözleşmeden doğan haklarını ve ${A.toLowerCase()} KİRAYA VEREN'in önceden yazılı onayı olmaksızın üçüncü kişilere devredemez, alt kiraya veremez, üzerinde herhangi bir ayni/şahsi hak tesis edemez. ${A} üzerine KİRACI'nın borçları nedeniyle üçüncü kişilerce haciz, ihtiyati haciz veya ihtiyati tedbir konulması halinde KİRACI, ${A.toLowerCase()}nın KİRAYA VEREN mülkiyetinde olduğunu derhal icra dairesine ve ilgili mercilere bildirmek ve KİRAYA VEREN'i gecikmeksizin haberdar etmekle yükümlüdür; bu bildirimin yapılmaması veya geç yapılması nedeniyle doğacak tüm zarar ve masraflar KİRACI'ya aittir.`},
+  {no:11, b:'CEZAİ ŞARTLAR VE TAZMİNAT', t:`Aşağıdaki hallerde KİRACI, ayrıca ihtara gerek kalmaksızın belirtilen cezai şartları KİRAYA VEREN'e öder; cezai şartın ödenmesi KİRAYA VEREN'in bu tutarı aşan gerçek zararını ayrıca talep etme hakkını ortadan kaldırmaz: (a) KİRACI'nın sözleşmeyi süresinden önce tek taraflı feshetmesi veya erken iade talep etmesi halinde, kalan kira süresine ait toplam kira bedelinin %20'si; (b) ${A}nın izinsiz devri, alt kiraya verilmesi veya sözleşmeye aykırı/kötüye kullanımı halinde, sözleşme toplam bedelinin %50'si; (c) ${A}nın sözleşme süresi sonunda veya KİRAYA VEREN'in fesih hakkının doğduğu tarihte iade edilmemesi halinde, iade gecikmesinin devam ettiği her gün için aylık kira bedelinin %10'u oranında gecikme tazminatı.`},
+  {no:12, b:'ERKEN FESİH VE KİRAYA VERENİN FESİH HAKKI', t:`KİRACI, sözleşmeyi süresinden önce sona erdirmek istediğinde bunu en az 30 (otuz) gün önceden yazılı olarak KİRAYA VEREN'e bildirir; bu halde Madde 11(a) uyarınca cezai şart uygulanır. KİRAYA VEREN; kira bedelinin ödenmemesi, ${A.toLowerCase()}nın sözleşmeye aykırı kullanılması, sigortanın geçersiz kılınmasına yol açacak davranışlar, KİRACI'nın iflası/konkordato ilanı/işlerini tasfiye etmesi veya KİRACI hakkında haciz işlemi başlatılması hallerinde, ihtara gerek kalmaksızın sözleşmeyi derhal feshedip ${A.toLowerCase()} geri alma hakkına sahiptir.`},
+  {no:13, b:'ARACIN GERİ ALINMASI', t:`KİRACI, sözleşme süresinin sona ermesi veya KİRAYA VEREN'in fesih hakkının doğması halinde ${A.toLowerCase()} derhal ve kendiliğinden iade eder. ${A} iade edilmezse KİRAYA VEREN, ${A.toLowerCase()}nın bulunduğu yeri tespit ederek yasal yollardan (icra takibi dahil) geri alma hakkına sahiptir; bu kapsamda yapılan tüm masraflar (avukatlık ücreti, icra masrafları, yer tespiti ve nakliye giderleri dahil) KİRACI'dan tahsil edilir.`},
+  {no:14, b:'GİZLİLİK VE KİŞİSEL VERİLERİN KORUNMASI (KVKK)', t:`Taraflar, işbu sözleşme kapsamında öğrendikleri birbirlerine ait ticari ve kişisel bilgileri gizli tutmayı, sözleşme amacı dışında kullanmayı ve önceden yazılı onay olmaksızın üçüncü kişilerle paylaşmamayı taahhüt eder. KİRAYA VEREN, KİRACI'ya ve varsa bildirdiği sürücülere ait kişisel verileri, 6698 sayılı Kişisel Verilerin Korunması Kanunu ve ilgili mevzuata uygun olarak, sözleşmenin kurulması ve ifası, hasar/kaza/ceza takibi ve yasal yükümlülüklerin yerine getirilmesi amacıyla işler; buna ilişkin aydınlatma metni Ek-3'te yer alır.`},
+  {no:15, b:'MÜCBİR SEBEP', t:`Deprem, sel, yangın, savaş, terör, genel grev, salgın hastalık, resmi makam kararları gibi tarafların makul kontrolü dışındaki ve öngörülemeyen hallerin (mücbir sebep) sözleşmenin ifasını imkânsız veya aşırı derecede güçleştirmesi halinde, etkilenen Taraf durumu derhal diğer Tarafa yazılı olarak bildirir ve mücbir sebep süresince yükümlülükler askıya alınır. Mücbir sebep 30 (otuz) günden uzun sürerse taraflardan her biri sözleşmeyi tazminatsız feshedebilir; bu durumda o ana kadar tahakkuk etmiş kira bedeli ve varsa hasar/ceza alacakları KİRAYA VEREN'e ödenir.`},
+  {no:16, b:'TEBLİGAT', t:`Taraflar, işbu sözleşmede belirtilen adreslerini tebligat adresi olarak kabul eder; adres değişiklikleri diğer Tarafa yazılı olarak (noter/iadeli taahhütlü/e-posta) bildirilmedikçe, son bildirilen adrese yapılan tebligat geçerli sayılır. Taraflar, işbu sözleşmede belirtilen e-posta adreslerine yapılacak bildirimleri de yazılı bildirim olarak kabul eder.`},
+  {no:17, b:'ALACAĞIN DEVRİ', t:`KİRAYA VEREN, işbu sözleşmeden doğan alacaklarını (kira bedeli, cezai şart, tazminat alacakları dahil) önceden KİRACI'nın onayını almaksızın üçüncü kişilere (finans kuruluşları dahil) devir ve temlik edebilir; bu durumda KİRACI, temlik bildirimini takiben ödemelerini bildirilen alacaklıya yapmakla yükümlüdür.`},
+  {no:18, b:'SÖZLEŞMENİN BÜTÜNLÜĞÜ VE DEĞİŞİKLİK', t:`İşbu sözleşme ve ekleri, taraflar arasındaki anlaşmanın tamamını oluşturur ve sözleşme tarihinden önceki tüm sözlü/yazılı anlaşmaların yerine geçer. Sözleşmede yapılacak her türlü değişiklik, ancak yazılı ve her iki tarafça imzalanmış ek protokol ile geçerli olur. Sözleşmenin herhangi bir hükmünün geçersiz veya uygulanamaz sayılması, sözleşmenin diğer hükümlerinin geçerliliğini etkilemez; geçersiz hüküm, tarafların amacına en yakın geçerli bir hükümle değiştirilmiş sayılır.`},
+  {no:19, b:'UYUŞMAZLIKLARIN ÇÖZÜMÜ VE YETKİLİ MAHKEME', t:`İşbu sözleşmenin uygulanmasından doğacak her türlü uyuşmazlıkta Türk hukuku uygulanır; KONYA Mahkemeleri ve İcra Daireleri münhasıran yetkilidir. İşbu sözleşme 2 (iki) nüsha olarak düzenlenmiş, taraflarca okunup anlaşılarak aşağıda belirtilen tarihte imzalanmıştır.`},
+  ];
+}
+
 function sozlesmeHtmlPdf(d){
   const log = document.getElementById('sozlesmeLog');
   const html = sozlesmeHtml(d);
@@ -6754,6 +7057,8 @@ function sozlesmeHtmlPdf(d){
 }
 
 function sozlesmeHtml(d){
+  const logoSrc = (document.querySelector('.lock-logo-wrap img')||{}).src||'';
+  const logoTag = logoSrc ? `<img src="${logoSrc}" alt="" style="display:block;margin:0 auto 10px;max-height:72px;">` : '';
   return `<!DOCTYPE html>
 <html lang="tr"><head><meta charset="UTF-8"><title>Kira Sözleşmesi — ${d.plaka}</title>
 <style>
@@ -6771,6 +7076,7 @@ function sozlesmeHtml(d){
   @media print{body{padding:0;} @page{margin:15mm;}}
 </style></head>
 <body>
+${logoTag}
 <h1>${d.sozlesmeTip}</h1>
 <p style="text-align:center;font-size:11px;">Sözleşme No: ${d.sozNo} | Tarih: ${d.tarih}</p>
 
@@ -6778,51 +7084,86 @@ function sozlesmeHtml(d){
 <table>
   <tr><th>KİRAYA VEREN</th><th>KİRACI</th></tr>
   <tr>
-    <td><strong>${d.firmaAdi}</strong><br>${d.firmaAdres}${d.firmaTelefon?'<br>Tel: '+d.firmaTelefon:''}</td>
-    <td><strong>${d.kiraci}</strong>${d.kiraciVergi?`<br>TC/Vergi No: ${d.kiraciVergi}`:''}${d.kiraciAdres?`<br>${d.kiraciAdres}`:''}${d.kiraciTel?'<br>Tel: '+d.kiraciTel:''}${d.kiraciEhliyet?`<br>Ehliyet No: ${d.kiraciEhliyet}`:''}</td>
+    <td><strong>${d.firmaAdi}</strong><br>${d.firmaAdres}${d.firmaTelefon?'<br>Tel: '+d.firmaTelefon:''}${d.firmaVergiNo?'<br>Vergi No: '+d.firmaVergiNo:''}${d.firmaEposta?'<br>E-posta: '+d.firmaEposta:''}</td>
+    <td><strong>${d.kiraci}</strong>${d.kiraciVergi?`<br>TC/Vergi No: ${d.kiraciVergi}`:''}${d.kiraciAdres?`<br>${d.kiraciAdres}`:''}${d.kiraciTel?'<br>Tel: '+d.kiraciTel:''}${d.kiraciEposta?'<br>E-posta: '+d.kiraciEposta:''}${d.kiraciEhliyet?`<br>Ehliyet No: ${d.kiraciEhliyet}`:''}</td>
   </tr>
 </table>
 
 <h2>2. Araç Bilgileri</h2>
+${(d.araclar && d.araclar.length>1) ? `
+<table>
+  <tr><th>#</th><th>Plaka</th><th>Marka / Model</th><th>Cinsi</th><th>Yıl</th><th>Renk</th><th>Ruhsat Seri No</th><th>Teslim KM</th><th>Aylık Kira (₺)</th></tr>
+  ${d.araclar.map((a,i)=>`<tr><td>${i+1}</td><td><strong>${a.plaka}</strong></td><td>${a.marka} ${a.model} ${a.versiyon}</td><td>${a.aracCinsi||'—'}</td><td>${a.modelYili||'—'}</td><td>${a.renk||'—'}</td><td>${a.ruhsatNo||'—'}</td><td>${a.teslimKm}</td><td>${a.aylikKira}</td></tr>`).join('')}
+  <tr><th colspan="8" style="text-align:right;">TOPLAM AYLIK KİRA (KDV Hariç)</th><th>${d.toplamAylikKira} ₺</th></tr>
+</table>
+<p style="font-size:11px;">Toplam <strong>${d.aracSayisi}</strong> adet araç yukarıda listelenmiş olup tamamı birlikte kiralanmıştır.</p>
+` : `
 <table>
   <tr><th>Plaka</th><td>${d.plaka}</td><th>Marka / Model</th><td>${d.marka} ${d.model} ${d.versiyon}</td></tr>
   <tr><th>Araç Cinsi</th><td>${d.aracCinsi||'—'}</td><th>Model Yılı</th><td>${d.modelYili||'—'}</td></tr>
   <tr><th>Ruhsat Seri No</th><td>${d.ruhsatNo||'—'}</td><th>Şasi No</th><td>${d.sasiNo||'—'}</td></tr>
-  <tr><th>Renk</th><td>${d.renk||'—'}</td><th>Model Yılı</th><td>${d.modelYili||'—'}</td></tr>
+  <tr><th>Renk</th><td>${d.renk||'—'}</td><th>Teslim KM</th><td>${d.teslimKm}</td></tr>
   ${d.motorNo?`<tr><th>Motor No</th><td colspan="3">${d.motorNo}</td></tr>`:''}
 </table>
+`}
 
 <h2>3. Kira Koşulları</h2>
 <table>
   <tr><th>Başlangıç Tarihi</th><td>${d.bas}</td><th>Bitiş Tarihi</th><td>${d.bitis}</td></tr>
-  <tr><th>Süre</th><td>${d.sureDays} gün</td><th>Teslim KM</th><td>${d.teslimKm} km</td></tr>
-  <tr><th>Aylık Kira Bedeli</th><td><strong>${d.aylikKira} ₺ (KDV Hariç)</strong></td><th>Aylık KM Limiti</th><td>${d.kmLimit} km</td></tr>
+  <tr><th>Süre</th><td>${d.sure}</td><th>Teslim KM</th><td>${(d.araclar && d.araclar.length>1) ? 'Araç bazında (bkz. Madde 2 tablosu)' : d.teslimKm+' km'}</td></tr>
+  <tr><th>Aylık Kira Bedeli</th><td><strong>${(d.araclar && d.araclar.length>1) ? d.toplamAylikKira+' ₺ ('+d.aracSayisi+' araç toplamı, KDV Hariç)' : d.aylikKira+' ₺ (KDV Hariç)'}</strong></td><th>Aylık KM Limiti</th><td>${d.kmLimit} km/araç</td></tr>
   <tr><th>KM Aşım Ücreti</th><td>${d.kmAsimFiyat} ₺/km</td><th>Depozito</th><td>${d.depozito} ₺</td></tr>
+  <tr><th>Teslim Yakıt Seviyesi</th><td>${d.yakit||'Dolu'}</td><th>Teslim Yeri</th><td>${d.teslimYer||'KİRAYA VEREN merkezi'}</td></tr>
+  <tr><th>Ödeme Günü</th><td colspan="3">Her ayın 1. günü, peşin (havalı/EFT)</td></tr>
 </table>
 
 <h2>4. Sözleşme Maddeleri</h2>
-<div class="madde"><span class="madde-no">MADDE 1 — TESLİM VE İADE:</span> Araç yukarıda belirtilen tarihte ${d.teslimKm} km ile teslim edilmiştir. Araç dolu yakıtla teslim edilip dolu yakıtla iade edilecektir. İade sırasında araç birlikte kontrol edilerek tutanak düzenlenecektir.</div>
-<div class="madde"><span class="madde-no">MADDE 2 — BAKIM VE ONARIM:</span> Periyodik bakımlar kiralayan tarafından yapılacak olup, kiracı zamanında bakım yaptırmakla yükümlüdür. Kiracının kusuru veya ihmali nedeniyle oluşan arıza ve hasarların bedeli kiracıya aittir. Yetkisiz servislerde bakım/onarım yaptırılamaz.</div>
-<div class="madde"><span class="madde-no">MADDE 3 — SİGORTA VE HASAR:</span> Araç zorunlu mali mesuliyet ve kasko sigortası kiralayan tarafından yapılacaktır. Kaza durumunda kiracı derhal kiralayana bilgi verecektir. Kasko muafiyetleri, iç mekan/lastik/cam hasarları ve alkol-uyuşturucu etkisi altındaki kullanımdan doğan hasarlar kiracıya aittir.</div>
-<div class="madde"><span class="madde-no">MADDE 4 — KM LİMİTİ:</span> Aylık ${d.kmLimit} km limit olup aşım durumunda km başına ${d.kmAsimFiyat} ₺ + KDV ek ücret tahakkuk ettirilir. Kullanılmayan km sonraki döneme devredilmez.</div>
-<div class="madde"><span class="madde-no">MADDE 5 — ÖDEME:</span> Kira bedeli her ayın 1. günü peşin, banka havalesi/EFT ile ödenecektir. Gecikmeli ödemelere yasal faiz uygulanır. Depozito (${d.depozito} ₺) sözleşme imzalanmadan önce tahsil edilir, sorunsuz iadede iade edilir.</div>
-<div class="madde"><span class="madde-no">MADDE 6 — KULLANIM KURALLARI:</span> Araç yalnızca sözleşmede belirtilen amaçla kullanılacaktır; üçüncü kişilere kiralanamaz, devredilemez, rehin verilemez. Yurt dışına çıkış kiralayanın yazılı onayına tabidir. Yetkisiz değişiklik (LPG, renk vb.) yapılamaz.</div>
-<div class="madde"><span class="madde-no">MADDE 7 — FESİH VE ERKEN İADE:</span> Erken fesih için 30 gün önceden yazılı bildirim zorunludur; kalan süreye ait kira bedelinin %20'si cezai şart olarak tahsil edilir. Sözleşme ihlalinde kiralayan derhal fesih hakkına sahiptir.</div>
-<div class="madde"><span class="madde-no">MADDE 8 — TRAFİK CEZALARI:</span> Kira süresinde kiracının kullanımından kaynaklanan tüm trafik cezaları, OGS/HGS geçiş ücretleri, çekici ve otopark bedelleri kiracıya aittir.</div>
-<div class="madde"><span class="madde-no">MADDE 9 — CEZAİ ŞART VE TAZMİNAT:</span> Sözleşmeye aykırı davranışta kiralayanın tüm zararları ile kaybedilen kira gelirleri kiracıdan tazmin edilir. İzinsiz devir veya kötüye kullanımda sözleşme bedelinin %50'si cezai şart olarak tahsil edilir.</div>
-<div class="madde"><span class="madde-no">MADDE 10 — GİZLİLİK VE KVKK:</span> Taraflar, 6698 sayılı KVKK kapsamında kişisel verileri korumakla yükümlüdür; sözleşme konusu bilgileri yetkisiz üçüncü kişilerle paylaşamaz.</div>
-<div class="madde"><span class="madde-no">MADDE 11 — TEMİNAT VE HACİZ YASAĞI:</span> Kiracı, ${d.depozito} ₺ teminat vermiştir. Kiralanan araç üzerine haciz, rehin veya ihtiyati tedbir koyduramaz; kiracı nedeniyle üçüncü kişilerce haciz halinde doğacak zararlar kiracıya aittir.</div>
-<div class="madde"><span class="madde-no">MADDE 12 — MÜCBİR SEBEP:</span> Deprem, sel, yangın, savaş, grev, salgın gibi kontrol dışı sebeplerden doğan ifa imkânsızlığında taraflar sorumlu tutulamaz; mücbir sebep 30 günü aşarsa sözleşme feshedilebilir.</div>
-<div class="madde"><span class="madde-no">MADDE 13 — UYUŞMAZLIK VE YETKİLİ MAHKEME:</span> Bu sözleşmeden doğacak uyuşmazlıklarda KONYA Mahkemeleri ve İcra Daireleri yetkilidir. Bu sözleşme 2 (iki) nüsha olarak tanzim edilip imzalanmıştır.</div>
-<div class="madde"><span class="madde-no">MADDE 14 — GENEL HÜKÜMLER:</span> Yazılı olmayan hallerde Türk Borçlar Kanunu ve ilgili mevzuat uygulanır. Bir maddenin geçersizliği diğer maddeleri etkilemez.</div>
+${sozMaddeListesi(d).map(m=>`<div class="madde"><span class="madde-no">MADDE ${m.no} — ${m.b}:</span> ${m.t}</div>`).join('')}
 ${d.notlar?`<div class="madde"><span class="madde-no">ÖZEL ŞARTLAR:</span> ${d.notlar}</div>`:''}
 
+<h2 style="page-break-before:always;">EK-1 — ARAÇ TESLİM TUTANAĞI</h2>
+<table>
+  <tr><th style="width:28%;">Sözleşme No</th><td>${d.sozNo}</td><th style="width:28%;">Tarih</th><td>${d.tarih}</td></tr>
+  <tr><th>Kiracı</th><td colspan="3">${d.kiraci}</td></tr>
+</table>
+<table>
+  <tr><th>Plaka</th><th>Teslim KM</th><th>Yakıt Seviyesi</th><th>Hasar / Aksesuar Notu</th></tr>
+  ${(d.araclar&&d.araclar.length>1?d.araclar:[{plaka:d.plaka,teslimKm:d.teslimKm}]).map(a=>`<tr><td><strong>${a.plaka}</strong></td><td>${a.teslimKm}</td><td>${d.yakit||'Dolu'}</td><td style="height:34px;"></td></tr>`).join('')}
+</table>
+<p style="font-size:11px;">Yukarıda nitelikleri belirtilen araç(lar), sözleşme şartlarına uygun olarak eksiksiz ve hasar durumu işaretlenerek teslim edilmiştir.</p>
 <div class="imza">
+  <div class="imza-box"><div class="imza-line">KİRAYA VEREN / Yetkili</div></div>
+  <div class="imza-box"><div class="imza-line">KİRACI / Yetkili</div></div>
+</div>
+
+<h2>EK-2 — ARAÇ İADE TUTANAĞI</h2>
+<table>
+  <tr><th style="width:28%;">Sözleşme No</th><td>${d.sozNo}</td><th style="width:28%;">İade Tarihi</th><td>....../....../......</td></tr>
+  <tr><th>Kiracı</th><td colspan="3">${d.kiraci}</td></tr>
+</table>
+<table>
+  <tr><th>Plaka</th><th>İade KM</th><th>Yakıt Seviyesi</th><th>Tespit Edilen Hasar / Eksik</th></tr>
+  ${(d.araclar&&d.araclar.length>1?d.araclar:[{plaka:d.plaka}]).map(a=>`<tr><td><strong>${a.plaka}</strong></td><td></td><td></td><td style="height:34px;"></td></tr>`).join('')}
+</table>
+<p style="font-size:11px;">Yukarıda nitelikleri belirtilen araç(lar), iade sırasında taraflarca birlikte kontrol edilmiş olup tespit edilen durum kaydedilmiştir. Kiracının imzası, hasar/eksik bildirimlerini kabul ettiğini gösterir.</p>
+<div class="imza">
+  <div class="imza-box"><div class="imza-line">KİRAYA VEREN / Yetkili</div></div>
+  <div class="imza-box"><div class="imza-line">KİRACI / Yetkili</div></div>
+</div>
+
+<h2>EK-3 — KVKK AYDINLATMA METNİ</h2>
+<p style="font-size:11px;">6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") uyarınca veri sorumlusu PEKDOĞRU OTOMOTİV TURİZM TAŞIMACILIK NAKLİYE HAYVANCILIK TİCARET LİMİTED ŞİRKETİ'dir. Kiracıya ve varsa bildirilen sürücülere ait ad-soyad, TCKN/VKN, adres, telefon, e-posta, ehliyet ve kiralama/hasar/ceza bilgileri; sözleşmenin kurulması ve ifası, taraf olunan sigorta işlemleri, hasar-kaza-ceza takibi, hukuki koruma ve yasal saklama yükümlülükleri amacıyla işlenir. İlgili kişiler KVKK m.11 kapsamında bilgi alma, düzeltme ve silme haklarına sahiptir; talepler için KİRAYA VEREN'e başvurulabilir. Veriler, işlem amaçlarıyla sınırlı olarak ve yasal saklama süreleri boyunca saklanır, yetkili kurumlarla paylaşılabilir.</p>
+
+<div class="imza" style="margin-top:70px;">
   <div class="imza-box">
-    <div class="imza-line">KİRAYA VEREN<br><strong>${d.firmaAdi}</strong></div>
+    <div class="imza-line">KİRAYA VEREN</div>
+    <div style="font-size:11px;margin-top:4px;"><strong>${d.firmaAdi}</strong></div>
+    <div style="font-size:10.5px;color:#333;margin-top:8px;">Ad Soyad / Unvan: ..............................<br>Tarih: ....../....../..........<br>Kaşe:</div>
   </div>
   <div class="imza-box">
-    <div class="imza-line">KİRACI<br><strong>${d.kiraci}</strong></div>
+    <div class="imza-line">KİRACI</div>
+    <div style="font-size:11px;margin-top:4px;"><strong>${d.kiraci}</strong></div>
+    <div style="font-size:10.5px;color:#333;margin-top:8px;">Ad Soyad / Unvan: ..............................<br>Tarih: ....../....../..........<br>Kaşe:</div>
   </div>
 </div>
 </body></html>`;
@@ -6845,8 +7186,22 @@ async function sozlesmeDocx(d){
 
     const {
       Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
-      WidthType, AlignmentType, BorderStyle, ShadingType, UnderlineType
+      WidthType, AlignmentType, BorderStyle, ShadingType, UnderlineType, ImageRun
     } = window.docx;
+
+    // Firma logosu — panelde gömülü base64 PNG'den okunur
+    let logoParas = [];
+    try{
+      const logoSrc = (document.querySelector('.lock-logo-wrap img')||{}).src||'';
+      if(logoSrc && logoSrc.startsWith('data:image')){
+        const b64 = logoSrc.split(',')[1];
+        const bin = atob(b64);
+        const bytes = new Uint8Array(bin.length);
+        for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
+        logoParas = [new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 160 },
+          children: [new ImageRun({ data: bytes, transformation: { width: 56, height: 64 } })] })];
+      }
+    }catch(e){}
 
     const BORDER = { style: BorderStyle.SINGLE, size: 1, color: '999999' };
 
@@ -6900,6 +7255,7 @@ async function sozlesmeDocx(d){
       sections: [{
         properties: { page: { margin: { top: 1000, bottom: 1000, left: 1200, right: 1200 } } },
         children: [
+          ...logoParas,
           new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 0, after: 200 },
             children: [new TextRun({ text: d.sozlesmeTip||'OPERASYONEl KİRALAMA SÖZLEŞMESİ', bold: true, size: 28, font: 'Arial' })] }),
           new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 0, after: 400 },
@@ -6913,123 +7269,54 @@ async function sozlesmeDocx(d){
           bos(),
 
           baslik('MADDE 2 – ARAÇ BİLGİLERİ'),
-          new Table({ width: { size: 9360, type: WidthType.DXA }, borders: tblBorder, rows: [
-            new TableRow({ children: [ hucre('Plaka',{bold:true,bg:'F5F5F5',width:2340}), hucre(d.plaka,{bold:true,width:2340}), hucre('Marka / Model',{bold:true,bg:'F5F5F5',width:2340}), hucre(`${d.marka} ${d.model} ${d.versiyon}`,{width:2340}) ]}),
-            new TableRow({ children: [ hucre('Araç Cinsi',{bold:true,bg:'F5F5F5',width:2340}), hucre(d.aracCinsi,{width:2340}), hucre('Model Yılı',{bold:true,bg:'F5F5F5',width:2340}), hucre(d.modelYili,{width:2340}) ]}),
-            new TableRow({ children: [ hucre('Renk',{bold:true,bg:'F5F5F5',width:2340}), hucre(d.renk||'—',{width:2340}), hucre('Teslim KM',{bold:true,bg:'F5F5F5',width:2340}), hucre(d.teslimKm+' km',{width:2340}) ]}),
-            new TableRow({ children: [ hucre('Ruhsat Seri No',{bold:true,bg:'F5F5F5',width:2340}), hucre(d.ruhsatNo||'—',{width:2340}), hucre('Şasi No',{bold:true,bg:'F5F5F5',width:2340}), hucre(d.sasiNo||'—',{width:2340}) ]}),
-            new TableRow({ children: [ hucre('Motor No',{bold:true,bg:'F5F5F5',width:2340}), hucre(d.motorNo||'—',{width:4680,span:3}) ]}),
-          ]}),
+          ...((d.araclar && d.araclar.length>1) ? [
+            new Table({ width: { size: 9360, type: WidthType.DXA }, borders: tblBorder, rows: [
+              new TableRow({ children: [
+                hucre('#',{bold:true,bg:'E8E8E8',width:420}), hucre('Plaka',{bold:true,bg:'E8E8E8',width:1100}),
+                hucre('Marka / Model',{bold:true,bg:'E8E8E8',width:1800}), hucre('Cinsi',{bold:true,bg:'E8E8E8',width:1100}),
+                hucre('Yıl',{bold:true,bg:'E8E8E8',width:700}), hucre('Renk',{bold:true,bg:'E8E8E8',width:900}),
+                hucre('Ruhsat Seri No',{bold:true,bg:'E8E8E8',width:1300}), hucre('Teslim KM',{bold:true,bg:'E8E8E8',width:1000}),
+                hucre('Aylık Kira (₺)',{bold:true,bg:'E8E8E8',width:1040}),
+              ]}),
+              ...d.araclar.map((a,i)=>new TableRow({ children: [
+                hucre(String(i+1),{width:420}), hucre(a.plaka,{bold:true,width:1100}),
+                hucre(`${a.marka} ${a.model} ${a.versiyon}`,{width:1800}), hucre(a.aracCinsi||'—',{width:1100}),
+                hucre(a.modelYili||'—',{width:700}), hucre(a.renk||'—',{width:900}),
+                hucre(a.ruhsatNo||'—',{width:1300}), hucre(a.teslimKm,{width:1000}),
+                hucre(a.aylikKira,{width:1040}),
+              ]})),
+              new TableRow({ children: [
+                hucre('TOPLAM AYLIK KİRA (KDV Hariç): '+d.toplamAylikKira+' ₺ — '+d.aracSayisi+' araç',{bold:true,bg:'FFFDE7',span:9,width:9360}),
+              ]}),
+            ]}),
+            new Paragraph({ spacing: { before: 80, after: 40 }, children: [new TextRun({ text: `Toplam ${d.aracSayisi} adet araç yukarıda listelenmiş olup tamamı birlikte kiralanmıştır.`, size: 20, font: 'Arial' })] }),
+          ] : [
+            new Table({ width: { size: 9360, type: WidthType.DXA }, borders: tblBorder, rows: [
+              new TableRow({ children: [ hucre('Plaka',{bold:true,bg:'F5F5F5',width:2340}), hucre(d.plaka,{bold:true,width:2340}), hucre('Marka / Model',{bold:true,bg:'F5F5F5',width:2340}), hucre(`${d.marka} ${d.model} ${d.versiyon}`,{width:2340}) ]}),
+              new TableRow({ children: [ hucre('Araç Cinsi',{bold:true,bg:'F5F5F5',width:2340}), hucre(d.aracCinsi,{width:2340}), hucre('Model Yılı',{bold:true,bg:'F5F5F5',width:2340}), hucre(d.modelYili,{width:2340}) ]}),
+              new TableRow({ children: [ hucre('Renk',{bold:true,bg:'F5F5F5',width:2340}), hucre(d.renk||'—',{width:2340}), hucre('Teslim KM',{bold:true,bg:'F5F5F5',width:2340}), hucre(d.teslimKm+' km',{width:2340}) ]}),
+              new TableRow({ children: [ hucre('Ruhsat Seri No',{bold:true,bg:'F5F5F5',width:2340}), hucre(d.ruhsatNo||'—',{width:2340}), hucre('Şasi No',{bold:true,bg:'F5F5F5',width:2340}), hucre(d.sasiNo||'—',{width:2340}) ]}),
+              new TableRow({ children: [ hucre('Motor No',{bold:true,bg:'F5F5F5',width:2340}), hucre(d.motorNo||'—',{width:4680,span:3}) ]}),
+            ]}),
+          ]),
           bos(),
 
           baslik('MADDE 3 – KİRA SÜRESİ VE BEDELİ'),
           new Table({ width: { size: 9360, type: WidthType.DXA }, borders: tblBorder, rows: [
             new TableRow({ children: [ hucre('Kira Başlangıç',{bold:true,bg:'F5F5F5',width:2340}), hucre(d.bas,{width:2340}), hucre('Kira Bitiş',{bold:true,bg:'F5F5F5',width:2340}), hucre(d.bitis,{width:2340}) ]}),
-            new TableRow({ children: [ hucre('Kira Süresi',{bold:true,bg:'F5F5F5',width:2340}), hucre(d.sure,{width:2340}), hucre('Aylık KM Limiti',{bold:true,bg:'F5F5F5',width:2340}), hucre(d.kmLimit+' km',{width:2340}) ]}),
-            new TableRow({ children: [ hucre('Aylık Kira Bedeli (KDV Hariç)',{bold:true,bg:'FFFDE7',width:2340}), hucre(d.aylikKira+' ₺',{bold:true,width:2340}), hucre('Yıllık Kira Bedeli (KDV Hariç)',{bold:true,bg:'FFFDE7',width:2340}), hucre(d.yillikKira+' ₺',{bold:true,width:2340}) ]}),
+            new TableRow({ children: [ hucre('Kira Süresi',{bold:true,bg:'F5F5F5',width:2340}), hucre(d.sure,{width:2340}), hucre('Aylık KM Limiti',{bold:true,bg:'F5F5F5',width:2340}), hucre(d.kmLimit+' km/araç',{width:2340}) ]}),
+            new TableRow({ children: [ hucre((d.araclar&&d.araclar.length>1)?'Toplam Aylık Kira (KDV Hariç)':'Aylık Kira Bedeli (KDV Hariç)',{bold:true,bg:'FFFDE7',width:2340}), hucre(((d.araclar&&d.araclar.length>1)?d.toplamAylikKira:d.aylikKira)+' ₺',{bold:true,width:2340}), hucre('Yıllık Kira Bedeli (KDV Hariç)',{bold:true,bg:'FFFDE7',width:2340}), hucre(d.yillikKira+' ₺',{bold:true,width:2340}) ]}),
             new TableRow({ children: [ hucre('KM Aşım Ücreti',{bold:true,bg:'F5F5F5',width:2340}), hucre(d.kmAsimFiyat+' ₺/km',{width:2340}), hucre('Depozito',{bold:true,bg:'F5F5F5',width:2340}), hucre(d.depozito+' ₺',{width:2340}) ]}),
+            new TableRow({ children: [ hucre('Teslim Yakıt Seviyesi',{bold:true,bg:'F5F5F5',width:2340}), hucre(d.yakit||'Dolu',{width:2340}), hucre('Teslim Yeri',{bold:true,bg:'F5F5F5',width:2340}), hucre(d.teslimYer||'KİRAYA VEREN merkezi',{width:2340}) ]}),
+            new TableRow({ children: [ hucre('Ödeme Günü',{bold:true,bg:'F5F5F5',width:2340}), hucre('Her ayın 1. günü, peşin (havalı/EFT)',{width:4680,span:3}) ]}),
           ]}),
           bos(),
 
-          ...madde(4,'TESLİM VE İADE',[
-            `4.1. Araç, ${d.bas} tarihinde ${d.teslimKm} km ile kiracıya teslim edilmiştir.`,
-            '4.2. Araç dolu yakıtla teslim edilmiş olup, iade sırasında da dolu yakıtla teslim edilecektir.',
-            '4.3. Kiracı, kira süresi sonunda aracı sözleşme başlangıcındaki durumuna uygun şekilde iade etmekle yükümlüdür.',
-            '4.4. Normal yıpranma dışındaki her türlü hasar kiracıya aittir.',
-            '4.5. İade sırasında araç birlikte kontrol edilecek ve tutanak düzenlenecektir.',
-          ]),
-          bos(),
-
-          ...madde(5,'BAKIM VE ONARIM',[
-            '5.1. Aracın periyodik bakımları kiralayan tarafından yapılacak olup kiracı zamanında servise getirmekle yükümlüdür.',
-            '5.2. Kiracının kusuru olmaksızın meydana gelen arızaların onarım bedeli kiralayana aittir.',
-            '5.3. Kiracının kusuru veya ihmali nedeniyle oluşan arıza ve hasarların bedeli kiracıya aittir.',
-            '5.4. Kiracı, yetkisiz servislerde bakım ve onarım yaptıramaz.',
-          ]),
-          bos(),
-
-          ...madde(6,'SİGORTA VE HASAR',[
-            '6.1. Araç, zorunlu mali mesuliyet ve kasko sigortası ile kiralayan tarafından sigortalanmıştır.',
-            '6.2. Kaza durumunda kiracı, derhal kiralayana bilgi vermekle yükümlüdür.',
-            '6.3. Kiracının kusurlu olduğu hasarlarda kasko muafiyeti ve onarım süresi kaybı kiracıya aittir.',
-            '6.4. Kasko dışı hasarlar (iç mekan, lastik, cam) kiracı tarafından karşılanır.',
-            '6.5. Alkol veya uyuşturucu etkisi altında kullanımdan doğan hasarlar tamamen kiracıya aittir.',
-          ]),
-          bos(),
-
-          ...madde(7,'KİLOMETRE LİMİTİ',[
-            `7.1. Aylık kilometre limiti ${d.kmLimit} km olarak belirlenmiştir.`,
-            `7.2. Limit aşımı durumunda her fazla km için ${d.kmAsimFiyat} ₺ + KDV ek ücret tahakkuk ettirilir.`,
-            '7.3. Kullanılmayan km bir sonraki döneme devredilmez.',
-          ]),
-          bos(),
-
-          ...madde(8,'ÖDEME KOŞULLARI',[
-            '8.1. Kira bedeli her ayın 1. günü peşin olarak ödenecektir.',
-            '8.2. Ödeme banka havalesi/EFT yoluyla yapılacaktır.',
-            '8.3. Süresi geçen ödemeler için yasal faiz oranında gecikme faizi uygulanır.',
-            `8.4. Depozito (${d.depozito} ₺), sözleşme imzalanmadan önce tahsil edilir; sorunsuz iade sonrası iade edilir.`,
-          ]),
-          bos(),
-
-          ...madde(9,'KULLANIM KURALLARI',[
-            '9.1. Araç yalnızca sözleşmede belirtilen amaçla kullanılacaktır.',
-            '9.2. Araç üçüncü kişilere kiralanamaz, devredilemez veya rehin verilemez.',
-            '9.3. Araç ile yurt dışına çıkış için kiralayanın yazılı onayı gereklidir.',
-            '9.4. Araçta yetkisiz değişiklik (LPG, renk vb.) yapılamaz.',
-          ]),
-          bos(),
-
-          ...madde(10,'FESİH VE ERKEN İADE',[
-            '10.1. Kiracı sözleşmeyi erken feshetmek istediğinde 30 gün önceden yazılı bildirimde bulunmak zorundadır.',
-            "10.2. Erken fesih durumunda kalan süreye ait kira bedelinin %20'si cezai şart olarak tahsil edilir.",
-            '10.3. Kiralayan; sözleşme ihlali, iflas veya taksit aksaması durumunda sözleşmeyi derhal feshedebilir.',
-          ]),
-          bos(),
-
-          ...madde(11,'TRAFİK CEZALARI',[
-            '11.1. Kira süresi içinde kiracının kullanımından kaynaklanan tüm trafik idari para cezaları, OGS/HGS geçiş ücretleri, çekici ve otopark bedelleri kiracıya aittir.',
-            '11.2. Kiralayan tarafından tebliğ edilen cezalar, kiracıdan ayrıca tahsil edilir.',
-          ]),
-          bos(),
-
-          ...madde(12,'CEZAİ ŞART VE TAZMİNAT',[
-            '12.1. Kiracının sözleşme hükümlerine aykırı davranması halinde, kiralayanın uğradığı tüm zararlar ile kaybedilen kira gelirleri kiracıdan tazmin edilir.',
-            '12.2. Erken iade veya fesihte, kalan süreye ait kira bedelinin %20’si cezai şart olarak tahsil edilir.',
-            '12.3. Aracın izinsiz devri veya kötüye kullanımı halinde sözleşme bedelinin %50’si cezai şart olarak tahsil edilir.',
-          ]),
-          bos(),
-
-          ...madde(13,'GİZLİLİK VE KVKK',[
-            '13.1. Taraflar, bu sözleşmenin kurulması ve ifası kapsamında öğrenmiş oldukları kişisel verileri 6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) kapsamında korunacak şekilde işler ve saklar.',
-            '13.2. Taraflar, sözleşme konusu bilgileri üçüncü kişilerle yetkisiz olarak paylaşmayacaktır.',
-            '13.3. Kiracı, verilerinin işlenmesi konusunda kiralayanı 6698 sayılı Kanun çerçevesinde bilgilendirmesi halinde yazılı onay vermiş sayılır.',
-          ]),
-          bos(),
-
-          ...madde(14,'TEMİNAT VE HACİZ YASAĞI',[
-            `14.1. Kiracı, sözleşmenin güvenli ifası için ${d.depozito} ₺ teminat/depozito vermiştir.`,
-            '14.2. Kiracı, kiralanan araç üzerine haciz, rehin veya ihtiyati tedbir koyduramaz; kiralayana yazılı bildirimde bulunmaksızın aracı devredemez.',
-            '14.3. Aracın kiracı nedeniyle üçüncü kişilerce hacz edilmesi halinde doğacak zararlar kiracıya aittir.',
-          ]),
-          bos(),
-
-          ...madde(15,'MÜCBİR SEBEP',[
-            '15.1. Deprem, sel, yangın, savaş, grev, salgın ve benzeri tarafların kontrolü dışındaki mücbir sebeplerden doğan ifa imkânsızlığında taraflar sorumlu tutulamaz.',
-            '15.2. Mücbir sebebin 30 günden fazla sürmesi halinde taraflardan her biri sözleşmeyi feshedebilir; o ana kadar kullanılan sürelerin kirası tahsil edilir.',
-          ]),
-          bos(),
-
-          ...madde(16,'UYUŞMAZLIK VE YETKİLİ MAHKEME',[
-            '16.1. Bu sözleşmeden doğacak uyuşmazlıklarda KONYA Mahkemeleri ve İcra Daireleri yetkilidir.',
-            '16.2. Bu sözleşme 2 (iki) nüsha olarak tanzim edilmiş ve taraflarca imzalanmıştır.',
-          ]),
-          bos(),
-
-          ...madde(17,'GENEL HÜKÜMLER',[
-            '17.1. Bu sözleşmede yazılı olmayan hallerde Türk Borçlar Kanunu ve ilgili mevzuat hükümleri uygulanır.',
-            '17.2. Sözleşmenin bir maddesinin geçersiz sayılması, diğer maddelerin geçerliliğini etkilemez.',
-            '17.3. Taraflar, sözleşme şartlarını okuduğunu, anladığını ve kabul ettiğini beyan eder.',
+          // 19 maddelik sözleşme metni — HTML sözleşmeyle aynı kaynak
+          ...sozMaddeListesi(d).flatMap(m=>[
+            new Paragraph({ spacing: { before: 200, after: 60 }, children: [new TextRun({ text: `MADDE ${m.no} – ${m.b}`, bold: true, size: 21, font: 'Arial' })] }),
+            new Paragraph({ spacing: { before: 40, after: 40 }, indent: { left: 360 }, children: [new TextRun({ text: m.t.replace(/<[^>]+>/g,''), size: 20, font: 'Arial' })] }),
+            bos(),
           ]),
 
           ...(d.notlar ? [bos(), new Paragraph({ spacing: { before: 200, after: 100 }, children: [
@@ -7037,7 +7324,29 @@ async function sozlesmeDocx(d){
             new TextRun({ text: d.notlar, size: 20, font: 'Arial' }),
           ]})] : []),
 
+          // --- EKLER ---
+          baslik('EK-1: ARAÇ TESLİM TUTANAĞI'),
+          new Table({ width: { size: 9360, type: WidthType.DXA }, borders: tblBorder, rows: [
+            new TableRow({ children: [ hucre('Sözleşme No',{bold:true,bg:'F5F5F5',width:2340}), hucre(d.sozNo,{width:2340}), hucre('Tarih',{bold:true,bg:'F5F5F5',width:2340}), hucre(d.tarih,{width:2340}) ]}),
+            new TableRow({ children: [ hucre('Kiracı',{bold:true,bg:'F5F5F5',width:2340}), hucre(d.kiraci,{width:4680,span:3}) ]}),
+            new TableRow({ children: [ hucre('Plaka',{bold:true,bg:'E8E8E8',width:2340}), hucre('Teslim KM',{bold:true,bg:'E8E8E8',width:2340}), hucre('Yakıt Seviyesi',{bold:true,bg:'E8E8E8',width:2340}), hucre('Hasar / Aksesuar Notu',{bold:true,bg:'E8E8E8',width:2340}) ]}),
+            ...((d.araclar&&d.araclar.length>1?d.araclar:[{plaka:d.plaka,teslimKm:d.teslimKm}]).map(a=>new TableRow({ children: [ hucre(a.plaka,{bold:true,width:2340}), hucre(a.teslimKm||'',{width:2340}), hucre(d.yakit||'Dolu',{width:2340}), hucre('',{width:2340}) ]}))),
+          ]}),
+          new Paragraph({ spacing: { before: 80, after: 300 }, children: [new TextRun({ text: 'Yukarıda nitelikleri belirtilen araç(lar), sözleşme şartlarına uygun olarak eksiksiz teslim edilmiştir.  İmzalar: Kiraya Veren ..............................  /  Kiracı ..............................', size: 20, font: 'Arial' })] }),
+
+          baslik('EK-2: ARAÇ İADE TUTANAĞI'),
+          new Table({ width: { size: 9360, type: WidthType.DXA }, borders: tblBorder, rows: [
+            new TableRow({ children: [ hucre('Sözleşme No',{bold:true,bg:'F5F5F5',width:2340}), hucre(d.sozNo,{width:2340}), hucre('İade Tarihi',{bold:true,bg:'F5F5F5',width:2340}), hucre('....../....../......',{width:2340}) ]}),
+            new TableRow({ children: [ hucre('Kiracı',{bold:true,bg:'F5F5F5',width:2340}), hucre(d.kiraci,{width:4680,span:3}) ]}),
+            new TableRow({ children: [ hucre('Plaka',{bold:true,bg:'E8E8E8',width:2340}), hucre('İade KM',{bold:true,bg:'E8E8E8',width:2340}), hucre('Yakıt Seviyesi',{bold:true,bg:'E8E8E8',width:2340}), hucre('Tespit Edilen Hasar / Eksik',{bold:true,bg:'E8E8E8',width:2340}) ]}),
+            ...((d.araclar&&d.araclar.length>1?d.araclar:[{plaka:d.plaka}]).map(a=>new TableRow({ children: [ hucre(a.plaka,{bold:true,width:2340}), hucre('',{width:2340}), hucre('',{width:2340}), hucre('',{width:2340}) ]}))),
+          ]}),
+          new Paragraph({ spacing: { before: 80, after: 300 }, children: [new TextRun({ text: 'Araç(lar) iade sırasında taraflarca birlikte kontrol edilmiştir. Kiracının imzası, hasar/eksik bildirimlerini kabul ettiğini gösterir.  İmzalar: Kiraya Veren ..............................  /  Kiracı ..............................', size: 20, font: 'Arial' })] }),
+
+          baslik('EK-3: KVKK AYDINLATMA METNİ'),
+          new Paragraph({ spacing: { before: 40, after: 200 }, children: [new TextRun({ text: '6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") uyarınca veri sorumlusu PEKDOĞRU OTOMOTİV TURİZM TAŞIMACILIK NAKLİYE HAYVANCILIK TİCARET LİMİTED ŞİRKETİ\'dir. Kiracıya ve varsa bildirilen sürücülere ait ad-soyad, TCKN/VKN, adres, telefon, e-posta, ehliyet ve kiralama/hasar/ceza bilgileri; sözleşmenin kurulması ve ifası, taraf olunan sigorta işlemleri, hasar-kaza-ceza takibi, hukuki koruma ve yasal saklama yükümlülükleri amacıyla işlenir. İlgili kişiler KVKK m.11 kapsamında bilgi alma, düzeltme ve silme haklarına sahiptir; talepler için KİRAYA VEREN\'e başvurulabilir. Veriler, işlem amaçlarıyla sınırlı olarak ve yasal saklama süreleri boyunca saklanır, yetkili kurumlarla paylaşılabilir.', size: 20, font: 'Arial' })] }),
           bos(), bos(),
+
           new Paragraph({ border: { bottom: { style: BorderStyle.SINGLE, size: 1, color: '000000' } }, children: [new TextRun({ text: '', size: 4 })] }),
           bos(),
 
@@ -7046,15 +7355,19 @@ async function sozlesmeDocx(d){
               new TableCell({ width: { size: 4200, type: WidthType.DXA }, borders: noBorder, children: [
                 new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 0, after: 600 }, children: [new TextRun({ text: 'KİRAYA VEREN', bold: true, size: 20, font: 'Arial' })] }),
                 new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: d.firmaAdi, size: 17, font: 'Arial' })] }),
+                new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 200 }, children: [new TextRun({ text: 'Ad Soyad / Unvan: ..............................', size: 18, font: 'Arial' })] }),
                 new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 60 }, children: [new TextRun({ text: 'İmza: ____________________', size: 19, font: 'Arial' })] }),
                 new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 40 }, children: [new TextRun({ text: `Tarih: ${d.tarih}`, size: 19, font: 'Arial' })] }),
+                new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 40 }, children: [new TextRun({ text: 'Kaşe:', size: 18, font: 'Arial' })] }),
               ]}),
               new TableCell({ width: { size: 960, type: WidthType.DXA }, borders: noBorder, children: [new Paragraph({ children: [new TextRun({ text: '' })] })] }),
               new TableCell({ width: { size: 4200, type: WidthType.DXA }, borders: noBorder, children: [
                 new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 0, after: 600 }, children: [new TextRun({ text: 'KİRACI', bold: true, size: 20, font: 'Arial' })] }),
                 new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: d.kiraci, size: 17, font: 'Arial' })] }),
+                new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 200 }, children: [new TextRun({ text: 'Ad Soyad / Unvan: ..............................', size: 18, font: 'Arial' })] }),
                 new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 60 }, children: [new TextRun({ text: 'İmza: ____________________', size: 19, font: 'Arial' })] }),
                 new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 40 }, children: [new TextRun({ text: `Tarih: ${d.tarih}`, size: 19, font: 'Arial' })] }),
+                new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 40 }, children: [new TextRun({ text: 'Kaşe:', size: 18, font: 'Arial' })] }),
               ]}),
             ]})
           ]}),
