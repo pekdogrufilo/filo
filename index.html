@@ -577,7 +577,26 @@
   .dstat-txt .d{font-size:12px;margin-top:4px;font-weight:600;}
 
   .dash-grid{display:grid;grid-template-columns:1fr 1fr 320px;gap:20px;align-items:start;}
-  @media (max-width:1100px){.dash-grid{grid-template-columns:1fr;}}
+  .dg-21{grid-template-columns:1.6fr 1fr;}
+  .dg-3{grid-template-columns:1fr 1fr 1fr;}
+  .dg-141{grid-template-columns:1.4fr 1fr;}
+  .dg-1120{grid-template-columns:1fr 1fr 320px;}
+  @media (max-width:1100px){.dash-grid,.dg-21,.dg-3,.dg-141,.dg-1120{grid-template-columns:1fr;}}
+  /* ATS PRO stilinde dağılım listesi + yaklaşan periyot */
+  .fd-row{display:flex;align-items:center;gap:8px;font-size:12.5px;margin-top:11px;}
+  .fd-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+  .fd-l{color:var(--steel-100);flex:1;}
+  .fd-v{font-weight:700;}
+  .fd-bar{height:4px;background:var(--surface-2);border-radius:3px;margin-top:5px;overflow:hidden;}
+  .fd-bar span{display:block;height:100%;border-radius:3px;}
+  .yp-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .yp-box{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;text-align:center;}
+  .yp-n{font-size:20px;font-weight:700;line-height:1.1;}
+  .yp-l{font-size:11px;color:var(--steel-300);margin-top:3px;}
+  .yp-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid var(--line);font-size:12px;}
+  .yp-row:last-child{border-bottom:none;}
+  .yp-tip{color:var(--steel-100);flex:1;}
+  .yp-gun{font-weight:600;white-space:nowrap;}
   .dcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;transition:border-color .2s ease, box-shadow .2s ease;}
   .dcard:hover{border-color:var(--border-2);}
   .dcard:hover{border-color:var(--steel-600);}
@@ -5730,48 +5749,39 @@ function renderDashboard(){
         </div>
       </div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
-      <div class="dcard" style="background:var(--surface-2);border-color:var(--line);">
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-          <span style="font-size:12px;color:var(--steel-300);">Bu Ay Masraf</span>
-          <span style="font-size:18px;font-weight:700;color:var(--coral);">${isAdmin() ? fmtTL2(masrafBuAy) : '—'}</span>
-        </div>
+    <div class="dash-grid dg-3">
+      <div class="dcard">
+        <h3>Filo Araç Dağılımı <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;background:rgba(59,130,246,.12);color:#3B82F6;">Doluluk %${pct(kirada)}</span></h3>
+        <div class="fd-row"><span class="fd-dot" style="background:#22C55E"></span><span class="fd-l">Kiradaki Araçlar</span><span class="fd-v">${kirada}</span></div>
+        <div class="fd-bar"><span style="background:#22C55E;width:${pct(kirada)}%"></span></div>
+        <div class="fd-row"><span class="fd-dot" style="background:#F59E0B"></span><span class="fd-l">Müsait Araçlar</span><span class="fd-v">${musait}</span></div>
+        <div class="fd-bar"><span style="background:#F59E0B;width:${pct(musait)}%"></span></div>
+        <div class="fd-row"><span class="fd-dot" style="background:#EF4444"></span><span class="fd-l">Servisteki Araçlar</span><span class="fd-v">${serviste}</span></div>
+        <div class="fd-bar"><span style="background:#EF4444;width:${pct(serviste)}%"></span></div>
+        <div class="fd-row"><span class="fd-dot" style="background:#8B5CF6"></span><span class="fd-l">Yakında Belgesi Bitecek</span><span class="fd-v">${yakindaBitecekPlakalar.size}</span></div>
+        <div class="fd-row"><span class="fd-dot" style="background:#3B82F6"></span><span class="fd-l">Aktif Müşteri</span><span class="fd-v">${aktifMusteri}</span></div>
+        <div style="font-size:11px;color:var(--steel-300);margin-top:10px;">Toplam ${total} araç · ${musteriSayisi} müşteri kaydı</div>
       </div>
-      <div class="dcard" style="background:var(--surface-2);border-color:var(--line);">
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-          <span style="font-size:12px;color:var(--steel-300);">Tahmini Net</span>
-          <span style="font-size:18px;font-weight:700;color:${netKar>=0?'#16A34A':'#DC2626'}">${isAdmin() ? fmtTL2(netKar) : '—'}</span>
-        </div>
+      <div class="dcard">
+        <h3>Aylık Masraf (Son 6 Ay) ${(()=>{ const gec = series.values.length>=2 ? series.values[series.values.length-2] : 0; const tr = gec>0 && masrafBuAy>0 ? Math.round((masrafBuAy-gec)/gec*100) : 0; return tr ? `<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;background:${tr>0?'rgba(220,38,38,.12)':'rgba(22,163,74,.12)'};color:${tr>0?'#DC2626':'#16A34A'}">${tr>0?'▲':'▼'} %${Math.abs(tr)}</span>` : ''; })()}</h3>
+        ${svgBarChart(series.values, series.labels, 320, 180, '#6366F1')}
+      </div>
+      <div class="dcard">
+        <h3>Yaklaşan Periyot (30 Gün)</h3>
+        ${(()=>{
+          const tipler=[['Sigorta','sigortaTarihi'],['Muayene','muayeneTarihi'],['Kasko','kaskoBitis'],['Sözleşme','sozlesmeBitis'],['Kira','kiraBitis']];
+          const say={'Sigorta':0,'Muayene':0,'Kasko':0,'Sözleşme':0,'Kira':0};
+          const yak=[];
+          vehicles.forEach(v=>{ tipler.forEach(([ad,alan])=>{ const t=v[alan]; if(!t) return; const dl=daysLeft(t); if(dl!==null && dl<=30){ say[ad]++; yak.push({p:v.plaka, ad, dl}); } }); });
+          yak.sort((a,b)=>a.dl-b.dl);
+          const box=(ad,n,renk)=>`<div class="yp-box"><div class="yp-n" style="color:${n>0?renk:'var(--steel-300)'}">${n}</div><div class="yp-l">${ad}</div></div>`;
+          const liste=yak.slice(0,5).map(r=>`<div class="yp-row"><span class="mini-plaka" style="font-size:11.5px;">${esc(r.p)}</span><span class="yp-tip">${r.ad}</span><span class="yp-gun" style="color:${r.dl<0?'#DC2626':'#EA580C'}">${r.dl<0?Math.abs(r.dl)+' gün geçti':r.dl+' gün'}</span></div>`).join('');
+          return `<div class="yp-grid">${box('Sigorta',say['Sigorta'],'#2563EB')}${box('Muayene',say['Muayene'],'#6366F1')}${box('Kasko',say['Kasko'],'#8B5CF6')}${box('Kira/Söz.',say['Kira']+say['Sözleşme'],'#EA580C')}</div>
+          <div style="margin-top:10px;">${yak.length?liste:'<div class="log-empty">30 gün içinde belge bitişi yok.</div>'}</div>`;
+        })()}
       </div>
     </div>
-    <div class="dash-grid">
-      <div class="dcard">
-        <h3>Filo Durumu</h3>
-        <div class="donut-wrap">
-          ${svgDonut([{value:kirada,color:'#34C759'},{value:musait,color:'#FF9F0A'},{value:serviste,color:'#FF3B30'}], 130, 22, total, 'Toplam')}
-          <div class="donut-legend">
-            <div class="donut-legend-item"><span class="sw" style="background:#34C759"></span><span class="lbl">Kiradaki Araçlar</span><span class="val">${kirada}</span><span class="pct">%${pct(kirada)}</span></div>
-            <div class="donut-legend-item"><span class="sw" style="background:#FF9F0A"></span><span class="lbl">Müsait Araçlar</span><span class="val">${musait}</span><span class="pct">%${pct(musait)}</span></div>
-            <div class="donut-legend-item"><span class="sw" style="background:#FF3B30"></span><span class="lbl">Servisteki Araçlar</span><span class="val">${serviste}</span><span class="pct">%${pct(serviste)}</span></div>
-            <div class="donut-legend-item" style="margin-top:6px;padding-top:9px;border-top:1px solid var(--line);"><span class="sw" style="background:#AF52DE"></span><span class="lbl">Yakında Belgesi Bitecek</span><span class="val">${yakindaBitecekPlakalar.size}</span><span class="pct"></span></div>
-          </div>
-        </div>
-        <div style="font-size:12px;color:var(--steel-300);margin-top:10px;">* Yüzdeler toplam araç sayısına göre, "yakında bitecek" ise 30 gün içinde sigorta/muayene/kira/sözleşme/kasko tarihi olan araç sayısına göre hesaplanmıştır.</div>
-      </div>
-      <div class="dcard">
-        <h3>Aylık Masraf (Son 6 Ay)</h3>
-        ${svgLineChart(series.values, series.labels, 380, 170, {fmt: fmtCompactTL})}
-      </div>
-      <div class="dcard">
-        <h3>Gelir vs Masraf (Son 6 Ay)</h3>
-        ${(()=>{ const inc=computeMonthlyIncomeSeries(); return svgDualLineChart(inc.values, series.values, series.labels, 380, 170); })()}
-      </div>
-      <div class="dcard">
-        <h3>⚡ Aksiyon Merkezi <a data-goto="bildirimler" style="font-size:12px;font-weight:400;color:var(--accent-blue);text-decoration:none;">Tümünü Gör →</a></h3>
-        <div>${renderKritikUyarilarList(urgent)}</div>
-      </div>
-    </div>
-    <div class="dash-grid" style="margin-top:16px;grid-template-columns:1fr 1fr;">
+    <div class="dash-grid dg-3" style="margin-top:16px;">
       <div class="dcard">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
           <h3 style="margin:0;">Masraf Dağılımı</h3>
@@ -5787,16 +5797,29 @@ function renderDashboard(){
         </div>
       </div>
       <div class="dcard">
-        <h3>Yaklaşan Belge Bitişleri (6 Ay)</h3>
-        ${svgBarChart(expirySeries.values, expirySeries.labels, 380, 170, '#0A84FF')}
-        <div style="font-size:12px;color:var(--steel-300);margin-top:6px;">* Sigorta, muayene, kira, sözleşme ve kasko tarihlerinin toplamıdır — bir araç birden fazla kez sayılabilir.</div>
+        <h3>Gelir vs Masraf (Son 6 Ay) <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;background:${netKar>=0?'rgba(22,163,74,.12)':'rgba(220,38,38,.12)'};color:${netKar>=0?'#16A34A':'#DC2626'}">Net ${isAdmin()?fmtTL2(netKar):'—'}</span></h3>
+        ${(()=>{ const inc=computeMonthlyIncomeSeries(); return svgDualLineChart(inc.values, series.values, series.labels, 320, 180); })()}
+      </div>
+      <div class="dcard">
+        <h3>Kritik Araçlar (7 Gün) <a data-goto="bildirimler" style="font-size:11px;font-weight:400;color:var(--accent-blue);text-decoration:none;">Tümü →</a></h3>
+        ${(()=>{
+          const kr=[...urgent].sort((a,b)=>a.dl-b.dl).slice(0,6);
+          if(!kr.length) return '<div class="log-empty">Kritik uyarı yok — filo güvenli.</div>';
+          return kr.map(r=>`<div class="yp-row"><span class="mini-plaka" style="font-size:11.5px;">${esc(r.plaka)}</span><span class="yp-tip">${esc(r.tip)}</span><span class="yp-gun" style="color:${r.dl<0?'#DC2626':'#EA580C'};font-weight:700;">${r.dl<0?Math.abs(r.dl)+' gün geçti':(r.dl===0?'bugün':'son '+r.dl+' gün')}</span></div>`).join('');
+        })()}
       </div>
     </div>
-    <div class="dash-grid" style="margin-top:16px;grid-template-columns:1.4fr 1fr 320px;">
+    <div class="dash-grid dg-141" style="margin-top:16px;">
+      <div class="dcard">
+        <h3>⚡ Aksiyon Merkezi <a data-goto="bildirimler" style="font-size:12px;font-weight:400;color:var(--accent-blue);text-decoration:none;">Tümünü Gör →</a></h3>
+        <div>${renderKritikUyarilarList(urgent)}</div>
+      </div>
       <div class="dcard">
         <h3>Araçlar <a data-goto="arac-yonetimi">Tümünü Gör</a></h3>
         ${renderMiniVehicleTable()}
       </div>
+    </div>
+    <div class="dash-grid dg-141" style="margin-top:16px;">
       <div class="dcard">
         <h3>Son Etkinlikler <a data-goto="bildirimler">Tümünü Gör</a></h3>
         <div>${renderActivityListForDash()}</div>
