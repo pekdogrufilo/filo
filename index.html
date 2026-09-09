@@ -1178,7 +1178,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-09.12</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-09.13</div>
     </div>
   </aside>
 
@@ -6211,6 +6211,7 @@ function renderDashboard(){
   const aktifMusteri = new Set(vehicles.filter(v=>v.kiraciAdi).map(v=>v.kiraciAdi)).size;
   const musteriSayisi = new Set(vehicles.filter(v=>(v.kiraciAdi||v.yer)).map(v=>(v.kiraciAdi||v.yer).trim().toLocaleLowerCase('tr-TR'))).size;
   const hasarSayisi = vehicles.reduce((s,v)=>s+((v.hasarlar&&v.hasarlar.length)||0),0);
+  const toplamKiraKaydi = vehicles.reduce((s,v)=>s+((v.kiraGecmisi&&v.kiraGecmisi.length)||0),0);
 
   const page = document.getElementById('page-genel-bakis');
   page.innerHTML = `
@@ -6270,6 +6271,24 @@ function renderDashboard(){
           <div class="n" style="color:#2563EB">${fmtTL_role(gelir)}</div>
           <div class="d" style="color:var(--steel-300);font-weight:400;">${kirada} aktif kiralama</div>
         </div>
+      </div>
+    </div>
+    <div class="dcard" style="margin-top:16px;border:1px solid rgba(59,130,246,.25);box-shadow:var(--shadow-md);">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:12px;">
+        <h3 style="margin:0;">⚡ Hızlı İşlemler</h3>
+        <span style="font-size:12px;color:var(--text-3);">Tek tıkla en sık yapılan işlemler</span>
+      </div>
+      <div class="quick-grid" style="grid-template-columns:repeat(auto-fit,minmax(110px,1fr));">
+        <button class="qbtn" data-act="arac-kirala"><div class="qic" style="background:#16A34A;color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8v8h6l4 4V4L9 8H3Z"/></svg></div><span>Araç Kirala</span></button>
+        <button class="qbtn" data-act="iade-al"><div class="qic" style="background:#DC2626;color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></div><span>İade Al</span></button>
+        <button class="qbtn" data-act="yeni-arac"><div class="qic" style="background:var(--accent-blue);color:#fff">${DASH_ICONS.car}</div><span>Yeni Araç Ekle</span></button>
+        <button class="qbtn" data-act="arac-ara"><div class="qic" style="background:#2E8C63;color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></div><span>Araç Ara</span></button>
+        <button class="qbtn" data-act="masraf-ekle"><div class="qic" style="background:var(--coral);color:#fff">${DASH_ICONS.clock}</div><span>Masraf Ekle</span></button>
+        <button class="qbtn" data-act="yeni-sozlesme"><div class="qic" style="background:#C98A3E;color:#fff">${DASH_ICONS.doc}</div><span>Yeni Sözleşme</span></button>
+        <button class="qbtn" data-act="rapor-olustur"><div class="qic" style="background:var(--accent-blue);color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg></div><span>Rapor Oluştur</span></button>
+        <button class="qbtn" data-act="excele-aktar"><div class="qic" style="background:#2E8C63;color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 19h16"/></svg></div><span>Excel'e Aktar</span></button>
+        <button class="qbtn" data-act="yedekle"><div class="qic" style="background:var(--steel-600);color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg></div><span>Yedekle (JSON)</span></button>
+        <button class="qbtn" data-act="yedekten-yukle"><div class="qic" style="background:var(--steel-600);color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg></div><span>Yedekten Geri Yükle</span></button>
       </div>
     </div>
     <div class="dash-grid dg-3">
@@ -6348,18 +6367,13 @@ function renderDashboard(){
         <div>${renderActivityListForDash()}</div>
       </div>
       <div class="dcard">
-        <h3>Hızlı İşlemler</h3>
-        <div class="quick-grid">
-          <button class="qbtn" data-act="yeni-arac"><div class="qic" style="background:var(--accent-blue);color:#fff">${DASH_ICONS.car}</div><span>Yeni Araç Ekle</span></button>
-          <button class="qbtn" data-act="arac-ara"><div class="qic" style="background:#2E8C63;color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></div><span>Araç Ara</span></button>
-          <button class="qbtn" data-act="masraf-ekle"><div class="qic" style="background:var(--coral);color:#fff">${DASH_ICONS.clock}</div><span>Masraf Ekle</span></button>
-          <button class="qbtn" data-act="yeni-sozlesme"><div class="qic" style="background:#C98A3E;color:#fff">${DASH_ICONS.doc}</div><span>Yeni Sözleşme</span></button>
-          <button class="qbtn" data-act="arac-kirala"><div class="qic" style="background:#C98A3E;color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8v8h6l4 4V4L9 8H3Z"/></svg></div><span>Araç Kirala</span></button>
-          <button class="qbtn" data-act="rapor-olustur"><div class="qic" style="background:var(--accent-blue);color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg></div><span>Rapor Oluştur</span></button>
-          <button class="qbtn" data-act="excele-aktar"><div class="qic" style="background:#2E8C63;color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 19h16"/></svg></div><span>Excel'e Aktar</span></button>
-          <button class="qbtn" data-act="yedekle"><div class="qic" style="background:var(--steel-600);color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg></div><span>Yedekle (JSON)</span></button>
-          <button class="qbtn" data-act="yedekten-yukle"><div class="qic" style="background:var(--steel-600);color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg></div><span>Yedekten Geri Yükle</span></button>
-        </div>
+        <h3>📊 Özet <a data-goto="raporlar">Raporlar →</a></h3>
+        <div class="fd-row"><span class="fd-dot" style="background:#16A34A"></span><span class="fd-l">Şu An Kirada</span><span class="fd-v">${kirada}</span></div>
+        <div class="fd-row"><span class="fd-dot" style="background:#F59E0B"></span><span class="fd-l">Müsait</span><span class="fd-v">${musait}</span></div>
+        <div class="fd-row"><span class="fd-dot" style="background:#EF4444"></span><span class="fd-l">Serviste</span><span class="fd-v">${serviste}</span></div>
+        <div class="fd-row"><span class="fd-dot" style="background:#3B82F6"></span><span class="fd-l">Aktif Müşteri</span><span class="fd-v">${aktifMusteri}</span></div>
+        <div class="fd-row"><span class="fd-dot" style="background:#FF9F0A"></span><span class="fd-l">Kira Kaydı</span><span class="fd-v">${toplamKiraKaydi}</span></div>
+        <a data-goto="kiralama" style="display:block;margin-top:12px;font-size:13px;font-weight:600;color:var(--accent-blue);text-decoration:none;">Kiralama İşlemlerine Git →</a>
       </div>
     </div>
   `;
@@ -6369,6 +6383,11 @@ function renderDashboard(){
       const act = btn.dataset.act;
       if(act==='yeni-arac' || act==='yeni-sozlesme'){ switchPage('arac-yonetimi'); setTimeout(()=>openAdd(), 80); }
       else if(act==='arac-kirala'){ openAracKirala(); }
+      else if(act==='iade-al'){
+        const k = vehicles.filter(v=>v.durum==='Kirada');
+        if(!k.length){ showToast('Şu anda kirada araç yok.', true); return; }
+        showVehicleQuickList('Kirada','İade Al — Araç Seçin');
+      }
       else if(act==='arac-ara'){ switchPage('arac-yonetimi'); setTimeout(()=>document.getElementById('search').focus(), 100); }
       else if(act==='masraf-ekle'){ switchPage('masraf'); }
       else if(act==='rapor-olustur'){ switchPage('raporlar'); }
