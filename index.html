@@ -1184,7 +1184,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-10.28</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-10.29</div>
     </div>
   </aside>
 
@@ -6553,13 +6553,8 @@ function renderDashboard(){
   const toplamKiraKaydi = vehicles.reduce((s,v)=>s+((v.kiraGecmisi&&v.kiraGecmisi.length)||0),0);
 
   // ===== Bugün Yapılacaklar =====
-  const buAyOdediDash = v => (v.odemeler||[]).some(o=>o.donem===ym);
   const bugunYapilacaklar = (()=>{
     const items=[];
-    vehicles.filter(v=>v.durum==='Kirada' && !buAyOdediDash(v)).forEach(v=>{
-      const gecikti = now.getDate()>=10;
-      items.push({kritik:gecikti, renk:gecikti?'#DC2626':'#D97706', bg:gecikti?'rgba(220,38,38,.1)':'rgba(217,119,6,.1)', etiket:'Tahsilat', plaka:v.plaka, aci:(gecikti?'Gecikti — ':'Ödenmedi — ')+fmtTL_role(v.kira), act:`odemeIsaretle('${v.id}')`, btn:'Ödendi'});
-    });
     vehicles.forEach(v=>{
       const dl = daysLeft(v.kiraBitis||v.sozlesmeBitis);
       if(dl!==null && dl<0) items.push({kritik:true, renk:'#DC2626', bg:'rgba(220,38,38,.1)', etiket:'İade', plaka:v.plaka, aci:'Süresi '+Math.abs(dl)+' gün geçti', act:`openIadeForm('${v.id}')`, btn:'İade Al'});
@@ -6582,7 +6577,6 @@ function renderDashboard(){
         if(k.bas) rows.push({t:k.bas, tip:'kiralama', plaka:v.plaka, txt:(k.kiraci||k.yer||'—')+' kiraya verildi', tutar:Number(v.kira)||0});
         if(k.iadeKm>0 && k.bitis) rows.push({t:k.bitis, tip:'iade', plaka:v.plaka, txt:(k.kiraci||'—')+' iade edildi', tutar:0});
       });
-      (v.odemeler||[]).forEach(o=>{ if(o.tarih) rows.push({t:o.tarih, tip:'odeme', plaka:v.plaka, txt:o.donem+' dönemi tahsil edildi', tutar:Number(o.tutar)||0}); });
     });
     expenses.forEach(e=>{ if(e.tarih) rows.push({t:e.tarih, tip:'masraf', plaka:e.plaka||'', txt:e.tip||'Masraf', tutar:-(Number(e.tutar)||0)}); });
     rows.sort((a,b)=>(b.t>a.t?1:b.t<a.t?-1:0));
@@ -6591,7 +6585,6 @@ function renderDashboard(){
   const sonIslemMeta = {
     kiralama:{c:'#16A34A', bg:'rgba(22,163,74,.1)', et:'Kiraya'},
     iade:{c:'#C8102E', bg:'rgba(200,16,46,.1)', et:'İade'},
-    odeme:{c:'#16A34A', bg:'rgba(22,163,74,.1)', et:'Tahsilat'},
     masraf:{c:'#DC2626', bg:'rgba(220,38,38,.1)', et:'Masraf'},
   };
 
@@ -6785,7 +6778,7 @@ function renderDashboard(){
     </div>
     <div class="dash-grid dg-141" style="margin-top:16px;grid-template-columns:1.4fr 1fr 1fr;">
       <div class="dcard">
-        <h3>Son İşlemler <span style="font-size:11px;font-weight:500;color:var(--steel-300);">kiralamalar · tahsilatlar · masraflar</span></h3>
+        <h3>Son İşlemler <span style="font-size:11px;font-weight:500;color:var(--steel-300);">kiralamalar · iadeler · masraflar</span></h3>
         ${sonIslemler.length===0 ? '<div class="log-empty">Henüz işlem kaydı yok.</div>' : sonIslemler.map((r,i)=>{
           const m = sonIslemMeta[r.tip]||sonIslemMeta.masraf;
           return `
@@ -7955,36 +7948,83 @@ async function sozlesmeDocx(d){
   }
 }
 
-// ===== Aylık kira tahsilatı =====
-async function odemeIsaretle(id){
-  const v = vehicles.find(x=>x.id===id);
-  if(!v) return;
-  const donem = todayISO().slice(0,7);
-  v.odemeler = v.odemeler||[];
-  if(v.odemeler.some(o=>o.donem===donem)){ showToast('Bu dönem için ödeme zaten kayıtlı.', true); return; }
-  v.odemeler.push({ donem, tutar: Number(v.kira)||0, tarih: todayISO() });
-  await persist();
-  renderCurrentPage();
-  logActivity('edit', '<b>'+esc(v.plaka)+'</b> '+donem+' dönemi kirası tahsil edildi — '+fmtTL2_role(v.kira));
-  showToast(v.plaka+' — '+donem+' dönemi ödendi olarak işaretlendi.');
+// ===== Kira (hakediş) fiyatlarını Excel'den güncelle =====
+function kiraTutarParse(val){
+  if(val==null) return 0;
+  if(typeof val==='number') return val;
+  let s = String(val).replace(/[^\d.,-]/g,'');
+  if(!s) return 0;
+  if(s.includes(',') && s.includes('.')) s = s.replace(/\./g,'').replace(',','.');
+  else if(s.includes(',')) s = s.replace(',','.');
+  else if((s.match(/\./g)||[]).length>1) s = s.replace(/\./g,'');
+  else if(/\.\d{3}$/.test(s)) s = s.replace(/\./g,'');
+  return Number(s)||0;
 }
-async function odemeGeriAl(id){
-  const v = vehicles.find(x=>x.id===id);
-  if(!v) return;
-  const donem = todayISO().slice(0,7);
-  v.odemeler = (v.odemeler||[]).filter(o=>o.donem!==donem);
-  await persist();
-  renderCurrentPage();
-  showToast(v.plaka+' — '+donem+' dönemi ödeme işareti kaldırıldı.');
+async function kiraFiyatYukle(file){
+  if(!requireAdmin()) return;
+  if(!file) return;
+  const log = document.getElementById('kiraYuklemeLog');
+  if(!log) return;
+  log.innerHTML = '<div style="color:var(--text-2);font-size:13px;">Dosya okunuyor...</div>';
+  try{
+    const data = await new Promise((res,rej)=>{ const fr=new FileReader(); fr.onload=e=>res(e.target.result); fr.onerror=rej; fr.readAsArrayBuffer(file); });
+    const XLSX = await import('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm');
+    const wb = XLSX.read(data, {type:'array'});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
+    if(!rows || rows.length < 2){
+      log.innerHTML = '<div style="color:var(--red)">Dosya boş veya okunamadı.</div>';
+      return;
+    }
+    const headers = (rows[0]||[]).map(h=>(h||'').toString().trim().toLocaleLowerCase('tr-TR'));
+    const plakaCol = headers.findIndex(h=>h.includes('plaka'));
+    let tutarCol = headers.findIndex(h=>h.includes('hakediş')||h.includes('hakedis')||h.includes('kira')||h.includes('tutar')||h.includes('fiyat')||h.includes('ücret')||h.includes('ucret'));
+    if(tutarCol===-1) tutarCol = headers.findIndex(h=>h.includes('aylık')||h.includes('aylik')||h.includes('bedel')||h.includes('gelir'));
+    if(plakaCol===-1 || tutarCol===-1){
+      log.innerHTML = '<div style="color:var(--red)">Plaka ve kira/hakediş tutarı sütunu bulunamadı.<br><span style="font-size:12px;color:var(--text-3);">Bulunan başlıklar: '+esc((rows[0]||[]).join(' | ')||'—')+'</span></div>';
+      return;
+    }
+    let guncellenen=0, ayni=0, eslesmeyen=[];
+    const detay=[];
+    for(const row of rows.slice(1)){
+      if(!row || !row[plakaCol]) continue;
+      const hamPlaka = row[plakaCol].toString().trim();
+      const np = normPlaka(hamPlaka);
+      if(!np) continue;
+      const tutar = kiraTutarParse(row[tutarCol]);
+      const v = vehicles.find(x=>normPlaka(x.plaka)===np);
+      if(!v){ eslesmeyen.push(hamPlaka); continue; }
+      if(tutar<=0){ eslesmeyen.push(hamPlaka+' (tutar okunamadı)'); continue; }
+      const eski = Number(v.kira)||0;
+      if(eski!==tutar){ v.kira = tutar; guncellenen++; detay.push({plaka:v.plaka, eski, yeni:tutar}); }
+      else ayni++;
+    }
+    if(guncellenen>0) await persist();
+    if(guncellenen>0) logActivity('import', "Kira fiyatları Excel'den güncellendi — <b>"+guncellenen+' araç</b>');
+    const eskiToplam = detay.reduce((s,d)=>s+d.eski,0);
+    const yeniToplam = detay.reduce((s,d)=>s+d.yeni,0);
+    const ozetHtml = `
+      <div style="background:rgba(22,163,74,.08);border:1px solid rgba(22,163,74,.25);border-radius:10px;padding:12px 14px;">
+        <div style="color:#16A34A;font-size:13px;font-weight:700;margin-bottom:6px;">✅ ${guncellenen} aracın kirası güncellendi${ayni?`, ${ayni} araçta değişiklik yok`:''}.</div>
+        ${detay.length?`<div style="font-size:12px;color:var(--text-2);margin-bottom:4px;">Aylık kira geliri: <b>${fmtTL2_role(eskiToplam)} → ${fmtTL2_role(yeniToplam)}</b> (${fmtTL2_role(yeniToplam-eskiToplam)} değişim)</div>`:''}
+        ${detay.length?`<div style="max-height:180px;overflow-y:auto;font-size:12px;color:var(--text-2);border-top:1px solid var(--border);margin-top:8px;padding-top:8px;">${detay.map(d=>`<div style="display:flex;justify-content:space-between;gap:10px;padding:2px 0;"><span><span class="mini-plaka" style="font-size:10.5px;">${esc(d.plaka)}</span> ${fmtTL2_role(d.eski)} → <b style="color:var(--text);">${fmtTL2_role(d.yeni)}</b></span></div>`).join('')}</div>`:''}
+        ${eslesmeyen.length?`<div style="font-size:12px;color:#D97706;margin-top:8px;">⚠️ Eşleşmeyen ${eslesmeyen.length} kayıt: ${esc(eslesmeyen.slice(0,10).join(', '))}${eslesmeyen.length>10?' …':''}</div>`:''}
+      </div>`;
+    showToast(guncellenen+' aracın kira fiyatı güncellendi.');
+    renderCurrentPage();
+    const logEl = document.getElementById('kiraYuklemeLog');
+    if(logEl) logEl.innerHTML = ozetHtml;
+  }catch(e){
+    console.error(e);
+    const lg = document.getElementById('kiraYuklemeLog');
+    if(lg) lg.innerHTML = '<div style="color:var(--red)">Hata: '+esc(e.message||String(e))+'</div>';
+  }
 }
 
 function renderKiralamaPage(){
   const page = document.getElementById('page-kiralama');
   const kirada = vehicles.filter(v=>v.durum==='Kirada');
   const withHistory = vehicles.filter(v=>(v.kiraGecmisi||[]).length>0);
-  const donem = todayISO().slice(0,7);
-  const buAyOdedi = v => (v.odemeler||[]).some(o=>o.donem===donem);
-  const gecikeller = kirada.filter(v=>!buAyOdedi(v) && new Date().getDate()>=10);
 
   // Kira geçmişi özet istatistikleri
   let toplamKiraSuresi = 0, toplamKmKullanim = 0, toplamKiraSayisi = 0;
@@ -8037,25 +8077,7 @@ function renderKiralamaPage(){
         <div class="dstat-ic" style="background:rgba(200,16,46,.15);color:#C8102E;">${DASH_ICONS.trend}</div>
         <div class="dstat-txt"><div class="l">Toplam Kira Kaydı</div><div class="n">${toplamKiraSayisi}</div></div>
       </div>
-      <div class="dstat" style="cursor:default;">
-        <div class="dstat-ic" style="background:rgba(${gecikeller.length?'220,38,38':'22,163,74'},.15);color:${gecikeller.length?'#DC2626':'#16A34A'};">${DASH_ICONS.warn}</div>
-        <div class="dstat-txt"><div class="l">Geciken Tahsilat</div><div class="n" style="color:${gecikeller.length?'#DC2626':'#16A34A'};">${gecikeller.length}</div><div class="d">${donem.split('-')[1]}/${donem.split('-')[0]} dönemi</div></div>
-      </div>
     </div>
-
-    ${gecikeller.length>0 ? `
-    <div class="dcard" style="margin-bottom:14px;border-color:rgba(220,38,38,.3);">
-      <h3 style="color:#DC2626;">Geciken Tahsilatlar <span style="font-weight:400;font-size:13px;color:var(--text-3);">${donem.split('-')[1]}/${donem.split('-')[0]} dönemi — ${gecikeller.length} kiracı</span></h3>
-      <div style="display:flex;flex-direction:column;gap:6px;">
-        ${gecikeller.map(v=>`
-          <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;background:rgba(220,38,38,.05);border:1px solid rgba(220,38,38,.15);">
-            <span class="mini-plaka">${esc(v.plaka)}</span>
-            <span style="font-size:13px;color:var(--text-2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(v.yer||v.kiraciAdi||'—')}</span>
-            <span style="font-size:12px;color:var(--text-3);white-space:nowrap;">${fmtTL2_role(v.kira)}</span>
-            <button onclick="odemeIsaretle('${v.id}')" style="background:rgba(22,163,74,.12);border:1px solid rgba(22,163,74,.3);color:#16A34A;padding:4px 12px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">Ödendi İşaretle</button>
-          </div>`).join('')}
-      </div>
-    </div>` : ''}
 
     ${suresiGecen.length>0 ? `
     <div class="dcard" style="margin-bottom:14px;border-color:rgba(220,38,38,.3);">
@@ -8108,7 +8130,7 @@ function renderKiralamaPage(){
       <h3>Şu An Kiradaki Araçlar <span style="font-weight:400;font-size:13px;color:var(--text-3);">${kirada.length}</span></h3>
       ${kirada.length ? `
       <div class="table-scroll"><table class="mini-table">
-        <thead><tr><th>Plaka</th><th>Araç</th><th>Çalıştığı Yer</th><th>Tür</th><th>Teslim Tarihi</th><th>Teslim km</th><th>Aylık Kira</th><th>Sözleşme Bitiş</th><th>Tahsilat</th></tr></thead>
+        <thead><tr><th>Plaka</th><th>Araç</th><th>Çalıştığı Yer</th><th>Tür</th><th>Teslim Tarihi</th><th>Teslim km</th><th>Aylık Kira</th><th>Sözleşme Bitiş</th></tr></thead>
         <tbody>${kirada.map(v=>{
           const teslimTarih = v.teslimTarih ? fmtTarih(v.teslimTarih) : '—';
           const teslimKm = v.teslimKm ? v.teslimKm.toLocaleString('tr-TR')+' km' : '—';
@@ -8117,11 +8139,6 @@ function renderKiralamaPage(){
           const turLabel = v.kiralamaTuru==='şoförlü'
             ? `<span style="background:rgba(56,161,105,.15);color:#68D391;font-size:11px;font-weight:600;padding:2px 8px;border-radius:5px;">Şoförlü</span>`
             : `<span style="background:rgba(66,153,225,.12);color:var(--accent-blue);font-size:11px;font-weight:600;padding:2px 8px;border-radius:5px;">Şoförsüz</span>`;
-          const odedi = buAyOdedi(v);
-          const gecikti = !odedi && new Date().getDate()>=10;
-          const tahsilat = odedi
-            ? `<button onclick="odemeGeriAl('${v.id}')" title="Ödemeyi geri al" style="background:rgba(22,163,74,.12);border:1px solid rgba(22,163,74,.3);color:#16A34A;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">✓ Ödendi</button>`
-            : `<button onclick="odemeIsaretle('${v.id}')" title="Bu ay ödendi işaretle" style="background:${gecikti?'rgba(220,38,38,.1)':'rgba(217,119,6,.1)'};border:1px solid ${gecikti?'rgba(220,38,38,.3)':'rgba(217,119,6,.3)'};color:${gecikti?'#DC2626':'#D97706'};padding:3px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">${gecikti?'Gecikti':'Ödenmedi'}</button>`;
           return `<tr>
             <td><span class="mini-plaka">${esc(v.plaka)}</span></td>
             <td>${esc([v.marka,v.model].filter(Boolean).join(' ')||'—')}</td>
@@ -8131,18 +8148,12 @@ function renderKiralamaPage(){
             <td style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${teslimKm}</td>
             <td style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${fmtTL2_role(v.kira)}</td>
             <td>${sozBitis}</td>
-            <td>${tahsilat}</td>
           </tr>`;
         }).join('')}</tbody>
       </table></div>
       <div class="m-card-list">${kirada.map(v=>{
         const gun = v.teslimTarih ? Math.round((Date.now()-new Date(v.teslimTarih))/(86400000)) : null;
         const turLabel = v.kiralamaTuru==='şoförlü' ? '<span style="color:#68D391;font-weight:600;">Şoförlü</span>' : '<span style="color:var(--accent-blue);font-weight:600;">Şoförsüz</span>';
-        const odedi = buAyOdedi(v);
-        const gecikti = !odedi && new Date().getDate()>=10;
-        const tahsilatBtn = odedi
-          ? `<button onclick="odemeGeriAl('${v.id}')" style="flex:1;background:rgba(22,163,74,.12);border:1px solid rgba(22,163,74,.3);color:#16A34A;padding:7px 0;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">✓ Ödendi — geri al</button>`
-          : `<button onclick="odemeIsaretle('${v.id}')" style="flex:1;background:${gecikti?'rgba(220,38,38,.1)':'rgba(217,119,6,.1)'};border:1px solid ${gecikti?'rgba(220,38,38,.3)':'rgba(217,119,6,.3)'};color:${gecikti?'#DC2626':'#D97706'};padding:7px 0;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">${gecikti?'Gecikti — ödendi işaretle':'Ödenmedi — ödendi işaretle'}</button>`;
         return `<div class="m-card">
           <div class="m-card-head">
             <span class="mini-plaka">${esc(v.plaka)}</span>
@@ -8155,7 +8166,6 @@ function renderKiralamaPage(){
             ${v.teslimKm?`<div class="m-card-row"><span class="m-card-label">Teslim km</span><span class="m-card-val" style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${v.teslimKm.toLocaleString('tr-TR')} km</span></div>`:''}
             <div class="m-card-row"><span class="m-card-label">Aylık Kira</span><span class="m-card-val" style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${fmtTL2_role(v.kira)}</span></div>
           </div>
-          <div style="margin-top:10px;">${tahsilatBtn}</div>
         </div>`;
       }).join('')}</div>
       ` : '<div class="log-empty">Şu an kirada araç yok.</div>'}
@@ -9551,6 +9561,23 @@ function renderExcelPage(){
           Excel Dosyası Seç
         </button>
       </div>
+    </div>
+
+    <!-- Kira (Hakediş) Fiyatları Güncelle -->
+    <div class="dcard" style="margin-bottom:14px;">
+      <h3 style="margin-bottom:6px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>Kira Fiyatları Güncelle (Hakediş)</h3>
+      <p style="color:var(--text-2);font-size:13px;margin-bottom:14px;">Plaka ve aylık kira/hakediş tutarı içeren Excel dosyasını yükle. Sistem plakaları eşleştirip her aracın güncel kira fiyatını otomatik kaydeder; kira gelirleri anında güncellenir.</p>
+      <div id="kiraYuklemeArea" style="border:2px dashed var(--border);border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:border-color .2s ease;"
+        ondragover="event.preventDefault();this.style.borderColor='var(--accent-blue)'"
+        ondragleave="this.style.borderColor='var(--border)'"
+        ondrop="event.preventDefault();this.style.borderColor='var(--border)';kiraFiyatYukle(event.dataTransfer.files[0])">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:8px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">Excel dosyasını sürükle bırak</div>
+        <div style="font-size:12px;color:var(--text-3);margin-bottom:12px;">İlk satır başlık olmalı — ör.: PLAKA | HAKEDİŞ (aylık kira tutarı)</div>
+        <button class="settings-btn" onclick="document.getElementById('kiraFiyatInput').click()">Dosya Seç</button>
+        <input type="file" id="kiraFiyatInput" accept=".xlsx,.xls" style="display:none" onchange="kiraFiyatYukle(this.files[0])">
+      </div>
+      <div id="kiraYuklemeLog" style="margin-top:12px;"></div>
     </div>
 
     <!-- Km Takip Raporu -->
