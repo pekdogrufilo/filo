@@ -1,4 +1,4 @@
-const CACHE_NAME = 'filo-panel-v11';
+const CACHE_NAME = 'filo-panel-v12';
 const PRECACHE = [
   './',
   './index.html',

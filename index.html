@@ -1191,7 +1191,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-10.36</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-10.37</div>
     </div>
   </aside>
 
@@ -1355,8 +1355,8 @@
     <div class="chip" data-f="Kirada">Kirada</div>
     <div class="chip" data-f="Müsait">Müsait</div>
     <div class="chip" data-f="Serviste">Serviste</div>
-    <div class="chip" data-f="Pert">Pert</div>
     <div class="chip" data-f="Satıldı">Satıldı</div>
+    <div class="chip" id="chipArsiv" onclick="arsivAc()">🗄 Arşiv (<span id="arsivSayi">0</span>)</div>
     <div class="chip" id="chipSigorta">🔵 Sigortası yaklaşan</div>
     <div class="chip" id="chipMuayene">🟠 Muayenesi yaklaşan</div>
     <div class="chip" id="chipKira">🟣 Kirası yaklaşan</div>
@@ -1976,6 +1976,7 @@ async function initCloudSync(){
 }
 
 let vehicles = [];
+let arsiv = [];
 let activityLog = [];
 let expenses = [];
 let sozlesmeler = [];
@@ -2014,6 +2015,11 @@ async function load(){
     const sr = await storageAPI.get('sozlesmeler').catch(()=>null);
     sozlesmeler = (sr && sr.value) ? JSON.parse(sr.value) : [];
   }catch(e){ sozlesmeler = []; }
+  try{
+    const ar = await storageAPI.get('arsiv').catch(()=>null);
+    arsiv = (ar && ar.value) ? JSON.parse(ar.value) : [];
+  }catch(e){ arsiv = []; }
+  updateArsivSayi();
   // Bulutta kayıtlı Gemini anahtarı bu cihazda yoksa localStorage'a aynala
   if(window.__cloudSyncActive && !localStorage.getItem('filoPaneli_geminiKey')){
     try{
@@ -2441,6 +2447,76 @@ async function persist(){
   }
 }
 function cryptoId(){return 'v'+Math.random().toString(36).slice(2,10);}
+
+// ===== Arşiv (silinen araçlar) =====
+// "Silinen" araçlar kalıcı olarak yok edilmez; arşive atılır. Satılan/pert
+// araçların kayıtları böylece korunur, istenirse geri yüklenir.
+async function persistArsiv(){
+  await storageAPI.set('arsiv', JSON.stringify(arsiv)).catch(()=>showToast('Arşiv kaydedilemedi.', true));
+}
+function updateArsivSayi(){
+  const el = document.getElementById('arsivSayi');
+  if(el) el.textContent = arsiv.length;
+}
+function arsivAc(){
+  const old = document.getElementById('arsivOverlay'); if(old) old.remove();
+  const el = document.createElement('div');
+  el.className='overlay show'; el.id='arsivOverlay'; el.style.cssText='z-index:70;';
+  const liste = [...arsiv].sort((a,b)=>(b.arşivlenme||'').localeCompare(a.arşivlenme||''));
+  el.innerHTML = `
+    <div style="background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px;width:min(94vw,640px);max-height:88vh;overflow-y:auto;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <h3 style="margin:0;font-size:16px;color:var(--paper);">🗄 Arşivlenmiş Araçlar <span style="font-size:12px;font-weight:400;color:var(--steel-300);">${arsiv.length} kayıt</span></h3>
+        <button onclick="document.getElementById('arsivOverlay').remove()" style="background:none;border:none;color:var(--steel-300);cursor:pointer;padding:4px;display:flex;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <p style="margin:0 0 14px;font-size:12.5px;color:var(--text-3);">Silinen, satılan veya pert olan araçlar burada saklanır. "Geri Yükle" aracı aktif filoya döndürür; "Kalıcı Sil" tüm belgeleriyle birlikte tamamen siler.</p>
+      ${liste.length ? liste.map((a)=>{
+        const idx = arsiv.indexOf(a);
+        return `<div style="display:flex;align-items:center;gap:12px;padding:11px 12px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;background:var(--surface-2);">
+          <div style="min-width:0;flex:1;">
+            <div style="font-size:13.5px;font-weight:700;color:var(--paper);">${esc(a.plaka||'—')} <span style="font-size:12px;font-weight:400;color:var(--steel-300);">${esc([a.marka,a.model].filter(Boolean).join(' '))}</span></div>
+            <div style="font-size:11.5px;color:var(--text-3);margin-top:2px;">${esc(a.durum||'—')}${a.arşivlenme?' · Arşivlenme: '+fmtTarih(a.arşivlenme):''}${a.arşivNot?' · '+esc(a.arşivNot):''}</div>
+          </div>
+          <button onclick="arsivdenGeriYukle(${idx})" style="background:rgba(22,163,74,.12);border:1px solid rgba(22,163,74,.25);color:#16A34A;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">Geri Yükle</button>
+          <button onclick="arsivdenKaliciSil(${idx})" style="background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.2);color:#DC2626;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">Kalıcı Sil</button>
+        </div>`;
+      }).join('') : '<div class="log-empty">Arşiv boş.</div>'}
+    </div>`;
+  document.body.appendChild(el);
+  el.onclick = e=>{ if(e.target===el) el.remove(); };
+}
+async function arsivdenGeriYukle(idx){
+  const a = arsiv[idx]; if(!a) return;
+  vehicles.push(a);
+  arsiv.splice(idx,1);
+  await persist(); await persistArsiv();
+  updateArsivSayi();
+  const ov = document.getElementById('arsivOverlay'); if(ov) ov.remove();
+  buildSirketFilter(); render();
+  logActivity('add', `Araç arşivden geri yüklendi: <b>${esc(a.plaka||'—')}</b>`);
+  showToast('Araç filoya geri yüklendi.');
+}
+async function arsivdenKaliciSil(idx){
+  if(!requireAdmin()) return;
+  const a = arsiv[idx]; if(!a) return;
+  if(!confirm(a.plaka+' plakalı araç TÜM belgeleriyle birlikte kalıcı olarak silinecek. Bu işlem geri alınamaz. Emin misiniz?')) return;
+  for(const d of DOC_TYPES){
+    if(a[d.vehicleAdiField]) await storageAPI.delete(d.storagePrefix+a.id).catch(()=>{});
+  }
+  if(expenses.some(e=>e.vehicleId===a.id)){
+    expenses = expenses.filter(e=>e.vehicleId!==a.id);
+    await persistExpenses();
+  }
+  arsiv.splice(idx,1);
+  await persistArsiv();
+  updateArsivSayi();
+  const ov = document.getElementById('arsivOverlay');
+  if(ov){ ov.remove(); arsivAc(); }
+  logActivity('del', `Arşivden kalıcı silindi: <b>${esc(a.plaka||'—')}</b>`);
+  showToast('Araç kalıcı olarak silindi.');
+}
 
 // ===== Kayıtlı Sözleşmeler =====
 async function persistSozlesmeler(){
@@ -4930,6 +5006,10 @@ function openVehicleDetail(id){
     ...kmGecmisi.map(k=>({d:k.donem?k.donem+'-01':'', tip:'km', baslik:'Km raporu', detay:(k.toplamKm?Number(k.toplamKm).toLocaleString('tr-TR')+' km':''), tutar:null, tarihTxt:k.donem||'', onclick:''})),
     ...(v.teslimTarih?[{d:v.teslimTarih, tip:'teslim', baslik:'Araç teslim edildi', detay:v.teslimKm?Number(v.teslimKm).toLocaleString('tr-TR')+' km':'', tutar:null, tarihTxt:fmtTarih(v.teslimTarih), onclick:''}]:[]),
     ...(v.durumOlaylari||[]).map(o=>({d:o.tarih||'', tip:o.tip==='satis'?'satis':'pert', baslik:o.tip==='satis'?'Araç satıldı':'Pert kaydı (kaza)', detay:o.aciklama||'', tutar:o.tutar||null, tarihTxt:fmtTarih(o.tarih||''), onclick:''})),
+    ...(v.servisGirisleri||[]).flatMap(k=>[
+      {d:k.giris||'', tip:'servis', baslik:'Servise girdi', detay:[k.yer, k.islem].filter(Boolean).join(' · '), tutar:k.tutar, tarihTxt:fmtTarih(k.giris||''), onclick:''},
+      ...(k.cikis ? [{d:k.cikis, tip:'servis', baslik:'Servisten çıktı', detay:[k.yer, (()=>{ try{ const g=new Date(k.giris), c=new Date(k.cikis); const n=Math.round((c-g)/86400000); return n>=0?n+' gün serviste':''; }catch(e){ return ''; } })()].filter(Boolean).join(' · '), tutar:null, tarihTxt:fmtTarih(k.cikis), onclick:''}] : []),
+    ]),
   ].filter(g=>g.d).sort((a,b)=>(b.d||'').localeCompare(a.d||''));
 
   // Durum rengi
@@ -4965,6 +5045,7 @@ function openVehicleDetail(id){
           <div style="font-size:16px;font-weight:700;color:var(--paper);">${esc(v.plaka)} <span style="font-size:13px;font-weight:400;color:var(--steel-300);">${esc([v.marka,v.model,v.versiyon].filter(Boolean).join(' '))}</span></div>
           <div style="margin-top:3px;"><span style="background:${durumBg};color:${durumRenk};font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;">${esc(v.durum||'—')}</span></div>
         </div>
+        <button onclick="servisGirisFormuAc('${id}')" style="background:rgba(217,119,6,.12);border:1px solid rgba(217,119,6,.3);color:#D97706;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Servis Kaydı</button>
         <button onclick="document.getElementById('vehicleDetailOverlay').remove();openEdit('${id}')" style="background:var(--accent-blue);color:#fff;border:none;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Düzenle</button>
       </div>
 
@@ -5134,6 +5215,31 @@ function openVehicleDetail(id){
                 </div>
               </div>`).join('')}
           </div>` : '<div style="color:var(--steel-500);font-size:13px;padding:4px 0;">Hasar/kaza kaydı yok.</div>'}
+        </div>
+
+        <!-- Servis giriş/çıkış kayıtları -->
+        <div style="background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <div style="font-size:12px;font-weight:700;color:var(--paper);">${ICO('wrench',13)} Servis Kayıtları <span style="font-weight:400;color:var(--steel-300);">${(v.servisGirisleri||[]).length} kayıt</span></div>
+            <button onclick="servisGirisFormuAc('${id}')" style="background:rgba(217,119,6,.12);border:1px solid rgba(217,119,6,.3);color:#D97706;padding:4px 12px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;">+ Ekle</button>
+          </div>
+          ${(v.servisGirisleri||[]).length ? [...v.servisGirisleri].sort((a,b)=>(b.giris||'').localeCompare(a.giris||'')).map(k=>{
+            let sure = '';
+            if(k.cikis){ try{ const n=Math.round((new Date(k.cikis)-new Date(k.giris))/86400000); sure = n>=0 ? n+' gün' : ''; }catch(e){} }
+            return `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);">
+              <div style="min-width:0;">
+                <div style="font-size:12.5px;font-weight:600;color:var(--paper);">${esc(k.yer||'Servis')}${k.islem?' · <span style="font-weight:400;color:var(--steel-100);">'+esc(k.islem)+'</span>':''}</div>
+                <div style="font-size:11px;color:var(--steel-500);margin-top:2px;">${fmtTarih(k.giris)} → ${k.cikis?fmtTarih(k.cikis)+(sure?' ('+sure+')':''):'<span style="color:#D97706;font-weight:700;">hâlâ serviste</span>'}</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+                ${k.tutar!=null ? `<div style="font-size:12.5px;font-weight:700;color:var(--paper);">${fmtTL2(k.tutar)}</div>` : ''}
+                <button onclick="servisGirisFormuAc('${id}','${k.id}')" style="background:none;border:1px solid var(--line);color:var(--text-2);font-size:11px;padding:3px 9px;border-radius:6px;cursor:pointer;">Düzenle</button>
+                <button onclick="servisGirisSil('${id}','${k.id}')" style="background:none;border:none;color:var(--steel-500);cursor:pointer;padding:4px;display:flex;" title="Sil">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+                </button>
+              </div>
+            </div>`;
+          }).join('') : '<div style="color:var(--steel-500);font-size:13px;padding:4px 0;">Servis kaydı yok. Kaza sonrası aracın hangi serviste ne kadar kaldığını buraya kaydedin.</div>'}
         </div>
 
         <!-- Araç Geçmişi — kronolojik zaman tüneli -->
@@ -5461,18 +5567,16 @@ function renderStatMasraf(){
 async function delVehicle(id){
   if(!requireAdmin()) return;
   const v = vehicles.find(x=>x.id===id);
+  if(!v) return;
+  const sebep = v.durum==='Satıldı' ? 'Satıldı (arşive alınıyor)' : v.durum==='Pert' ? 'Pert (arşive alınıyor)' : 'Arşive alınacak';
+  if(!confirm(v.plaka+' plakalı araç silinecek ve arşive atanacak.\n('+sebep+')\n\nKayıtları korunur; Arşiv\'den geri yüklenebilir. Devam edilsin mi?')) return;
   vehicles = vehicles.filter(v=>v.id!==id);
-  await persist(); buildSirketFilter(); render();
-  if(v){
-    for(const d of DOC_TYPES){
-      if(v[d.vehicleAdiField]) await storageAPI.delete(d.storagePrefix+id).catch(()=>{});
-    }
-  }
-  if(expenses.some(e=>e.vehicleId===id)){
-    expenses = expenses.filter(e=>e.vehicleId!==id);
-    await persistExpenses();
-  }
-  if(v) logActivity('del', `Araç silindi: <b>${esc(v.plaka||'—')}</b>`);
+  // Arşive kaydet — belgeler ve masraflar korunur
+  arsiv.push({...v, arşivlenme: new Date().toISOString().slice(0,10), arşivNot: v.durum==='Satıldı' ? 'Satıldı' : v.durum==='Pert' ? 'Pert (kaza)' : ''});
+  await persist(); await persistArsiv(); updateArsivSayi();
+  buildSirketFilter(); render();
+  logActivity('del', `Araç arşive atıldı: <b>${esc(v.plaka||'—')}</b> (${esc(v.durum||'—')})`);
+  showToast('Araç arşive atıldı. Geri yüklemek için Araç Yönetimi > Arşiv.');
 }
 
 // ===== Veri doğrulama =====
@@ -6605,6 +6709,68 @@ async function durumOlayOnayla(id, tip){
   showToast(tip==='satis'?'Satış kaydı araç geçmişine işlendi.':'Pert kaydı araç geçmişine işlendi.');
 }
 
+// Servis giriş/çıkış kaydı: aracın servise ne zaman girdiği, ne zaman çıktığı,
+// nerede ve ne işlem yapıldığı takip edilir. Çıkış tarihi boşsa "hâlâ serviste".
+function servisGirisFormuAc(id, kayitId){
+  const old = document.getElementById('servisGirisOverlay'); if(old) old.remove();
+  const v = vehicles.find(x=>x.id===id); if(!v) return;
+  const bugun = new Date().toISOString().slice(0,10);
+  const kayit = kayitId ? (v.servisGirisleri||[]).find(k=>k.id===kayitId) : null;
+  const inp = 'width:100%;margin-top:4px;background:var(--surface-2);border:1px solid var(--line);color:var(--paper);padding:8px 10px;border-radius:8px;font-size:13px;font-family:inherit;';
+  const el = document.createElement('div');
+  el.className='overlay show'; el.id='servisGirisOverlay'; el.style.cssText='z-index:70;';
+  el.innerHTML = `
+    <div style="background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px;width:min(92vw,430px);max-height:88vh;overflow-y:auto;">
+      <h3 style="margin:0 0 4px;font-size:16px;color:var(--paper);">Servis Kaydı <span class="mini-plaka" style="font-size:12px;margin-left:6px;">${esc(v.plaka)}</span></h3>
+      <p style="margin:0 0 14px;font-size:12.5px;color:var(--text-3);">Servise giriş/çıkış tarihini, servisin adını ve yapılan işlemi kaydedin. Çıkış tarihi boş bırakılırsa araç "hâlâ serviste" sayılır.</p>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <label style="font-size:12px;color:var(--text-2);">Servise Giriş Tarihi<input type="date" id="svGiris" value="${kayit?(kayit.giris||bugun):bugun}" style="${inp}"></label>
+        <label style="font-size:12px;color:var(--text-2);">Servisten Çıkış Tarihi <span style="color:var(--steel-500);">(boş = hâlâ serviste)</span><input type="date" id="svCikis" value="${kayit?(kayit.cikis||''):''}" style="${inp}"></label>
+        <label style="font-size:12px;color:var(--text-2);">Servis Yeri (nerede)<input type="text" id="svYer" placeholder="örn. Konya Otoyedek, Oto Korkmaz…" value="${esc(kayit?(kayit.yer||''):'')}" style="${inp}"></label>
+        <label style="font-size:12px;color:var(--text-2);">Yapılan İşlem<input type="text" id="svIslem" placeholder="örn. kaza onarımı, ön tampon, motor bakımı…" value="${esc(kayit?(kayit.islem||''):'')}" style="${inp}"></label>
+        <label style="font-size:12px;color:var(--text-2);">Tutar (₺, opsiyonel)<input type="number" id="svTutar" min="0" placeholder="örn. 12500" value="${kayit&&kayit.tutar!=null?kayit.tutar:''}" style="${inp}"></label>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:16px;">
+        <button onclick="servisGirisKaydet('${id}'${kayitId?",'"+kayitId+"'":''})" style="flex:1;background:var(--accent-blue);border:none;color:#fff;padding:10px 0;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-ui);">Kaydet</button>
+        <button onclick="document.getElementById('servisGirisOverlay').remove()" style="background:var(--surface-2);border:1px solid var(--line);color:var(--text-2);padding:10px 16px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-ui);">Atla</button>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+  el.onclick = e=>{ if(e.target===el) el.remove(); };
+}
+async function servisGirisKaydet(id, kayitId){
+  const v = vehicles.find(x=>x.id===id); if(!v) return;
+  const giris = (document.getElementById('svGiris')||{value:''}).value || new Date().toISOString().slice(0,10);
+  const cikis = (document.getElementById('svCikis')||{value:''}).value || '';
+  const yer = (document.getElementById('svYer')||{value:''}).value.trim();
+  const islem = (document.getElementById('svIslem')||{value:''}).value.trim();
+  const tutar = Number((document.getElementById('svTutar')||{value:''}).value)||null;
+  if(cikis && cikis < giris){ showToast('Çıkış tarihi giriş tarihinden önce olamaz.', true); return; }
+  v.servisGirisleri = v.servisGirisleri||[];
+  if(kayitId){
+    const k = v.servisGirisleri.find(x=>x.id===kayitId);
+    if(k) Object.assign(k, {giris, cikis, yer, islem, tutar});
+  }else{
+    v.servisGirisleri.push({id:'sv'+Date.now(), giris, cikis, yer, islem, tutar});
+  }
+  await persist();
+  document.getElementById('servisGirisOverlay').remove();
+  logActivity('servis', `Servis kaydı: <b>${esc(v.plaka)}</b> · ${cikis?esc(yer||'servis')+' ('+fmtTarih(giris)+' → '+fmtTarih(cikis)+')':esc(yer||'servis')+' · hâlâ serviste'}`);
+  const detay = document.getElementById('vehicleDetailOverlay');
+  if(detay){ detay.remove(); openVehicleDetail(id); }
+  renderStatMasraf();
+  showToast('Servis kaydı araç geçmişine işlendi.');
+}
+async function servisGirisSil(id, kayitId){
+  const v = vehicles.find(x=>x.id===id); if(!v) return;
+  if(!confirm('Bu servis kaydı silinsin mi?')) return;
+  v.servisGirisleri = (v.servisGirisleri||[]).filter(k=>k.id!==kayitId);
+  await persist();
+  const detay = document.getElementById('vehicleDetailOverlay');
+  if(detay){ detay.remove(); openVehicleDetail(id); }
+  showToast('Servis kaydı silindi.');
+}
+
 function showVehicleQuickList(filter, title){
   const list = filter === 'Toplam' ? vehicles : vehicles.filter(v=>v.durum===filter);
   const colors = {'Kirada':'#38A169','Müsait':'#C9A961','Serviste':'var(--safety)','Pert':'#6B7280','Satıldı':'#0891B2','Toplam':'var(--accent-blue)'};
@@ -7144,6 +7310,34 @@ function renderBakimPage(){
           </tr>`;
         }).join('')}</tbody>
       </table></div>` : `<div class="log-empty">Henüz planlı servis kaydı yok. <a onclick="openServisPlanla()" style="color:var(--accent-blue);cursor:pointer">Servis planla →</a></div>`}
+    </div>
+
+    <div class="dcard">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+        <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76Z"/></svg>Servise Giriş / Çıkış Kayıtları <span style="font-weight:400;font-size:13px;color:var(--steel-100)">hangi araç hangi serviste ne zaman</span></h3>
+      </div>
+      ${(()=>{
+        const tumKayitlar = vehicles.flatMap(v=>(v.servisGirisleri||[]).map(k=>({...k, plaka:v.plaka, vid:v.id}))).sort((a,b)=>(b.giris||'').localeCompare(a.giris||''));
+        const halaServiste = tumKayitlar.filter(k=>!k.cikis).length;
+        return `${halaServiste ? `<div style="font-size:12.5px;color:var(--text-3);margin-bottom:10px;"><b style="color:#D97706;">${halaServiste} araç hâlâ serviste.</b></div>` : ''}
+        ${tumKayitlar.length ? `<div class="table-scroll"><table class="mini-table">
+          <thead><tr><th>Plaka</th><th>Servis Yeri</th><th>İşlem</th><th>Giriş</th><th>Çıkış</th><th>Süre</th><th style="text-align:right">Tutar</th><th></th></tr></thead>
+          <tbody>${tumKayitlar.map(k=>{
+            let sure = '';
+            if(k.cikis){ try{ const n=Math.round((new Date(k.cikis)-new Date(k.giris))/86400000); sure = n>=0 ? n+' gün' : '—'; }catch(e){} }
+            return `<tr>
+              <td><span class="mini-plaka">${esc(k.plaka||'—')}</span></td>
+              <td style="font-weight:600;color:var(--paper)">${esc(k.yer||'—')}</td>
+              <td style="font-size:12px;color:var(--steel-100)">${esc(k.islem||'—')}</td>
+              <td>${fmtTarih(k.giris)}</td>
+              <td>${k.cikis?fmtTarih(k.cikis):'<span style="color:#D97706;font-weight:700;">hâlâ serviste</span>'}</td>
+              <td>${sure||'—'}</td>
+              <td style="text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${k.tutar!=null?fmtTL2(k.tutar):'—'}</td>
+              <td><button onclick="openVehicleDetail('${k.vid}')" style="background:none;border:1px solid var(--line);color:var(--paper);font-size:11px;padding:3px 9px;border-radius:6px;cursor:pointer;white-space:nowrap;">Araç</button></td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table></div>` : '<div class="log-empty">Kayıt yok. Araç kartından "Servis Kaydı > + Ekle" ile servise giriş/çıkış kaydedin.</div>'}`;
+      })()}
     </div>
 
     <div class="dcard">
@@ -10168,7 +10362,7 @@ function sonYedekMetni(k){
 function backupToJson(){
   const backup = {
     olusturmaTarihi: new Date().toISOString(),
-    vehicles, expenses, activityLog, sozlesmeler,
+    vehicles, expenses, activityLog, sozlesmeler, arsiv,
   };
   const blob = new Blob([JSON.stringify(backup, null, 2)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
@@ -10197,10 +10391,13 @@ document.getElementById('restoreJsonInput')?.addEventListener('change', async (e
     expenses = Array.isArray(data.expenses) ? data.expenses : [];
     activityLog = Array.isArray(data.activityLog) ? data.activityLog : [];
     sozlesmeler = Array.isArray(data.sozlesmeler) ? data.sozlesmeler : [];
+    arsiv = Array.isArray(data.arsiv) ? data.arsiv : [];
     await persist();
     await persistExpenses();
     await storageAPI.set('activityLog', JSON.stringify(activityLog)).catch(()=>{});
     await persistSozlesmeler();
+    await persistArsiv();
+    updateArsivSayi();
     buildSirketFilter();
     render();
     renderStatMasraf();
