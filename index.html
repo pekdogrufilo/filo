@@ -1178,7 +1178,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-09.18</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-09.19</div>
     </div>
   </aside>
 
@@ -4697,6 +4697,11 @@ function openVehicleDetail(id){
   const durumRenk = v.durum==='Kirada'?'#16A34A':v.durum==='Serviste'?'#DC2626':'#D97706';
   const durumBg = v.durum==='Kirada'?'rgba(22,163,74,.1)':v.durum==='Serviste'?'rgba(220,38,38,.1)':'rgba(217,119,6,.1)';
 
+  // Bu araca ait kayıtlı sözleşmeler (plaka araclar[] içinde veya tek araç plakası olarak geçen)
+  const plakaNorm = normPlaka(v.plaka);
+  const vSozler = (sozlesmeler||[]).filter(r=>(r.plakalar||[]).some(p=>normPlaka(p)===plakaNorm) || r.aracOzet && r.aracOzet.split(',').some(p=>normPlaka(p.trim())===plakaNorm))
+    .sort((a,b)=>(b.basISO||'').localeCompare(a.basISO||''));
+
   // Belge durumları
   const belgeler = [
     {ad:'Sigorta', tarih:v.sigortaTarihi},
@@ -4761,6 +4766,29 @@ function openVehicleDetail(id){
                   <span style="font-size:12px;color:${renk};font-weight:600;">${esc(dtxt)}</span>
                   <span style="font-size:11px;color:var(--steel-500);margin-left:8px;">${fmtTarih(b.tarih)}</span>
                 </div>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>` : ''}
+
+        <!-- Sözleşmeler -->
+        ${vSozler.length ? `
+        <div style="background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:14px;">
+          <div style="font-size:12px;font-weight:700;color:var(--paper);margin-bottom:10px;">${ICO('doc',13)} Sözleşmeler <span style="font-weight:400;color:var(--steel-300);">(${vSozler.length})</span></div>
+          <div style="display:flex;flex-direction:column;">
+            ${vSozler.map(r=>{
+              const dl = daysLeft(r.bitisISO);
+              const sRenk = dl===null?'var(--steel-300)':dl<0?'#DC2626':'#16A34A';
+              const sTxt = dl===null?'—':dl<0?'Süresi geçti':'Aktif · '+dl+' gün';
+              return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);flex-wrap:wrap;">
+                <span style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace;font-weight:700;font-size:12px;color:var(--accent-blue);">${esc(r.sozNo)}</span>
+                <span style="font-size:12px;color:var(--steel-300);flex:1;min-width:120px;">${esc(r.kiraci||'')}</span>
+                <span style="font-size:11px;color:var(--steel-300);">${r.basISO?fmtTarih(r.basISO):'—'} → ${r.bitisISO?fmtTarih(r.bitisISO):'—'}</span>
+                <span style="font-size:11px;font-weight:600;color:${sRenk};white-space:nowrap;">${sTxt}</span>
+                <span style="display:flex;gap:4px;">
+                  <button onclick="sozKayitPdf('${r.id}')" style="background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);color:var(--accent-blue);padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">PDF</button>
+                  <button onclick="sozKayitDocx('${r.id}')" style="background:rgba(22,163,74,.1);border:1px solid rgba(22,163,74,.2);color:#16A34A;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Word</button>
+                </span>
               </div>`;
             }).join('')}
           </div>
