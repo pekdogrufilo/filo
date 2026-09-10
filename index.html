@@ -1178,7 +1178,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-09.13</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-09.14</div>
     </div>
   </aside>
 
@@ -1457,9 +1457,9 @@
       </button>
     </div>
     <div class="modal-tabs">
-      <button class="modal-tab active" data-tab="tab-temel">🚗 Temel</button>
-      <button class="modal-tab" data-tab="tab-belgeler">📄 Belgeler</button>
-      <button class="modal-tab" data-tab="tab-kira">🤝 Kira & Teslim</button>
+      <button class="modal-tab active" data-tab="tab-temel"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M19 17h2v-6l-3-5H4l-3 5v6h2"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="16.5" cy="17.5" r="2.5"/></svg>Temel</button>
+      <button class="modal-tab" data-tab="tab-belgeler"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z"/><path d="M14 2v6h6"/></svg>Belgeler</button>
+      <button class="modal-tab" data-tab="tab-kira"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M11 14h2a2 2 0 1 0 0-4h-3c-.6 0-1.1.2-1.4.6L3 16"/><path d="m7 20 1.6-1.4c.3-.4.8-.6 1.4-.6h4c1.1 0 2.1-.4 2.8-1.2l4.6-4.4a2 2 0 0 0-2.75-2.91L13.5 12"/><path d="M2 15l6 6"/></svg>Kira &amp; Teslim</button>
     </div>
     <input type="hidden" id="editId">
     <div class="modal-body">
@@ -2644,7 +2644,7 @@ function render(){
 
         ${(()=>{
           const seriler = [
-            ['📄', 'Ruhsat', v.ruhsatSeriNo],
+            [ICO('filetext',12), 'Ruhsat', v.ruhsatSeriNo],
           ].filter(([, , num])=>num && String(num).trim());
           if(!seriler.length) return '';
           const cpIco = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>';
@@ -4474,7 +4474,7 @@ async function fisBelgeGor(masrafId){
   el.innerHTML = `
     <div style="background:var(--surface);border-radius:12px;width:90%;max-width:700px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;">
       <div style="padding:12px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;">
-        <span style="font-size:14px;font-weight:600;color:var(--paper);">📄 Fiş Görüntüsü</span>
+        <span style="font-size:14px;font-weight:600;color:var(--paper);">${ICO('filetext',14)} Fiş Görüntüsü</span>
         <div style="display:flex;gap:8px;">
           <a href="${url}" download="fis.${isPdf?'pdf':'jpg'}" style="background:var(--accent-blue);color:#fff;padding:5px 12px;border-radius:7px;font-size:12px;font-weight:600;text-decoration:none;">İndir</a>
           <button onclick="this.closest('.overlay').remove()" style="background:none;border:none;color:var(--steel-300);cursor:pointer;font-size:20px;line-height:1;">×</button>
@@ -4682,7 +4682,7 @@ function openVehicleDetail(id){
             <div style="font-size:14px;font-weight:700;color:#16A34A;">${fmtTL2(v.kira||0)}</div>
           </div>
           ${v.ruhsatSeriNo ? `<div style="background:rgba(37,99,235,.06);border:1px solid rgba(37,99,235,.2);border-radius:10px;padding:12px 14px;cursor:pointer;" onclick="navigator.clipboard&&navigator.clipboard.writeText('${esc(v.ruhsatSeriNo)}').then(()=>showToast('Ruhsat no kopyalandı'))" title="Kopyala">
-            <div style="font-size:10px;color:var(--accent-blue);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;">📋 Ruhsat No (tıkla kopyala)</div>
+            <div style="font-size:10px;color:var(--accent-blue);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;">${ICO('clipboard',11)} Ruhsat No (tıkla kopyala)</div>
             <div style="font-size:15px;font-weight:700;color:var(--accent-blue);font-family:monospace;">${esc(v.ruhsatSeriNo)}</div>
           </div>` : ''}
         </div>
@@ -4690,7 +4690,7 @@ function openVehicleDetail(id){
         <!-- Belgeler -->
         ${belgeler.length ? `
         <div style="background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:14px;">
-          <div style="font-size:12px;font-weight:700;color:var(--paper);margin-bottom:10px;">📄 Belgeler</div>
+          <div style="font-size:12px;font-weight:700;color:var(--paper);margin-bottom:10px;">${ICO('filetext',13)} Belgeler</div>
           <div style="display:flex;flex-direction:column;gap:8px;">
             ${belgeler.map(b=>{
               const dl = daysLeft(b.tarih);
@@ -4711,8 +4711,8 @@ function openVehicleDetail(id){
         ${(()=>{ const evraklar = aracEvrakListesi(v); if(!evraklar.length) return ''; return `
         <div style="background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:14px;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px;">
-            <div style="font-size:12px;font-weight:700;color:var(--paper);">📎 Evraklar <span style="font-weight:400;color:var(--steel-300);">(${evraklar.length})</span></div>
-            <button onclick="tumEvraklariIndir('${id}')" style="background:var(--accent-blue);color:#fff;border:none;padding:6px 12px;border-radius:8px;font-size:11.5px;font-weight:600;cursor:pointer;white-space:nowrap;">⬇ Tümünü ZIP indir</button>
+            <div style="font-size:12px;font-weight:700;color:var(--paper);">${ICO('paperclip',13)} Evraklar <span style="font-weight:400;color:var(--steel-300);">(${evraklar.length})</span></div>
+            <button onclick="tumEvraklariIndir('${id}')" style="background:var(--accent-blue);color:#fff;border:none;padding:6px 12px;border-radius:8px;font-size:11.5px;font-weight:600;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;">${ICO('download',12)} Tümünü ZIP indir</button>
           </div>
           <div style="display:flex;flex-direction:column;">
             ${evraklar.map(e=>`
@@ -4721,7 +4721,7 @@ function openVehicleDetail(id){
                 <div style="font-size:12.5px;font-weight:600;color:var(--paper);">${esc(e.ad)}</div>
                 <div style="font-size:11px;color:var(--steel-500);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(e.adi)}</div>
               </div>
-              <button onclick="belgeIndir('${e.key}','${esc(e.adi).replace(/'/g,'')}')" style="background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);color:var(--accent-blue);cursor:pointer;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;white-space:nowrap;">⬇ İndir</button>
+              <button onclick="belgeIndir('${e.key}','${esc(e.adi).replace(/'/g,'')}')" style="background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);color:var(--accent-blue);cursor:pointer;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;">${ICO('download',11)} İndir</button>
             </div>`).join('')}
           </div>
         </div>`;})()}
@@ -4729,7 +4729,7 @@ function openVehicleDetail(id){
         <!-- Km Geçmişi -->
         ${kmGecmisi.length ? `
         <div style="background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:14px;">
-          <div style="font-size:12px;font-weight:700;color:var(--paper);margin-bottom:10px;">🚗 Km Geçmişi</div>
+          <div style="font-size:12px;font-weight:700;color:var(--paper);margin-bottom:10px;">${ICO('car',13)} Km Geçmişi</div>
           <div style="display:flex;flex-direction:column;gap:6px;">
             ${kmGecmisi.slice().reverse().map(k=>`
               <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line);">
@@ -4745,7 +4745,7 @@ function openVehicleDetail(id){
 
         <!-- Masraf Geçmişi -->
         <div style="background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:14px;">
-          <div style="font-size:12px;font-weight:700;color:var(--paper);margin-bottom:10px;">💸 Masraf Geçmişi ${vMasraf.length ? `<span style="font-weight:400;color:var(--steel-300);">(${vMasraf.length} kayıt)</span>` : ''}</div>
+          <div style="font-size:12px;font-weight:700;color:var(--paper);margin-bottom:10px;">${ICO('money',13)} Masraf Geçmişi ${vMasraf.length ? `<span style="font-weight:400;color:var(--steel-300);">(${vMasraf.length} kayıt)</span>` : ''}</div>
           ${vMasraf.length ? `
           <div style="display:flex;flex-direction:column;gap:0;">
             ${vMasraf.sort((a,b)=>(b.tarih||'').localeCompare(a.tarih||'')).map(e=>`
@@ -4759,7 +4759,7 @@ function openVehicleDetail(id){
                     <div style="font-size:13px;font-weight:700;color:#DC2626;">${fmtTL2(e.tutar||0)}</div>
                     <div style="font-size:11px;color:var(--steel-500);">${fmtTarih(e.tarih)}</div>
                   </div>
-                  ${e.hasFis ? `<button onclick="fisBelgeGor('${e.id}')" style="background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);color:var(--accent-blue);cursor:pointer;padding:4px 8px;border-radius:6px;font-size:11px;font-weight:600;">📄 Fiş</button>` : ''}
+                  ${e.hasFis ? `<button onclick="fisBelgeGor('${e.id}')" style="background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);color:var(--accent-blue);cursor:pointer;padding:4px 8px;border-radius:6px;font-size:11px;font-weight:600;">${ICO('receipt',11)} Fiş</button>` : ''}
                   <button onclick="detayMasrafSil('${e.id}','${id}')" style="background:none;border:none;color:var(--steel-500);cursor:pointer;padding:4px;border-radius:4px;display:flex;" title="Sil">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
                   </button>
@@ -4774,7 +4774,7 @@ function openVehicleDetail(id){
         <!-- Hasar / Kaza Kayıtları -->
         <div style="background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:14px;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-            <div style="font-size:12px;font-weight:700;color:var(--paper);">💥 Hasar / Kaza Kayıtları ${hasarlar.length?`<span style="font-weight:400;color:var(--steel-300);">(${hasarlar.length})</span>`:''}</div>
+            <div style="font-size:12px;font-weight:700;color:var(--paper);">${ICO('crash',13)} Hasar / Kaza Kayıtları ${hasarlar.length?`<span style="font-weight:400;color:var(--steel-300);">(${hasarlar.length})</span>`:''}</div>
             <button onclick="document.getElementById('hasarForm').style.display=document.getElementById('hasarForm').style.display==='none'?'block':'none'" style="background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);color:var(--accent-blue);padding:5px 12px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;">+ Ekle</button>
           </div>
           <div id="hasarForm" style="display:none;background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:12px;margin-bottom:10px;">
@@ -4807,25 +4807,25 @@ function openVehicleDetail(id){
                   </button>
                 </div>
               </div>`).join('')}
-          </div>` : '<div style="color:var(--steel-500);font-size:13px;padding:4px 0;">Hasar/kaza kaydı yok. ✅</div>'}
+          </div>` : '<div style="color:var(--steel-500);font-size:13px;padding:4px 0;">Hasar/kaza kaydı yok.</div>'}
         </div>
 
         <!-- Araç Geçmişi — kronolojik zaman tüneli -->
         ${gecmis.length ? `
         <div style="background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:14px;">
-          <div style="font-size:12px;font-weight:700;color:var(--paper);margin-bottom:12px;">🕓 Araç Geçmişi <span style="font-weight:400;color:var(--steel-300);">(${gecmis.length} olay)</span></div>
+          <div style="font-size:12px;font-weight:700;color:var(--paper);margin-bottom:12px;">${ICO('clock',13)} Araç Geçmişi <span style="font-weight:400;color:var(--steel-300);">(${gecmis.length} olay)</span></div>
           <div style="display:flex;flex-direction:column;">
             ${gecmis.map(g=>{
               const stil = {
-                masraf:{ico:'💸', renk:'#DC2626'},
-                hasar: {ico:'💥', renk:'#DC2626'},
-                servis:{ico:'🔧', renk:'#D97706'},
-                belge: {ico:'📄', renk:'#2563EB'},
-                km:    {ico:'🚗', renk:'#2563EB'},
-                teslim:{ico:'🔑', renk:'#16A34A'},
+                masraf:{ico:ICO('money',14), renk:'#DC2626'},
+                hasar: {ico:ICO('crash',14), renk:'#DC2626'},
+                servis:{ico:ICO('wrench',14), renk:'#D97706'},
+                belge: {ico:ICO('filetext',14), renk:'#2563EB'},
+                km:    {ico:ICO('car',14), renk:'#2563EB'},
+                teslim:{ico:ICO('key',14), renk:'#16A34A'},
               }[g.tip]||{ico:'•',renk:'var(--steel-300)'};
               return `<div style="display:flex;gap:12px;padding:7px 0;border-bottom:1px solid var(--line);align-items:flex-start;">
-                <span style="font-size:15px;line-height:1.3;flex-shrink:0;">${stil.ico}</span>
+                <span style="line-height:1.3;flex-shrink:0;color:${stil.renk};display:flex;">${stil.ico}</span>
                 <div style="flex:1;min-width:0;">
                   <div style="font-size:12.5px;color:var(--paper);"><b style="color:${stil.renk};">${esc(g.baslik)}</b>${g.detay?` <span style="color:var(--steel-300);font-size:11.5px;">${esc(g.detay)}</span>`:''}</div>
                   <div style="font-size:11px;color:var(--steel-500);margin-top:1px;">${esc(g.tarihTxt)}</div>
@@ -6070,6 +6070,31 @@ const DASH_ICONS = {
   doc:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z"/><path d="M14 2v6h6"/></svg>',
   shield:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>',
 };
+// Boyut ayarlanabilir satır içi SVG ikon yardımcısı (emoji ikonların yerine)
+const ICO_PATHS = {
+  car:'<path d="M19 17h2v-6l-3-5H4l-3 5v6h2"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="16.5" cy="17.5" r="2.5"/>',
+  doc:'<path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z"/><path d="M14 2v6h6"/>',
+  filetext:'<path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h6"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  wrench:'<path d="m14.7 6.3-6.4 6.4a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l6.4-6.4a4 4 0 1 0-3-3Z"/>',
+  chart:'<path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/>',
+  clipboard:'<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>',
+  receipt:'<path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M8 7h8M8 11h8M8 15h5"/>',
+  key:'<circle cx="7.5" cy="15.5" r="4.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/>',
+  money:'<circle cx="12" cy="12" r="9"/><path d="M12 7v10"/><path d="M15 9.5c0-1-1.3-1.5-3-1.5s-3 .5-3 1.5 1 1.5 3 1.5 3 .5 3 1.5-1.3 1.5-3 1.5-3-.5-3-1.5"/>',
+  crash:'<path d="M12 3 2 20h20L12 3Z"/><path d="M12 10v4M12 17h.01"/>',
+  shieldSm:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/>',
+  search:'<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
+  globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a13.5 13.5 0 0 1 0 18 13.5 13.5 0 0 1 0-18Z"/>',
+  paperclip:'<path d="m21.4 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/>',
+  zap:'<path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/>',
+  folder:'<path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/>',
+  pencil:'<path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>',
+  trash:'<path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>',
+  download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/>',
+  hand:'<path d="M11 14h2a2 2 0 1 0 0-4h-3c-.6 0-1.1.2-1.4.6L3 16"/><path d="m7 20 1.6-1.4c.3-.4.8-.6 1.4-.6h4c1.1 0 2.1-.4 2.8-1.2l4.6-4.4a2 2 0 0 0-2.75-2.91L13.5 12"/><path d="M2 15l6 6"/>',
+};
+const ICO = (name, sz=14, sw=2)=>`<svg width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${ICO_PATHS[name]||''}</svg>`;
 
 function renderKritikUyarilarList(urgent){
   if(!urgent.length) return '<div class="log-empty" style="padding:12px 0;">✓ Yaklaşan kritik durum yok.</div>';
@@ -6122,18 +6147,18 @@ function renderActivityListForDash(){
   const list = activityLog.slice(0,8);
   if(list.length===0) return '<div class="log-empty">Henüz etkinlik yok.</div>';
   const icons = {
-    'add':    {ic:'🚗', renk:'#2563EB', bg:'rgba(37,99,235,.1)'},
-    'edit':   {ic:'✏️', renk:'#D97706', bg:'rgba(217,119,6,.1)'},
-    'del':    {ic:'🗑️', renk:'#DC2626', bg:'rgba(220,38,38,.1)'},
-    'doc':    {ic:'📄', renk:'#7C3AED', bg:'rgba(124,58,237,.1)'},
-    'import': {ic:'📥', renk:'#16A34A', bg:'rgba(22,163,74,.1)'},
-    'warn':   {ic:'⚠️', renk:'#D97706', bg:'rgba(217,119,6,.1)'},
+    'add':    {ic:ICO('car',14), renk:'#2563EB', bg:'rgba(37,99,235,.1)'},
+    'edit':   {ic:ICO('pencil',14), renk:'#D97706', bg:'rgba(217,119,6,.1)'},
+    'del':    {ic:ICO('trash',14), renk:'#DC2626', bg:'rgba(220,38,38,.1)'},
+    'doc':    {ic:ICO('filetext',14), renk:'#7C3AED', bg:'rgba(124,58,237,.1)'},
+    'import': {ic:ICO('download',14), renk:'#16A34A', bg:'rgba(22,163,74,.1)'},
+    'warn':   {ic:ICO('clock',14), renk:'#D97706', bg:'rgba(217,119,6,.1)'},
   };
   return `<div style="display:flex;flex-direction:column;gap:0;">` + list.map((l,i)=>{
-    const m = icons[l.action] || {ic:'📝', renk:'var(--text-3)', bg:'var(--surface-2)'};
+    const m = icons[l.action] || {ic:ICO('pencil',14), renk:'var(--text-3)', bg:'var(--surface-2)'};
     return `
       <div style="display:flex;gap:10px;padding:8px 0;${i<list.length-1?'border-bottom:1px solid var(--border);':''}">
-        <div style="width:28px;height:28px;border-radius:8px;background:${m.bg};display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;">${m.ic}</div>
+        <div style="width:28px;height:28px;border-radius:8px;background:${m.bg};color:${m.renk};display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;">${m.ic}</div>
         <div style="flex:1;min-width:0;">
           <div style="font-size:13px;color:var(--text);line-height:1.4;">${l.detail}</div>
           <div style="font-size:11px;color:var(--text-3);margin-top:2px;">${relTime(l.ts)}</div>
@@ -6275,7 +6300,7 @@ function renderDashboard(){
     </div>
     <div class="dcard" style="margin-top:16px;border:1px solid rgba(59,130,246,.25);box-shadow:var(--shadow-md);">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:12px;">
-        <h3 style="margin:0;">⚡ Hızlı İşlemler</h3>
+        <h3 style="margin:0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/></svg>Hızlı İşlemler</h3>
         <span style="font-size:12px;color:var(--text-3);">Tek tıkla en sık yapılan işlemler</span>
       </div>
       <div class="quick-grid" style="grid-template-columns:repeat(auto-fit,minmax(110px,1fr));">
@@ -6353,7 +6378,7 @@ function renderDashboard(){
     </div>
     <div class="dash-grid dg-141" style="margin-top:16px;">
       <div class="dcard">
-        <h3>⚡ Aksiyon Merkezi <a data-goto="bildirimler" style="font-size:12px;font-weight:400;color:var(--accent-blue);text-decoration:none;">Tümünü Gör →</a></h3>
+        <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/></svg>Aksiyon Merkezi <a data-goto="bildirimler" style="font-size:12px;font-weight:400;color:var(--accent-blue);text-decoration:none;">Tümünü Gör →</a></h3>
         <div>${renderKritikUyarilarList(urgent)}</div>
       </div>
       <div class="dcard">
@@ -6367,7 +6392,7 @@ function renderDashboard(){
         <div>${renderActivityListForDash()}</div>
       </div>
       <div class="dcard">
-        <h3>📊 Özet <a data-goto="raporlar">Raporlar →</a></h3>
+        <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg>Özet <a data-goto="raporlar">Raporlar →</a></h3>
         <div class="fd-row"><span class="fd-dot" style="background:#16A34A"></span><span class="fd-l">Şu An Kirada</span><span class="fd-v">${kirada}</span></div>
         <div class="fd-row"><span class="fd-dot" style="background:#F59E0B"></span><span class="fd-l">Müsait</span><span class="fd-v">${musait}</span></div>
         <div class="fd-row"><span class="fd-dot" style="background:#EF4444"></span><span class="fd-l">Serviste</span><span class="fd-v">${serviste}</span></div>
@@ -6510,7 +6535,7 @@ function renderBakimPage(){
 
   page.innerHTML = `
     <div class="dcard" style="margin-bottom:16px;">
-      <h3>🧾 Tamir Fişi Yükle — AI ile Otomatik Oku</h3>
+      <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/></svg>Tamir Fişi Yükle — AI ile Otomatik Oku</h3>
       <p style="font-size:13px;color:var(--steel-300);margin-bottom:14px;">Tamirhaneden gelen fişin fotoğrafını veya PDF'ini yükle. AI plaka, tutar, tarih ve yapılan işlemi okuyup masraf olarak kaydet.</p>
       <div id="fisYuklemeArea" style="border:2px dashed var(--line);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:border-color .2s;"
         ondragover="event.preventDefault();this.style.borderColor='var(--accent-blue)'"
@@ -6597,7 +6622,7 @@ function renderBakimPage(){
 
     <div class="dcard">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
-        <h3 style="margin:0;">📋 Servis Kayıtları <span style="font-weight:400;font-size:13px;color:var(--steel-100)">${tumBakimMasraf.length} kayıt</span></h3>
+        <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76Z"/></svg>Servis Kayıtları <span style="font-weight:400;font-size:13px;color:var(--steel-100)">${tumBakimMasraf.length} kayıt</span></h3>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
           <input id="servisKayitAra" placeholder="Plaka ara..." oninput="servisKayitFiltrele()"
             style="background:var(--surface-2);border:1px solid var(--line);color:var(--paper);padding:6px 10px;border-radius:8px;font-size:12.5px;font-family:inherit;width:130px;">
@@ -7558,7 +7583,7 @@ function renderKiralamaPage(){
 
     ${suresiGecen.length>0 ? `
     <div class="dcard" style="margin-bottom:14px;border-color:rgba(220,38,38,.3);">
-      <h3 style="color:#DC2626;">🔴 Süresi Geçmiş Kiralamalar <span style="font-weight:400;font-size:13px;">${suresiGecen.length} araç</span></h3>
+      <h3><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#DC2626;margin-right:7px;"></span>Süresi Geçmiş Kiralamalar <span style="font-weight:400;font-size:13px;">${suresiGecen.length} araç</span></h3>
       <div style="display:flex;flex-direction:column;gap:6px;">
         ${suresiGecen.map(v=>{
           const dl = daysLeft(v.kiraBitis||v.sozlesmeBitis);
@@ -7581,7 +7606,7 @@ function renderKiralamaPage(){
 
     ${yaklasanBitis.length>0 ? `
     <div class="dcard" style="margin-bottom:14px;">
-      <h3>🟡 Yaklaşan Kira Bitişleri <span style="font-weight:400;font-size:13px;color:var(--text-3);">30 gün içinde · ${yaklasanBitis.length} araç</span></h3>
+      <h3><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#D97706;margin-right:7px;"></span>Yaklaşan Kira Bitişleri <span style="font-weight:400;font-size:13px;color:var(--text-3);">30 gün içinde · ${yaklasanBitis.length} araç</span></h3>
       <div style="display:flex;flex-direction:column;gap:6px;">
         ${yaklasanBitis.map(v=>{
           const dl = daysLeft(v.kiraBitis||v.sozlesmeBitis);
@@ -7649,7 +7674,7 @@ function renderKiralamaPage(){
     </div>
 
     <div class="dcard" style="margin-bottom:16px;">
-      <h3>📝 Kira Sözleşmesi Oluştur</h3>
+      <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg>Kira Sözleşmesi Oluştur</h3>
       <p style="font-size:13px;color:var(--text-2);margin-bottom:14px;">Araç bilgilerini seçin, sözleşme otomatik oluşturulsun. PDF ve Word olarak indirin.</p>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
         <div class="field">
@@ -7732,7 +7757,7 @@ function renderKiralamaPage(){
     </div>
 
     <div class="dcard" style="margin-bottom:16px;">
-      <h3>📁 Kayıtlı Sözleşmeler <span style="font-weight:400;font-size:13px;color:var(--steel-100)">${sozlesmeler.length} kayıt</span></h3>
+      <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2Z"/></svg>Kayıtlı Sözleşmeler <span style="font-weight:400;font-size:13px;color:var(--steel-100)">${sozlesmeler.length} kayıt</span></h3>
       <p style="font-size:13px;color:var(--text-2);margin-bottom:12px;">Oluşturulan her sözleşme otomatik kaydedilir; istediğiniz zaman PDF/Word olarak yeniden indirebilirsiniz.</p>
       ${sozlesmeler.length ? `
       <div class="table-scroll"><table class="mini-table">
@@ -7954,7 +7979,7 @@ function renderDocUploadPage(){
   tumu.sort((a,b)=>(b.o.yukleme||'').localeCompare(a.o.yukleme||''));
   const sonN = tumu.slice(0, 40);
 
-  const turIco = t=>({sigorta:'🛡️',kasko:'🧾',muayene:'🔍',ruhsat:'📋',sozlesme:'📝',masraf:'💸',servis:'🔧',vize:'🌍',diger:'📄'}[t]||'📄');
+  const turIco = t=>({sigorta:ICO('shieldSm',13),kasko:ICO('receipt',13),muayene:ICO('search',13),ruhsat:ICO('clipboard',13),sozlesme:ICO('filetext',13),masraf:ICO('money',13),servis:ICO('wrench',13),vize:ICO('globe',13),diger:ICO('doc',13)}[t]||ICO('doc',13));
   const turAd  = t=>({sigorta:'Sigorta',kasko:'Kasko',muayene:'Muayene',ruhsat:'Ruhsat',sozlesme:'Sözleşme',masraf:'Masraf',servis:'Servis',vize:'Vize',diger:'Belge'}[t]||'Belge');
 
   page.innerHTML = `
@@ -7969,7 +7994,7 @@ function renderDocUploadPage(){
         </select>
       </div>
       <div id="duDrop" style="border:2px dashed var(--border-2);border-radius:14px;padding:28px 16px;text-align:center;cursor:pointer;transition:all .15s ease;background:var(--surface-2);">
-        <div style="font-size:30px;margin-bottom:8px;">📤</div>
+        <div style="color:var(--accent-blue);margin-bottom:8px;display:flex;justify-content:center;">${ICO('download',26,1.6)}</div>
         <div style="font-size:13.5px;font-weight:600;color:var(--text);">Sürükleip bırakın veya <span style="color:var(--accent-blue);">dosya seçin</span></div>
         <div style="font-size:11.5px;color:var(--text-3);margin-top:4px;">PDF veya görsel · en fazla 3,5 MB · birden fazla dosya seçebilirsiniz</div>
       </div>
@@ -7987,7 +8012,7 @@ function renderDocUploadPage(){
           const d = o.yukleme ? new Date(o.yukleme) : null;
           const dTxt = d ? d.toLocaleDateString('tr-TR')+' '+d.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'}) : '';
           return `<div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;background:var(--surface-2);border:1px solid var(--border);">
-            <span style="font-size:18px;flex-shrink:0;">${turIco(o.tur)}</span>
+            <span style="color:var(--accent-blue);flex-shrink:0;display:flex;">${turIco(o.tur)}</span>
             <div style="flex:1;min-width:0;">
               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
                 <span class="plaka" style="font-size:11.5px;padding:1px 7px;">${esc(v.plaka)}</span>
@@ -7996,7 +8021,7 @@ function renderDocUploadPage(){
               <div style="font-size:11.5px;color:var(--text-3);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(o.adi)}${o.tarih?' · '+esc(fmtTarih(o.tarih)):''}${dTxt?' · '+dTxt:''}</div>
             </div>
             <button onclick="viewOtoDoc('${v.id}',${(v.otoBelgeler||[]).indexOf(o)})" style="background:var(--blue-dim);border:none;color:var(--accent-blue);padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0;">Gör</button>
-            <button onclick="belgeIndir('${o.key}','${esc(o.adi).replace(/'/g,'')}')" style="background:var(--blue-dim);border:none;color:var(--accent-blue);padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0;" title="İndir">⬇</button>
+            <button onclick="belgeIndir('${o.key}','${esc(o.adi).replace(/'/g,'')}')" style="background:var(--blue-dim);border:none;color:var(--accent-blue);padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0;display:flex;align-items:center;" title="İndir">${ICO('download',13)}</button>
             <button onclick="otoBelgeSil('${v.id}','${o.key}')" style="background:none;border:none;color:var(--text-3);cursor:pointer;padding:6px;display:flex;flex-shrink:0;" title="Sil">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
             </button>
@@ -8620,7 +8645,7 @@ function renderAiPage(){
       <div style="margin-bottom:12px;">
         <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--surface);border:1px solid var(--line);border-radius:10px;cursor:pointer;" onclick="document.getElementById('sartnameInput').click()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg>
-          <span id="sartnameLabel" style="font-size:13px;color:var(--text-3);">📎 Teknik şartname yükle (PDF veya Word)</span>
+          <span id="sartnameLabel" style="font-size:13px;color:var(--text-3);">${ICO('paperclip',13)} Teknik şartname yükle (PDF veya Word)</span>
           ${window.__sartnameBase64 ? `<span style="margin-left:auto;background:rgba(22,163,74,.1);color:#16A34A;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;">✓ Yüklendi</span>` : ''}
         </div>
         <input type="file" id="sartnameInput" accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/*" style="display:none" onchange="sartnameYukle(this.files[0])">
@@ -8714,7 +8739,7 @@ async function sartnameYukle(file){
     window.__sartnameMime = file.type || 'application/pdf';
     window.__sartnameAdi = file.name;
 
-    if(lbl) lbl.textContent = `📎 ${file.name} (yüklendi)`;
+    if(lbl) lbl.innerHTML = `${ICO('paperclip',13)} ${esc(file.name)} (yüklendi)`;
 
     // Otomatik analiz başlat
     showToast('Şartname yüklendi. Analiz başlıyor...');
@@ -8986,7 +9011,7 @@ function renderExcelPage(){
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
       <!-- Excel'e Aktar -->
       <div class="dcard">
-        <h3 style="margin-bottom:8px;">📤 Excel'e Aktar</h3>
+        <h3 style="margin-bottom:8px;">${ICO('download',15)} Excel'e Aktar</h3>
         <p style="color:var(--text-2);font-size:13px;margin-bottom:14px;">Tüm araç, kiralama ve masraf verilerini Excel dosyası olarak indir.</p>
         <button class="add-btn" id="xpExport" style="width:100%;justify-content:center;">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 19h16"/></svg>
@@ -8996,7 +9021,7 @@ function renderExcelPage(){
 
       <!-- Excel'den Güncelle -->
       <div class="dcard">
-        <h3 style="margin-bottom:8px;">📥 Excel'den Güncelle</h3>
+        <h3 style="margin-bottom:8px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>Excel'den Güncelle</h3>
         <p style="color:var(--text-2);font-size:13px;margin-bottom:14px;">Var olan araçları plaka eşleşmesiyle Excel dosyasındaki bilgilerle günceller.</p>
         <button class="settings-btn" id="xpImport" style="width:100%;justify-content:center;">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.3"/><path d="M21 3v6h-6"/></svg>
@@ -9007,7 +9032,7 @@ function renderExcelPage(){
 
     <!-- Km Takip Raporu -->
     <div class="dcard" style="margin-bottom:14px;">
-      <h3 style="margin-bottom:6px;">🚗 Km Takip Raporu Yükle</h3>
+      <h3 style="margin-bottom:6px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>Km Takip Raporu Yükle</h3>
       <p style="color:var(--text-2);font-size:13px;margin-bottom:14px;">Triomobil veya N2 Mobil'den indirdiğin detaylı km raporu Excel dosyasını yükle. Sistem plakaları eşleştirip her araca aylık km bilgisini otomatik kaydeder.</p>
       <div id="kmYuklemeArea" style="border:2px dashed var(--border);border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:border-color .2s ease;"
         ondragover="event.preventDefault();this.style.borderColor='var(--accent-blue)'"
@@ -9024,7 +9049,7 @@ function renderExcelPage(){
 
     <!-- Km Geçmişi -->
     <div class="dcard" style="margin-bottom:14px;">
-      <h3 style="margin-bottom:10px;">📊 Km Geçmişi</h3>
+      <h3 style="margin-bottom:10px;">${ICO('chart',15)} Km Geçmişi</h3>
       ${vehicles.filter(v=>v.kmGecmisi&&v.kmGecmisi.length>0).length > 0 ? `
       <div class="table-scroll"><table class="mini-table">
         <thead><tr><th>Plaka</th><th>Araç</th><th>Dönem</th><th style="text-align:right">Başlangıç km</th><th style="text-align:right">Bitiş km</th><th style="text-align:right">Toplam km</th></tr></thead>
@@ -9045,7 +9070,7 @@ function renderExcelPage(){
 
     <!-- Toplu Belge Yükleme -->
     <div class="dcard">
-      <h3 style="margin-bottom:6px;">📄 Toplu Poliçe / Belge Yükleme</h3>
+      <h3 style="margin-bottom:6px;">${ICO('filetext',15)} Toplu Poliçe / Belge Yükleme</h3>
       <p style="color:var(--text-2);font-size:13px;margin-bottom:14px;">Birden fazla sigorta poliçesi, kasko veya muayene raporunu aynı anda yükle. AI her belgeyi okuyup ilgili araca kaydeder.</p>
       <div id="topluYuklemeArea" style="border:2px dashed var(--border);border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:border-color .2s ease;"
         ondragover="event.preventDefault();this.style.borderColor='var(--accent-blue)'"
