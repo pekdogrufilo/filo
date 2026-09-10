@@ -1178,7 +1178,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-09.19</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-09.20</div>
     </div>
   </aside>
 
@@ -2068,6 +2068,12 @@ function urgentList(){
       if(kalan<=500) rows.push({plaka:v.plaka, tip:'Bakım (km)', dl: kalan<=0 ? 0 : 5, km: kalan});
     }
   });
+  // Kayıtlı sözleşme bitişleri (arşivden — toplu kiralamalar dahil)
+  (sozlesmeler||[]).forEach(r=>{
+    if(!r.bitisISO) return;
+    const dl = daysLeft(r.bitisISO);
+    if(dl<=7) rows.push({plaka:r.aracOzet||'—', tip:'Sözleşme bitişi '+r.sozNo, dl, kiraci:r.kiraci||''});
+  });
   return rows;
 }
 
@@ -2152,12 +2158,12 @@ function buildReminderBody(list){
   let body = `Filo Kontrol Paneli - Günlük Hatırlatma (${new Date().toLocaleDateString('tr-TR')})\n\n`;
   if(gecti.length){
     body += `SÜRESİ GEÇMİŞ (${gecti.length}):\n`;
-    gecti.forEach(r=> body += `- ${r.plaka} · ${r.tip} · ${Math.abs(r.dl)} gün gecikti\n`);
+    gecti.forEach(r=> body += `- ${r.plaka}${r.kiraci?' ('+r.kiraci+')':''} · ${r.tip} · ${Math.abs(r.dl)} gün gecikti\n`);
     body += '\n';
   }
   if(acil.length){
     body += `YAKLAŞAN (7 gün içinde) (${acil.length}):\n`;
-    acil.forEach(r=> body += `- ${r.plaka} · ${r.tip} · ${r.dl===0?'bugün':r.dl+' gün kaldı'}\n`);
+    acil.forEach(r=> body += `- ${r.plaka}${r.kiraci?' ('+r.kiraci+')':''} · ${r.tip} · ${r.dl===0?'bugün':r.dl+' gün kaldı'}\n`);
   }
   return body;
 }
