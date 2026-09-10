@@ -1183,7 +1183,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-10.31</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-10.32</div>
     </div>
   </aside>
 
@@ -6132,8 +6132,8 @@ function svgDonut(segments, size, thickness, centerValue, centerLabel){
     return el;
   }).join('');
   const centerText = (centerValue!=null) ? `
-    <text x="${cx}" y="${(cy-size*0.02).toFixed(1)}" font-family="-apple-system,'SF Pro Display','Segoe UI',Roboto,sans-serif" font-size="${(size*0.155).toFixed(1)}" font-weight="700" fill="var(--paper)" text-anchor="middle">${esc(String(centerValue))}</text>
-    <text x="${cx}" y="${(cy+size*0.115).toFixed(1)}" font-family="-apple-system,'SF Pro Text','Segoe UI',Roboto,sans-serif" font-size="${(size*0.058).toFixed(1)}" fill="var(--steel-500)" text-anchor="middle">${esc(centerLabel||'')}</text>
+    <text x="${cx}" y="${(cy-size*0.02).toFixed(1)}" font-family="var(--font-ui)" font-size="${(size*0.155).toFixed(1)}" font-weight="700" fill="var(--paper)" text-anchor="middle">${esc(String(centerValue))}</text>
+    <text x="${cx}" y="${(cy+size*0.115).toFixed(1)}" font-family="var(--font-ui)" font-size="${(size*0.058).toFixed(1)}" fill="var(--steel-500)" text-anchor="middle">${esc(centerLabel||'')}</text>
   ` : '';
   return `<svg class="donut-svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="flex-shrink:0;filter:drop-shadow(0 6px 14px rgba(0,0,0,.10))">
     <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(120,120,128,.16)" stroke-width="${thickness}"/>
@@ -6221,10 +6221,11 @@ function computeMonthlyIncomeSeries(){
     months.push({
       key: `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`,
       sonGun: new Date(d.getFullYear(), d.getMonth()+1, 0).toISOString().slice(0,10),
+      label: d.toLocaleDateString('tr-TR', {month:'short'})
     });
   }
   const values = months.map(m=> vehicles.filter(v=>v.durum==='Kirada' && Number(v.kira)>0 && (!v.teslimTarih || v.teslimTarih<=m.sonGun)).reduce((s,v)=>s+Number(v.kira),0));
-  return {values, labels: months.map(m=>m.key.slice(5)+' ay')};
+  return {values, labels: months.map(m=>m.label)};
 }
 function svgDualLineChart(a, b, labels, width, height){
   const idA='da'+(__chartIdCounter++), idB='db'+(__chartIdCounter++);
@@ -6236,53 +6237,59 @@ function svgDualLineChart(a, b, labels, width, height){
   const fmt=v=> v>=1000000 ? (v/1000000).toFixed(1).replace('.',',')+' M' : v>=1000 ? Math.round(v/1000)+' B' : String(Math.round(v));
   const coordsA=a.map((v,i)=>[pad.l+(a.length===1?w/2:(i*w/(a.length-1))), pad.t+h-(v/niceMax)*h]);
   const coordsB=b.map((v,i)=>[pad.l+(b.length===1?w/2:(i*w/(b.length-1))), pad.t+h-(v/niceMax)*h]);
-  const pathOf=cs=>cs.map((c,i)=>(i?'L':'M')+c[0].toFixed(1)+' '+c[1].toFixed(1)).join(' ');
+  const pathOf=cs=>smoothPath(cs);
   const areaA=pathOf(coordsA)+` L ${coordsA[coordsA.length-1][0].toFixed(1)} ${(pad.t+h).toFixed(1)} L ${coordsA[0][0].toFixed(1)} ${(pad.t+h).toFixed(1)} Z`;
+  const areaB=pathOf(coordsB)+` L ${coordsB[coordsB.length-1][0].toFixed(1)} ${(pad.t+h).toFixed(1)} L ${coordsB[0][0].toFixed(1)} ${(pad.t+h).toFixed(1)} Z`;
   const grid=[0,0.5,1].map(f=>{
     const y=(pad.t+h-f*h).toFixed(1);
     return `<line x1="${pad.l}" y1="${y}" x2="${width-pad.r}" y2="${y}" stroke="var(--line)" stroke-width="1" stroke-dasharray="${f===0?'0':'3 4'}"/>
       <text x="${pad.l-7}" y="${Number(y)+3}" font-size="9.5" fill="var(--steel-500)" text-anchor="end">${esc(fmt(niceMax*f))}</text>`;
   }).join('');
-  const dotsA=coordsA.slice(0,-1).map(c=>`<circle cx="${c[0].toFixed(1)}" cy="${c[1].toFixed(1)}" r="3.4" fill="var(--surface)" stroke="#34C759" stroke-width="2.2"/>`).join('');
-  const dotsB=coordsB.slice(0,-1).map(c=>`<circle cx="${c[0].toFixed(1)}" cy="${c[1].toFixed(1)}" r="3.4" fill="var(--surface)" stroke="#FF9F0A" stroke-width="2.2"/>`).join('');
+  const dotsA=coordsA.slice(0,-1).map(c=>`<circle cx="${c[0].toFixed(1)}" cy="${c[1].toFixed(1)}" r="3.4" fill="var(--surface)" stroke="#4E92FF" stroke-width="2.2"/>`).join('');
+  const dotsB=coordsB.slice(0,-1).map(c=>`<circle cx="${c[0].toFixed(1)}" cy="${c[1].toFixed(1)}" r="3.4" fill="var(--surface)" stroke="#F5A83C" stroke-width="2.2"/>`).join('');
   const sonA=coordsA[coordsA.length-1];
   const labelEls=labels.map((lb,i)=>`<text x="${coordsA[i][0].toFixed(1)}" y="${height-5}" font-size="9.5" fill="var(--steel-500)" text-anchor="middle">${esc(lb)}</text>`).join('');
   return `<svg width="100%" height="${height}" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" style="overflow:visible;display:block">
     <defs>
-      <linearGradient id="${idA}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#34C759" stop-opacity="0.22"/><stop offset="100%" stop-color="#34C759" stop-opacity="0"/></linearGradient>
+      <linearGradient id="${idA}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#4E92FF" stop-opacity="0.22"/><stop offset="100%" stop-color="#4E92FF" stop-opacity="0"/></linearGradient>
+      <linearGradient id="${idB}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#F5A83C" stop-opacity="0.12"/><stop offset="100%" stop-color="#F5A83C" stop-opacity="0"/></linearGradient>
     </defs>
     ${grid}
     <path class="chart-area" d="${areaA}" fill="url(#${idA})"/>
-    <path class="chart-line-path" d="${pathOf(coordsA)}" pathLength="1" fill="none" stroke="#34C759" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
-    <path class="chart-line-path2" d="${pathOf(coordsB)}" fill="none" stroke="#FF9F0A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="1 0"/>
+    <path class="chart-area" d="${areaB}" fill="url(#${idB})"/>
+    <path class="chart-line-path" d="${pathOf(coordsA)}" pathLength="1" fill="none" stroke="#4E92FF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <path class="chart-line-path2" d="${pathOf(coordsB)}" fill="none" stroke="#F5A83C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="1 0"/>
     ${dotsA}${dotsB}
-    <circle cx="${sonA[0].toFixed(1)}" cy="${sonA[1].toFixed(1)}" r="4" fill="#34C759" stroke="var(--surface)" stroke-width="2"/>
+    <circle cx="${sonA[0].toFixed(1)}" cy="${sonA[1].toFixed(1)}" r="4" fill="#4E92FF" stroke="var(--surface)" stroke-width="2"/>
     ${labelEls}
   </svg>
   <div style="display:flex;gap:16px;margin-top:6px;font-size:11px;color:var(--text-3);">
-    <span style="display:flex;align-items:center;gap:5px;"><span style="width:14px;height:3px;border-radius:2px;background:#34C759;display:inline-block;"></span>Aylık Kira Geliri (tahmini)</span>
-    <span style="display:flex;align-items:center;gap:5px;"><span style="width:14px;height:3px;border-radius:2px;background:#FF9F0A;display:inline-block;"></span>Masraf</span>
+    <span style="display:flex;align-items:center;gap:5px;"><span style="width:14px;height:3px;border-radius:2px;background:#4E92FF;display:inline-block;"></span>Aylık Kira Geliri (tahmini)</span>
+    <span style="display:flex;align-items:center;gap:5px;"><span style="width:14px;height:3px;border-radius:2px;background:#F5A83C;display:inline-block;"></span>Masraf</span>
   </div>`;
 }
 
 function svgBarChart(values, labels, width, height, color){
   const id = 'bg'+(__chartIdCounter++);
-  const pad = {l:8,r:8,t:22,b:24};
+  const pad = {l:44,r:8,t:22,b:24};
   const w = width - pad.l - pad.r;
   const h = height - pad.t - pad.b;
   const max = Math.max(...values, 1);
+  const fmtV = v=> v>=1000000 ? (v/1000000).toFixed(1).replace('.',',')+' M' : v>=10000 ? Math.round(v/1000)+' B' : v>=1000 ? (v/1000).toFixed(1).replace('.',',')+' B' : String(Math.round(v));
+  const niceMax = max<=0?1:Math.ceil(max/(max>100000?50000: max>10000?5000: max>1000?500:50)) * (max>100000?50000: max>10000?5000: max>1000?500:50);
   const gap = 10;
   const barW = (w - gap*(values.length-1)) / values.length;
   const gridLines = [0,0.5,1].map(f=>{
     const y = pad.t + h - f*h;
-    return `<line x1="${pad.l}" y1="${y.toFixed(1)}" x2="${width-pad.r}" y2="${y.toFixed(1)}" stroke="var(--line)" stroke-width="1" stroke-dasharray="${f===0?'0':'3 3'}"/>`;
+    return `<line x1="${pad.l}" y1="${y.toFixed(1)}" x2="${width-pad.r}" y2="${y.toFixed(1)}" stroke="var(--line)" stroke-width="1" stroke-dasharray="${f===0?'0':'3 3'}"/>
+      <text x="${(pad.l-7).toFixed(1)}" y="${(y+3).toFixed(1)}" font-size="9.5" fill="var(--steel-500)" text-anchor="end">${esc(fmtV(niceMax*f))}</text>`;
   }).join('');
   const bars = values.map((v,i)=>{
-    const bh = Math.max((v/max)*h, v>0?4:0);
+    const bh = Math.max((v/niceMax)*h, v>0?4:0);
     const x = pad.l + i*(barW+gap);
     const y = pad.t + h - bh;
     return `<rect class="chart-bar" style="animation-delay:${(i*70)}ms" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" rx="6" fill="url(#${id})"/>
-      <text style="animation:chartFade .4s ${(i*70+350)}ms ease both" x="${(x+barW/2).toFixed(1)}" y="${(y-7).toFixed(1)}" font-size="10" font-weight="600" fill="var(--steel-300)" text-anchor="middle">${v}</text>`;
+      <text style="animation:chartFade .4s ${(i*70+350)}ms ease both" x="${(x+barW/2).toFixed(1)}" y="${(y-7).toFixed(1)}" font-size="10" font-weight="600" fill="var(--steel-300)" text-anchor="middle">${esc(fmtV(v))}</text>`;
   }).join('');
   const labelEls = labels.map((lb,i)=>{
     const x = pad.l + i*(barW+gap) + barW/2;
@@ -6293,7 +6300,7 @@ function svgBarChart(values, labels, width, height, color){
     <defs>
       <linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%" stop-color="${color}" stop-opacity="1"/>
-        <stop offset="100%" stop-color="${color}" stop-opacity=".5"/>
+        <stop offset="100%" stop-color="${color}" stop-opacity=".45"/>
       </linearGradient>
     </defs>
     ${gridLines}${baseline}${bars}${labelEls}
@@ -6720,7 +6727,7 @@ function renderDashboard(){
       </div>
       <div class="dcard">
         <h3>Aylık Masraf (Son 6 Ay) ${(()=>{ const gec = series.values.length>=2 ? series.values[series.values.length-2] : 0; const tr = gec>0 && masrafBuAy>0 ? Math.round((masrafBuAy-gec)/gec*100) : 0; return tr ? `<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;background:${tr>0?'rgba(220,38,38,.12)':'rgba(22,163,74,.12)'};color:${tr>0?'#DC2626':'#16A34A'}">${tr>0?'▲':'▼'} %${Math.abs(tr)}</span>` : ''; })()}</h3>
-        ${svgBarChart(series.values, series.labels, 320, 180, '#6366F1')}
+        ${svgBarChart(series.values, series.labels, 320, 180, '#4E92FF')}
       </div>
       <div class="dcard">
         <h3>Yaklaşan Periyot (30 Gün)</h3>
@@ -8033,6 +8040,24 @@ async function kiraFiyatYukle(file){
   }
 }
 
+// Sözleşme durum yardımcıları: Titarus tarzı durum gruplaması + sol renk çubuğu
+function sozDurumOf(r){
+  if(r.iadeEdildi) return {key:'iade', label:'İade edildi'+(r.iadeEdildi.tarih?' · '+r.iadeEdildi.tarih:''), color:'#2E7CF6'};
+  const dl = daysLeft(r.bitisISO);
+  if(dl===null) return {key:'bilinmiyor', label:'—', color:'#8E8E93'};
+  if(dl<0) return {key:'gecmis', label:'Süresi geçti', color:'#DC2626'};
+  return {key:'aktif', label:'Aktif'+(dl<=7?' · '+dl+' gün kaldı':''), color:'#16A34A'};
+}
+function sozFiltrele(list){
+  const f = window.__sozFiltre||'tumu';
+  if(f==='tumu') return list;
+  return list.filter(r=>sozDurumOf(r).key===f);
+}
+function sozFiltreSet(f){ window.__sozFiltre=f; renderKiralamaPage(); }
+function sozChipRenk(f){
+  const m = {tumu:'var(--accent-blue)', aktif:'#16A34A', gecmis:'#DC2626', iade:'#2E7CF6'};
+  return m[f]||'var(--steel-300)';
+}
 function renderKiralamaPage(){
   const page = document.getElementById('page-kiralama');
   const kirada = vehicles.filter(v=>v.durum==='Kirada');
@@ -8277,22 +8302,30 @@ function renderKiralamaPage(){
     <div class="dcard" style="margin-bottom:16px;">
       <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2Z"/></svg>Kayıtlı Sözleşmeler <span style="font-weight:400;font-size:13px;color:var(--steel-100)">${sozlesmeler.length} kayıt</span></h3>
       <p style="font-size:13px;color:var(--text-2);margin-bottom:12px;">Oluşturulan her sözleşme otomatik kaydedilir; istediğiniz zaman PDF/Word olarak yeniden indirebilirsiniz.</p>
-      ${sozlesmeler.length ? `
+      ${(()=>{
+        const say = {tumu:sozlesmeler.length, aktif:0, gecmis:0, iade:0};
+        sozlesmeler.forEach(r=>{ const d=sozDurumOf(r); if(say[d.key]!==undefined) say[d.key]++; });
+        const secili = window.__sozFiltre||'tumu';
+        return `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+          ${[['tumu','Tümü'],['aktif','Aktif'],['gecmis','Süresi Geçmiş'],['iade','İade Edildi']].map(([k,l])=>`
+          <button onclick="sozFiltreSet('${k}')" style="padding:6px 14px;border-radius:999px;font-size:12.5px;font-weight:600;cursor:pointer;transition:all .15s;${secili===k
+            ? `background:${sozChipRenk(k)};color:#fff;border:1px solid ${sozChipRenk(k)};`
+            : 'background:var(--surface-2);color:var(--text-2);border:1px solid var(--border);'}">${l} <span style="opacity:.75;font-weight:500;">${say[k]}</span></button>`).join('')}
+        </div>`;
+      })()}
+      ${(()=>{ const gorunen = sozFiltrele([...sozlesmeler].reverse());
+      return gorunen.length ? `
       <div class="table-scroll"><table class="mini-table">
         <thead><tr><th>Sözleşme No</th><th>Tarih</th><th>Kiracı</th><th>Araç(lar)</th><th>Dönem</th><th>Durum</th><th style="white-space:nowrap;">İşlem</th></tr></thead>
-        <tbody>${[...sozlesmeler].reverse().map(r=>{
-          const dl = daysLeft(r.bitisISO);
-          const durum = r.iadeEdildi ? `<span style="color:#2E7CF6;font-weight:600;">İade edildi${r.iadeEdildi.tarih?' · '+r.iadeEdildi.tarih:''}</span>`
-            : (dl===null ? '<span style="color:var(--steel-300);">—</span>'
-            : (dl<0 ? '<span style="color:#DC2626;font-weight:600;">Süresi geçti</span>'
-                    : `<span style="color:#16A34A;font-weight:600;">Aktif${dl<=7?' · '+dl+' gün kaldı':''}</span>`));
-          return `<tr>
+        <tbody>${gorunen.map(r=>{
+          const d = sozDurumOf(r);
+          return `<tr style="box-shadow:inset 3px 0 0 ${d.color};">
             <td style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace;font-weight:700;">${esc(r.sozNo)}</td>
             <td>${esc(r.tarih||'—')}</td>
             <td>${esc(r.kiraci||'—')}${r.kiraciVKN?`<div style="font-size:11px;color:var(--steel-300);">VKN/TC: ${esc(r.kiraciVKN)}</div>`:''}</td>
             <td style="font-size:12px;">${esc(r.aracOzet||'—')}</td>
             <td style="font-size:12px;">${r.basISO?fmtTarih(r.basISO):'—'} → ${r.bitisISO?fmtTarih(r.bitisISO):'—'}</td>
-            <td>${durum}</td>
+            <td><span style="color:${d.color};font-weight:600;">${d.label}</span></td>
             <td style="white-space:nowrap;">
               <button onclick="sozKayitPdf('${r.id}')" style="background:rgba(46,124,246,.1);border:1px solid rgba(46,124,246,.2);color:var(--accent-blue);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">PDF</button>
               <button onclick="sozKayitDocx('${r.id}')" style="background:rgba(22,163,74,.1);border:1px solid rgba(22,163,74,.2);color:#16A34A;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Word</button>
@@ -8302,16 +8335,12 @@ function renderKiralamaPage(){
           </tr>`;
         }).join('')}</tbody>
       </table></div>
-      <div class="m-card-list">${[...sozlesmeler].reverse().map(r=>{
-        const dl = daysLeft(r.bitisISO);
-        const durum = r.iadeEdildi ? '<span style="color:#2E7CF6;font-weight:600;">İade edildi</span>'
-          : (dl===null ? '<span style="color:var(--steel-300);">—</span>'
-          : (dl<0 ? '<span style="color:#DC2626;font-weight:600;">Süresi geçti</span>'
-                  : '<span style="color:#16A34A;font-weight:600;">Aktif</span>'));
-        return `<div class="m-card">
+      <div class="m-card-list">${gorunen.map(r=>{
+        const d = sozDurumOf(r);
+        return `<div class="m-card" style="border-left:3px solid ${d.color};">
           <div class="m-card-head">
             <span style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace;font-weight:700;font-size:13px;">${esc(r.sozNo)}</span>
-            ${durum}
+            <span style="color:${d.color};font-weight:600;">${d.label}</span>
           </div>
           <div class="m-card-rows">
             <div class="m-card-row"><span class="m-card-label">Kiracı</span><span class="m-card-val">${esc(r.kiraci||'—')}</span></div>
@@ -8327,7 +8356,8 @@ function renderKiralamaPage(){
           </div>
         </div>`;
       }).join('')}</div>
-      ` : '<div class="log-empty">Henüz kayıtlı sözleşme yok. "Kira Sözleşmesi Oluştur" veya "Araç Kirala" ile ilk sözleşmenizi üretin — otomatik olarak burada saklanır.</div>'}
+      ` : (sozlesmeler.length ? '<div class="log-empty">Bu durumda sözleşme yok.</div>' : '<div class="log-empty">Henüz kayıtlı sözleşme yok. "Kira Sözleşmesi Oluştur" veya "Araç Kirala" ile ilk sözleşmenizi üretin — otomatik olarak burada saklanır.</div>');
+      })()}
     </div>
 
     <div class="dcard" style="margin-bottom:16px;">
@@ -8930,6 +8960,15 @@ function musteriListesiOlustur(){
     m.toplamKira = m.araclar.filter(v=>v.durum==='Kirada').reduce((s,v)=>s+(Number(v.kira)||0),0);
     const key = m.ad.toLocaleLowerCase('tr-TR');
     m.gecmisSayi = vehicles.reduce((s,v)=>s+(v.kiraGecmisi||[]).filter(k=>(k.kiraci||'').trim().toLocaleLowerCase('tr-TR')===key).length,0);
+    // Problemli müşteri: süresi geçmiş ama iade edilmemiş sözleşmesi olan ya da
+    // kiradaki aracının kira/sözleşme bitişi geçmiş olan müşteri
+    const gecmisSoz = (sozlesmeler||[]).filter(r=>!r.iadeEdildi
+      && (r.kiraci||'').trim().toLocaleLowerCase('tr-TR')===key
+      && (()=>{ const dl=daysLeft(r.bitisISO); return dl!==null && dl<0; })()).length;
+    const gecmisArac = m.araclar.filter(v=>v.durum==='Kirada'
+      && (()=>{ const dl=daysLeft(v.kiraBitis||v.sozlesmeBitis); return dl!==null && dl<0; })()).length;
+    m.problemSayi = gecmisSoz + gecmisArac;
+    m.problemli = m.problemSayi>0;
     return m;
   }).sort((a,b)=>b.toplamKira-a.toplamKira || b.araclar.length-a.araclar.length || a.ad.localeCompare(b.ad,'tr'));
 }
@@ -8974,6 +9013,10 @@ function renderMusterilerPage(){
         <div class="dstat-ic" style="background:rgba(124,58,237,.15);color:#7C3AED;">${DASH_ICONS.clock}</div>
         <div class="dstat-txt"><div class="l">Çok Araçlı Müşteri</div><div class="n">${cokAracli}</div><div class="d">2+ araç</div></div>
       </div>
+      <div class="dstat" style="cursor:default;">
+        <div class="dstat-ic" style="background:rgba(220,38,38,.15);color:#DC2626;">${DASH_ICONS.warn}</div>
+        <div class="dstat-txt"><div class="l">Problemli Müşteri</div><div class="n" style="color:${musteriler.filter(m=>m.problemli).length?'#DC2626':'inherit'};">${musteriler.filter(m=>m.problemli).length}</div><div class="d">süresi geçmiş kayıt</div></div>
+      </div>
     </div>
 
     <div class="search-wrap" style="margin-bottom:14px;">
@@ -8989,11 +9032,14 @@ function renderMusterilerPage(){
       const renkler = ['#2E7CF6','#16A34A','#D97706','#7C3AED','#DC2626','#0891B2'];
       const avRenk = renkler[i % renkler.length];
       return `
-      <div class="dcard" style="padding:0;overflow:hidden;margin-bottom:12px;">
+      <div class="dcard" style="padding:0;overflow:hidden;margin-bottom:12px;${m.problemli?'border-left:3px solid #DC2626;':''}">
         <div style="display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:pointer;" onclick="musteriAcKapa(${i})">
           <div style="width:38px;height:38px;border-radius:50%;background:${avRenk};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex-shrink:0;">${esc(initial)}</div>
           <div style="flex:1;min-width:0;">
-            <div style="font-size:14px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(m.ad)}</div>
+            <div style="display:flex;align-items:center;gap:8px;min-width:0;">
+              <span style="font-size:14px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(m.ad)}</span>
+              ${m.problemli?`<span title="Süresi geçmiş sözleşme/araca sahip" style="flex-shrink:0;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:12px;background:rgba(220,38,38,.14);color:#DC2626;border:1px solid rgba(220,38,38,.3);">⚠ Problemli (${m.problemSayi})</span>`:''}
+            </div>
             <div style="font-size:12px;color:var(--text-3);margin-top:2px;">
               ${m.araclar.length} araç · ${m.kirada} kirada${m.tel?' · 📞 '+esc(m.tel):''}${m.sehirler.size?' · '+esc([...m.sehirler].slice(0,2).join(', ')):''}
             </div>
