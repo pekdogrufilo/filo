@@ -1191,7 +1191,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-10.40</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-10.41</div>
     </div>
   </aside>
 
@@ -3682,7 +3682,7 @@ const DOC_TYPES = [
   {
     key: 'police', label: 'Sigorta poliçesi', fromLabel: 'Sigorta poliçesinden',
     fileId: 'fPolice', mevcutId: 'policeMevcut', adiId: 'policeAdi', kaldirId: 'policeKaldir',
-    autoBtnId: 'policeAutoFillBtn', autoTextId: 'policeAutoFillBtnText', resultId: 'policeAutoFillResult',
+    autoBtnId: 'policeAutoFillBtn', autoTextId: 'policeAutoFillText', resultId: 'policeAutoFillResult',
     vehicleAdiField: 'policeAdi', vehicleTipField: 'policeTip', storagePrefix: 'police_',
     system: 'Sen bir araç sigorta poliçesi belgesinden bilgi çıkaran bir asistansın. Sana verilen belgeyi dikkatle oku. SADECE aşağıdaki alanları içeren geçerli bir JSON nesnesiyle yanıt ver — başka hiçbir metin, açıklama veya markdown kod bloğu ekleme:\n{"baslamaTarihi": "YYYY-MM-DD"|null, "bitisTarihi": "YYYY-MM-DD"|null, "policeNo": string|null, "plaka": string|null, "primTutari": number|null}\nBelgede genelde yan yana iki tarih sütunu olur. İkisini de ayrı ayrı yaz. "primTutari" alanına poliçedeki toplam prim/net prim tutarını sadece sayı olarak yaz (TL cinsinden, nokta/virgül ayırıcıları olmadan). Bir alanı bulamıyorsan null yaz.',
     userText: 'Bu sigorta poliçesinden başlama tarihi, bitiş tarihi, poliçe numarası, araç plakası ve toplam prim tutarını çıkar.',
@@ -3705,7 +3705,7 @@ const DOC_TYPES = [
   {
     key: 'muayene', label: 'Muayene raporu', fromLabel: 'Muayene raporundan',
     fileId: 'fMuayeneBelge', mevcutId: 'muayeneBelgeMevcut', adiId: 'muayeneBelgeAdi', kaldirId: 'muayeneBelgeKaldir',
-    autoBtnId: 'muayeneBelgeAutoFillBtn', autoTextId: 'muayeneBelgeAutoFillBtnText', resultId: 'muayeneBelgeAutoFillResult',
+    autoBtnId: 'muayeneBelgeAutoFillBtn', autoTextId: 'muayeneBelgeAutoFillText', resultId: 'muayeneBelgeAutoFillResult',
     vehicleAdiField: 'muayeneBelgeAdi', vehicleTipField: 'muayeneBelgeTip', storagePrefix: 'muayenebelge_',
     system: 'Sen bir araç muayene raporu/belgesinden bilgi çıkaran bir asistansın. Sana verilen belgeyi dikkatle oku. SADECE aşağıdaki alanları içeren geçerli bir JSON nesnesiyle yanıt ver — başka hiçbir metin, açıklama veya markdown kod bloğu ekleme:\n{"sonrakiMuayeneTarihi": "YYYY-MM-DD"|null, "belgeSeriNo": string|null, "plaka": string|null}\n"sonrakiMuayeneTarihi" bir sonraki muayenenin yapılması gereken tarihtir (genelde belgede "geçerlilik tarihi" veya "sonraki muayene tarihi" olarak yazar). Bir alanı bulamıyorsan null yaz, tahmin yürütme. Tarihi mutlaka YYYY-MM-DD formatına çevir.',
     userText: 'Bu muayene raporundan bir sonraki muayene tarihini, belge seri numarasını ve varsa araç plakasını çıkar.',
@@ -3720,7 +3720,7 @@ const DOC_TYPES = [
   {
     key: 'kasko', label: 'Kasko poliçesi', fromLabel: 'Kasko poliçesinden',
     fileId: 'fKaskoBelge', mevcutId: 'kaskoBelgeMevcut', adiId: 'kaskoBelgeAdi', kaldirId: 'kaskoBelgeKaldir',
-    autoBtnId: 'kaskoBelgeAutoFillBtn', autoTextId: 'kaskoBelgeAutoFillBtnText', resultId: 'kaskoBelgeAutoFillResult',
+    autoBtnId: 'kaskoBelgeAutoFillBtn', autoTextId: 'kaskoBelgeAutoFillText', resultId: 'kaskoBelgeAutoFillResult',
     vehicleAdiField: 'kaskoBelgeAdi', vehicleTipField: 'kaskoBelgeTip', storagePrefix: 'kasko_',
     system: 'Sen bir araç kasko poliçesi belgesinden bilgi çıkaran bir asistansın. Sana verilen belgeyi dikkatle oku. SADECE aşağıdaki alanları içeren geçerli bir JSON nesnesiyle yanıt ver — başka hiçbir metin, açıklama veya markdown kod bloğu ekleme:\n{"baslamaTarihi": "YYYY-MM-DD"|null, "bitisTarihi": "YYYY-MM-DD"|null, "policeNo": string|null, "plaka": string|null, "primTutari": number|null}\nBelgede genelde yan yana iki tarih sütunu olur. İkisini de ayrı ayrı yaz. "primTutari" alanına poliçedeki toplam prim/net prim tutarını sadece sayı olarak yaz (TL cinsinden). Bir alanı bulamıyorsan null yaz.',
     userText: 'Bu kasko poliçesinden başlama tarihi, bitiş tarihi, poliçe numarası, araç plakası ve toplam prim tutarını çıkar.',
