@@ -4100,26 +4100,50 @@ document.getElementById('fRuhsatHizli').addEventListener('change', async (e)=>{
   };
   if(file.size > 3.5*1024*1024){ show("Dosya 3,5MB'ı geçemez.", true); e.target.value=''; return; }
   const d = DOC_TYPES.find(x=>x.key==='ruhsat');
+  const st = docState[d.key];
+  // Belgeler sekmesindeki ruhsat girişini görsel olarak senkron tutmayı deniyoruz,
+  // ama okuma/otomatik doldurma işini ARTIK BURADA DOĞRUDAN yürütüyoruz.
+  // Eskiden bu dosya "Belgeler" sekmesindeki input'a sahte bir change olayı
+  // gönderilerek aktarılıyor ve okuma o tarafın yakalamasına bırakılıyordu; bu
+  // yöntem bazı tarayıcı/PWA ortamlarında güvenilir çalışmadığından okuma hiç
+  // başlamıyor ve doğrudan "okuma başarısız" mesajı gösteriliyordu.
   try{
     const dt = new DataTransfer();
     dt.items.add(file);
-    const target = document.getElementById(d.fileId);
-    target.files = dt.files;
-    target.dispatchEvent(new Event('change'));
-  }catch(err){
-    show('Dosya aktarılamadı; "Belgeler" sekmesinden ruhsatı yükleyin.', true);
-    e.target.value='';
-    return;
-  }
-  if(!getGeminiKey()){
-    show('Ruhsat belgeye eklendi. AI anahtarı tanımlı olmadığından otomatik okuma yapılamadı; alanları elle doldurun.', true);
-    return;
-  }
+    document.getElementById(d.fileId).files = dt.files;
+  }catch(err){ /* görsel senkron başarısız olsa bile aşağıdaki okumaya devam ediyoruz */ }
+
   show('Ruhsat okunuyor, bilgiler çıkarılıyor…', false);
-  const t0 = Date.now();
-  while((docState.ruhsat.extracting || docState.ruhsat.reading) && Date.now()-t0 < 60000){
-    await new Promise(r=>setTimeout(r,300));
+  st.reading = true;
+  showDocName(d, file.name + ' (okunuyor...)');
+  let dataUrl;
+  try{
+    dataUrl = await new Promise((resolve, reject)=>{
+      const reader = new FileReader();
+      reader.onload = ()=>resolve(reader.result);
+      reader.onerror = ()=>reject(new Error('Dosya okunamadı.'));
+      reader.readAsDataURL(file);
+    });
+  }catch(err){
+    st.reading = false;
+    show('Dosya okunamadı; "Belgeler" sekmesinden ruhsatı yükleyin.', true);
+    return;
   }
+  st.file = { name: file.name, type: file.type, data: dataUrl };
+  st.remove = false;
+  st.reading = false;
+  showDocName(d, file.name + ' (yeni)');
+  const isPdfOrImage = file.type==='application/pdf' || file.type.startsWith('image/');
+  const btn = document.getElementById(d.autoBtnId);
+  if(!isPdfOrImage || !getGeminiKey()){
+    btn.style.display = 'none';
+    show(!getGeminiKey()
+      ? 'Ruhsat belgeye eklendi. AI anahtarı tanımlı olmadığından otomatik okuma yapılamadı; alanları elle doldurun.'
+      : 'Ruhsat belgeye eklendi. Bu dosya türü otomatik okunamıyor; alanları elle doldurun.', true);
+    return;
+  }
+  btn.style.display = 'flex';
+  await runDocAutoFill(d);
   const res = document.getElementById(d.resultId);
   const resGorunur = res && res.style.display!=='none';
   if(resGorunur && res.classList.contains('ok')){
