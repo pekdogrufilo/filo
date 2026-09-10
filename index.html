@@ -217,6 +217,8 @@
   .badge.kirada{background:rgba(46,140,99,.2);color:#4FD1A5;border:1px solid rgba(46,140,99,.3);}
   .badge.musait{background:rgba(74,85,104,.3);color:#A0AEC0;border:1px solid rgba(74,85,104,.4);}
   .badge.serviste{background:rgba(140,52,48,.2);color:#F3A392;border:1px solid rgba(140,52,48,.3);}
+  .badge.pert{background:rgba(107,114,128,.22);color:#B8BCC4;border:1px solid rgba(107,114,128,.35);}
+  .badge.satis{background:rgba(8,145,178,.2);color:#5BD0EC;border:1px solid rgba(8,145,178,.3);}
 
   /* Kart bilgi grid */
   .card-info{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;margin-bottom:12px;}
@@ -985,6 +987,8 @@
   .vk-st.kirada .n{background:#4ade80;box-shadow:0 0 8px #4ade80;}
   .vk-st.musait .n{background:#fbbf24;box-shadow:0 0 8px #fbbf24;}
   .vk-st.serviste .n{background:#f87171;box-shadow:0 0 8px #f87171;}
+  .vk-st.pert .n{background:#9ca3af;box-shadow:0 0 8px #9ca3af;}
+  .vk-st.satis .n{background:#38bdf8;box-shadow:0 0 8px #38bdf8;}
   .vk-head .plaka-tr{border-color:#0c2340;box-shadow:0 2px 8px rgba(0,0,0,.3);position:relative;z-index:1;}
   .vk-head .arac-adi{margin-top:9px;font-size:14.5px;font-weight:700;color:#fff;letter-spacing:.1px;}
   .vk-head .model{font-size:11.5px;color:rgba(255,255,255,.62);margin-top:2px;letter-spacing:.2px;}
@@ -1184,7 +1188,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-10.33</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-10.34</div>
     </div>
   </aside>
 
@@ -1348,6 +1352,8 @@
     <div class="chip" data-f="Kirada">Kirada</div>
     <div class="chip" data-f="Müsait">Müsait</div>
     <div class="chip" data-f="Serviste">Serviste</div>
+    <div class="chip" data-f="Pert">Pert</div>
+    <div class="chip" data-f="Satıldı">Satıldı</div>
     <div class="chip" id="chipSigorta">🔵 Sigortası yaklaşan</div>
     <div class="chip" id="chipMuayene">🟠 Muayenesi yaklaşan</div>
     <div class="chip" id="chipKira">🟣 Kirası yaklaşan</div>
@@ -1503,7 +1509,7 @@
         <div class="field"><label>Çalıştığı yer / Kiracı</label><input type="text" id="fYer" placeholder="Konya Hastane, İnşaat sahası..."></div>
         <div class="field-row">
           <div class="field"><label>Durum</label>
-            <select id="fDurum"><option>Müsait</option><option>Kirada</option><option>Serviste</option></select>
+            <select id="fDurum"><option>Müsait</option><option>Kirada</option><option>Serviste</option><option>Pert</option><option>Satıldı</option></select>
           </div>
           <div class="field"><label>Aylık kira (₺)</label><input type="number" id="fKira" min="0" placeholder="0"></div>
         </div>
@@ -2618,7 +2624,7 @@ function render(){
     grid.innerHTML = '<div class="empty"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h-2v-6l2-5h9l4 5h1a2 2 0 0 1 2 2v4h-2"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="16.5" cy="17.5" r="2.5"/></svg><div class="big">Araç bulunamadı</div>Filtreyi değiştirin veya yeni bir araç ekleyin.</div>';
   }
   list.forEach((v, idx)=>{
-    const badgeClass = v.durum==='Kirada'?'kirada':(v.durum==='Müsait'?'musait':'serviste');
+    const badgeClass = v.durum==='Kirada'?'kirada':(v.durum==='Müsait'?'musait':v.durum==='Pert'?'pert':v.durum==='Satıldı'?'satis':'serviste');
     const accentColor = v.durum==='Kirada' ? '#2E8C63' : (v.durum==='Müsait' ? '#6E6867' : '#8C3430');
     const aracAdi = [v.marka, v.model, v.versiyon].filter(Boolean).join(' ');
     const trTitle = s => String(s).toLocaleLowerCase('tr-TR').replace(/(^|[\s·\-\/(])(\p{L})/gu, (m,a,b)=>a+b.toLocaleUpperCase('tr-TR'));
@@ -2662,7 +2668,7 @@ function render(){
       }
       return `<div class="vk-seg ${subCls}" title="${lbl}: ${tip}"><div class="bar"><span style="width:${w}%;background:${renk}"></span></div><div class="lbl">${lbl}</div><div class="gun">${subTxt}</div></div>`;
     }).join('')}</div>`;
-    const stKlas = v.durum==='Kirada'?'kirada':(v.durum==='Müsait'?'musait':'serviste');
+    const stKlas = v.durum==='Kirada'?'kirada':(v.durum==='Müsait'?'musait':v.durum==='Pert'?'pert':v.durum==='Satıldı'?'satis':'serviste');
 
     card.innerHTML = `
       <div class="vk-head">
@@ -3019,6 +3025,8 @@ function updateFromExcel(file){
             if(durumVal==='KİRADA') patch.durum='Kirada';
             else if(durumVal==='MÜSAİT') patch.durum='Müsait';
             else if(durumVal==='SERVİSTE') patch.durum='Serviste';
+            else if(durumVal==='PERT') patch.durum='Pert';
+            else if(durumVal==='SATILDI') patch.durum='Satıldı';
           }
 
           const existing = vehicles.find(v=>v.plaka===plaka);
@@ -3136,7 +3144,7 @@ function printSummary(){
 function printInventory(){
   const list = [...vehicles].sort((a,b)=>(a.plaka||'').localeCompare(b.plaka||'','tr'));
   const rowsHtml = list.map(v=>{
-    const durumClass = v.durum==='Kirada'?'d-kirada':(v.durum==='Müsait'?'d-musait':'d-serviste');
+    const durumClass = v.durum==='Kirada'?'d-kirada':(v.durum==='Müsait'?'d-musait':v.durum==='Pert'?'d-pert':v.durum==='Satıldı'?'d-satis':'d-serviste');
     const aracAdi = [v.marka, v.model, v.versiyon].filter(Boolean).join(' ') || '—';
     return `<tr>
       <td class="plaka">${esc(v.plaka||'—')}</td>
@@ -3173,6 +3181,8 @@ function printInventory(){
     .d-kirada{color:#1E7A4F;}
     .d-musait{color:#777;}
     .d-serviste{color:#C0392B;}
+    .d-pert{color:#6B7280;}
+    .d-satis{color:#0891B2;}
     .foot{margin-top:22px;font-size:12px;color:#999;text-align:center;}
     @media print{ body{padding:12mm;} .head{margin-bottom:10px;} tr{page-break-inside:avoid;} }
   </style></head>
@@ -4400,7 +4410,7 @@ function openAracKirala(vehicleId){
             <input type="text" id="krAra" placeholder="Plaka veya model ara..." oninput="krListeFiltrele()" style="margin-bottom:6px;">
             <div id="krListe" style="max-height:170px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;">
               ${vehicles.map(v=>{
-                const st = v.durum==='Kirada'?'🔴':(v.durum==='Serviste'?'🟡':'🟢');
+                const st = v.durum==='Kirada'?'🔴':(v.durum==='Serviste'?'🟡':v.durum==='Pert'?'⚫':v.durum==='Satıldı'?'🔵':'🟢');
                 return `<label class="kr-item" data-ara="${esc((v.plaka+' '+(v.marka||'')+' '+(v.model||'')).toLocaleLowerCase('tr-TR'))}" style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-bottom:1px solid var(--line);cursor:pointer;font-size:13px;">
                   <input type="checkbox" class="krCheck" value="${v.id}" onchange="krSecimGuncelle()" style="width:16px;height:16px;accent-color:#C98A3E;">
                   <span class="mini-plaka" style="font-size:12px;">${esc(v.plaka)}</span>
@@ -4916,11 +4926,12 @@ function openVehicleDetail(id){
     ...otoDocs.map(o=>({d:(o.tarih||'').slice(0,10)||'', tip:o.tur==='servis'?'servis':'belge', baslik:o.tur==='diger'?'Belge yüklendi':(o.tur.charAt(0).toLocaleUpperCase('tr-TR')+o.tur.slice(1))+' belgesi', detay:o.adi, tutar:null, tarihTxt:fmtTarih((o.tarih||'').slice(0,10))||'tarih yok', onclick:`viewOtoDoc('${id}',${otoDocs.indexOf(o)})`})),
     ...kmGecmisi.map(k=>({d:k.donem?k.donem+'-01':'', tip:'km', baslik:'Km raporu', detay:(k.toplamKm?Number(k.toplamKm).toLocaleString('tr-TR')+' km':''), tutar:null, tarihTxt:k.donem||'', onclick:''})),
     ...(v.teslimTarih?[{d:v.teslimTarih, tip:'teslim', baslik:'Araç teslim edildi', detay:v.teslimKm?Number(v.teslimKm).toLocaleString('tr-TR')+' km':'', tutar:null, tarihTxt:fmtTarih(v.teslimTarih), onclick:''}]:[]),
+    ...(v.durumOlaylari||[]).map(o=>({d:o.tarih||'', tip:o.tip==='satis'?'satis':'pert', baslik:o.tip==='satis'?'Araç satıldı':'Pert kaydı (kaza)', detay:o.aciklama||'', tutar:o.tutar||null, tarihTxt:fmtTarih(o.tarih||''), onclick:''})),
   ].filter(g=>g.d).sort((a,b)=>(b.d||'').localeCompare(a.d||''));
 
   // Durum rengi
-  const durumRenk = v.durum==='Kirada'?'#16A34A':v.durum==='Serviste'?'#DC2626':'#D97706';
-  const durumBg = v.durum==='Kirada'?'rgba(22,163,74,.1)':v.durum==='Serviste'?'rgba(220,38,38,.1)':'rgba(217,119,6,.1)';
+  const durumRenk = v.durum==='Kirada'?'#16A34A':v.durum==='Serviste'?'#DC2626':v.durum==='Pert'?'#6B7280':v.durum==='Satıldı'?'#0891B2':'#D97706';
+  const durumBg = v.durum==='Kirada'?'rgba(22,163,74,.1)':v.durum==='Serviste'?'rgba(220,38,38,.1)':v.durum==='Pert'?'rgba(107,114,128,.12)':v.durum==='Satıldı'?'rgba(8,145,178,.12)':'rgba(217,119,6,.1)';
 
   // Bu araca ait kayıtlı sözleşmeler (plaka araclar[] içinde veya tek araç plakası olarak geçen)
   const plakaNorm = normPlaka(v.plaka);
@@ -5135,6 +5146,8 @@ function openVehicleDetail(id){
                 belge: {ico:ICO('filetext',14), renk:'#2E7CF6'},
                 km:    {ico:ICO('car',14), renk:'#2E7CF6'},
                 teslim:{ico:ICO('key',14), renk:'#16A34A'},
+                pert:  {ico:ICO('crash',14), renk:'#6B7280'},
+                satis: {ico:ICO('money',14), renk:'#0891B2'},
               }[g.tip]||{ico:'•',renk:'var(--steel-300)'};
               return `<div style="display:flex;gap:12px;padding:7px 0;border-bottom:1px solid var(--line);align-items:flex-start;">
                 <span style="line-height:1.3;flex-shrink:0;color:${stil.renk};display:flex;">${stil.ico}</span>
@@ -5718,6 +5731,10 @@ document.getElementById('saveBtn').onclick = async ()=>{
       vehicles = vehicles.map(v=>v.id===id?data:v);
       if(orig && (orig.sofor||'') !== (data.sofor||'')){
         logActivity('sofor', `Şoför değişti: <b>${esc(data.plaka)}</b> · ${esc(orig.sofor||'boş')} → ${esc(data.sofor||'boş')}`);
+      }
+      if(orig && (orig.durum||'') !== data.durum && (data.durum==='Pert'||data.durum==='Satıldı')){
+        await persist();
+        durumOlayFormuAc(vehicleId, data.durum==='Satıldı'?'satis':'pert');
       }
     }else{
       vehicles.push(data);
@@ -6470,7 +6487,7 @@ function renderMiniVehicleTable(){
   const list = vehicles.slice(0,5);
   if(list.length===0) return '<div class="log-empty">Henüz araç eklenmedi.</div>';
   const rows = list.map(v=>{
-    const badgeClass = v.durum==='Kirada'?'kirada':(v.durum==='Müsait'?'musait':'serviste');
+    const badgeClass = v.durum==='Kirada'?'kirada':(v.durum==='Müsait'?'musait':v.durum==='Pert'?'pert':v.durum==='Satıldı'?'satis':'serviste');
     const aracAdi = [v.marka, v.model].filter(Boolean).join(' ')||'—';
     return `<tr>
       <td><span class="mini-plaka">${esc(v.plaka)}</span></td>
@@ -6506,9 +6523,52 @@ function renderActivityListForDash(){
   }).join('') + `</div>`;
 }
 
+// Pert / Satış durum olayı kayıt formu
+function durumOlayFormuAc(id, tip){
+  const old = document.getElementById('durumOlayOverlay'); if(old) old.remove();
+  const v = vehicles.find(x=>x.id===id); if(!v) return;
+  const isSatis = tip==='satis';
+  const bugun = new Date().toISOString().slice(0,10);
+  const inp = 'width:100%;margin-top:4px;background:var(--surface-2);border:1px solid var(--line);color:var(--paper);padding:8px 10px;border-radius:8px;font-size:13px;font-family:inherit;';
+  const el = document.createElement('div');
+  el.className='overlay show'; el.id='durumOlayOverlay'; el.style.cssText='z-index:70;';
+  el.innerHTML = `
+    <div style="background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px;width:min(92vw,420px);max-height:88vh;overflow-y:auto;">
+      <h3 style="margin:0 0 4px;font-size:16px;color:var(--paper);">${isSatis?'Satış Kaydı':'Pert Kaydı'} <span class="mini-plaka" style="font-size:12px;margin-left:6px;">${esc(v.plaka)}</span></h3>
+      <p style="margin:0 0 14px;font-size:12.5px;color:var(--text-3);">${isSatis?'Satış bilgilerini girin — araç geçmişine otomatik işlenir.':'Kaza sonucu pert olan araç için tarih ve açıklama girin — araç geçmişine otomatik işlenir.'}</p>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <label style="font-size:12px;color:var(--text-2);">Tarih<input type="date" id="doTarih" value="${bugun}" style="${inp}"></label>
+        ${isSatis?`<label style="font-size:12px;color:var(--text-2);">Satış Tutarı (₺)<input type="number" id="doTutar" min="0" placeholder="örn. 450000" style="${inp}"></label>`:''}
+        <label style="font-size:12px;color:var(--text-2);">${isSatis?'Not (alıcı, ihale vb.)':'Açıklama (kaza, sigorta süreci vb.)'}<textarea id="doNot" rows="2" style="${inp}resize:vertical;"></textarea></label>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:16px;">
+        <button onclick="durumOlayOnayla('${id}','${tip}')" style="flex:1;background:var(--accent-blue);border:none;color:#fff;padding:10px 0;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-ui);">Kaydet</button>
+        <button onclick="document.getElementById('durumOlayOverlay').remove()" style="background:var(--surface-2);border:1px solid var(--line);color:var(--text-2);padding:10px 16px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-ui);">Atla</button>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+  el.onclick = e=>{ if(e.target===el) el.remove(); };
+}
+async function durumOlayOnayla(id, tip){
+  const v = vehicles.find(x=>x.id===id); if(!v) return;
+  const tarih = (document.getElementById('doTarih')||{value:''}).value || new Date().toISOString().slice(0,10);
+  const not = (document.getElementById('doNot')||{value:''}).value.trim();
+  const tutar = tip==='satis' ? Number((document.getElementById('doTutar')||{value:''}).value)||null : null;
+  v.durumOlaylari = v.durumOlaylari||[];
+  v.durumOlaylari.push({id:'do'+Date.now(), tip, tarih, tutar, aciklama:not});
+  if(tip==='satis') v.satisBilgi={tarih, tutar, aciklama:not}; else v.pertBilgi={tarih, aciklama:not};
+  await persist();
+  logActivity(tip, tip==='satis'
+    ? `Araç satıldı: <b>${esc(v.plaka)}</b>${tutar?' · '+fmtTL2(tutar):''}`
+    : `Pert kaydı: <b>${esc(v.plaka)}</b>${not?' · '+esc(not):''}`);
+  document.getElementById('durumOlayOverlay').remove();
+  render();
+  showToast(tip==='satis'?'Satış kaydı araç geçmişine işlendi.':'Pert kaydı araç geçmişine işlendi.');
+}
+
 function showVehicleQuickList(filter, title){
   const list = filter === 'Toplam' ? vehicles : vehicles.filter(v=>v.durum===filter);
-  const colors = {'Kirada':'#38A169','Müsait':'#C9A961','Serviste':'var(--safety)','Toplam':'var(--accent-blue)'};
+  const colors = {'Kirada':'#38A169','Müsait':'#C9A961','Serviste':'var(--safety)','Pert':'#6B7280','Satıldı':'#0891B2','Toplam':'var(--accent-blue)'};
   const ic = colors[filter] || 'var(--accent-blue)';
   const isMüsait = filter === 'Müsait';
   const isKirada = filter === 'Kirada';
@@ -6720,8 +6780,11 @@ function renderDashboard(){
             {n:kirada, c:'#22C55E', l:'Kirada'},
             {n:musait, c:'#F59E0B', l:'Müsait'},
             {n:serviste, c:'#EF4444', l:'Serviste'},
-          ];
-          const diger = Math.max(0, total - kirada - musait - serviste);
+            {n:vehicles.filter(v=>v.durum==='Pert').length, c:'#6B7280', l:'Pert'},
+            {n:vehicles.filter(v=>v.durum==='Satıldı').length, c:'#0891B2', l:'Satıldı'},
+          ].filter(p=>p.n>0);
+          const sayilan = parts.reduce((s,p)=>s+p.n,0);
+          const diger = Math.max(0, total - sayilan);
           if(diger>0) parts.push({n:diger, c:'#94A3B8', l:'Diğer'});
           const T = total||1, R=52, C=2*Math.PI*R; let off=0;
           const segs = parts.map(p=>{
@@ -8875,7 +8938,7 @@ function renderRaporlarPage(){
         <tbody>${karlilik.map(({v,aylikGelir,toplamMasraf,aylikMasrafTahmini,aylikKar})=>{
           const karRenk = aylikKar>=0?'#68D391':'#FC8181';
           const barPct = Math.min(100, Math.max(0, aylikGelir>0?(aylikKar/aylikGelir*100+50):0));
-          const durumBadge = v.durum==='Kirada'?'kirada':v.durum==='Müsait'?'musait':'serviste';
+          const durumBadge = v.durum==='Kirada'?'kirada':v.durum==='Müsait'?'musait':v.durum==='Pert'?'pert':v.durum==='Satıldı'?'satis':'serviste';
           return `<tr>
             <td><span class="mini-plaka">${esc(v.plaka)}</span></td>
             <td>${esc([v.marka,v.model].filter(Boolean).join(' ')||'—')}</td>
@@ -9364,7 +9427,7 @@ async function aiSendSartname(){
     // Filo verisi özet
     const filoAraclar = vehicles.map(v=>{
       const sdl=daysLeft(v.sigortaTarihi), mdl=daysLeft(v.muayeneTarihi);
-      const ihaleUygun = v.durum!=='Serviste' && (sdl===null||sdl>30) && (mdl===null||mdl>30);
+      const ihaleUygun = !['Serviste','Pert','Satıldı'].includes(v.durum) && (sdl===null||sdl>30) && (mdl===null||mdl>30);
       return {
         plaka:v.plaka, marka:v.marka, model:v.model, versiyon:v.versiyon||'',
         aracCinsi:v.aracCinsi||'', modelYili:v.modelYili||'',
@@ -9480,7 +9543,7 @@ async function aiSend(mesaj){
         // Tarihi hiç girilmemiş belge "geçerli" sayılmaz — eksik olarak işaretlenir.
         const belgelerGecerli = sigortaDl!==null && sigortaDl>30 && muayeneDl!==null && muayeneDl>30;
         const belgeEksik = sigortaDl===null || muayeneDl===null;
-        const ihaleUygun = v.durum!=='Serviste' && belgelerGecerli;
+        const ihaleUygun = !['Serviste','Pert','Satıldı'].includes(v.durum) && belgelerGecerli;
         return {
           plaka: v.plaka,
           marka: v.marka,
@@ -9517,7 +9580,7 @@ async function aiSend(mesaj){
       ihaleUygunAraclar: vehicles.filter(v=>{
         const sdl=daysLeft(v.sigortaTarihi), mdl=daysLeft(v.muayeneTarihi);
         // Tarihi girilmemiş belge geçerli sayılmaz
-        return v.durum!=='Serviste' && sdl!==null && sdl>30 && mdl!==null && mdl>30;
+        return !['Serviste','Pert','Satıldı'].includes(v.durum) && sdl!==null && sdl>30 && mdl!==null && mdl>30;
       }).map(v=>v.plaka),
     };
 
