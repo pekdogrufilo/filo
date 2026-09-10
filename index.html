@@ -44,8 +44,8 @@
     --text:#F5F5F7;
     --text-2:#98989D;
     --text-3:#6E6E73;
-    --blue:#0A84FF;
-    --blue-dim:rgba(10,132,255,.14);
+    --blue:#FF4D5C;
+    --blue-dim:rgba(255,77,92,.16);
     --green:#30D158;
     --green-dim:rgba(48,209,88,.14);
     --amber:#FF9F0A;
@@ -75,10 +75,10 @@
     --coral:#FF453A;
     --coral-dim:rgba(255,69,58,.14);
     --line:rgba(255,255,255,.08);
-    --glow:rgba(10,132,255,.07);
+    --glow:rgba(255,77,92,.07);
     --gold:#C9962E;
     --gold-dim:rgba(201,150,46,.14);
-    --accent-blue:#0A84FF;
+    --accent-blue:#FF4D5C;
     --sidebar-bg:#111113;
     --surface-glass:rgba(18,18,20,.72);
     --edge-hl:transparent;
@@ -95,8 +95,8 @@
     --text:#1D1D1F;
     --text-2:#6E6E73;
     --text-3:#8E8E93;
-    --blue:#0071E3;
-    --blue-dim:rgba(0,113,227,.1);
+    --blue:#C8102E;
+    --blue-dim:rgba(200,16,46,.09);
     --green:#34C759;
     --green-dim:rgba(52,199,89,.1);
     --amber:#FF9500;
@@ -125,7 +125,8 @@
     --coral-dim:rgba(255,59,48,.1);
     --gold:#B08A1E;
     --gold-dim:rgba(176,138,30,.1);
-    --accent-blue:#0071E3;
+    --accent-blue:#C8102E;
+    --glow:rgba(200,16,46,.05);
     --surface-glass:rgba(255,255,255,.78);
     --edge-hl:transparent;
     --fixed-light:#F5F5F7;
@@ -143,7 +144,7 @@
   ::-webkit-scrollbar-track{background:transparent;}
   ::-webkit-scrollbar-thumb{background:var(--steel-600);border-radius:10px;}
   ::-webkit-scrollbar-thumb:hover{background:var(--steel-500);}
-  .wrap{max-width:1280px;margin:0 auto;padding:32px 24px 80px;}
+  .wrap{max-width:1320px;margin:0 auto;padding:32px 28px 96px;}
   @keyframes fadeSlideUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
   @keyframes cardReveal{from{opacity:0;}to{opacity:1;}}
   .page.active{animation:cardReveal .35s ease both;}
@@ -153,18 +154,18 @@
   .field-flash{animation:fieldFlash 1.8s ease-out;}
   @keyframes softPulse{0%,100%{opacity:1;}50%{opacity:.55;}}
 
-  .topbar{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:28px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:22px;}
+  .topbar{position:sticky;top:0;z-index:60;display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin:-32px -8px 24px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding:36px 8px 14px;background:var(--surface-glass);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);}
   .brand{display:flex;align-items:center;gap:14px;}
-  .brand-mark{width:50px;height:50px;border-radius:11px;background:var(--fixed-light);display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:6px;box-shadow:0 6px 18px rgba(0,0,0,.3);}
+  .brand-mark{width:50px;height:50px;border-radius:12px;background:var(--fixed-light);display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:6px;box-shadow:0 6px 18px rgba(0,0,0,.3);}
   .brand-mark img{width:100%;height:100%;object-fit:contain;}
   .brand-mark svg{width:24px;height:24px;}
-  h1{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif;font-size:22px;font-weight:600;margin:0;letter-spacing:.2px;}
+  h1{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif;font-size:25px;font-weight:750;margin:0;letter-spacing:-.3px;}
   .sub{color:var(--steel-100);font-size:13px;margin-top:2px;}
-  .add-btn{background:#0070F3;color:#fff;border:none;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif;font-weight:600;font-size:14px;padding:11px 20px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:opacity .15s ease, transform .15s ease;box-shadow:0 4px 14px rgba(66,153,225,.3);}
-  .add-btn:hover{opacity:.9;transform:translateY(-1px);}
+  .add-btn{background:#C8102E;color:#fff;border:none;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif;font-weight:650;font-size:14px;padding:12px 22px;border-radius:12px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:opacity .15s ease, transform .15s ease, box-shadow .15s ease;box-shadow:0 4px 14px rgba(200,16,46,.28);}
+  .add-btn:hover{opacity:.95;transform:translateY(-1px);box-shadow:0 6px 18px rgba(200,16,46,.34);}
   .add-btn:active{transform:translateY(0) scale(.98);}
   .btn-row{display:flex;gap:10px;flex-wrap:wrap;}
-  .export-btn,.print-btn,.lock-btn{background:var(--surface);color:var(--paper);border:1px solid var(--line);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif;font-weight:600;font-size:14px;padding:12px 20px;border-radius:9px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .15s var(--ease);}
+  .export-btn,.print-btn,.lock-btn{background:var(--surface);color:var(--paper);border:1px solid var(--line);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif;font-weight:600;font-size:14px;padding:12px 22px;border-radius:12px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .15s var(--ease);}
   .export-btn:hover,.print-btn:hover,.lock-btn:hover{border-color:var(--steel-300);background:var(--surface-2);transform:translateY(-1px);box-shadow:var(--shadow-sm);}
 
   .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:28px;}
@@ -487,14 +488,14 @@
   .sb-brand{display:flex;align-items:center;gap:10px;padding:20px 16px 16px;}
   .sb-brand-mark{width:30px;height:30px;border-radius:7px;background:var(--fixed-light);display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:4px;}
   .sb-brand-mark img{width:100%;height:100%;object-fit:contain;}
-  .sb-brand-text{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif;font-weight:700;font-size:13px;line-height:1.2;letter-spacing:.2px;color:#FFFFFF;}
+  .sb-brand-text{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif;font-weight:800;font-size:13.5px;line-height:1.2;letter-spacing:.6px;color:#FF5A6A;}
   .sb-brand-sub{font-size:10px;color:rgba(255,255,255,.7);letter-spacing:.5px;margin-top:1px;}
   .sb-nav{flex:1;padding:6px 8px;}
   .sb-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:7px;color:rgba(255,255,255,.75);font-size:13px;font-weight:500;cursor:pointer;margin-bottom:1px;transition:all .12s ease;position:relative;border:none;background:none;width:100%;text-align:left;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',Arial,sans-serif;}
   .sb-item svg{flex-shrink:0;width:15px;height:15px;}
   .sb-item:hover{background:rgba(255,255,255,.08);color:#fff;}
   .sb-item.active{background:var(--accent-blue);color:#fff;border-left:none;border-radius:0 7px 7px 0;}
-  .sb-item.active svg{color:#3B82F6;}
+  .sb-item.active svg{color:#C8102E;}
   .sb-item .sb-badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;min-width:16px;text-align:center;}
   .sb-divider{height:1px;background:rgba(255,255,255,.08);margin:8px 8px;}
   .sb-section{font-size:10px;font-weight:700;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.8px;padding:8px 10px 4px;margin-top:4px;}
@@ -504,7 +505,7 @@
   .sb-foot-brand img{width:20px;height:20px;object-fit:contain;border-radius:4px;}
   .sb-user{display:flex;align-items:center;gap:9px;padding:10px 12px;border-top:1px solid rgba(255,255,255,.08);cursor:pointer;transition:background .12s ease;}
   .sb-user:hover{background:rgba(255,255,255,.06);}
-  .sb-user-avatar{width:32px;height:32px;border-radius:50%;background:#2563EB;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;}
+  .sb-user-avatar{width:32px;height:32px;border-radius:50%;background:#C8102E;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;}
   .sb-user-info{flex:1;min-width:0;}
   .sb-user-name{font-size:12px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .sb-user-role{font-size:10px;color:rgba(255,255,255,.4);margin-top:1px;}
@@ -602,10 +603,10 @@
   .yp-row:last-child{border-bottom:none;}
   .yp-tip{color:var(--steel-100);flex:1;}
   .yp-gun{font-weight:600;white-space:nowrap;}
-  .dcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;transition:border-color .2s ease, box-shadow .2s ease;}
+  .dcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 22px;transition:border-color .2s ease, box-shadow .2s ease;}
   .dcard:hover{border-color:var(--border-2);}
   .dcard:hover{border-color:var(--steel-600);}
-  .dcard h3{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif;font-size:13.5px;font-weight:600;margin:0 0 16px;display:flex;align-items:center;justify-content:space-between;letter-spacing:0;color:var(--steel-100);}
+  .dcard h3{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif;font-size:14px;font-weight:700;margin:0 0 16px;display:flex;align-items:center;justify-content:space-between;letter-spacing:-.1px;color:var(--steel-100);}
   .dcard h3 a{font-size:13px;color:var(--accent-blue);font-weight:500;cursor:pointer;text-decoration:none;}
 
   .donut-wrap{display:flex;align-items:center;gap:20px;}
@@ -642,9 +643,9 @@
   .table-scroll::-webkit-scrollbar{height:4px;}
   .table-scroll::-webkit-scrollbar-track{background:var(--surface-2);border-radius:2px;}
   .table-scroll::-webkit-scrollbar-thumb{background:var(--steel-500);border-radius:2px;}
-  .mini-table th{text-align:left;color:var(--text-3);font-size:11.5px;letter-spacing:.2px;padding:0 8px 10px;font-weight:600;}
-  .mini-table td{padding:10px 8px;border-top:1px solid var(--border);}
-  .mini-table tr:hover td{background:var(--surface-2);}
+  .mini-table th{text-align:left;color:var(--text-3);font-size:11px;letter-spacing:.7px;text-transform:uppercase;padding:0 10px 12px;font-weight:700;}
+  .mini-table td{padding:12px 10px;border-top:1px solid var(--border);}
+  .mini-table tr:hover td{background:rgba(200,16,46,.03);}
   .mini-plaka{font-family:'SF Mono',SFMono-Regular,Consolas,monospace;font-weight:600;background:var(--fixed-light);color:var(--fixed-dark);padding:2px 8px;border-radius:5px;font-size:13px;}
   .mini-badge{font-size:12px;font-weight:600;padding:3px 9px;border-radius:12px;}
   .mini-badge.kirada{background:var(--teal-dim);color:#7FDFC4;}
@@ -696,7 +697,7 @@
     .dcard{padding:14px 15px;}
     .quick-grid{grid-template-columns:1fr 1fr;}
     .wrap{padding:14px 12px 80px;}
-    .topbar{padding-bottom:14px;margin-bottom:16px;}
+    .topbar{margin:-14px -4px 16px;padding:18px 4px 10px;padding-bottom:14px;}
     .grid{grid-template-columns:1fr;}
     .filters{flex-direction:column;align-items:stretch;}
     .search-wrap{min-width:0;}
@@ -745,7 +746,7 @@
 </style>
 <style id="polish-layer">
   /* ===== Apple tasarım dili ===== */
-  ::selection{background:rgba(10,132,255,.3);color:var(--text);}
+  ::selection{background:rgba(255,77,92,.3);color:var(--text);}
   ::-webkit-scrollbar{width:8px;height:8px;}
   ::-webkit-scrollbar-track{background:transparent;}
   ::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:8px;border:2px solid transparent;background-clip:content-box;}
@@ -791,10 +792,10 @@
   /* Giriş kartı */
   .lock-card{border:1px solid var(--border);border-top:1px solid var(--border);border-radius:22px;box-shadow:0 20px 60px rgba(0,0,0,.4);}
   html[data-theme="light"] .lock-card{box-shadow:0 12px 44px rgba(0,0,0,.1);}
-  .splash-glow{background:radial-gradient(closest-side, rgba(10,132,255,.16), transparent 70%);}
+  .splash-glow{background:radial-gradient(closest-side, rgba(255,77,92,.16), transparent 70%);}
   .splash-brand,.lock-brand{font-weight:700;letter-spacing:-.03em;}
   /* Tablolar: sade başlık */
-  .mini-table thead th{text-transform:none;font-size:12px;letter-spacing:0;color:var(--text-2);font-weight:600;}
+  .mini-table thead th{text-transform:uppercase;font-size:11px;letter-spacing:.7px;color:var(--text-3);font-weight:700;}
   .modal{border:1px solid var(--border);border-radius:18px;box-shadow:0 24px 80px rgba(0,0,0,.45);}
   html[data-theme="light"] .modal{box-shadow:0 24px 80px rgba(0,0,0,.16);}
   button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;box-shadow:0 0 0 4px var(--blue-dim);}
@@ -847,11 +848,11 @@
     -webkit-backdrop-filter:saturate(180%) blur(20px);
     border-right:1px solid rgba(0,0,0,.07);
   }
-  html[data-theme="light"] .sb-brand-text{color:#1D1D1F;}
+  html[data-theme="light"] .sb-brand-text{color:#C8102E;}
   html[data-theme="light"] .sb-brand-sub{color:rgba(60,60,67,.55);}
   html[data-theme="light"] .sb-item{color:#3C3C43;border-radius:9px;}
   html[data-theme="light"] .sb-item:hover{background:rgba(0,0,0,.05);color:#1D1D1F;}
-  html[data-theme="light"] .sb-item.active{background:var(--accent-blue);color:#fff;border-radius:9px;box-shadow:0 2px 10px rgba(0,113,227,.32);}
+  html[data-theme="light"] .sb-item.active{background:var(--accent-blue);color:#fff;border-radius:9px;box-shadow:0 2px 10px rgba(200,16,46,.32);}
   html[data-theme="light"] .sb-item.active svg{color:#fff;}
   html[data-theme="light"] .sb-section{color:rgba(60,60,67,.42);}
   html[data-theme="light"] .sb-divider{background:rgba(0,0,0,.08);}
@@ -888,8 +889,8 @@
   html[data-theme="light"] .iade-card,
   html[data-theme="light"] .drawer{border-radius:20px;}
   html[data-theme="light"] .modal{box-shadow:0 24px 80px rgba(0,0,0,.18);}
-  /* Butonlar: Apple mavisi */
-  html[data-theme="light"] .add-btn{background:var(--accent-blue);box-shadow:0 4px 14px rgba(0,113,227,.25);}
+  /* Butonlar: Pekdoğru kurumsal kırmızısı */
+  html[data-theme="light"] .add-btn{background:var(--accent-blue);box-shadow:0 4px 14px rgba(200,16,46,.25);}
   /* Splash: açık zeminde koyu metin */
   html[data-theme="light"] .splash{background:#F5F5F7;}
   html[data-theme="light"] .splash h2{color:#1D1D1F;}
@@ -900,7 +901,7 @@
   html[data-theme="light"] .splash-grid-bg{opacity:.35;}
   html[data-theme="light"] .splash-bar{background:rgba(0,0,0,.1);}
   html[data-theme="light"] .splash-bar::after{background:var(--accent-blue);}
-  html[data-theme="light"] .splash-glow{background:radial-gradient(closest-side, rgba(0,113,227,.10), transparent 70%);}
+  html[data-theme="light"] .splash-glow{background:radial-gradient(closest-side, rgba(200,16,46,.10), transparent 70%);}
   /* Toast: beyaz */
   html[data-theme="light"] .toast{background:#FFFFFF;color:#1D1D1F;box-shadow:0 8px 30px rgba(0,0,0,.16);}
   html[data-theme="light"] .toast .tclose{color:rgba(60,60,67,.5);}
@@ -957,7 +958,7 @@
   .seri-chip{display:inline-flex;align-items:center;gap:5px;background:var(--surface-2);border-radius:8px;padding:4px 5px 4px 8px;font-size:11.5px;color:var(--text-3);max-width:100%;}
   .seri-chip .sc-l{font-weight:600;white-space:nowrap;}
   .seri-chip .sc-v{font-family:'SF Mono',SFMono-Regular,Consolas,monospace;font-weight:700;color:var(--text);letter-spacing:.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px;}
-  .seri-copy{width:22px;height:22px;border:none;border-radius:6px;background:rgba(37,99,235,.12);color:var(--accent-blue,#2563eb);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;transition:transform .12s;}
+  .seri-copy{width:22px;height:22px;border:none;border-radius:6px;background:rgba(200,16,46,.12);color:var(--accent-blue,#2563eb);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;transition:transform .12s;}
   .seri-copy:active{transform:scale(.88);}
   .seri-copy.copied{background:rgba(52,199,89,.18);color:#1d8a4e;}
   /* Seri no çipleri artık her zaman lacivert kart gövdesinde */
@@ -1183,7 +1184,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-09.27</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-10.28</div>
     </div>
   </aside>
 
@@ -4951,7 +4952,7 @@ function openVehicleDetail(id){
             <div style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;">Aylık Kira</div>
             <div style="font-size:14px;font-weight:700;color:#16A34A;">${fmtTL2(v.kira||0)}</div>
           </div>
-          ${v.ruhsatSeriNo ? `<div style="background:rgba(37,99,235,.06);border:1px solid rgba(37,99,235,.2);border-radius:10px;padding:12px 14px;cursor:pointer;" onclick="navigator.clipboard&&navigator.clipboard.writeText('${esc(v.ruhsatSeriNo)}').then(()=>showToast('Ruhsat no kopyalandı'))" title="Kopyala">
+          ${v.ruhsatSeriNo ? `<div style="background:rgba(200,16,46,.06);border:1px solid rgba(200,16,46,.2);border-radius:10px;padding:12px 14px;cursor:pointer;" onclick="navigator.clipboard&&navigator.clipboard.writeText('${esc(v.ruhsatSeriNo)}').then(()=>showToast('Ruhsat no kopyalandı'))" title="Kopyala">
             <div style="font-size:10px;color:var(--accent-blue);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;">${ICO('clipboard',11)} Ruhsat No (tıkla kopyala)</div>
             <div style="font-size:15px;font-weight:700;color:var(--accent-blue);font-family:monospace;">${esc(v.ruhsatSeriNo)}</div>
           </div>` : ''}
@@ -4984,7 +4985,7 @@ function openVehicleDetail(id){
           <div style="display:flex;flex-direction:column;">
             ${vSozler.map(r=>{
               const dl = daysLeft(r.bitisISO);
-              const sRenk = r.iadeEdildi?'#2563EB':(dl===null?'var(--steel-300)':dl<0?'#DC2626':'#16A34A');
+              const sRenk = r.iadeEdildi?'#C8102E':(dl===null?'var(--steel-300)':dl<0?'#DC2626':'#16A34A');
               const sTxt = r.iadeEdildi ? 'İade edildi'+(r.iadeEdildi.tarih?' · '+r.iadeEdildi.tarih:'') : (dl===null?'—':dl<0?'Süresi geçti':'Aktif · '+dl+' gün');
               return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);flex-wrap:wrap;">
                 <span style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace;font-weight:700;font-size:12px;color:var(--accent-blue);">${esc(r.sozNo)}</span>
@@ -4992,7 +4993,7 @@ function openVehicleDetail(id){
                 <span style="font-size:11px;color:var(--steel-300);">${r.basISO?fmtTarih(r.basISO):'—'} → ${r.bitisISO?fmtTarih(r.bitisISO):'—'}</span>
                 <span style="font-size:11px;font-weight:600;color:${sRenk};white-space:nowrap;">${sTxt}</span>
                 <span style="display:flex;gap:4px;">
-                  <button onclick="sozKayitPdf('${r.id}')" style="background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);color:var(--accent-blue);padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">PDF</button>
+                  <button onclick="sozKayitPdf('${r.id}')" style="background:rgba(200,16,46,.1);border:1px solid rgba(200,16,46,.2);color:var(--accent-blue);padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">PDF</button>
                   <button onclick="sozKayitDocx('${r.id}')" style="background:rgba(22,163,74,.1);border:1px solid rgba(22,163,74,.2);color:#16A34A;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Word</button>
                 </span>
               </div>`;
@@ -5014,7 +5015,7 @@ function openVehicleDetail(id){
                 <div style="font-size:12.5px;font-weight:600;color:var(--paper);">${esc(e.ad)}</div>
                 <div style="font-size:11px;color:var(--steel-500);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(e.adi)}</div>
               </div>
-              <button onclick="belgeIndir('${e.key}','${esc(e.adi).replace(/'/g,'')}')" style="background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);color:var(--accent-blue);cursor:pointer;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;">${ICO('download',11)} İndir</button>
+              <button onclick="belgeIndir('${e.key}','${esc(e.adi).replace(/'/g,'')}')" style="background:rgba(200,16,46,.1);border:1px solid rgba(200,16,46,.2);color:var(--accent-blue);cursor:pointer;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;">${ICO('download',11)} İndir</button>
             </div>`).join('')}
           </div>
         </div>`;})()}
@@ -5052,7 +5053,7 @@ function openVehicleDetail(id){
                     <div style="font-size:13px;font-weight:700;color:#DC2626;">${fmtTL2(e.tutar||0)}</div>
                     <div style="font-size:11px;color:var(--steel-500);">${fmtTarih(e.tarih)}</div>
                   </div>
-                  ${e.hasFis ? `<button onclick="fisBelgeGor('${e.id}')" style="background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);color:var(--accent-blue);cursor:pointer;padding:4px 8px;border-radius:6px;font-size:11px;font-weight:600;">${ICO('receipt',11)} Fiş</button>` : ''}
+                  ${e.hasFis ? `<button onclick="fisBelgeGor('${e.id}')" style="background:rgba(200,16,46,.1);border:1px solid rgba(200,16,46,.2);color:var(--accent-blue);cursor:pointer;padding:4px 8px;border-radius:6px;font-size:11px;font-weight:600;">${ICO('receipt',11)} Fiş</button>` : ''}
                   <button onclick="detayMasrafSil('${e.id}','${id}')" style="background:none;border:none;color:var(--steel-500);cursor:pointer;padding:4px;border-radius:4px;display:flex;" title="Sil">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
                   </button>
@@ -5068,7 +5069,7 @@ function openVehicleDetail(id){
         <div style="background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:14px;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
             <div style="font-size:12px;font-weight:700;color:var(--paper);">${ICO('crash',13)} Hasar / Kaza Kayıtları ${hasarlar.length?`<span style="font-weight:400;color:var(--steel-300);">(${hasarlar.length})</span>`:''}</div>
-            <button onclick="document.getElementById('hasarForm').style.display=document.getElementById('hasarForm').style.display==='none'?'block':'none'" style="background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);color:var(--accent-blue);padding:5px 12px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;">+ Ekle</button>
+            <button onclick="document.getElementById('hasarForm').style.display=document.getElementById('hasarForm').style.display==='none'?'block':'none'" style="background:rgba(200,16,46,.1);border:1px solid rgba(200,16,46,.2);color:var(--accent-blue);padding:5px 12px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;">+ Ekle</button>
           </div>
           <div id="hasarForm" style="display:none;background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:12px;margin-bottom:10px;">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
@@ -5094,7 +5095,7 @@ function openVehicleDetail(id){
                 </div>
                 <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;margin-left:12px;">
                   ${h.tutar!=null && h.tutar!=='' ? `<div style="font-size:12.5px;font-weight:700;color:#DC2626;">${fmtTL2(h.tutar)}</div>` : ''}
-                  ${h.fotolar&&h.fotolar.length>1 ? `<button onclick="hasarFotoGor('${id}','${h.id}')" style="background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);color:var(--accent-blue);cursor:pointer;padding:4px 8px;border-radius:6px;font-size:11px;font-weight:600;">📷 ${h.fotolar.length} foto</button>` : (h.fotoKey ? `<button onclick="hasarFotoGor('${id}','${h.id}')" style="background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);color:var(--accent-blue);cursor:pointer;padding:4px 8px;border-radius:6px;font-size:11px;font-weight:600;">📷 Foto</button>` : '')}
+                  ${h.fotolar&&h.fotolar.length>1 ? `<button onclick="hasarFotoGor('${id}','${h.id}')" style="background:rgba(200,16,46,.1);border:1px solid rgba(200,16,46,.2);color:var(--accent-blue);cursor:pointer;padding:4px 8px;border-radius:6px;font-size:11px;font-weight:600;">📷 ${h.fotolar.length} foto</button>` : (h.fotoKey ? `<button onclick="hasarFotoGor('${id}','${h.id}')" style="background:rgba(200,16,46,.1);border:1px solid rgba(200,16,46,.2);color:var(--accent-blue);cursor:pointer;padding:4px 8px;border-radius:6px;font-size:11px;font-weight:600;">📷 Foto</button>` : '')}
                   <button onclick="hasarSil('${id}','${h.id}')" style="background:none;border:none;color:var(--steel-500);cursor:pointer;padding:4px;display:flex;" title="Sil">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
                   </button>
@@ -5113,8 +5114,8 @@ function openVehicleDetail(id){
                 masraf:{ico:ICO('money',14), renk:'#DC2626'},
                 hasar: {ico:ICO('crash',14), renk:'#DC2626'},
                 servis:{ico:ICO('wrench',14), renk:'#D97706'},
-                belge: {ico:ICO('filetext',14), renk:'#2563EB'},
-                km:    {ico:ICO('car',14), renk:'#2563EB'},
+                belge: {ico:ICO('filetext',14), renk:'#C8102E'},
+                km:    {ico:ICO('car',14), renk:'#C8102E'},
                 teslim:{ico:ICO('key',14), renk:'#16A34A'},
               }[g.tip]||{ico:'•',renk:'var(--steel-300)'};
               return `<div style="display:flex;gap:12px;padding:7px 0;border-bottom:1px solid var(--line);align-items:flex-start;">
@@ -5124,7 +5125,7 @@ function openVehicleDetail(id){
                   <div style="font-size:11px;color:var(--steel-500);margin-top:1px;">${esc(g.tarihTxt)}</div>
                 </div>
                 ${g.tutar!=null&&g.tutar!==''&&g.tutar!==0?`<div style="font-size:12.5px;font-weight:700;color:#DC2626;flex-shrink:0;">${fmtTL2(g.tutar)}</div>`:''}
-                ${g.onclick?`<button onclick="${g.onclick}" style="background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);color:var(--accent-blue);cursor:pointer;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;flex-shrink:0;">Gör</button>`:''}
+                ${g.onclick?`<button onclick="${g.onclick}" style="background:rgba(200,16,46,.1);border:1px solid rgba(200,16,46,.2);color:var(--accent-blue);cursor:pointer;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;flex-shrink:0;">Gör</button>`:''}
               </div>`;
             }).join('')}
           </div>
@@ -6354,7 +6355,7 @@ function computeMasrafKategoriData(donem){
     filtered = expenses;
   }
   const categories = [
-    {label:'Yakıt',    color:'#2563EB'},
+    {label:'Yakıt',    color:'#C8102E'},
     {label:'Tamir',    color:'#DC2626'},
     {label:'Lastik',   color:'#D97706'},
     {label:'Bakım',    color:'#16A34A'},
@@ -6419,7 +6420,7 @@ function renderKritikUyarilarList(urgent){
     'Sigorta':       {emoji:'🟠', color:'#EA580C', bg:'rgba(234,88,12,.08)',  border:'rgba(234,88,12,.2)',  label:'Sigortası yaklaşan araçlar'},
     'Kasko Bitişi':  {emoji:'🟠', color:'#D97706', bg:'rgba(217,119,6,.08)', border:'rgba(217,119,6,.2)',  label:'Kaskosu yaklaşan araçlar'},
     'Sözleşme Bitişi':{emoji:'🟡', color:'#CA8A04', bg:'rgba(202,138,4,.08)', border:'rgba(202,138,4,.2)',  label:'Sözleşmesi yaklaşan araçlar'},
-    'Kira Bitişi':   {emoji:'🔵', color:'#2563EB', bg:'rgba(37,99,235,.08)', border:'rgba(37,99,235,.2)',  label:'Kirası bitecek araçlar'},
+    'Kira Bitişi':   {emoji:'🔵', color:'#C8102E', bg:'rgba(200,16,46,.08)', border:'rgba(200,16,46,.2)',  label:'Kirası bitecek araçlar'},
   };
   const order = ['Muayene','Sigorta','Kasko Bitişi','Sözleşme Bitişi','Kira Bitişi'];
 
@@ -6460,7 +6461,7 @@ function renderActivityListForDash(){
   const list = activityLog.slice(0,8);
   if(list.length===0) return '<div class="log-empty">Henüz etkinlik yok.</div>';
   const icons = {
-    'add':    {ic:ICO('car',14), renk:'#2563EB', bg:'rgba(37,99,235,.1)'},
+    'add':    {ic:ICO('car',14), renk:'#C8102E', bg:'rgba(200,16,46,.1)'},
     'edit':   {ic:ICO('pencil',14), renk:'#D97706', bg:'rgba(217,119,6,.1)'},
     'del':    {ic:ICO('trash',14), renk:'#DC2626', bg:'rgba(220,38,38,.1)'},
     'doc':    {ic:ICO('filetext',14), renk:'#7C3AED', bg:'rgba(124,58,237,.1)'},
@@ -6589,7 +6590,7 @@ function renderDashboard(){
   })();
   const sonIslemMeta = {
     kiralama:{c:'#16A34A', bg:'rgba(22,163,74,.1)', et:'Kiraya'},
-    iade:{c:'#2563EB', bg:'rgba(37,99,235,.1)', et:'İade'},
+    iade:{c:'#C8102E', bg:'rgba(200,16,46,.1)', et:'İade'},
     odeme:{c:'#16A34A', bg:'rgba(22,163,74,.1)', et:'Tahsilat'},
     masraf:{c:'#DC2626', bg:'rgba(220,38,38,.1)', et:'Masraf'},
   };
@@ -6598,8 +6599,8 @@ function renderDashboard(){
   page.innerHTML = `
     <div id="dashYedekUyari"></div>
     <div class="dash-stats">
-      <div class="dstat dstat-strong" style="--accent-c:#2563EB;background:linear-gradient(135deg,rgba(37,99,235,.14),rgba(37,99,235,.03))" onclick="showVehicleQuickList('Toplam','Tüm Araçlar')">
-        <div class="dstat-ic" style="background:rgba(37,99,235,.12);color:#2563EB">${DASH_ICONS.car}</div>
+      <div class="dstat dstat-strong" style="--accent-c:#C8102E;background:linear-gradient(135deg,rgba(200,16,46,.14),rgba(200,16,46,.03))" onclick="showVehicleQuickList('Toplam','Tüm Araçlar')">
+        <div class="dstat-ic" style="background:rgba(200,16,46,.12);color:#C8102E">${DASH_ICONS.car}</div>
         <div class="dstat-txt">
           <div class="l">Toplam Araç</div>
           <div class="n">${total}</div>
@@ -6646,11 +6647,11 @@ function renderDashboard(){
           <div class="d" style="color:var(--steel-300);font-weight:400;">tüm zamanlar</div>
         </div>
       </div>
-      <div class="dstat dstat-strong" style="--accent-c:#3B82F6;background:linear-gradient(135deg,rgba(59,130,246,.14),rgba(59,130,246,.03));cursor:default;">
-        <div class="dstat-ic" style="background:rgba(37,99,235,.12);color:#2563EB">${DASH_ICONS.trend}</div>
+      <div class="dstat dstat-strong" style="--accent-c:#C8102E;background:linear-gradient(135deg,rgba(200,16,46,.14),rgba(200,16,46,.03));cursor:default;">
+        <div class="dstat-ic" style="background:rgba(200,16,46,.12);color:#C8102E">${DASH_ICONS.trend}</div>
         <div class="dstat-txt">
           <div class="l">Aylık Kira Geliri</div>
-          <div class="n" style="color:#2563EB">${fmtTL_role(gelir)}</div>
+          <div class="n" style="color:#C8102E">${fmtTL_role(gelir)}</div>
           <div class="d" style="color:var(--steel-300);font-weight:400;">${kirada} aktif kiralama</div>
         </div>
       </div>
@@ -6675,7 +6676,7 @@ function renderDashboard(){
         return rows + (kalan>0 ? `<div style="font-size:12px;color:var(--steel-300);text-align:center;padding:4px 0;">+${kalan} işlem daha — <a data-goto="bildirimler" style="color:var(--accent-blue);text-decoration:none;cursor:pointer;">Aksiyon Merkezi'nde gör</a></div>` : '');
       })()}
     </div>
-    <div class="dcard" style="margin-top:16px;border:1px solid rgba(59,130,246,.25);box-shadow:var(--shadow-md);">
+    <div class="dcard" style="margin-top:16px;border:1px solid rgba(200,16,46,.25);box-shadow:var(--shadow-md);">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:12px;">
         <h3 style="margin:0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/></svg>Hızlı İşlemler</h3>
         <span style="font-size:12px;color:var(--text-3);">Tek tıkla en sık yapılan işlemler</span>
@@ -6695,7 +6696,7 @@ function renderDashboard(){
     </div>
     <div class="dash-grid dg-3">
       <div class="dcard">
-        <h3>Filo Araç Dağılımı <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;background:rgba(59,130,246,.12);color:#3B82F6;">Doluluk %${pct(kirada)}</span></h3>
+        <h3>Filo Araç Dağılımı <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;background:rgba(200,16,46,.12);color:#C8102E;">Doluluk %${pct(kirada)}</span></h3>
         ${(()=>{
           const parts=[
             {n:kirada, c:'#22C55E', l:'Kirada'},
@@ -6723,7 +6724,7 @@ function renderDashboard(){
           </div>`;
         })()}
         <div class="fd-row"><span class="fd-dot" style="background:#8B5CF6"></span><span class="fd-l">Yakında Belgesi Bitecek</span><span class="fd-v">${yakindaBitecekPlakalar.size}</span></div>
-        <div class="fd-row"><span class="fd-dot" style="background:#3B82F6"></span><span class="fd-l">Aktif Müşteri</span><span class="fd-v">${aktifMusteri}</span></div>
+        <div class="fd-row"><span class="fd-dot" style="background:#C8102E"></span><span class="fd-l">Aktif Müşteri</span><span class="fd-v">${aktifMusteri}</span></div>
       </div>
       <div class="dcard">
         <h3>Aylık Masraf (Son 6 Ay) ${(()=>{ const gec = series.values.length>=2 ? series.values[series.values.length-2] : 0; const tr = gec>0 && masrafBuAy>0 ? Math.round((masrafBuAy-gec)/gec*100) : 0; return tr ? `<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;background:${tr>0?'rgba(220,38,38,.12)':'rgba(22,163,74,.12)'};color:${tr>0?'#DC2626':'#16A34A'}">${tr>0?'▲':'▼'} %${Math.abs(tr)}</span>` : ''; })()}</h3>
@@ -6739,7 +6740,7 @@ function renderDashboard(){
           yak.sort((a,b)=>a.dl-b.dl);
           const box=(ad,n,renk)=>`<div class="yp-box"><div class="yp-n" style="color:${n>0?renk:'var(--steel-300)'}">${n}</div><div class="yp-l">${ad}</div></div>`;
           const liste=yak.slice(0,5).map(r=>`<div class="yp-row"><span class="mini-plaka" style="font-size:11.5px;">${esc(r.p)}</span><span class="yp-tip">${r.ad}</span><span class="yp-gun" style="color:${r.dl<0?'#DC2626':'#EA580C'}">${r.dl<0?Math.abs(r.dl)+' gün geçti':r.dl+' gün'}</span></div>`).join('');
-          return `<div class="yp-grid">${box('Sigorta',say['Sigorta'],'#2563EB')}${box('Muayene',say['Muayene'],'#6366F1')}${box('Kasko',say['Kasko'],'#8B5CF6')}${box('Kira/Söz.',say['Kira']+say['Sözleşme'],'#EA580C')}</div>
+          return `<div class="yp-grid">${box('Sigorta',say['Sigorta'],'#C8102E')}${box('Muayene',say['Muayene'],'#6366F1')}${box('Kasko',say['Kasko'],'#8B5CF6')}${box('Kira/Söz.',say['Kira']+say['Sözleşme'],'#EA580C')}</div>
           <div style="margin-top:10px;">${yak.length?liste:'<div class="log-empty">30 gün içinde belge bitişi yok.</div>'}</div>`;
         })()}
       </div>
@@ -6807,7 +6808,7 @@ function renderDashboard(){
         <div class="fd-row"><span class="fd-dot" style="background:#16A34A"></span><span class="fd-l">Şu An Kirada</span><span class="fd-v">${kirada}</span></div>
         <div class="fd-row"><span class="fd-dot" style="background:#F59E0B"></span><span class="fd-l">Müsait</span><span class="fd-v">${musait}</span></div>
         <div class="fd-row"><span class="fd-dot" style="background:#EF4444"></span><span class="fd-l">Serviste</span><span class="fd-v">${serviste}</span></div>
-        <div class="fd-row"><span class="fd-dot" style="background:#3B82F6"></span><span class="fd-l">Aktif Müşteri</span><span class="fd-v">${aktifMusteri}</span></div>
+        <div class="fd-row"><span class="fd-dot" style="background:#C8102E"></span><span class="fd-l">Aktif Müşteri</span><span class="fd-v">${aktifMusteri}</span></div>
         <div class="fd-row"><span class="fd-dot" style="background:#FF9F0A"></span><span class="fd-l">Kira Kaydı</span><span class="fd-v">${toplamKiraKaydi}</span></div>
         <a data-goto="kiralama" style="display:block;margin-top:12px;font-size:13px;font-weight:600;color:var(--accent-blue);text-decoration:none;">Kiralama İşlemlerine Git →</a>
       </div>
@@ -8033,7 +8034,7 @@ function renderKiralamaPage(){
         <div class="dstat-txt"><div class="l">Süresi Geçmiş</div><div class="n" style="color:#DC2626;">${suresiGecen.length}</div></div>
       </div>
       <div class="dstat" style="cursor:default;">
-        <div class="dstat-ic" style="background:rgba(37,99,235,.15);color:#2563EB;">${DASH_ICONS.trend}</div>
+        <div class="dstat-ic" style="background:rgba(200,16,46,.15);color:#C8102E;">${DASH_ICONS.trend}</div>
         <div class="dstat-txt"><div class="l">Toplam Kira Kaydı</div><div class="n">${toplamKiraSayisi}</div></div>
       </div>
       <div class="dstat" style="cursor:default;">
@@ -8070,7 +8071,7 @@ function renderKiralamaPage(){
             </div>
             <div style="display:flex;align-items:center;gap:8px;">
               <span style="font-size:12px;font-weight:700;color:#DC2626;">${Math.abs(dl||0)} gün geçti</span>
-              <button onclick="openVehicleDetail('${v.id}')" style="background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);color:var(--accent-blue);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Detay</button>
+              <button onclick="openVehicleDetail('${v.id}')" style="background:rgba(200,16,46,.1);border:1px solid rgba(200,16,46,.2);color:var(--accent-blue);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Detay</button>
               <button onclick="openUzatForm('${v.id}')" style="background:rgba(217,119,6,.15);border:1px solid rgba(217,119,6,.3);color:#D97706;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Uzat</button>
               <button onclick="switchPage('arac-yonetimi');setTimeout(()=>{const v=vehicles.find(x=>x.id==='${v.id}');if(v)openIadeForm(v.id);},100);" style="background:rgba(220,38,38,.15);border:1px solid rgba(220,38,38,.3);color:#DC2626;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">İade Al</button>
             </div>
@@ -8095,7 +8096,7 @@ function renderKiralamaPage(){
             <div style="display:flex;align-items:center;gap:8px;">
               <span style="font-size:12px;font-weight:700;color:${renk};">${dl} gün kaldı</span>
               <span style="font-size:11px;color:var(--text-3);">${fmtTarih(v.kiraBitis||v.sozlesmeBitis)}</span>
-              <button onclick="openVehicleDetail('${v.id}')" style="background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);color:var(--accent-blue);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Detay</button>
+              <button onclick="openVehicleDetail('${v.id}')" style="background:rgba(200,16,46,.1);border:1px solid rgba(200,16,46,.2);color:var(--accent-blue);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Detay</button>
               <button onclick="openUzatForm('${v.id}')" style="background:rgba(217,119,6,.15);border:1px solid rgba(217,119,6,.3);color:#D97706;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Uzat</button>
             </div>
           </div>`;
@@ -8259,7 +8260,7 @@ function renderKiralamaPage(){
         <thead><tr><th>Sözleşme No</th><th>Tarih</th><th>Kiracı</th><th>Araç(lar)</th><th>Dönem</th><th>Durum</th><th style="white-space:nowrap;">İşlem</th></tr></thead>
         <tbody>${[...sozlesmeler].reverse().map(r=>{
           const dl = daysLeft(r.bitisISO);
-          const durum = r.iadeEdildi ? `<span style="color:#2563EB;font-weight:600;">İade edildi${r.iadeEdildi.tarih?' · '+r.iadeEdildi.tarih:''}</span>`
+          const durum = r.iadeEdildi ? `<span style="color:#C8102E;font-weight:600;">İade edildi${r.iadeEdildi.tarih?' · '+r.iadeEdildi.tarih:''}</span>`
             : (dl===null ? '<span style="color:var(--steel-300);">—</span>'
             : (dl<0 ? '<span style="color:#DC2626;font-weight:600;">Süresi geçti</span>'
                     : `<span style="color:#16A34A;font-weight:600;">Aktif${dl<=7?' · '+dl+' gün kaldı':''}</span>`));
@@ -8271,7 +8272,7 @@ function renderKiralamaPage(){
             <td style="font-size:12px;">${r.basISO?fmtTarih(r.basISO):'—'} → ${r.bitisISO?fmtTarih(r.bitisISO):'—'}</td>
             <td>${durum}</td>
             <td style="white-space:nowrap;">
-              <button onclick="sozKayitPdf('${r.id}')" style="background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);color:var(--accent-blue);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">PDF</button>
+              <button onclick="sozKayitPdf('${r.id}')" style="background:rgba(200,16,46,.1);border:1px solid rgba(200,16,46,.2);color:var(--accent-blue);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">PDF</button>
               <button onclick="sozKayitDocx('${r.id}')" style="background:rgba(22,163,74,.1);border:1px solid rgba(22,163,74,.2);color:#16A34A;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Word</button>
               <button onclick="teslimTutanakAc(sozlesmeler.find(x=>x.id==='${r.id}').data)" title="Ek-1 Teslim Tutanağını yeniden üret" style="background:rgba(201,138,62,.1);border:1px solid rgba(201,138,62,.25);color:#C98A3E;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Teslim</button>
               <button onclick="sozKayitSil('${r.id}')" style="background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.2);color:#DC2626;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Sil</button>
@@ -8281,7 +8282,7 @@ function renderKiralamaPage(){
       </table></div>
       <div class="m-card-list">${[...sozlesmeler].reverse().map(r=>{
         const dl = daysLeft(r.bitisISO);
-        const durum = r.iadeEdildi ? '<span style="color:#2563EB;font-weight:600;">İade edildi</span>'
+        const durum = r.iadeEdildi ? '<span style="color:#C8102E;font-weight:600;">İade edildi</span>'
           : (dl===null ? '<span style="color:var(--steel-300);">—</span>'
           : (dl<0 ? '<span style="color:#DC2626;font-weight:600;">Süresi geçti</span>'
                   : '<span style="color:#16A34A;font-weight:600;">Aktif</span>'));
@@ -8297,7 +8298,7 @@ function renderKiralamaPage(){
             <div class="m-card-row"><span class="m-card-label">Tarih</span><span class="m-card-val">${esc(r.tarih||'—')}</span></div>
           </div>
           <div style="display:flex;gap:6px;margin-top:10px;">
-            <button onclick="sozKayitPdf('${r.id}')" style="flex:1;background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);color:var(--accent-blue);padding:7px 0;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">PDF</button>
+            <button onclick="sozKayitPdf('${r.id}')" style="flex:1;background:rgba(200,16,46,.1);border:1px solid rgba(200,16,46,.2);color:var(--accent-blue);padding:7px 0;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">PDF</button>
             <button onclick="sozKayitDocx('${r.id}')" style="flex:1;background:rgba(22,163,74,.1);border:1px solid rgba(22,163,74,.2);color:#16A34A;padding:7px 0;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Word</button>
             <button onclick="teslimTutanakAc(sozlesmeler.find(x=>x.id==='${r.id}').data)" style="flex:1;background:rgba(201,138,62,.1);border:1px solid rgba(201,138,62,.25);color:#C98A3E;padding:7px 0;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Teslim</button>
             <button onclick="sozKayitSil('${r.id}')" style="background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.2);color:#DC2626;padding:7px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Sil</button>
@@ -8732,7 +8733,7 @@ function renderBelgelerPage(){
             </div>
             ${toplamBelge===0 ? `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:8px;background:var(--surface-2);border:1px dashed var(--border);">
               <span style="font-size:13px;color:var(--text-3);">Bu araçta henüz belge yüklenmemiş.</span>
-              <button onclick="belgeYukleSecilenId('${v.id}')" style="background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);color:var(--accent-blue);padding:4px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Belge Yükle</button>
+              <button onclick="belgeYukleSecilenId('${v.id}')" style="background:rgba(200,16,46,.1);border:1px solid rgba(200,16,46,.2);color:var(--accent-blue);padding:4px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Belge Yükle</button>
             </div>` : `
             <div style="display:flex;flex-direction:column;gap:6px;">
               ${docs.map(d=>{
@@ -8744,7 +8745,7 @@ function renderBelgelerPage(){
                   </div>
                   <div style="display:flex;align-items:center;gap:8px;">
                     ${dur ? `<span style="font-size:12px;font-weight:700;color:${dur.renk};">${dur.etiket}</span>` : ''}
-                    ${d.belgeAdi ? `<button onclick="viewDoc('${d.prefix}','${v.id}','${esc(d.label)}')" style="background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);color:var(--accent-blue);padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Gör</button>` : '<span style="font-size:11px;color:var(--text-3);">Belge yok</span>'}
+                    ${d.belgeAdi ? `<button onclick="viewDoc('${d.prefix}','${v.id}','${esc(d.label)}')" style="background:rgba(200,16,46,.1);border:1px solid rgba(200,16,46,.2);color:var(--accent-blue);padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Gör</button>` : '<span style="font-size:11px;color:var(--text-3);">Belge yok</span>'}
                   </div>
                 </div>`;
               }).join('')}
@@ -8754,7 +8755,7 @@ function renderBelgelerPage(){
                     <span style="font-size:13px;font-weight:600;color:var(--text);">${esc(o.tur==='diger'?'Belge':(o.tur.charAt(0).toLocaleUpperCase('tr-TR')+o.tur.slice(1)))}</span>
                     <span style="font-size:11px;color:var(--text-3);">${esc(o.adi)}</span>
                   </div>
-                  <button onclick="viewOtoDoc('${v.id}',${i})" style="background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);color:var(--accent-blue);padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Gör</button>
+                  <button onclick="viewOtoDoc('${v.id}',${i})" style="background:rgba(200,16,46,.1);border:1px solid rgba(200,16,46,.2);color:var(--accent-blue);padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Gör</button>
                 </div>`).join('')}
             </div>`}
           </div>`;
@@ -8936,7 +8937,7 @@ function renderMusterilerPage(){
 
     <div class="dash-stats" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:16px;">
       <div class="dstat" style="cursor:default;">
-        <div class="dstat-ic" style="background:rgba(37,99,235,.15);color:#2563EB;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <div class="dstat-ic" style="background:rgba(200,16,46,.15);color:#C8102E;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
         <div class="dstat-txt"><div class="l">Müşteri / Kurum</div><div class="n">${musteriler.length}</div></div>
       </div>
       <div class="dstat" style="cursor:default;">
@@ -8963,7 +8964,7 @@ function renderMusterilerPage(){
     ` : musteriler.map((m,i)=>{
       const acikMi = acik===i;
       const initial = m.ad.trim().charAt(0).toLocaleUpperCase('tr-TR');
-      const renkler = ['#2563EB','#16A34A','#D97706','#7C3AED','#DC2626','#0891B2'];
+      const renkler = ['#C8102E','#16A34A','#D97706','#7C3AED','#DC2626','#0891B2'];
       const avRenk = renkler[i % renkler.length];
       return `
       <div class="dcard" style="padding:0;overflow:hidden;margin-bottom:12px;">
@@ -8998,7 +8999,7 @@ function musteriDetayHtml(m){
     .sort((a,b)=>(b.basISO||'').localeCompare(a.basISO||''));
   const sozSatirlar = mSozler.map(r=>{
     const dl = daysLeft(r.bitisISO);
-    const durum = r.iadeEdildi ? '<span style="color:#2563EB;font-weight:700;">İade edildi</span>'
+    const durum = r.iadeEdildi ? '<span style="color:#C8102E;font-weight:700;">İade edildi</span>'
       : (dl===null ? '<span style="color:var(--text-3);">—</span>'
       : (dl<0 ? '<span style="color:#DC2626;font-weight:700;">Süresi geçti</span>'
               : `<span style="color:#16A34A;font-weight:600;">Aktif${dl<=7?' · '+dl+' gün':''}</span>`));
@@ -9009,7 +9010,7 @@ function musteriDetayHtml(m){
         <span style="font-size:11.5px;color:var(--text-3);white-space:nowrap;">${r.basISO?fmtTarih(r.basISO):'—'} → ${r.bitisISO?fmtTarih(r.bitisISO):'—'}</span>
         <span style="font-size:11px;font-weight:600;white-space:nowrap;">${durum}</span>
         <span style="display:flex;gap:4px;flex-shrink:0;">
-          <button onclick="sozKayitPdf('${r.id}')" style="background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);color:var(--accent-blue);padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">PDF</button>
+          <button onclick="sozKayitPdf('${r.id}')" style="background:rgba(200,16,46,.1);border:1px solid rgba(200,16,46,.2);color:var(--accent-blue);padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">PDF</button>
           <button onclick="sozKayitDocx('${r.id}')" style="background:rgba(22,163,74,.1);border:1px solid rgba(22,163,74,.2);color:#16A34A;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Word</button>
         </span>
       </div>`;
@@ -9030,7 +9031,7 @@ function musteriDetayHtml(m){
     <div style="border-top:1px solid var(--border);background:var(--surface-2);">
       ${m.tel ? `
       <div style="display:flex;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border);">
-        <a href="tel:${esc(m.tel)}" style="background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);color:var(--accent-blue);padding:5px 12px;border-radius:7px;font-size:12px;font-weight:600;text-decoration:none;">📞 ${esc(m.tel)}</a>
+        <a href="tel:${esc(m.tel)}" style="background:rgba(200,16,46,.1);border:1px solid rgba(200,16,46,.2);color:var(--accent-blue);padding:5px 12px;border-radius:7px;font-size:12px;font-weight:600;text-decoration:none;">📞 ${esc(m.tel)}</a>
       </div>` : ''}
       <div style="padding:8px 14px 4px;font-size:12px;font-weight:700;color:var(--text-2);">Araçlar (${m.araclar.length})</div>
       ${satirlar || '<div style="padding:6px 14px 10px;font-size:12px;color:var(--text-3);">Şu an kayıtlı aracı yok (yalnızca geçmiş kayıtlardan biliniyor).</div>'}
@@ -9101,7 +9102,7 @@ function renderBildirimlerPage(){
         {k:'kritik', l:'🔴 Kritik (≤7 gün)'},
         {k:'gecmis', l:'💀 Süresi Geçmiş'},
       ].map(f=>`<button onclick="window.__bildirimFilter='${f.k}';renderBildirimlerPage()"
-        style="padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid ${filter===f.k?'var(--accent-blue)':'var(--border)'};background:${filter===f.k?'rgba(37,99,235,.1)':'var(--surface)'};color:${filter===f.k?'var(--accent-blue)':'var(--text-2)'};">${f.l}</button>`).join('')}
+        style="padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid ${filter===f.k?'var(--accent-blue)':'var(--border)'};background:${filter===f.k?'rgba(200,16,46,.1)':'var(--surface)'};color:${filter===f.k?'var(--accent-blue)':'var(--text-2)'};">${f.l}</button>`).join('')}
     </div>
 
     <div class="dcard">
@@ -9133,7 +9134,7 @@ function renderBildirimlerPage(){
               renderBildirimlerPage();"
               style="background:none;border:1px solid var(--border);color:var(--text-3);padding:4px 9px;border-radius:6px;font-size:11px;cursor:pointer;white-space:nowrap;">${okundu?'✓ Okundu':'Okundu işaretle'}</button>
             <button onclick="switchPage('arac-yonetimi');setTimeout(()=>{const v=vehicles.find(x=>x.plaka==='${esc(u.plaka)}');if(v)openVehicleDetail(v.id);},100);"
-              style="background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);color:var(--accent-blue);padding:4px 9px;border-radius:6px;font-size:11px;cursor:pointer;white-space:nowrap;">Araca Git</button>
+              style="background:rgba(200,16,46,.1);border:1px solid rgba(200,16,46,.2);color:var(--accent-blue);padding:4px 9px;border-radius:6px;font-size:11px;cursor:pointer;white-space:nowrap;">Araca Git</button>
           </div>`;
       }).join('')}
     </div>
