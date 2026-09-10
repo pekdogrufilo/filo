@@ -852,16 +852,14 @@
   /* Sayfayı aşağı/yukarı fazla çekince tarayıcının "lastik" geri sekme
      efektini kapat — web sayfası değil, uygulama gibi hissettirsin. */
   html,body{overscroll-behavior-y:contain;}
-  /* Dokunulan butonlarda Android/iOS'in gri "flaş" vurgusunu kaldır,
-     bunun yerine kendi basılı-durum efektimizi kullanalım. */
-  button,a,.bn-item,.sb-item,.card,.dcard,.settings-btn{-webkit-tap-highlight-color:transparent;}
-  /* Çift dokunmada yakınlaştırma gecikmesini kaldır — tıklamalar anında tepki versin. */
-  button,.bn-item,.sb-item,.card,.dcard,.settings-btn,.chip{touch-action:manipulation;}
-  /* Basılı tutunca hafif küçülme — dokunmatik ekranlarda "tık" hissi verir. */
-  .bn-item:active{transform:scale(.92);}
+  /* Dokunulan butonlarda Android/iOS'in gri "flaş" vurgusunu kaldır. */
+  button,a,.bn-item,.sb-item,.settings-btn{-webkit-tap-highlight-color:transparent;}
+  /* Basılı tutunca hafif soluklaşma — bazı iOS sürümlerinde dokunmatik
+     tepkiyi bozabildiği görülen transform/scale efekti yerine, tıklamayı
+     hiç etkilemeyen sade bir opaklık geçişi kullanılıyor. */
+  .bn-item:active{opacity:.55;}
   .sb-item:active{background:rgba(255,255,255,.06);}
   html[data-theme="light"] .sb-item:active{background:rgba(0,0,0,.06);}
-  button:active,.settings-btn:active{transform:scale(.97);}
   /* Çentikli/Dynamic Island'lı telefonlarda üst çubuk durum çubuğunun altında kalmasın. */
   .top-header{padding-top:calc(12px + env(safe-area-inset-top,0px));}
   @media (max-width:900px){ .top-header{padding-top:calc(12px + env(safe-area-inset-top,0px));} }
@@ -1113,7 +1111,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-10.48</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-10.49</div>
     </div>
   </div>
 </div>
@@ -1224,7 +1222,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-10.48</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-10.49</div>
     </div>
   </aside>
 
