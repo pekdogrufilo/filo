@@ -1178,7 +1178,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-09.16</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-09.17</div>
     </div>
   </aside>
 
@@ -1443,6 +1443,7 @@
     <div id="reminderList" style="max-height:280px;overflow-y:auto;margin-bottom:16px"></div>
     <div class="modal-actions">
       <button class="cancel" id="reminderDismiss">Bugün bir daha gösterme</button>
+      <button id="reminderWaBtn" style="background:rgba(37,211,102,.14);border:1px solid rgba(37,211,102,.35);color:#128C7E;padding:9px 14px;border-radius:8px;font-family:inherit;font-weight:600;font-size:13px;cursor:pointer;">WhatsApp</button>
       <button class="save" id="reminderMailBtn">E-posta taslağı oluştur</button>
     </div>
   </div>
@@ -2319,6 +2320,13 @@ document.getElementById('reminderDismiss').onclick = async ()=>{
 document.getElementById('reminderMailBtn').onclick = async ()=>{
   const list = urgentList().sort((a,b)=>a.dl-b.dl);
   openMailDraft(list);
+  document.getElementById('reminderOverlay').classList.remove('show');
+  await markReminderShownToday();
+};
+document.getElementById('reminderWaBtn').onclick = async ()=>{
+  const list = urgentList().sort((a,b)=>a.dl-b.dl);
+  const url = `https://wa.me/?text=${encodeURIComponent(buildReminderBody(list))}`;
+  window.open(url, '_blank');
   document.getElementById('reminderOverlay').classList.remove('show');
   await markReminderShownToday();
 };
@@ -3444,6 +3452,45 @@ function exportExcel(){
   ws['!cols'] = [{wch:12},{wch:14},{wch:14},{wch:16},{wch:16},{wch:10},{wch:18},{wch:18},{wch:24},{wch:10},{wch:15},{wch:16},{wch:14},{wch:14},{wch:14},{wch:18},{wch:22},{wch:20},{wch:18},{wch:16}];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Filo Listesi');
+
+  // Masraflar sayfası
+  const masrafRows = (expenses||[]).map(e=>{
+    const v = vehicles.find(x=>x.id===e.vehicleId);
+    return {
+      'Tarih': e.tarih || '',
+      'Plaka': e.plaka || (v ? v.plaka : ''),
+      'Tür': e.tip || '',
+      'Açıklama': e.not || e.aciklama || e.firma || '',
+      'Tutar (TL)': e.tutar || 0,
+      'Fiş': e.hasFis ? 'Var' : '',
+    };
+  });
+  if(masrafRows.length){
+    const wsM = XLSX.utils.json_to_sheet(masrafRows);
+    wsM['!cols'] = [{wch:12},{wch:12},{wch:14},{wch:36},{wch:14},{wch:8}];
+    XLSX.utils.book_append_sheet(wb, wsM, 'Masraflar');
+  }
+
+  // Kayıtlı sözleşmeler sayfası
+  const sozRows = (sozlesmeler||[]).map(r=>{
+    const dl = r.bitisISO ? Math.ceil((new Date(r.bitisISO)-new Date())/86400000) : null;
+    return {
+      'Sözleşme No': r.sozNo || '',
+      'Tarih': r.tarih || '',
+      'Kiracı': r.kiraci || '',
+      'TC/VKN': r.kiraciVKN || '',
+      'Araç(lar)': r.aracOzet || '',
+      'Başlangıç': r.basISO ? fmtTarih(r.basISO) : '',
+      'Bitiş': r.bitisISO ? fmtTarih(r.bitisISO) : '',
+      'Durum': dl===null ? '' : (dl<0 ? 'Süresi geçti' : 'Aktif'),
+    };
+  });
+  if(sozRows.length){
+    const wsS = XLSX.utils.json_to_sheet(sozRows);
+    wsS['!cols'] = [{wch:16},{wch:12},{wch:28},{wch:14},{wch:30},{wch:12},{wch:12},{wch:12}];
+    XLSX.utils.book_append_sheet(wb, wsS, 'Sözleşmeler');
+  }
+
   const dateStr = todayISO();
   XLSX.writeFile(wb, `filo-listesi-${dateStr}.xlsx`);
 }
