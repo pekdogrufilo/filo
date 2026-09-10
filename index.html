@@ -1178,7 +1178,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-09.14</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-09.15</div>
     </div>
   </aside>
 
@@ -4253,6 +4253,16 @@ function openAracKirala(vehicleId){
           <label>Kiracı adresi</label>
           <input type="text" id="krAdres" placeholder="Kiracının açık adresi">
         </div>
+        <div class="iade-row">
+          <div class="iade-field">
+            <label>Kefil (opsiyonel)</label>
+            <input type="text" id="krKefil" placeholder="Kefil Ad Soyad">
+          </div>
+          <div class="iade-field">
+            <label>Kefil TC No</label>
+            <input type="text" id="krKefilTC" placeholder="11 haneli TC" maxlength="11">
+          </div>
+        </div>
         <div class="iade-section" style="font-weight:600;font-size:13px;color:var(--text);margin:10px 0 8px;">3 — Kira koşulları</div>
         <div class="iade-row">
           <div class="iade-field">
@@ -4310,7 +4320,7 @@ function openAracKirala(vehicleId){
           <input type="text" id="krNotlar" placeholder="Varsa özel koşullar...">
         </div>
         <div style="background:rgba(201,138,62,.08);border:1px solid rgba(201,138,62,.25);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--text-2);margin-top:4px;">
-          <b>Not:</b> Kaydet'te araç otomatik <b>"Kirada"</b> olur, kiracı bilgileri araç kartına işlenir ve 19 maddelik kapsamlı sözleşme (Ekler dahil) hazırlanır.
+          <b>Not:</b> Kaydet'te araç otomatik <b>"Kirada"</b> olur, kiracı bilgileri araç kartına işlenir ve 23 maddelik kapsamlı sözleşme (Ekler dahil) hazırlanır.
         </div>
       </div>
       <div class="iade-foot">
@@ -4431,6 +4441,8 @@ async function kirayaVerVeSozlesme(format){
     firmaEposta: localStorage.getItem('filoPaneli_firmaEposta')||'',
     sozlesmeTip: tip,
     kiraci, kiraciVergi: kiraciVKN||'', kiraciAdres: kiraciAdres||'', kiraciTel: kiraciTel||'', kiraciEhliyet: '', kiraciVKN: kiraciVKN||'',
+    kefil: (document.getElementById('krKefil')||{}).value?.trim()||'',
+    kefilTC: (document.getElementById('krKefilTC')||{}).value?.trim()||'',
     yakit: (document.getElementById('krYakit')||{}).value||'Dolu',
     teslimYer: (document.getElementById('krTeslimYer')||{}).value?.trim()||'',
     bas: bas.split('-').reverse().join('.'),
@@ -7078,6 +7090,8 @@ async function sozlesmeOlustur(format){
     firmaVergiNo: localStorage.getItem('filoPaneli_firmaVergiNo')||'',
     sozlesmeTip: tip,
     kiraci, kiraciVergi: kiraciVKNInp||v.kiraciVergi||'', kiraciAdres: kiraciAdresInp||v.kiraciAdres||'', kiraciTel: v.kiraciTel||'', kiraciEhliyet: v.kiraciEhliyet||'', kiraciVKN: kiraciVKNInp||v.kiraciVergi||'',
+    kefil: document.getElementById('sozKefil')?.value?.trim()||'',
+    kefilTC: document.getElementById('sozKefilTC')?.value?.trim()||'',
     bas: bas.split('-').reverse().join('.'),
     bitis: bitis.split('-').reverse().join('.'),
     plaka: v.plaka, marka: v.marka||'', model: v.model||'',
@@ -7106,7 +7120,7 @@ async function sozlesmeOlustur(format){
   }
 }
 
-// Sözleşme maddeleri — 19 maddelik koruyucu şablon; PDF ve Word aynı kaynağı kullanır
+// Sözleşme maddeleri — 23 maddelik koruyucu şablon; PDF ve Word aynı kaynağı kullanır
 function sozMaddeListesi(d){
   const coklu = d.araclar && d.araclar.length>1;
   const aracKelime = coklu ? (d.aracSayisi+' adet aracın') : 'aracın';
@@ -7129,8 +7143,12 @@ function sozMaddeListesi(d){
   {no:15, b:'MÜCBİR SEBEP', t:`Deprem, sel, yangın, savaş, terör, genel grev, salgın hastalık, resmi makam kararları gibi tarafların makul kontrolü dışındaki ve öngörülemeyen hallerin (mücbir sebep) sözleşmenin ifasını imkânsız veya aşırı derecede güçleştirmesi halinde, etkilenen Taraf durumu derhal diğer Tarafa yazılı olarak bildirir ve mücbir sebep süresince yükümlülükler askıya alınır. Mücbir sebep 30 (otuz) günden uzun sürerse taraflardan her biri sözleşmeyi tazminatsız feshedebilir; bu durumda o ana kadar tahakkuk etmiş kira bedeli ve varsa hasar/ceza alacakları KİRAYA VEREN'e ödenir.`},
   {no:16, b:'TEBLİGAT', t:`Taraflar, işbu sözleşmede belirtilen adreslerini tebligat adresi olarak kabul eder; adres değişiklikleri diğer Tarafa yazılı olarak (noter/iadeli taahhütlü/e-posta) bildirilmedikçe, son bildirilen adrese yapılan tebligat geçerli sayılır. Taraflar, işbu sözleşmede belirtilen e-posta adreslerine yapılacak bildirimleri de yazılı bildirim olarak kabul eder.`},
   {no:17, b:'ALACAĞIN DEVRİ', t:`KİRAYA VEREN, işbu sözleşmeden doğan alacaklarını (kira bedeli, cezai şart, tazminat alacakları dahil) önceden KİRACI'nın onayını almaksızın üçüncü kişilere (finans kuruluşları dahil) devir ve temlik edebilir; bu durumda KİRACI, temlik bildirimini takiben ödemelerini bildirilen alacaklıya yapmakla yükümlüdür.`},
-  {no:18, b:'SÖZLEŞMENİN BÜTÜNLÜĞÜ VE DEĞİŞİKLİK', t:`İşbu sözleşme ve ekleri, taraflar arasındaki anlaşmanın tamamını oluşturur ve sözleşme tarihinden önceki tüm sözlü/yazılı anlaşmaların yerine geçer. Sözleşmede yapılacak her türlü değişiklik, ancak yazılı ve her iki tarafça imzalanmış ek protokol ile geçerli olur. Sözleşmenin herhangi bir hükmünün geçersiz veya uygulanamaz sayılması, sözleşmenin diğer hükümlerinin geçerliliğini etkilemez; geçersiz hüküm, tarafların amacına en yakın geçerli bir hükümle değiştirilmiş sayılır.`},
-  {no:19, b:'UYUŞMAZLIKLARIN ÇÖZÜMÜ VE YETKİLİ MAHKEME', t:`İşbu sözleşmenin uygulanmasından doğacak her türlü uyuşmazlıkta Türk hukuku uygulanır; KONYA Mahkemeleri ve İcra Daireleri münhasıran yetkilidir. İşbu sözleşme 2 (iki) nüsha olarak düzenlenmiş, taraflarca okunup anlaşılarak aşağıda belirtilen tarihte imzalanmıştır.`},
+  {no:18, b:'KEFİL VE MÜTESELSİL SORUMLULUK', t:d.kefil ? `İşbu sözleşmeden doğan tüm borçlardan (kira bedeli, cezai şart, tazminat, hasar bedeli, trafik cezaları ve diğer her türlü alacak dahil) ${d.kefil}${d.kefilTC?' (T.C. Kimlik No: '+d.kefilTC+')':''} ("KEFİL"), KİRACI ile birlikte ve aynı derecede sorumlu olmayı (müteselsil sorumluluk), bu sorumluluğun borcu sonradan doğanlar için de devam edeceğini bilerek ve isteyerek kabul ve taahhüt eder. Kefil, KİRAYA VEREN'in önce Kiracıya başvurmasını veya Kiracı hakkında takip yapmasını beklemek zorunda olmaksızın doğrudan dava ve icra takibine muhatap olarak ödeme yapmayı kabul eder. Kefilin bu beyanı sözleşmenin yenilenmesi veya süre uzatımı hallerinde aynen geçerlidir.` : `KİRACI tüzel kişi ise, işbu sözleşmeyi imzalayan temsilci, şirketi bağlayıcı imza yetkisine sahip olduğunu beyan eder; yetki eksikliği halinde sözleşmeden doğan tüm borç ve zararlardan imzalayan kişi KİRACI ile birlikte müştereken ve müteselsilen sorumludur. KİRAYA VEREN, kira süresince dilediği anda KİRACI'dan gösterilecek kefilin müteselsil sorumluluk beyanını imzalamasını talep etme hakkına sahiptir; bu talebin 15 gün içinde karşılanmaması halinde KİRAYA VEREN sözleşmeyi derhal feshedip ${A.toLowerCase()} geri alma hakkını saklı tutar.`},
+  {no:19, b:'KASKO PRİM ARTIŞI VE HASARSIZLIK KAYBI', t:`KİRACI'nın veya bildirilen sürücülerin kusuruyla meydana gelen her hasar sonucunda sigorta şirketlerince uygulanan hasarsızlık indirimlerinin kaybedilmesi ve kasko ile zorunlu mali mesuliyet sigortası primlerinde oluşan artış, kaybedilen indirim tutarı ve yeni prim ile önceki prim arasındaki fark esas alınarak hesaplanır ve KİRACI'ya yansıtılır. KİRACI, kira süresinin bitimini takip eden ilk prim yenileme dönemini kapsayan prim artışlarını, belgelendirilmiş olarak ilk yazılı bildirimde ödemeyi kabul ve taahhüt eder; bu tutarlar depozitodan mahsup edilebilir.`},
+  {no:20, b:'KİRA BEDELİNİN YENİLENMESİ', t:`12 (on iki) ay ve üzeri süreli kiralamalarda kira bedeli, her kira dönem başında, önceki 12 aylık döneme ilişkin TÜFE (Yiyecek ve Alkolsüz İçecekler hariç Esas Yıllık Ortalama Tüketici Fiyatları Endeksi) artış oranı kadar zamlanarak yenilenir; güncelleme oranı %25'in üzerinde ise %25 esas alınır. KİRAYA VEREN, yeni dönem kira bedelini dönem başlangıcından en az 30 (otuz) gün önce yazılı olarak KİRACI'ya bildirir; KİRACI'nın yeni bedeli kabul etmemesi halinde sözleşme, devam eden kira döneminin sonunda tazminatsız olarak sona erer ve KİRACI ${A.toLowerCase()} Madde 2 hükümlerine göre iade eder.`},
+  {no:21, b:'AVUKATLIK ÜCRETİ VE YARGI MASRAFLARI', t:`İşbu sözleşmeden doğan alacak ve uyuşmazlıkların tahsili/çözümü amacıyla KİRAYA VEREN tarafından başlatılan her türlü hukuk ve icra takibinde; avukatlık ücretleri aksi kararlaştırılmış olsa dahi, harç, masraf, bilirkişi ve keşif giderleri dahil tüm yargı ve icra masrafları KİRACI'ya ait olup talep halinde peşin ödenir. KİRAYA VEREN'in birden fazla avukat veya avukatlık bürosu ile temsil edilmesi halinde hepsi için avukatlık ücreti hükmedilmesini KİRACI şimdiden kabul ve taahhüt eder.`},
+  {no:22, b:'SÖZLEŞMENİN BÜTÜNLÜĞÜ VE DEĞİŞİKLİK', t:`İşbu sözleşme ve ekleri, taraflar arasındaki anlaşmanın tamamını oluşturur ve sözleşme tarihinden önceki tüm sözlü/yazılı anlaşmaların yerine geçer. Sözleşmede yapılacak her türlü değişiklik, ancak yazılı ve her iki tarafça imzalanmış ek protokol ile geçerli olur. Sözleşmenin herhangi bir hükmünün geçersiz veya uygulanamaz sayılması, sözleşmenin diğer hükümlerinin geçerliliğini etkilemez; geçersiz hüküm, tarafların amacına en yakın geçerli bir hükümle değiştirilmiş sayılır.`},
+  {no:23, b:'UYUŞMAZLIKLARIN ÇÖZÜMÜ VE YETKİLİ MAHKEME', t:`İşbu sözleşmenin uygulanmasından doğacak her türlü uyuşmazlıkta Türk hukuku uygulanır; KONYA Mahkemeleri ve İcra Daireleri münhasıran yetkilidir. İşbu sözleşme 2 (iki) nüsha olarak düzenlenmiş, taraflarca okunup anlaşılarak aşağıda belirtilen tarihte imzalanmıştır.`},
   ];
 }
 
@@ -7193,7 +7211,7 @@ ${logoTag}
   <tr><th>KİRAYA VEREN</th><th>KİRACI</th></tr>
   <tr>
     <td><strong>${d.firmaAdi}</strong><br>${d.firmaAdres}${d.firmaTelefon?'<br>Tel: '+d.firmaTelefon:''}${d.firmaVergiNo?'<br>Vergi No: '+d.firmaVergiNo:''}${d.firmaEposta?'<br>E-posta: '+d.firmaEposta:''}</td>
-    <td><strong>${d.kiraci}</strong>${d.kiraciVergi?`<br>TC/Vergi No: ${d.kiraciVergi}`:''}${d.kiraciAdres?`<br>${d.kiraciAdres}`:''}${d.kiraciTel?'<br>Tel: '+d.kiraciTel:''}${d.kiraciEposta?'<br>E-posta: '+d.kiraciEposta:''}${d.kiraciEhliyet?`<br>Ehliyet No: ${d.kiraciEhliyet}`:''}</td>
+    <td><strong>${d.kiraci}</strong>${d.kiraciVergi?`<br>TC/Vergi No: ${d.kiraciVergi}`:''}${d.kiraciAdres?`<br>${d.kiraciAdres}`:''}${d.kiraciTel?'<br>Tel: '+d.kiraciTel:''}${d.kiraciEposta?'<br>E-posta: '+d.kiraciEposta:''}${d.kiraciEhliyet?`<br>Ehliyet No: ${d.kiraciEhliyet}`:''}${d.kefil?`<br><br><strong>KEFİL:</strong> ${d.kefil}${d.kefilTC?'<br>T.C. Kimlik No: '+d.kefilTC:''}<br><span style="font-size:10px;">Kefil, sözleşme borçlarından müteselsilen sorumludur (Madde 18).</span>`:''}</td>
   </tr>
 </table>
 
@@ -7242,6 +7260,7 @@ ${d.notlar?`<div class="madde"><span class="madde-no">ÖZEL ŞARTLAR:</span> ${d
 <div class="imza">
   <div class="imza-box"><div class="imza-line">KİRAYA VEREN / Yetkili</div></div>
   <div class="imza-box"><div class="imza-line">KİRACI / Yetkili</div></div>
+  ${d.kefil?'<div class="imza-box"><div class="imza-line">KEFİL (Müteselsil Sorumlu) / '+d.kefil+'</div></div>':''}
 </div>
 
 <h2>EK-2 — ARAÇ İADE TUTANAĞI</h2>
@@ -7257,6 +7276,7 @@ ${d.notlar?`<div class="madde"><span class="madde-no">ÖZEL ŞARTLAR:</span> ${d
 <div class="imza">
   <div class="imza-box"><div class="imza-line">KİRAYA VEREN / Yetkili</div></div>
   <div class="imza-box"><div class="imza-line">KİRACI / Yetkili</div></div>
+  ${d.kefil?'<div class="imza-box"><div class="imza-line">KEFİL (Müteselsil Sorumlu) / '+d.kefil+'</div></div>':''}
 </div>
 
 <h2>EK-3 — KVKK AYDINLATMA METNİ</h2>
@@ -7383,7 +7403,7 @@ async function sozlesmeDocx(d){
           baslik('MADDE 1 – TARAFLAR'),
           new Table({ width: { size: 9360, type: WidthType.DXA }, borders: tblBorder, rows: [
             new TableRow({ children: [ hucre('KİRAYA VEREN', {bold:true, bg:'E8E8E8', width:4680}), hucre('KİRACI', {bold:true, bg:'E8E8E8', width:4680}) ]}),
-            new TableRow({ children: [ hucre(`${d.firmaAdi}\n${d.firmaAdres}\nTel: ${d.firmaTelefon}\nVergi No: ${d.firmaVergiNo}`, {width:4680}), hucre(`${d.kiraci}\n${d.kiraciAdres||''}\nVergi/TC No: ${d.kiraciVKN||''}`, {width:4680}) ]}),
+            new TableRow({ children: [ hucre(`${d.firmaAdi}\n${d.firmaAdres}\nTel: ${d.firmaTelefon}\nVergi No: ${d.firmaVergiNo}`, {width:4680}), hucre(`${d.kiraci}\n${d.kiraciAdres||''}\nVergi/TC No: ${d.kiraciVKN||''}${d.kefil?`\n\nKEFİL: ${d.kefil}${d.kefilTC?' (TCKN: '+d.kefilTC+')':''}\nKefil, sözleşme borçlarından müteselsilen sorumludur (Madde 18).`:''}`, {width:4680}) ]}),
           ]}),
           bos(),
 
@@ -7431,7 +7451,7 @@ async function sozlesmeDocx(d){
           ]}),
           bos(),
 
-          // 19 maddelik sözleşme metni — HTML sözleşmeyle aynı kaynak
+          // 23 maddelik sözleşme metni — HTML sözleşmeyle aynı kaynak
           ...sozMaddeListesi(d).flatMap(m=>[
             new Paragraph({ spacing: { before: 200, after: 60 }, children: [new TextRun({ text: `MADDE ${m.no} – ${m.b}`, bold: true, size: 21, font: 'Arial' })] }),
             new Paragraph({ spacing: { before: 40, after: 40 }, indent: { left: 360 }, children: [new TextRun({ text: m.t.replace(/<[^>]+>/g,''), size: 20, font: 'Arial' })] }),
@@ -7488,7 +7508,18 @@ async function sozlesmeDocx(d){
                 new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 40 }, children: [new TextRun({ text: `Tarih: ${d.tarih}`, size: 19, font: 'Arial' })] }),
                 new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 40 }, children: [new TextRun({ text: 'Kaşe:', size: 18, font: 'Arial' })] }),
               ]}),
-            ]})
+            ]}),
+            ...(d.kefil ? [new TableRow({ children: [
+              new TableCell({ width: { size: 4200, type: WidthType.DXA }, borders: noBorder, children: [new Paragraph({ children: [new TextRun({ text: '' })] })] }),
+              new TableCell({ width: { size: 960, type: WidthType.DXA }, borders: noBorder, children: [new Paragraph({ children: [new TextRun({ text: '' })] })] }),
+              new TableCell({ width: { size: 4200, type: WidthType.DXA }, borders: noBorder, children: [
+                new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 0, after: 600 }, children: [new TextRun({ text: 'KEFİL (Müteselsil Sorumlu)', bold: true, size: 20, font: 'Arial' })] }),
+                new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: d.kefil, size: 17, font: 'Arial' })] }),
+                new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 200 }, children: [new TextRun({ text: 'Ad Soyad: ..............................', size: 18, font: 'Arial' })] }),
+                new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 60 }, children: [new TextRun({ text: 'İmza: ____________________', size: 19, font: 'Arial' })] }),
+                new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 40 }, children: [new TextRun({ text: `Tarih: ${d.tarih}`, size: 19, font: 'Arial' })] }),
+              ]}),
+            ]})] : []),
           ]}),
         ]
       }]
@@ -7724,6 +7755,14 @@ function renderKiralamaPage(){
         <div class="field">
           <label>Kiracı Adresi</label>
           <input type="text" id="sozKiraciAdres" placeholder="Kiracının açık adresi">
+        </div>
+        <div class="field">
+          <label>Kefil (opsiyonel)</label>
+          <input type="text" id="sozKefil" placeholder="Kefil Ad Soyad — boş bırakılırsa sözleşmede kefil yok sayılır">
+        </div>
+        <div class="field">
+          <label>Kefil TC No</label>
+          <input type="text" id="sozKefilTC" placeholder="Kefilin 11 haneli TC kimlik no" maxlength="11">
         </div>
         <div class="field">
           <label>Araç Rengi</label>
