@@ -1,0 +1,9 @@
+node_modules/
+.netlify/
+.env
+.env.*
+.DS_Store
+Thumbs.db
+__serve.ps1
+__serve_backup.ps1
+*.zip
