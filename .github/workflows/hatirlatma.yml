@@ -1,0 +1,26 @@
+name: Hatırlatma E-postası
+
+on:
+  schedule:
+    # Her gün 04:00 UTC (Türkiye saatiyle 07:00) — Netlify'daki eski takvimle aynı
+    - cron: '0 4 * * *'
+  workflow_dispatch: {}
+
+jobs:
+  hatirlatma:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install firebase-admin
+      - run: node scripts/hatirlatma.js
+        env:
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_CLIENT_EMAIL: ${{ secrets.FIREBASE_CLIENT_EMAIL }}
+          FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          HATIRLATMA_EMAIL: ${{ secrets.HATIRLATMA_EMAIL }}
+          HATIRLATMA_GONDEREN: ${{ secrets.HATIRLATMA_GONDEREN }}
+          FIREBASE_COLLECTION: ${{ secrets.FIREBASE_COLLECTION }}
