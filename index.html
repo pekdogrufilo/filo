@@ -544,7 +544,7 @@
   .page.active{display:block;}
 
   .dash-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:20px;margin-bottom:24px;}
-  .dstat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;display:flex;align-items:flex-start;gap:12px;transition:border-color .15s ease, transform .15s ease;cursor:pointer;}
+  .dstat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;display:flex;align-items:flex-start;gap:12px;transition:border-color .15s ease, transform .15s ease;cursor:pointer;min-width:0;}
   .dstat:hover{border-color:var(--border-2);transform:translateY(-1px);}
   .dstat:hover{border-color:var(--accent-blue);transform:translateY(-2px);}
   .dstat[data-filter="Toplam"]:hover{border-color:var(--accent-blue);}
@@ -575,7 +575,8 @@
   .vqm-close:hover{background:var(--surface-2);color:var(--paper);}
   .vqm-body{overflow-y:auto;padding:12px 16px 20px;flex:1;}
   .dstat-ic{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;}
-  .dstat-txt .n{font-family:var(--font-ui);font-size:25px;font-weight:600;line-height:1;letter-spacing:-.2px;}
+  .dstat-txt{min-width:0;}
+  .dstat-txt .n{font-family:var(--font-ui);font-size:25px;font-weight:600;line-height:1;letter-spacing:-.2px;overflow-wrap:anywhere;}
   .dstat-txt .l{font-size:13px;color:var(--steel-300);margin-top:7px;}
   .dstat-txt .d{font-size:12px;margin-top:4px;font-weight:600;}
   .dstat-strong{position:relative;overflow:hidden;border-width:0;box-shadow:var(--shadow-md);}
@@ -1081,7 +1082,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-10.42</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-10.43</div>
     </div>
   </div>
 </div>
@@ -1192,7 +1193,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-10.42</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-10.43</div>
     </div>
   </aside>
 
@@ -7238,11 +7239,18 @@ function renderDashboard(){
 }
 
 // ===== Masraf Yönetimi sayfası (tüm araçlar) =====
-function renderMasrafPage(){
-  const page = document.getElementById('page-masraf');
+function masrafFiltreliSirali(){
+  const arama = (window.__masrafArama||'').trim().toLocaleLowerCase('tr-TR');
   const sorted = [...expenses].sort((a,b)=>(b.tarih||'').localeCompare(a.tarih||''));
-  const toplam = expenses.reduce((s,e)=>s+(Number(e.tutar)||0),0);
-  const rows = sorted.map(e=>{
+  if(!arama) return sorted;
+  return sorted.filter(e=>{
+    const v = vehicles.find(x=>x.id===e.vehicleId);
+    const hay = [e.plaka||(v?v.plaka:''), e.tip, e.not, fmtTarih(e.tarih)].filter(Boolean).join(' ').toLocaleLowerCase('tr-TR');
+    return hay.includes(arama);
+  });
+}
+function masrafRowsHTML(list){
+  return list.map(e=>{
     const v = vehicles.find(x=>x.id===e.vehicleId);
     return `<tr>
       <td><span class="mini-plaka">${esc(e.plaka||(v?v.plaka:'—'))}</span></td>
@@ -7253,6 +7261,31 @@ function renderMasrafPage(){
       <td style="text-align:right;"><button class="mdel" data-id="${e.id}" title="Sil"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg></button></td>
     </tr>`;
   }).join('');
+}
+function wireMasrafDeleteButtons(){
+  document.querySelectorAll('.mdel').forEach(b=>b.onclick = async ()=>{
+    if(!requireAdmin()) return;
+    const exp = expenses.find(x=>x.id===b.dataset.id);
+    expenses = expenses.filter(x=>x.id!==b.dataset.id);
+    await persistExpenses();
+    renderStatMasraf();
+    renderMasrafTable();
+    if(exp) logActivity('del', `Masraf silindi: <b>${esc(exp.plaka)}</b> · ${esc(exp.tip)} · ${fmtTL2(exp.tutar)}`);
+  });
+}
+function renderMasrafTable(){
+  const filtered = masrafFiltreliSirali();
+  const wrap = document.getElementById('masrafTableWrap');
+  const count = document.getElementById('masrafSayac');
+  if(count) count.textContent = window.__masrafArama ? `${filtered.length} / ${expenses.length} kayıt` : `${expenses.length} kayıt · Toplam ${fmtTL2(expenses.reduce((s,e)=>s+(Number(e.tutar)||0),0))}`;
+  if(wrap) wrap.innerHTML = filtered.length ? `<table class="mini-table"><thead><tr><th>Plaka</th><th>Tip</th><th>Tarih</th><th>Not</th><th style="text-align:right">Tutar</th><th></th></tr></thead><tbody id="masrafTableBody">${masrafRowsHTML(filtered)}</tbody></table>` : `<div class="log-empty">${window.__masrafArama ? 'Aramanla eşleşen masraf bulunamadı.' : 'Henüz masraf kaydedilmedi.'}</div>`;
+  wireMasrafDeleteButtons();
+}
+function renderMasrafPage(){
+  const page = document.getElementById('page-masraf');
+  const sorted = masrafFiltreliSirali();
+  const toplam = expenses.reduce((s,e)=>s+(Number(e.tutar)||0),0);
+  const rows = masrafRowsHTML(sorted);
   const vehicleOptions = vehicles.map(v=>`<option value="${v.id}">${esc(v.plaka)}</option>`).join('');
   page.innerHTML = `
     <div class="dcard" style="margin-bottom:16px;">
@@ -7276,10 +7309,15 @@ function renderMasrafPage(){
       </button>
     </div>
     <div class="dcard">
-      <h3>Tüm Masraflar <span style="font-weight:400;font-size:13px;color:var(--steel-100)">${expenses.length} kayıt · Toplam ${fmtTL2(toplam)}</span></h3>
-      ${sorted.length ? `<div class="table-scroll"><table class="mini-table"><thead><tr><th>Plaka</th><th>Tip</th><th>Tarih</th><th>Not</th><th style="text-align:right">Tutar</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : '<div class="log-empty">Henüz masraf kaydedilmedi.</div>'}
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
+        <h3 style="margin:0;">Tüm Masraflar <span id="masrafSayac" style="font-weight:400;font-size:13px;color:var(--steel-100)">${expenses.length} kayıt · Toplam ${fmtTL2(toplam)}</span></h3>
+        <input type="text" id="mArama" value="${esc(window.__masrafArama||'')}" placeholder="Plaka, tip veya not'a göre ara..." autocomplete="off" style="max-width:260px;background:var(--surface-2);border:1px solid var(--line);color:var(--paper);padding:8px 12px;border-radius:8px;font-family:inherit;font-size:13px;">
+      </div>
+      <div id="masrafTableWrap" class="table-scroll">${sorted.length ? `<table class="mini-table"><thead><tr><th>Plaka</th><th>Tip</th><th>Tarih</th><th>Not</th><th style="text-align:right">Tutar</th><th></th></tr></thead><tbody id="masrafTableBody">${rows}</tbody></table>` : `<div class="log-empty">${window.__masrafArama ? 'Aramanla eşleşen masraf bulunamadı.' : 'Henüz masraf kaydedilmedi.'}</div>`}</div>
     </div>
   `;
+  document.getElementById('mArama').oninput = (e)=>{ window.__masrafArama = e.target.value; renderMasrafTable(); };
+  wireMasrafDeleteButtons();
   document.getElementById('mpTarih').value = todayISO();
   // Plaka otomatik tamamlama
   window.mpPlakaSuggest = function(val){
@@ -7320,18 +7358,14 @@ function renderMasrafPage(){
     expenses.push(entry);
     await persistExpenses();
     renderStatMasraf();
-    renderMasrafPage();
+    renderMasrafTable();
+    document.getElementById('mpPlaka').value='';
+    document.getElementById('mpTutar').value='';
+    document.getElementById('mpNot').value='';
+    document.getElementById('mpTip').selectedIndex = 0;
+    document.getElementById('mpTarih').value = todayISO();
     logActivity('add', `Masraf eklendi: <b>${esc(v.plaka)}</b> · ${esc(entry.tip)} · ${fmtTL2(tutar)}`);
   };
-  page.querySelectorAll('.mdel').forEach(b=>b.onclick = async ()=>{
-    if(!requireAdmin()) return;
-    const exp = expenses.find(x=>x.id===b.dataset.id);
-    expenses = expenses.filter(x=>x.id!==b.dataset.id);
-    await persistExpenses();
-    renderStatMasraf();
-    renderMasrafPage();
-    if(exp) logActivity('del', `Masraf silindi: <b>${esc(exp.plaka)}</b> · ${esc(exp.tip)} · ${fmtTL2(exp.tutar)}`);
-  });
 }
 
 // ===== Bakım & Servis sayfası =====
@@ -9171,6 +9205,14 @@ function renderBelgelerPage(){
 
   const kritikSayi = belgeler.filter(b=>b.minDl!==null&&b.minDl<=30).length;
 
+  // Kalabalık olmasın diye kartlar varsayılan olarak kapalı gelir; yalnızca kritik/süresi
+  // geçmiş belgesi olan araçlar ilk açılışta otomatik genişletilmiş görünür. Kullanıcının
+  // elle açıp kapattığı kartlar bu oturum boyunca hatırlanır (window.__belgeAcikSet).
+  if(!window.__belgeAcikSet){
+    window.__belgeAcikSet = new Set(belgeler.filter(b=>b.minDl!==null&&b.minDl<=30).map(b=>b.v.id));
+  }
+  const acikSet = window.__belgeAcikSet;
+
   page.innerHTML = `
     <div class="topbar">
       <div class="topbar-left">
@@ -9197,25 +9239,37 @@ function renderBelgelerPage(){
         {k:'gecerli', l:'✅ Geçerli', c:'#16A34A'},
       ].map(f=>`<button onclick="window.__belgeFilter='${f.k}';renderBelgelerPage()"
         style="padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid ${filter===f.k?f.c:'var(--border)'};background:${filter===f.k?f.c+'1a':'var(--surface)'};color:${filter===f.k?f.c:'var(--text-2)'};">${f.l}</button>`).join('')}
+      <span style="flex:1"></span>
+      <button onclick="window.__belgeAcikSet=new Set(${JSON.stringify(filtered.map(b=>b.v.id))});renderBelgelerPage()" style="padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text-2);">Tümünü Genişlet</button>
+      <button onclick="window.__belgeAcikSet=new Set();renderBelgelerPage()" style="padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text-2);">Tümünü Daralt</button>
     </div>
 
     <div style="display:flex;flex-direction:column;gap:8px;">
       ${filtered.length===0 ? `<div class="log-empty">Bu filtrede belge bulunamadı.</div>` :
-        filtered.map(({v, docs})=>{
+        filtered.map(({v, docs, minDl})=>{
           const otoDocs = Array.isArray(v.otoBelgeler) ? v.otoBelgeler : [];
           const toplamBelge = docs.filter(d=>d.belgeAdi).length + otoDocs.length;
+          const acik = acikSet.has(v.id);
+          const kritikBu = docs.filter(d=>{ const dl=daysLeft(d.tarih); return dl!==null && dl<=30; }).length;
+          const gecmisBu = docs.filter(d=>{ const dl=daysLeft(d.tarih); return dl!==null && dl<0; }).length;
+          const ozetRenk = gecmisBu>0?'#DC2626':kritikBu>0?'#D97706':'#16A34A';
+          const ozetMetin = gecmisBu>0?`${gecmisBu} süresi geçmiş`:kritikBu>0?`${kritikBu} kritik`:'Tümü geçerli';
           return `
           <div class="dcard" style="padding:14px 16px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-              <div>
+            <div onclick="window.__belgeAcikSet.${acik?'delete':'add'}('${v.id}');renderBelgelerPage()" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;${acik?'margin-bottom:10px;':''}">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-3);transform:rotate(${acik?90:0}deg);transition:transform .15s ease;flex-shrink:0;"><path d="m9 18 6-6-6-6"/></svg>
                 <span style="font-size:14px;font-weight:700;color:var(--paper);">${esc(v.plaka)}</span>
-                <span style="font-size:12px;color:var(--text-3);margin-left:8px;">${esc([v.marka,v.model].filter(Boolean).join(' ')||'')}</span>
+                <span style="font-size:12px;color:var(--text-3);">${esc([v.marka,v.model].filter(Boolean).join(' ')||'')}</span>
               </div>
-              <span style="font-size:12px;color:var(--text-3);">${esc(v.yer||v.kiraciAdi||'')}</span>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <span style="font-size:12px;color:var(--text-3);">${esc(v.yer||v.kiraciAdi||'')}</span>
+                ${!acik ? `<span style="font-size:11px;font-weight:700;color:${ozetRenk};">${ozetMetin}</span>` : ''}
+              </div>
             </div>
-            ${toplamBelge===0 ? `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:8px;background:var(--surface-2);border:1px dashed var(--border);">
+            ${!acik ? '' : toplamBelge===0 ? `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:8px;background:var(--surface-2);border:1px dashed var(--border);">
               <span style="font-size:13px;color:var(--text-3);">Bu araçta henüz belge yüklenmemiş.</span>
-              <button onclick="belgeYukleSecilenId('${v.id}')" style="background:rgba(46,124,246,.1);border:1px solid rgba(46,124,246,.2);color:var(--accent-blue);padding:4px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Belge Yükle</button>
+              <button onclick="event.stopPropagation();belgeYukleSecilenId('${v.id}')" style="background:rgba(46,124,246,.1);border:1px solid rgba(46,124,246,.2);color:var(--accent-blue);padding:4px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Belge Yükle</button>
             </div>` : `
             <div style="display:flex;flex-direction:column;gap:6px;">
               ${docs.map(d=>{
@@ -9277,7 +9331,11 @@ function renderRaporlarPage(){
   }).filter(x=>x.aylikGelir>0 || x.toplamMasraf>0)
     .sort((a,b)=>b.aylikKar-a.aylikKar);
 
-  const toplamGelir = karlilik.reduce((s,x)=>s+x.aylikGelir,0);
+  // Not: üstteki özet kutuları yalnızca ŞU AN kirada olan araçların gelirini saymalı —
+  // Genel Bakış / Araç Yönetimi sayfalarındaki "Aylık Kira Geliri" ile aynı tanımı kullanır.
+  // Serviste/Müsait/Satıldı gibi durumlarda kayıtlı bir kira bedeli olsa da bu, o an tahsil
+  // edilen bir gelir değildir; alttaki tabloda araç bazında yine görünür, sadece toplama girmez.
+  const toplamGelir = karlilik.filter(x=>x.v.durum==='Kirada').reduce((s,x)=>s+x.aylikGelir,0);
   const toplamMasraf = karlilik.reduce((s,x)=>s+x.aylikMasrafTahmini,0);
   const toplamKar = toplamGelir - toplamMasraf;
 
