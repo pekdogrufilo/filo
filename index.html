@@ -1191,7 +1191,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-10.39</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-10.40</div>
     </div>
   </aside>
 
@@ -3743,10 +3743,10 @@ const DOC_TYPES = [
   {
     key: 'ruhsat', label: 'Ruhsat belgesi', fromLabel: 'Ruhsat belgesinden',
     fileId: 'fRuhsatBelge', mevcutId: 'ruhsatBelgeMevcut', adiId: 'ruhsatBelgeAdi', kaldirId: 'ruhsatBelgeKaldir',
-    autoBtnId: 'ruhsatBelgeAutoFillBtn', autoTextId: 'ruhsatBelgeAutoFillBtnText', resultId: 'ruhsatBelgeAutoFillResult',
+    autoBtnId: 'ruhsatBelgeAutoFillBtn', autoTextId: 'ruhsatBelgeAutoFillText', resultId: 'ruhsatBelgeAutoFillResult',
     vehicleAdiField: 'ruhsatBelgeAdi', vehicleTipField: 'ruhsatBelgeTip', storagePrefix: 'ruhsat_',
-    system: 'Sen bir araç ruhsat (tescil) belgesinden bilgi çıkaran bir asistansın. Sana verilen belgeyi dikkatle oku. SADECE aşağıdaki alanları içeren geçerli bir JSON nesnesiyle yanıt ver — başka hiçbir metin, açıklama veya markdown kod bloğu ekleme:\n{"plaka": string|null, "marka": string|null, "model": string|null, "versiyon": string|null, "donanim": string|null, "modelYili": number|null, "ruhsatSeriNo": string|null}\n"model" alanına aracın tip/model adını yaz (ör. "Corolla", "Passat"), marka adını tekrar etme. "versiyon" alanına motor/yakıt bilgisini yaz (ör. "1.5 dCi", "1.6 TDI"). "donanim" alanına donanım paket adını yaz (ör. "Touch", "Safeline", "Joy") — bulamazsan null. "modelYili" sadece 4 haneli yıl sayısı olsun. "ruhsatSeriNo" ruhsatın seri numarasıdır. Bir alanı bulamıyorsan null yaz, tahmin yürütme.',
-    userText: 'Bu ruhsat belgesinden plaka, marka, model, model yılı ve ruhsat seri numarasını çıkar.',
+    system: 'Sen bir araç ruhsat/tescil belgesinden bilgi çıkaran bir asistansın. Belge klasik pembe/mavi ruhsat kartı, geçici tescil belgesi ya da noter satışı sonrası düzenlenen tescil/fatura eki belgesi olabilir — hepsi geçerlidir, formatına takılma. Sana verilen belgeyi dikkatle oku. SADECE aşağıdaki alanları içeren geçerli bir JSON nesnesiyle yanıt ver — başka hiçbir metin, açıklama veya markdown kod bloğu ekleme:\n{"plaka": string|null, "marka": string|null, "model": string|null, "versiyon": string|null, "donanim": string|null, "modelYili": number|null, "ruhsatSeriNo": string|null, "aracCinsi": string|null}\n"marka" (D.1/MARKASI) ile "model" (D.3/TİCARİ ADI ya da D.2/TİPİ) alanlarını karıştırma: "TİCARİ ADI" hem markayı hem modeli içeriyorsa (ör. "FIAT DUCATO"), "model" alanına SADECE marka adından sonraki kısmı yaz (ör. "DUCATO"), markayı tekrar etme. "versiyon" alanına doğrudan yazılı bir motor/versiyon adı (ör. "1.5 dCi") varsa onu yaz; yoksa silindir hacmi (cm³) ve yakıt cinsinden kısa bir özet oluştur (ör. "2.2 Dizel"); hiçbiri yoksa null. "donanim" alanına donanım paket adını yaz (ör. "Touch", "Safeline", "Joy") — bulamazsan null. "modelYili" sadece 4 haneli yıl sayısı olsun. "ruhsatSeriNo" için önce "RUHSAT SERİ NO" alanına bak; yoksa belgedeki "BELGE Seri" / "Seri No" numarasını kullan (harf+rakam kombinasyonu, ör. "IG 056880"). "aracCinsi" alanına belgedeki CİNSİ bilgisini olduğu gibi yaz (ör. "Kamyonet-Açık Kasa", "Otomobil"). Bir alanı hiçbir şekilde bulamıyorsan null yaz, tahmin yürütme.',
+    userText: 'Bu ruhsat/tescil belgesinden plaka, marka, model, versiyon, donanım, model yılı, ruhsat seri numarası ve araç cinsini çıkar.',
     apply(extracted){
       const filled = [];
       if(extracted.plaka && !document.getElementById('fPlaka').value.trim()){ setFieldValueFlash('fPlaka', extracted.plaka); filled.push('plaka'); }
@@ -3756,6 +3756,7 @@ const DOC_TYPES = [
       if(extracted.donanim){ setFieldValueFlash('fDonanim', extracted.donanim); filled.push('donanım paketi'); }
       if(extracted.modelYili && !isNaN(Number(extracted.modelYili))){ setFieldValueFlash('fYil', Number(extracted.modelYili)); filled.push('model yılı'); }
       if(extracted.ruhsatSeriNo){ setFieldValueFlash('fRuhsatSeri', extracted.ruhsatSeriNo); filled.push('ruhsat seri no'); }
+      if(extracted.aracCinsi && !document.getElementById('fCins').value.trim()){ setFieldValueFlash('fCins', extracted.aracCinsi); filled.push('araç cinsi'); }
       return filled;
     }
   },
@@ -4147,21 +4148,29 @@ document.getElementById('fRuhsatHizli').addEventListener('change', async (e)=>{
   // birkaç dakikayı bulabilir. Kutu o süre boyunca "okunuyor" yazısında donmuş
   // görünmesin diye burada ayrı bir üst sınır koyuyoruz; arka plandaki gerçek
   // okuma isterse devam edip Belgeler sekmesini sonradan güncelleyebilir.
-  let zamanAsimi = false;
-  await Promise.race([
-    runDocAutoFill(d),
-    new Promise(resolve=>setTimeout(()=>{ zamanAsimi = true; resolve(); }, 50000))
-  ]);
-  if(zamanAsimi){
-    show('Okuma 50 saniyeden uzun sürdü — Gemini şu an yoğun ya da internet bağlantınızda bir sorun olabilir. Az sonra tekrar deneyin ya da "Belgeler" sekmesinden elle doldurun.', true);
-    return;
-  }
-  const res = document.getElementById(d.resultId);
-  const resGorunur = res && res.style.display!=='none';
-  if(resGorunur && res.classList.contains('ok')){
-    show('✓ ' + res.textContent.trim() + ' — Belgeler sekmesinde de kayıtlı.', false);
-  }else{
-    show(resGorunur ? res.textContent.trim() : 'Okuma başarısız oldu; alanları elle doldurabilirsin.', true);
+  // Ayrıca beklenmedik herhangi bir hata (ör. bir DOM elemanı bulunamaması)
+  // artık kutuyu sonsuza dek "okunuyor" yazısında bırakmak yerine burada
+  // yakalanıp kullanıcıya görünür bir mesaj olarak gösteriliyor.
+  try{
+    let zamanAsimi = false;
+    await Promise.race([
+      runDocAutoFill(d),
+      new Promise(resolve=>setTimeout(()=>{ zamanAsimi = true; resolve(); }, 50000))
+    ]);
+    if(zamanAsimi){
+      show('Okuma 50 saniyeden uzun sürdü — Gemini şu an yoğun ya da internet bağlantınızda bir sorun olabilir. Az sonra tekrar deneyin ya da "Belgeler" sekmesinden elle doldurun.', true);
+      return;
+    }
+    const res = document.getElementById(d.resultId);
+    const resGorunur = res && res.style.display!=='none';
+    if(resGorunur && res.classList.contains('ok')){
+      show('✓ ' + res.textContent.trim() + ' — Belgeler sekmesinde de kayıtlı.', false);
+    }else{
+      show(resGorunur ? res.textContent.trim() : 'Okuma başarısız oldu; alanları elle doldurabilirsin.', true);
+    }
+  }catch(err){
+    console.error('Ruhsat hızlı okuma hatası:', err);
+    show('Beklenmeyen bir hata oldu: ' + (err && err.message ? err.message : 'bilinmeyen hata') + '. Alanları elle doldurabilir ya da "Belgeler" sekmesinden tekrar deneyebilirsin.', true);
   }
 });
 
