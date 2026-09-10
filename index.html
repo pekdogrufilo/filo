@@ -1178,7 +1178,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-09.15</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-09.16</div>
     </div>
   </aside>
 
@@ -7127,7 +7127,7 @@ function sozMaddeListesi(d){
   const A = coklu ? 'Araçlar' : 'Araç';
   return [
   {no:1, b:'SÖZLEŞMENİN KONUSU VE KAPSAMI', t:`İşbu sözleşmenin konusu, yukarıda nitelikleri belirtilen ${aracKelime} mülkiyeti KİRAYA VEREN'de kalmak kaydıyla, işbu sözleşmede belirlenen süre, bedel ve şartlarla KİRACI'ya operasyonel kiralama esasına göre kullanım hakkının devredilmesidir. Sözleşme, Araç Teslim Tutanağı (Ek-1) ve varsa diğer ekleriyle birlikte bir bütündür; ekler ile sözleşme metni arasında çelişki halinde sözleşme metni esas alınır. Kiracı, işbu sözleşmede belirttiği temsil yetkisinin geçerli ve tam olduğunu, temsilcisinin şirketi bağlayıcı şekilde imza atmaya yetkili olduğunu beyan ve taahhüt eder; yetkisiz temsilden doğan tüm zararlardan Kiracı ve temsilcisi müştereken ve müteselsilen sorumludur.`},
-  {no:2, b:'TESLİM VE İADE', t:`${A}, ${d.bas} tarihinde, Madde 2'de belirtilen kilometre ve <strong>${d.yakit||'Dolu'}</strong> yakıt seviyesiyle, ${d.teslimYer||'KİRAYA VEREN merkezi'} yerinde, taraflarca birlikte düzenlenip imzalanacak Araç Teslim Tutanağı (Ek-1) ile KİRACI'ya teslim edilmiştir; tutanakta aracın o anki hasar durumu, lastik/aksesuar bilgileri ve varsa fotoğrafları yer alır. ${A} dolu yakıtla teslim edilip dolu yakıtla iade edilecek, eksik yakıt bedeli KİRACI'dan piyasa fiyatı üzerinden tahsil edilecektir. Kira süresi sonunda ${A}, KİRAYA VEREN'in belirteceği yer ve tarihte, teslim alındığı hal ve donanımla, normal yıpranma payı dışında hasarsız olarak iade edilir; iade sırasında ${A.toLowerCase()} birlikte kontrol edilip Araç İade Tutanağı (Ek-2) düzenlenir. KİRACI'nın iade sırasında hazır bulunmaması veya tutanağı imzalamaktan kaçınması halinde KİRAYA VEREN'in tek taraflı düzenleyeceği tutanak taraflar arasında bağlayıcıdır.`},
+  {no:2, b:'TESLİM VE İADE', t:`${A}, ${d.bas} tarihinde, Madde 3'te belirtilen aylık kilometre ve <strong>${d.yakit||'Dolu'}</strong> yakıt seviyesiyle, ${d.teslimYer||'KİRAYA VEREN merkezi'} yerinde, taraflarca birlikte düzenlenip imzalanacak Araç Teslim Tutanağı (Ek-1) ile KİRACI'ya teslim edilmiştir; tutanakta aracın o anki hasar durumu, lastik/aksesuar bilgileri ve varsa fotoğrafları yer alır. ${A} dolu yakıtla teslim edilip dolu yakıtla iade edilecek, eksik yakıt bedeli KİRACI'dan piyasa fiyatı üzerinden tahsil edilecektir. Kira süresi sonunda ${A}, KİRAYA VEREN'in belirteceği yer ve tarihte, teslim alındığı hal ve donanımla, normal yıpranma payı dışında hasarsız olarak iade edilir; iade sırasında ${A.toLowerCase()} birlikte kontrol edilip Araç İade Tutanağı (Ek-2) düzenlenir. KİRACI'nın iade sırasında hazır bulunmaması veya tutanağı imzalamaktan kaçınması halinde KİRAYA VEREN'in tek taraflı düzenleyeceği tutanak taraflar arasında bağlayıcıdır.`},
   {no:3, b:'KULLANIM KOŞULLARI VE YASAKLAR', t:`${A} yalnızca işbu sözleşmede belirtilen amaçla ve KİRACI tarafından kullanılır; KİRAYA VEREN'in önceden yazılı onayı olmaksızın üçüncü kişilere kiralanamaz, alt kiraya konu edilemez, ödünç verilemez, devredilemez veya rehin/teminat olarak gösterilemez. ${A}nın yurt dışına çıkarılması KİRAYA VEREN'in önceden yazılı onayına tabidir. ${A} üzerinde LPG dönüşümü, renk değişikliği, marka/logo yapıştırması, mekanik/elektronik modifikasyon dahil hiçbir yetkisiz değişiklik yapılamaz. ${A}nın yarışta, sürüş eğitiminde, test amaçlı, başka bir aracı çekmede/kurtarmada, ruhsatında belirtilenden fazla yükleme ile veya trafik güvenliğini tehlikeye atacak şekilde kullanılması yasaktır. Bu maddeye aykırılıktan doğan her türlü zarar, ceza ve üçüncü kişi talepleri KİRACI'ya aittir ve KİRAYA VEREN bu hallerde sözleşmeyi derhal feshederek ${A.toLowerCase()} geri alma hakkına sahiptir. Aylık ${d.kmLimit} km kullanım limitini aşan her kilometre için ${d.kmAsimFiyat} ₺ + KDV ek ücret tahakkuk eder; kullanılmayan km sonraki döneme devredilmez.`},
   {no:4, b:'SÜRÜCÜ VE EHLİYET ŞARTI', t:`${A}yı yalnızca KİRACI ile önceden KİRAYA VEREN'e bildirilmiş, aracın sınıfına uygun geçerli sürücü belgesine sahip kişiler kullanabilir. KİRACI, ek sürücü bilgilerini (varsa) yazılı olarak bildirmekle yükümlüdür; bildirilmemiş bir sürücünün kullanımından doğan hasar, ceza ve sigorta reddi dahil tüm sonuçlar KİRACI'ya aittir. Ehliyetsiz, ehliyeti geçici/sürekli iptal edilmiş veya aracın sınıfına uygun olmayan ehliyetle yapılan kullanımdan doğan tüm hukuki ve cezai sonuçlar ile hasarlar münhasıran KİRACI'ya aittir; bu hallerde sigorta şirketinin ödeme yapmaması durumunda dahi KİRAYA VEREN'in zararı KİRACI'dan tazmin edilir.`},
   {no:5, b:'BAKIM, ONARIM VE PERİYODİK SERVİS', t:`${A}nın üretici tarafından öngörülen periyodik bakımları KİRAYA VEREN tarafından, KİRAYA VEREN'in yönlendireceği yetkili servislerde yaptırılır; KİRACI, ${A.toLowerCase()} bakım zamanı geldiğinde gecikmeksizin belirtilen servise götürmek ve arıza/uyarı ışıklarını derhal KİRAYA VEREN'e bildirmekle yükümlüdür. KİRACI'nın bu yükümlülüğü ihmal etmesi sonucu oluşan arıza büyümesi, motor/şanzıman hasarı gibi zararlar KİRACI'ya aittir. KİRAYA VEREN'in yazılı onayı olmaksızın yetkisiz servislerde bakım/onarım yaptırılamaz; aksi halde doğacak garanti kaybı ve hasarlardan KİRACI sorumludur. Bakım/onarım süresince ikame araç sağlanmaz.`},
@@ -9185,7 +9185,7 @@ function renderAyarlarPage(){
       </div>
       <div class="settings-card">
         <h3><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg> Yedekleme</h3>
-        <p>Tüm veriyi (araçlar, masraflar, etkinlik geçmişi) tek bir dosyaya indir, ya da bir yedekten geri yükle.</p>
+        <p>Tüm veriyi (araçlar, masraflar, kayıtlı sözleşmeler, etkinlik geçmişi) tek bir dosyaya indir, ya da bir yedekten geri yükle.</p>
         <div class="row-btns">
           <button class="settings-btn" id="apBackup">Yedekle (JSON)</button>
           <button class="settings-btn" id="apRestore">Yedekten geri yükle</button>
@@ -9479,7 +9479,7 @@ function sonYedekMetni(k){
 function backupToJson(){
   const backup = {
     olusturmaTarihi: new Date().toISOString(),
-    vehicles, expenses, activityLog,
+    vehicles, expenses, activityLog, sozlesmeler,
   };
   const blob = new Blob([JSON.stringify(backup, null, 2)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
@@ -9489,7 +9489,7 @@ function backupToJson(){
   a.click();
   setTimeout(()=>URL.revokeObjectURL(url), 5000);
   sonYedekKaydet();
-  logActivity('backup', 'Yedek alındı (JSON indirildi).').catch(()=>{});
+  logActivity('backup', `Yedek alındı (JSON indirildi — ${vehicles.length} araç, ${expenses.length} masraf, ${(sozlesmeler||[]).length} sözleşme).`).catch(()=>{});
   const info = document.getElementById('sonYedekInfo');
   if(info) info.innerHTML = sonYedekMetni(window.__sonYedek);
   showToast('Yedek dosyası indirildi.');
@@ -9502,13 +9502,16 @@ document.getElementById('restoreJsonInput')?.addEventListener('change', async (e
     const text = await file.text();
     const data = JSON.parse(text);
     if(!Array.isArray(data.vehicles)) throw new Error('Bu dosya geçerli bir yedek dosyası gibi görünmüyor.');
-    if(!confirm(`Bu yedek ${data.vehicles.length} araç içeriyor. Mevcut verinin YERİNE geçecek, geri alınamaz. Devam edilsin mi?`)) { e.target.value=''; return; }
+    const sozSayi = Array.isArray(data.sozlesmeler) ? data.sozlesmeler.length : 0;
+    if(!confirm(`Bu yedek ${data.vehicles.length} araç${sozSayi ? ' ve '+sozSayi+' kayıtlı sözleşme' : ''} içeriyor. Mevcut verinin YERİNE geçecek, geri alınamaz. Devam edilsin mi?`)) { e.target.value=''; return; }
     vehicles = data.vehicles;
     expenses = Array.isArray(data.expenses) ? data.expenses : [];
     activityLog = Array.isArray(data.activityLog) ? data.activityLog : [];
+    sozlesmeler = Array.isArray(data.sozlesmeler) ? data.sozlesmeler : [];
     await persist();
     await persistExpenses();
     await storageAPI.set('activityLog', JSON.stringify(activityLog)).catch(()=>{});
+    await persistSozlesmeler();
     buildSirketFilter();
     render();
     renderStatMasraf();
