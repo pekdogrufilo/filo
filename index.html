@@ -1178,7 +1178,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-09.21</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-09.22</div>
     </div>
   </aside>
 
@@ -4469,6 +4469,10 @@ function openAracKirala(vehicleId){
           <label>Özel şartlar / notlar</label>
           <input type="text" id="krNotlar" placeholder="Varsa özel koşullar...">
         </div>
+        <label style="display:flex;align-items:center;gap:8px;padding:8px 2px;font-size:13px;color:var(--text-2);cursor:pointer;">
+          <input type="checkbox" id="krTutanak" checked style="width:16px;height:16px;accent-color:var(--accent-blue);">
+          Sözleşmeyle birlikte <b>&nbsp;Teslim Tutanağı&nbsp;</b> (Ek-1) de oluştur
+        </label>
         <div style="background:rgba(201,138,62,.08);border:1px solid rgba(201,138,62,.25);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--text-2);margin-top:4px;">
           <b>Not:</b> Kaydet'te araç otomatik <b>"Kirada"</b> olur, kiracı bilgileri araç kartına işlenir ve 23 maddelik kapsamlı sözleşme (Ekler dahil) hazırlanır.
         </div>
@@ -4513,6 +4517,86 @@ function krSecimGuncelle(){
         </div>`;
       }).join('')}
     </div>`;
+}
+
+// ===== Teslim Tutanağı (Ek-1 formatı) =====
+function teslimTutanakHtml(d){
+  const logoSrc = (document.querySelector('.lock-logo-wrap img')||{}).src||'';
+  const logoTag = logoSrc ? `<img src="${logoSrc}" alt="" style="display:block;margin:0 auto 10px;max-height:64px;">` : '';
+  const aracSatirlar = d.araclar.map(a=>`
+    <tr><td style="text-align:center;"><strong>${a.plaka}</strong></td><td>${[a.marka,a.model].filter(Boolean).join(' ')||'—'}</td><td style="text-align:center;">${a.modelYili||'—'}</td><td style="text-align:center;">${a.renk||'—'}</td><td style="text-align:center;">${a.teslimKm||'—'}</td><td style="text-align:center;">${d.yakit||'Dolu'}</td></tr>`).join('');
+  return `<!DOCTYPE html>
+<html lang="tr"><head><meta charset="UTF-8"><title>Araç Teslim Tutanağı — ${d.plaka}</title>
+<style>
+  body{font-family:Arial,sans-serif;font-size:12px;line-height:1.6;color:#000;max-width:800px;margin:0 auto;padding:20px;}
+  h1{text-align:center;font-size:15px;text-transform:uppercase;border-bottom:2px solid #000;padding-bottom:8px;}
+  h2{font-size:13px;text-transform:uppercase;border-bottom:1px solid #333;}
+  table{width:100%;border-collapse:collapse;margin:10px 0;}
+  td,th{border:1px solid #999;padding:6px 8px;font-size:12px;vertical-align:top;}
+  th{background:#f0f0f0;font-weight:bold;width:32%;}
+  .arac-t{width:100%;} .arac-t th{width:auto;text-align:center;}
+  .imza{display:flex;justify-content:space-between;margin-top:70px;}
+  .imza-box{text-align:center;width:42%;}
+  .imza-line{border-top:1px solid #000;margin-top:60px;padding-top:5px;font-weight:bold;}
+  @media print{body{padding:0;} @page{margin:15mm;}}
+</style></head>
+<body>
+${logoTag}
+<h1>Araç Teslim Tutanağı</h1>
+<p style="text-align:center;font-size:11px;">Tutanak Tarihi: ${d.tarih} &nbsp;|&nbsp; ${d.sozNo ? 'İlgili Sözleşme No: '+d.sozNo : ''}</p>
+
+<h2>1. Taraflar</h2>
+<table>
+  <tr><th>Kiraya Veren</th><td><strong>${d.firmaAdi}</strong><br>${d.firmaAdres}${d.firmaTelefon?'<br>Tel: '+d.firmaTelefon:''}${d.firmaVergiNo?'<br>Vergi No: '+d.firmaVergiNo:''}</td></tr>
+  <tr><th>Kiracı</th><td><strong>${d.kiraci}</strong>${d.kiraciVKN?'<br>Vergi/TC No: '+d.kiraciVKN:''}${d.kiraciTel?'<br>Tel: '+d.kiraciTel:''}${d.kefil?'<br><strong>KEFİL:</strong> '+d.kefil+(d.kefilTC?' (TCKN: '+d.kefilTC+')':''):''}</td></tr>
+</table>
+
+<h2>2. Teslim Edilen Araçlar</h2>
+<table class="arac-t">
+  <tr><th>Plaka</th><th>Marka / Model</th><th>Model Yılı</th><th>Renk</th><th>Teslim KM</th><th>Yakıt</th></tr>
+  ${aracSatirlar}
+</table>
+
+<h2>3. Teslim Bilgileri</h2>
+<table>
+  <tr><th>Kira Dönemi</th><td>${d.bas} → ${d.bitis} (${d.sure})</td></tr>
+  <tr><th>Teslim Yeri</th><td>${d.teslimYer||'Belirtilmedi'}</td></tr>
+  <tr><th>Aylık KM Limiti</th><td>${d.kmLimit} km (aşımında ${d.kmAsimFiyat} TL/km)</td></tr>
+  <tr><th>Depozito</th><td>${d.depozito} TL</td></tr>
+  ${d.notlar?`<tr><th>Özel Şartlar</th><td>${esc(d.notlar)}</td></tr>`:''}
+</table>
+
+<h2>4. Beyan</h2>
+<p style="text-align:justify;">KİRAYA VEREN, yukarıda özellikleri yazılı araç(ları) ${d.bas} tarihinde KİRACI'ya belirtilen yakıt seviyesi ve kilometre durumunda sağlam ve temiz olarak teslim ettiğini beyan eder. KİRACI, araç(ları) bu durumda teslim aldığını, araçların mevcut hasar/kusurlarını şimdiden gördüğünü ve kabul ettiğini, aracı kira süresi sonunda ödeşmeden aynı durumda iade etmekle yükümlü olduğunu kabul ve taahhüt eder. Bu tutanak, taraflar arasındaki ${d.sozNo} numaralı kira sözleşmesinin ayrılmaz eki (Ek-1) niteliğindedir.</p>
+
+<div class="imza">
+  <div class="imza-box"><div class="imza-line">KİRAYA VEREN / Yetkili</div></div>
+  <div class="imza-box"><div class="imza-line">KİRACI / Yetkili</div></div>
+  ${d.kefil?'<div class="imza-box"><div class="imza-line">KEFİL / '+d.kefil+'</div></div>':''}
+</div>
+</body></html>`;
+}
+function teslimTutanakAc(d){
+  const html = teslimTutanakHtml(d);
+  let w = null;
+  try{ w = window.open('','_blank'); }catch(e){}
+  if(w && w.document){
+    w.document.open('text/html');
+    w.document.write(html);
+    w.document.close();
+    setTimeout(()=>{ try{ w.focus(); w.print(); }catch(e){} }, 600);
+  }else{
+    try{
+      const blob = new Blob([html], {type:'text/html'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `teslim_tutanagi_${(d.plaka||'arac').replace(/\s+/g,'-')}_${(d.tarih||'').replace(/\./g,'-')}.html`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url), 5000);
+      showToast('Pencere engellendi — Teslim Tutanağı HTML olarak indirildi. Açıp Ctrl+P ile PDF yapabilirsiniz.', true);
+    }catch(e){ showToast('Teslim tutanağı oluşturulamadı: '+e.message, true); }
+  }
 }
 
 async function kirayaVerVeSozlesme(format){
@@ -4567,6 +4651,7 @@ async function kirayaVerVeSozlesme(format){
   await persist();
   render();
   if(window.__currentPage && window.__currentPage!=='arac-yonetimi') renderCurrentPage();
+  const tutanakIstendi = document.getElementById('krTutanak')?.checked;
   document.getElementById('kiralaModal')?.remove();
   const plakalar = secilen.map(v=>esc(v.plaka)).join(', ');
   logActivity('edit', secilen.length===1
@@ -4619,6 +4704,9 @@ async function kirayaVerVeSozlesme(format){
   await sozKaydet(sozData, bas, bitis);
   if(format==='pdf') sozlesmeHtmlPdf(sozData);
   else sozlesmeDocx(sozData);
+  if(tutanakIstendi){
+    setTimeout(()=>teslimTutanakAc(sozData), 1200);
+  }
 }
 
 async function fisBelgeGor(masrafId){
