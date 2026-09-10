@@ -1082,7 +1082,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-10.43</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-10.45</div>
     </div>
   </div>
 </div>
@@ -1193,7 +1193,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-10.43</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-10.45</div>
     </div>
   </aside>
 
@@ -2035,16 +2035,6 @@ async function load(){
     arsiv = (ar && ar.value) ? JSON.parse(ar.value) : [];
   }catch(e){ arsiv = []; }
   updateArsivSayi();
-  // Bulutta kayıtlı Gemini anahtarı bu cihazda yoksa localStorage'a aynala
-  if(window.__cloudSyncActive && !localStorage.getItem('filoPaneli_geminiKey')){
-    try{
-      const gr = await storageAPI.get('geminiKey').catch(()=>null);
-      if(gr && gr.value){
-        const k = JSON.parse(gr.value);
-        if(k) localStorage.setItem('filoPaneli_geminiKey', k);
-      }
-    }catch(e){}
-  }
   buildSirketFilter();
   render();
   updateShellChrome();
@@ -3910,28 +3900,32 @@ function wireDocType(d){
   document.getElementById(d.autoBtnId).onclick = ()=>runDocAutoFill(d);
 }
 
-// Gemini API'ye direkt istek — Cloud Run bypass
+// Gemini API'ye istek — artık DOĞRUDAN Google'a değil, kendi Netlify sunucu fonksiyonumuza
+// (netlify/functions/gemini-proxy.js) gidiyor. Gerçek GEMINI_API_KEY yalnızca o fonksiyonun
+// sunucu ortamında duruyor; tarayıcıya, localStorage'a ya da Firestore'a hiç yazılmıyor.
+// Not: GitHub Pages üzerinden açılan kopya da bu fonksiyonu çağırabilsin diye adres mutlak
+// (Netlify domain'i sabit yazılı) — Netlify sitenizin adresi değişirse burayı güncelleyin.
 const GEMINI_MODELS = [
   'gemini-3.5-flash-lite',
   'gemini-3.5-flash',
   'gemini-3.1-flash-lite',
   'gemini-2.5-flash',
 ];
+const GEMINI_PROXY_URL = 'https://delightful-kangaroo-d4ba2e.netlify.app/.netlify/functions/gemini-proxy';
 
 function getGeminiKey(){
-  try{ return localStorage.getItem('filoPaneli_geminiKey') || ''; }catch(e){ return ''; }
+  // Geriye dönük uyumluluk: kod tabanında onlarca yer "AI özelliği aktif mi" diye bunun
+  // boş olmayan bir değer dönüp dönmediğine bakıyor. Gerçek anahtar artık sunucuda
+  // (Netlify env variable) olduğu için burada sabit, anahtar OLMAYAN bir işaret döneriz.
+  return 'sunucu-proxy-aktif';
 }
 
 async function callGeminiDirect(system, userText, contentBlock, modelIdx=0, retryCount=0){
-  const GEMINI_API_KEY = getGeminiKey();
-  if(!GEMINI_API_KEY){
-    throw new Error('Gemini API anahtarı ayarlanmamış. Ayarlar → AI bölümünden anahtarınızı girin.');
-  }
   const GEMINI_MODEL = GEMINI_MODELS[modelIdx] || GEMINI_MODELS[0];
   const base64 = contentBlock?.source?.data;
   const mimeType = contentBlock?.source?.media_type || 'application/pdf';
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
   const body = {
+    model: GEMINI_MODEL,
     system_instruction: { parts: [{ text: system }] },
     contents: [{
       role: 'user',
@@ -3945,9 +3939,9 @@ async function callGeminiDirect(system, userText, contentBlock, modelIdx=0, retr
   const controller = new AbortController();
   const timeout = setTimeout(()=>controller.abort(), 45000);
   try{
-    const res = await fetch(url, {
+    const res = await fetch(GEMINI_PROXY_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_API_KEY },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
       signal: controller.signal
     });
@@ -3969,7 +3963,7 @@ async function callGeminiDirect(system, userText, contentBlock, modelIdx=0, retr
           return callGeminiDirect(system, userText, contentBlock, nextModel, 0);
         }
       }
-      throw new Error(`Gemini hatası (${res.status}): ${err?.error?.message||''}`);
+      throw new Error(`Gemini hatası (${res.status}): ${err?.error?.message||err?.error||''}`);
     }
     const data = await res.json();
     const text = (data?.candidates?.[0]?.content?.parts||[]).map(p=>p.text||'').join('');
@@ -3983,18 +3977,17 @@ async function callGeminiDirect(system, userText, contentBlock, modelIdx=0, retr
 
 // Sohbet/şartname istekleri için ortak Gemini çağrısı: zaman aşımı + model yedeği + boş yanıt teşhisi
 async function geminiChatFetch(system, contents, generationConfig){
-  const key = getGeminiKey();
-  if(!key) throw new Error('Gemini API anahtarı gerekli. Ayarlar → AI bölümünden girin.');
   let lastErr = 'Yanıt alınamadı.';
   for(let i=0;i<GEMINI_MODELS.length;i++){
     const MODEL = GEMINI_MODELS[i];
     const controller = new AbortController();
     const timeout = setTimeout(()=>controller.abort(), 60000);
     try{
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,{
+      const res = await fetch(GEMINI_PROXY_URL,{
         method:'POST',
-        headers:{'Content-Type':'application/json','x-goog-api-key':key},
+        headers:{'Content-Type':'application/json'},
         body: JSON.stringify({
+          model: MODEL,
           system_instruction:{parts:[{text:system}]},
           contents,
           generationConfig
@@ -4004,7 +3997,7 @@ async function geminiChatFetch(system, contents, generationConfig){
       clearTimeout(timeout);
       if(!res.ok){
         const err = await res.json().catch(()=>({}));
-        lastErr = `Gemini hatası (${res.status}): ${err?.error?.message||''}`;
+        lastErr = `Gemini hatası (${res.status}): ${err?.error?.message||err?.error||''}`;
         // 404 model bulunamadı / 503 yoğunluk → sıradaki modeli dene
         if(res.status===404 || res.status===503) continue;
         throw new Error(lastErr);
@@ -9069,10 +9062,11 @@ async function otoBelgeSil(vehicleId, key){
   if(!requireAdmin()) return;
   const v = vehicles.find(x=>x.id===vehicleId);
   if(!v || !Array.isArray(v.otoBelgeler)) return;
+  const silinen = v.otoBelgeler.find(o=>o.key===key);
   v.otoBelgeler = v.otoBelgeler.filter(o=>o.key!==key);
   await storageAPI.set(key, '').catch(()=>{});
   await persist();
-  logActivity('del', `Belge silindi: <b>${esc(v.plaka)}</b> · ${esc(o.adi||'')}`).catch(()=>{});
+  logActivity('del', `Belge silindi: <b>${esc(v.plaka)}</b> · ${esc((silinen&&silinen.adi)||'')}`).catch(()=>{});
   showToast('Belge silindi.');
   renderDocUploadPage();
 }
@@ -9671,7 +9665,7 @@ function renderBildirimlerPage(){
           ? (u.km<=0 ? `${Math.abs(u.km).toLocaleString('tr-TR')} km gecikti!` : `${u.km.toLocaleString('tr-TR')} km kaldı`)
           : (u.dl<0?`${Math.abs(u.dl)} gün gecikti!`:u.dl===0?'Bugün!':u.dl<=7?`${u.dl} gün kaldı ⚠️`:`${u.dl} gün kaldı`);
         return `
-          <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);opacity:${okundu?'.5':'1'};">
+          <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);opacity:${okundu?'.5':'1'};flex-wrap:wrap;">
             <div style="width:8px;height:8px;border-radius:50%;background:${okundu?'var(--border)':renk};flex-shrink:0;"></div>
             <div style="flex:1;">
               <div style="display:flex;align-items:center;gap:8px;">
@@ -10230,15 +10224,7 @@ function renderAyarlarPage(){
       </div>
       <div class="settings-card">
         <h3><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg> AI Otomatik Doldurma (Gemini)</h3>
-        <p style="font-size:13px;color:var(--text-2);margin-bottom:12px;">Belge okuma için Gemini API anahtarı gerekli. <a href="https://aistudio.google.com" target="_blank" style="color:var(--accent-blue);">aistudio.google.com</a> adresinden ücretsiz anahtar alabilirsin. Anahtar bu cihazda saklanır, GitHub'a yüklenmez.</p>
-        <div class="field" style="margin-bottom:10px;">
-          <label style="font-size:12px;color:var(--text-2);display:block;margin-bottom:5px;">API Anahtarı</label>
-          <div style="display:flex;gap:8px;">
-            <input type="password" id="geminiKeyInput" placeholder="AQ.Ab8RN6..." style="flex:1;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:8px;font-family:monospace;font-size:13px;">
-            <button class="settings-btn" id="apSaveGeminiKey">Kaydet</button>
-          </div>
-        </div>
-        <div id="geminiKeyStatus" style="font-size:13px;"></div>
+        <p style="font-size:13px;color:var(--text-2);">Belge okuma artık güvenli bir sunucu üzerinden çalışıyor — anahtar tarayıcıda tutulmuyor, buraya bir şey girmene gerek yok. <span style="color:#16A34A;">✓ Aktif</span></p>
       </div>
       <div class="settings-card">
         <h3><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg> Yedekleme</h3>
@@ -10262,33 +10248,6 @@ function renderAyarlarPage(){
   document.getElementById('apEmail').onclick = ()=>document.getElementById('menuEmailSettings').click();
   document.getElementById('apCloud').onclick = ()=>document.getElementById('menuCloudSync').click();
   if(document.getElementById('apAi')) document.getElementById('apAi').onclick = ()=>document.getElementById('menuAiSettings')?.click();
-  
-  // Gemini API anahtarı
-  const geminiInput = document.getElementById('geminiKeyInput');
-  const geminiStatus = document.getElementById('geminiKeyStatus');
-  if(geminiInput){
-    const savedKey = getGeminiKey();
-    if(savedKey) {
-      geminiInput.value = savedKey;
-      geminiStatus.innerHTML = '<span style="color:#2ECC71">✓ Anahtar kayıtlı</span>';
-    }
-    document.getElementById('apSaveGeminiKey').onclick = async ()=>{
-      const key = geminiInput.value.trim();
-      if(!key){ geminiStatus.innerHTML = '<span style="color:#E74C3C">Anahtar boş olamaz.</span>'; return; }
-      try{
-        localStorage.setItem('filoPaneli_geminiKey', key);
-        // Bulut senkron aktifse anahtarı da buluta yaz — diğer cihazlarda otomatik dolsun
-        let bulutNotu = '';
-        if(window.__cloudSyncActive){
-          try{ await storageAPI.set('geminiKey', JSON.stringify(key)); bulutNotu = ' (buluta da kaydedildi)'; }
-          catch(e2){ bulutNotu = ' (buluta yazılamadı — sadece bu cihazda)'; }
-        }
-        geminiStatus.innerHTML = '<span style="color:#2ECC71">✓ Anahtar kaydedildi'+esc(bulutNotu)+'.</span>';
-      }catch(e){
-        geminiStatus.innerHTML = '<span style="color:#E74C3C">Kayıt hatası: '+e.message+'</span>';
-      }
-    };
-  }
   document.getElementById('apBackup').onclick = backupToJson;
   document.getElementById('apRestore').onclick = ()=>document.getElementById('restoreJsonInput').click();
   sonYedekOku().then(k=>{ const info=document.getElementById('sonYedekInfo'); if(info) info.innerHTML = sonYedekMetni(k); });
