@@ -20,13 +20,13 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /filoPaneliData/{doc} {
-      allow read, write: if true;
+      allow read, write: if request.auth != null;
     }
   }
 }
 ```
 
-> Not: Bu kural veriyi "yapılandırma bilgisine sahip herkesin" okumasına açar. Panel anahtar+şifre korumalıdır ve veri içinde gizli bilgi yoksa bu pratik düzeyde yeterlidir. Daha sıkı güvenlik isterseniz sonraki sürümde kimlik doğrulama eklenebilir.
+> Not: Bu kural yalnızca oturum açmış istemcilerin veriye erişmesine izin verir. Panel, bağlanırken kendiliğinden **anonim Firebase girişi** yapar (sizin işiniz yok); panelin kendi şifre ekranı erişim kontrolünü yapar. Böylece veri, yapılandırmayı bilen ama oturum açmayan tarayıcılardan korunur.
 
 ### 3. Web uygulaması anahtarını al
 1. Proje ana sayfasında ⚙️ **Project settings → General → Your apps → Web (</>) simgesi**.
@@ -34,9 +34,10 @@ service cloud.firestore {
 3. Karşınıza çıkan `firebaseConfig` bloğundaki değerler gerekli: **apiKey, authDomain, projectId, storageBucket, messagingSenderId, appId**.
 
 ### 4. Panele bağla
-1. Paneli açın → **Ayarlar → Bulut Senkronizasyonu → Bağlan**.
-2. firebaseConfig değerlerini forma girin → **Bağlan**.
-3. Üst çubukta **"☁ Bulutta senkronize"** rozeti görünmeli. Artık araç verileri + belgeler buluta yazılıyor; telefonunuzdan da aynı adımlarla bağlanınca her şey orada da görünür.
+1. Firebase Console → **Build → Authentication → Get started → Anonymous → Enable** (panel, buluta bağlanırken anonim oturum açar; bu adım bir kez yapılır).
+2. Paneli açın → **Ayarlar → Bulut Senkronizasyonu → Bağlan**.
+3. firebaseConfig değerlerini forma girin → **Bağlan**.
+4. Üst çubukta **"☁ Bulutta senkronize"** rozeti görünmeli. Artık araç verileri + belgeler buluta yazılıyor; telefonunuzdan da aynı adımlarla bağlanınca her şey orada da görünür.
 
 ---
 
@@ -63,7 +64,7 @@ Site Netlify'da yayında olduktan sonra:
 | `FIREBASE_CLIENT_EMAIL` | Servis hesabı JSON'undaki client_email |
 | `FIREBASE_PRIVATE_KEY` | Servis hesabı JSON'undaki private_key (BEGIN/END satırlarıyla birlikte, olduğu gibi) |
 | `RESEND_API_KEY` | `re_...` anahtarı |
-| `HATIRLATMA_EMAIL` | Hatırlatmaların geleceği e-posta adresiniz |
+| `HATIRLATMA_EMAIL` | Hatırlatmaların geleceği e-posta adresiniz *(opsiyonel — girmezseniz Ayarlar > Hatırlatma E-postası'na panelde girdiğiniz adres kullanılır)* |
 | `HATIRLATMA_GONDEREN` | (opsiyonel) ör. `PEKDOĞRU Filo <onboarding@resend.dev>` |
 
 2. **Deploys → Trigger deploy → Clear cache and deploy site** ile yeniden yayınlayın.

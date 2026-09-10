@@ -1,4 +1,4 @@
-const CACHE_NAME = 'filo-panel-v10';
+const CACHE_NAME = 'filo-panel-v11';
 const PRECACHE = [
   './',
   './index.html',
@@ -9,9 +9,11 @@ const PRECACHE = [
   './apple-touch-icon.png',
   './firebase-app-compat.js',
   './firebase-firestore-compat.js',
+  './firebase-auth-compat.js',
   // CDN kütüphaneleri (ZIP indirme, Excel, QR, sözleşme)
   'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',
 ];
 self.addEventListener('install', (event) => {
   event.waitUntil(

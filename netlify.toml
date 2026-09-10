@@ -2,6 +2,20 @@
   publish = "."
   functions = "netlify/functions"
 
+[build.environment]
+  NODE_VERSION = "20"
+
 # Otomatik hatırlatma: her gün sabah 07:00 (UTC 04:00) çalışır
 [functions."hatirlatma"]
   schedule = "0 4 * * *"
+
+# Güncellemelerin önbelleğe takılmadan yayılması için
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache"

@@ -2,19 +2,18 @@
 // Her gün çalışır; bitişe 30/7/1 gün kalan veya geçmiş belgeleri e-posta ile bildirir.
 // Gereken ortam değişkenleri (Netlify > Site settings > Environment variables):
 //   FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY
-//   RESEND_API_KEY, HATIRLATMA_EMAIL
+//   RESEND_API_KEY, HATIRLATMA_EMAIL (opsiyonel — yoksa panelden girilen
+//   Firestore'daki reminderEmail adresi kullanılır)
 // Ayrıntılı kurulum: KURULUM-BULUT.md
 
 const crypto = require('crypto');
 
 exports.handler = async () => {
   const gonderen = process.env.HATIRLATMA_GONDEREN || 'PEKDOĞRU Filo <onboarding@resend.dev>';
-  const alici = process.env.HATIRLATMA_EMAIL;
+  let alici = process.env.HATIRLATMA_EMAIL;
   const ozet = {ok: true, bulutOku: false, acil: 0, gonderildi: false, mesaj: ''};
 
   try{
-    if(!alici){ ozet.mesaj = 'HATIRLATMA_EMAIL tanımlı değil; e-posta gönderilmedi.'; return json(200, ozet); }
-
     // 1) Firestore'dan araçları oku
     const admin = require('firebase-admin');
     if(!admin.apps.length){
@@ -29,6 +28,16 @@ exports.handler = async () => {
     }
     const db = admin.firestore();
     const col = db.collection(process.env.FIREBASE_COLLECTION || 'filoPaneliData');
+
+    // Ortam değişkeni yoksa panelden girilen adresi (Ayarlar > Hatırlatma E-postası) kullan
+    if(!alici){
+      try{
+        const rem = await col.doc('reminderEmail').get();
+        const deger = rem.exists ? String(rem.data().value || '').trim() : '';
+        if(deger){ alici = deger; ozet.aliciKaynak = 'panel'; }
+      }catch(e){}
+    }
+    if(!alici){ ozet.mesaj = 'HATIRLATMA_EMAIL ve panelden girilen hatırlatma e-postası tanımlı değil; e-posta gönderilmedi.'; return json(200, ozet); }
 
     const vehicles = await chunkluOku(col, 'vehicles');
     if(!vehicles || !vehicles.length){ ozet.mesaj = 'Firestore\'da araç verisi bulunamadı (bulut senkron bağlı mı?).'; return json(200, ozet); }
