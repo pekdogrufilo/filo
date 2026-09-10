@@ -1054,6 +1054,9 @@
   .chart-dot-pulse{transform-box:fill-box;transform-origin:center;animation:dotPulse 2.2s 1.3s ease-out infinite;}
   @keyframes dotPulse{0%{opacity:.6;transform:scale(1);}70%{opacity:0;transform:scale(2.8);}100%{opacity:0;transform:scale(2.8);}}
   .chart-bar{transform-box:fill-box;transform-origin:center bottom;animation:barIn .55s cubic-bezier(.2,.7,.3,1) both;}
+  .chart-hbar{transform-origin:left center;animation:hbarIn .7s .2s cubic-bezier(.2,.7,.3,1) both;}
+  @keyframes hbarIn{from{transform:scaleX(0);}to{transform:scaleX(1);}}
+  @media (prefers-reduced-motion:reduce){.chart-hbar{animation:none !important;}}
   @keyframes barIn{from{transform:scaleY(0);}to{transform:scaleY(1);}}
   @media (prefers-reduced-motion: reduce){
     .donut-svg,.chart-line-path,.chart-area,.chart-dot-pulse,.chart-bar{animation:none !important;stroke-dashoffset:0 !important;opacity:1 !important;transform:none !important;}
@@ -1188,7 +1191,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-10.34</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-10.35</div>
     </div>
   </aside>
 
@@ -6305,6 +6308,42 @@ function svgDualLineChart(a, b, labels, width, height){
   </div>`;
 }
 
+// ProGo tarzı yatay bar grafikler (dashboard kira performansı)
+function topKiraChartHTML(){
+  const kirada = vehicles.filter(v=>v.durum==='Kirada' && Number(v.kira)>0).sort((a,b)=>Number(b.kira)-Number(a.kira)).slice(0,8);
+  if(!kirada.length) return '<div class="log-empty">Şu an kirada araç yok.</div>';
+  const max = Number(kirada[0].kira)||1;
+  return `<div style="display:flex;flex-direction:column;gap:9px;">${kirada.map((v,i)=>{
+    const w = Math.max(6, Math.round(Number(v.kira)/max*100));
+    return `<div style="display:grid;grid-template-columns:92px 1fr 88px;align-items:center;gap:10px;">
+      <span class="mini-plaka" style="font-size:11px;">${esc(v.plaka)}</span>
+      <div style="height:18px;border-radius:9px;background:var(--surface-2);overflow:hidden;">
+        <div class="chart-hbar" style="height:100%;width:${w}%;border-radius:9px;background:linear-gradient(90deg,#2E7CF6,#4E92FF);transition:width .6s cubic-bezier(.4,0,.2,1);"></div>
+      </div>
+      <span style="font-size:11.5px;font-weight:600;color:var(--steel-100);text-align:right;font-variant-numeric:tabular-nums;">${fmtTL2_role(v.kira)}</span>
+    </div>`;
+  }).join('')}</div>`;
+}
+function topMusteriChartHTML(){
+  const mapa = new Map();
+  vehicles.filter(v=>v.durum==='Kirada' && Number(v.kira)>0 && (v.yer||v.kiraciAdi)).forEach(v=>{
+    const ad = (v.yer||v.kiraciAdi).trim();
+    mapa.set(ad, (mapa.get(ad)||0)+Number(v.kira));
+  });
+  const top = [...mapa.entries()].map(([ad,k])=>({ad, k})).sort((a,b)=>b.k-a.k).slice(0,6);
+  if(!top.length) return '<div class="log-empty">Kirada müşteri kaydı yok.</div>';
+  const max = top[0].k||1;
+  return `<div style="display:flex;flex-direction:column;gap:9px;">${top.map((m,i)=>{
+    const w = Math.max(6, Math.round(m.k/max*100));
+    return `<div style="display:grid;grid-template-columns:110px 1fr 88px;align-items:center;gap:10px;">
+      <span style="font-size:11.5px;font-weight:600;color:var(--steel-100);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(m.ad)}">${esc(m.ad)}</span>
+      <div style="height:18px;border-radius:9px;background:var(--surface-2);overflow:hidden;">
+        <div class="chart-hbar" style="height:100%;width:${w}%;border-radius:9px;background:linear-gradient(90deg,#16A34A,#33D57F);transition:width .6s cubic-bezier(.4,0,.2,1);"></div>
+      </div>
+      <span style="font-size:11.5px;font-weight:600;color:var(--steel-100);text-align:right;font-variant-numeric:tabular-nums;">${fmtTL2_role(m.k)}</span>
+    </div>`;
+  }).join('')}</div>`;
+}
 function svgBarChart(values, labels, width, height, color){
   const id = 'bg'+(__chartIdCounter++);
   const pad = {l:44,r:8,t:22,b:24};
@@ -6824,6 +6863,16 @@ function renderDashboard(){
           return `<div class="yp-grid">${box('Sigorta',say['Sigorta'],'#2E7CF6')}${box('Muayene',say['Muayene'],'#6366F1')}${box('Kasko',say['Kasko'],'#8B5CF6')}${box('Kira/Söz.',say['Kira']+say['Sözleşme'],'#EA580C')}</div>
           <div style="margin-top:10px;">${yak.length?liste:'<div class="log-empty">30 gün içinde belge bitişi yok.</div>'}</div>`;
         })()}
+      </div>
+    </div>
+    <div class="dash-grid dg-3" style="margin-top:16px;grid-template-columns:1fr 1fr;">
+      <div class="dcard">
+        <h3>En Yüksek Kiralı Araçlar <a data-goto="arac-yonetimi" style="font-size:11px;font-weight:400;color:var(--accent-blue);text-decoration:none;">Tümü →</a></h3>
+        ${topKiraChartHTML()}
+      </div>
+      <div class="dcard">
+        <h3>Müşteri Bazlı Aylık Gelir <a data-goto="musteriler" style="font-size:11px;font-weight:400;color:var(--accent-blue);text-decoration:none;">Tümü →</a></h3>
+        ${topMusteriChartHTML()}
       </div>
     </div>
     <div class="dash-grid dg-3" style="margin-top:16px;grid-template-columns:1fr 1fr;">
