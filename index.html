@@ -1178,7 +1178,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-09.22</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-09.23</div>
     </div>
   </aside>
 
@@ -3488,7 +3488,7 @@ function exportExcel(){
       'Araç(lar)': r.aracOzet || '',
       'Başlangıç': r.basISO ? fmtTarih(r.basISO) : '',
       'Bitiş': r.bitisISO ? fmtTarih(r.bitisISO) : '',
-      'Durum': dl===null ? '' : (dl<0 ? 'Süresi geçti' : 'Aktif'),
+      'Durum': r.iadeEdildi ? 'İade edildi'+(r.iadeEdildi.tarih?' ('+r.iadeEdildi.tarih+')':'') : (dl===null ? '' : (dl<0 ? 'Süresi geçti' : 'Aktif')),
     };
   });
   if(sozRows.length){
@@ -4236,6 +4236,16 @@ async function saveIade(id){
       not: document.getElementById('iadeNot')?.value?.trim()||'',
     }],
   };
+  // İlgili sözleşme kaydını "İade edildi" olarak işaretle
+  if(sozlesmeler && sozlesmeler.length){
+    let isaretlendi = false;
+    sozlesmeler.forEach(r=>{
+      if(isaretlendi || r.iadeEdildi) return;
+      const plakaUyum = (r.plakalar||[]).includes(v.plaka) || (r.aracOzet||'').split(',').map(p=>p.trim()).includes(v.plaka);
+      if(plakaUyum){ r.iadeEdildi = {tarih: fmtTarih(iadeTarih)}; isaretlendi = true; }
+    });
+    if(isaretlendi) await persistSozlesmeler();
+  }
   // Modal kaldırılmadan önce tutanak verilerini yakala
   const tutanakIstendi = document.getElementById('iadeTutanak')?.checked;
   const tYakit = document.getElementById('iadeYakit')?.value||'';
@@ -4969,8 +4979,8 @@ function openVehicleDetail(id){
           <div style="display:flex;flex-direction:column;">
             ${vSozler.map(r=>{
               const dl = daysLeft(r.bitisISO);
-              const sRenk = dl===null?'var(--steel-300)':dl<0?'#DC2626':'#16A34A';
-              const sTxt = dl===null?'—':dl<0?'Süresi geçti':'Aktif · '+dl+' gün';
+              const sRenk = r.iadeEdildi?'#2563EB':(dl===null?'var(--steel-300)':dl<0?'#DC2626':'#16A34A');
+              const sTxt = r.iadeEdildi ? 'İade edildi'+(r.iadeEdildi.tarih?' · '+r.iadeEdildi.tarih:'') : (dl===null?'—':dl<0?'Süresi geçti':'Aktif · '+dl+' gün');
               return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);flex-wrap:wrap;">
                 <span style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace;font-weight:700;font-size:12px;color:var(--accent-blue);">${esc(r.sozNo)}</span>
                 <span style="font-size:12px;color:var(--steel-300);flex:1;min-width:120px;">${esc(r.kiraci||'')}</span>
@@ -8069,9 +8079,10 @@ function renderKiralamaPage(){
         <thead><tr><th>Sözleşme No</th><th>Tarih</th><th>Kiracı</th><th>Araç(lar)</th><th>Dönem</th><th>Durum</th><th style="white-space:nowrap;">İşlem</th></tr></thead>
         <tbody>${[...sozlesmeler].reverse().map(r=>{
           const dl = daysLeft(r.bitisISO);
-          const durum = dl===null ? '<span style="color:var(--steel-300);">—</span>'
+          const durum = r.iadeEdildi ? `<span style="color:#2563EB;font-weight:600;">İade edildi${r.iadeEdildi.tarih?' · '+r.iadeEdildi.tarih:''}</span>`
+            : (dl===null ? '<span style="color:var(--steel-300);">—</span>'
             : (dl<0 ? '<span style="color:#DC2626;font-weight:600;">Süresi geçti</span>'
-                    : `<span style="color:#16A34A;font-weight:600;">Aktif${dl<=7?' · '+dl+' gün kaldı':''}</span>`);
+                    : `<span style="color:#16A34A;font-weight:600;">Aktif${dl<=7?' · '+dl+' gün kaldı':''}</span>`));
           return `<tr>
             <td style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace;font-weight:700;">${esc(r.sozNo)}</td>
             <td>${esc(r.tarih||'—')}</td>
@@ -8082,6 +8093,7 @@ function renderKiralamaPage(){
             <td style="white-space:nowrap;">
               <button onclick="sozKayitPdf('${r.id}')" style="background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);color:var(--accent-blue);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">PDF</button>
               <button onclick="sozKayitDocx('${r.id}')" style="background:rgba(22,163,74,.1);border:1px solid rgba(22,163,74,.2);color:#16A34A;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Word</button>
+              <button onclick="teslimTutanakAc(sozlesmeler.find(x=>x.id==='${r.id}').data)" title="Ek-1 Teslim Tutanağını yeniden üret" style="background:rgba(201,138,62,.1);border:1px solid rgba(201,138,62,.25);color:#C98A3E;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Teslim</button>
               <button onclick="sozKayitSil('${r.id}')" style="background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.2);color:#DC2626;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Sil</button>
             </td>
           </tr>`;
@@ -8089,9 +8101,10 @@ function renderKiralamaPage(){
       </table></div>
       <div class="m-card-list">${[...sozlesmeler].reverse().map(r=>{
         const dl = daysLeft(r.bitisISO);
-        const durum = dl===null ? '<span style="color:var(--steel-300);">—</span>'
+        const durum = r.iadeEdildi ? '<span style="color:#2563EB;font-weight:600;">İade edildi</span>'
+          : (dl===null ? '<span style="color:var(--steel-300);">—</span>'
           : (dl<0 ? '<span style="color:#DC2626;font-weight:600;">Süresi geçti</span>'
-                  : '<span style="color:#16A34A;font-weight:600;">Aktif</span>');
+                  : '<span style="color:#16A34A;font-weight:600;">Aktif</span>'));
         return `<div class="m-card">
           <div class="m-card-head">
             <span style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace;font-weight:700;font-size:13px;">${esc(r.sozNo)}</span>
@@ -8106,6 +8119,7 @@ function renderKiralamaPage(){
           <div style="display:flex;gap:6px;margin-top:10px;">
             <button onclick="sozKayitPdf('${r.id}')" style="flex:1;background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);color:var(--accent-blue);padding:7px 0;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">PDF</button>
             <button onclick="sozKayitDocx('${r.id}')" style="flex:1;background:rgba(22,163,74,.1);border:1px solid rgba(22,163,74,.2);color:#16A34A;padding:7px 0;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Word</button>
+            <button onclick="teslimTutanakAc(sozlesmeler.find(x=>x.id==='${r.id}').data)" style="flex:1;background:rgba(201,138,62,.1);border:1px solid rgba(201,138,62,.25);color:#C98A3E;padding:7px 0;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Teslim</button>
             <button onclick="sozKayitSil('${r.id}')" style="background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.2);color:#DC2626;padding:7px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Sil</button>
           </div>
         </div>`;
@@ -8804,9 +8818,10 @@ function musteriDetayHtml(m){
     .sort((a,b)=>(b.basISO||'').localeCompare(a.basISO||''));
   const sozSatirlar = mSozler.map(r=>{
     const dl = daysLeft(r.bitisISO);
-    const durum = dl===null ? '<span style="color:var(--text-3);">—</span>'
+    const durum = r.iadeEdildi ? '<span style="color:#2563EB;font-weight:700;">İade edildi</span>'
+      : (dl===null ? '<span style="color:var(--text-3);">—</span>'
       : (dl<0 ? '<span style="color:#DC2626;font-weight:700;">Süresi geçti</span>'
-              : `<span style="color:#16A34A;font-weight:600;">Aktif${dl<=7?' · '+dl+' gün':''}</span>`);
+              : `<span style="color:#16A34A;font-weight:600;">Aktif${dl<=7?' · '+dl+' gün':''}</span>`));
     return `
       <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border);">
         <span style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace;font-weight:700;font-size:12px;color:var(--accent-blue);min-width:110px;">${esc(r.sozNo)}</span>
