@@ -81,6 +81,30 @@ Yanıtta şunları görürsünüz:
 
 ---
 
+---
+
+## BÖLÜM 3 — Netlify yerine yalnızca GitHub kullanmak
+
+Netlify kullanım limitinize takıldıysanız site GitHub Pages üzerinden de yayında kalabilir (`https://pekdogrufilo.github.io/filo/`), ama GitHub Pages statik dosya sunar — Netlify'daki "Otomatik E-posta Hatırlatması" fonksiyonunu (Bölüm 2) çalıştıramaz. Bunun yerine repoya eklenen `.github/workflows/hatirlatma.yml` + `scripts/hatirlatma.js` ile **GitHub Actions** aynı işi ücretsiz olarak günlük yapar. Kurulum:
+
+1. GitHub'da reponuzu açın → **Settings → Secrets and variables → Actions → New repository secret**.
+2. Bölüm 2'de topladığınız değerlerin AYNISINI, Netlify yerine buraya tek tek ekleyin (isimler birebir aynı):
+
+| Secret adı | Değer |
+|---|---|
+| `FIREBASE_PROJECT_ID` | firebaseConfig'teki projectId |
+| `FIREBASE_CLIENT_EMAIL` | Servis hesabı JSON'undaki client_email |
+| `FIREBASE_PRIVATE_KEY` | Servis hesabı JSON'undaki private_key (BEGIN/END satırlarıyla birlikte) |
+| `RESEND_API_KEY` | `re_...` anahtarı |
+| `HATIRLATMA_EMAIL` | (opsiyonel) hatırlatmaların geleceği adres |
+| `HATIRLATMA_GONDEREN` | (opsiyonel) ör. `PEKDOĞRU Filo <onboarding@resend.dev>` |
+
+3. Kaydettikten sonra reponun **Actions** sekmesine girin → soldan **"Hatırlatma E-postası"** workflow'unu seçin → **"Run workflow"** ile bir kez elle çalıştırıp test edin. Çıktıda `"gonderildi":true` veya `"mesaj"` alanına bakarak sonucu görebilirsiniz.
+4. Her şey doğruysa artık ayrıca bir şey yapmanıza gerek yok — her gün otomatik (Türkiye saatiyle 07:00) çalışır.
+5. Netlify'ı tamamen bırakırsanız `netlify/functions/hatirlatma.js` ve `netlify.toml` dosyalarını silmenize gerek yok, zararı olmaz; sadece kullanılmamış olur.
+
+---
+
 ## Sık sorulanlar
 
 **Buluta bağlayınca verilerim güvende mi?** Veri Google'ın altyapısında saklanır, HTML dosyanız artık araç verisi taşımaz. Kural dosyası pratik koruma sağlar; çok hassas görüyorsanız kimlik doğrulama ekleyelim.
