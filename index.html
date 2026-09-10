@@ -1178,7 +1178,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-09.20</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-09.21</div>
     </div>
   </aside>
 
@@ -4097,6 +4097,10 @@ function openIadeForm(id){
           <label>İade notu (opsiyonel)</label>
           <textarea id="iadeNot" placeholder="Hasar detayı, eksik parça, özel durum...">${v.iadeNot||''}</textarea>
         </div>
+        <label style="display:flex;align-items:center;gap:8px;padding:10px 2px;font-size:13px;color:var(--text-2);cursor:pointer;">
+          <input type="checkbox" id="iadeTutanak" checked style="width:16px;height:16px;accent-color:var(--accent-blue);">
+          İade Tutanağı da oluştur (yazdır/PDF)
+        </label>
       </div>
       <div class="iade-foot">
         <button class="iade-btn-cancel" onclick="document.getElementById('iadeModal').remove()">İptal</button>
@@ -4121,6 +4125,84 @@ function updateIadeKmDiff(){
     el.textContent = "İade km, teslim km'den küçük olamaz";
     el.style.color = 'var(--safety)';
   } else { el.textContent = ''; }
+}
+
+// ===== İade Tutanağı (Ek-2 formatı) =====
+function iadeTutanakHtml(v, b){
+  const logoSrc = (document.querySelector('.lock-logo-wrap img')||{}).src||'';
+  const logoTag = logoSrc ? `<img src="${logoSrc}" alt="" style="display:block;margin:0 auto 10px;max-height:64px;">` : '';
+  const firmaAdi = 'PEKDOĞRU OTOMOTİV TURİZM TAŞIMACILIK NAKLİYE HAYVANCILIK TİCARET LİMİTED ŞİRKETİ';
+  const firmaAdres = localStorage.getItem('filoPaneli_firmaAdres')||'Ferhuniye Mah. Sultanşah Cad. No:24B Selçuklu / KONYA';
+  const firmaTel = localStorage.getItem('filoPaneli_firmaTelefon')||'';
+  const firmaVkn = localStorage.getItem('filoPaneli_firmaVergiNo')||'';
+  const kmKullanim = (b.kmBas>0&&b.kmBit>b.kmBas) ? (b.kmBit-b.kmBas).toLocaleString('tr-TR')+' km' : '—';
+  return `<!DOCTYPE html>
+<html lang="tr"><head><meta charset="UTF-8"><title>Arac İade Tutanağı — ${v.plaka}</title>
+<style>
+  body{font-family:Arial,sans-serif;font-size:12px;line-height:1.6;color:#000;max-width:800px;margin:0 auto;padding:20px;}
+  h1{text-align:center;font-size:15px;text-transform:uppercase;border-bottom:2px solid #000;padding-bottom:8px;}
+  table{width:100%;border-collapse:collapse;margin:10px 0;}
+  td,th{border:1px solid #999;padding:6px 8px;font-size:12px;vertical-align:top;}
+  th{background:#f0f0f0;font-weight:bold;width:32%;}
+  .imza{display:flex;justify-content:space-between;margin-top:70px;}
+  .imza-box{text-align:center;width:42%;}
+  .imza-line{border-top:1px solid #000;margin-top:60px;padding-top:5px;font-weight:bold;}
+  @media print{body{padding:0;} @page{margin:15mm;}}
+</style></head>
+<body>
+${logoTag}
+<h1>Arac Teslim İade Tutanağı</h1>
+<p style="text-align:center;font-size:11px;">Tutanak Tarihi: ${b.tutanakTarihi} &nbsp;|&nbsp; İlgili Kira Dönemi: ${b.kiraBas?fmtTarih(b.kiraBas):'—'} → ${fmtTarih(b.iadeTarih)}</p>
+
+<h2 style="font-size:13px;text-transform:uppercase;border-bottom:1px solid #333;">1. Taraflar</h2>
+<table>
+  <tr><th>Kiraya Veren (Tutanak Sahibi)</th><td><strong>${firmaAdi}</strong><br>${firmaAdres}${firmaTel?'<br>Tel: '+firmaTel:''}${firmaVkn?'<br>Vergi No: '+firmaVkn:''}</td></tr>
+  <tr><th>Kiracı</th><td>${b.kiraci||'—'}${b.kiraciVKN?'<br>Vergi/TC No: '+b.kiraciVKN:''}</td></tr>
+</table>
+
+<h2 style="font-size:13px;text-transform:uppercase;border-bottom:1px solid #333;">2. Aracın Durumu</h2>
+<table>
+  <tr><th>Plaka</th><td><strong>${v.plaka}</strong></td></tr>
+  <tr><th>Marka / Model</th><td>${esc([v.marka,v.model].filter(Boolean).join(' ')||'—')}${v.yil?' / '+v.yil:''}</td></tr>
+  <tr><th>Kira Başlangıç Tarihi</th><td>${b.kiraBas?fmtTarih(b.kiraBas):'—'}</td></tr>
+  <tr><th>İade Tarihi</th><td>${fmtTarih(b.iadeTarih)}</td></tr>
+  <tr><th>Teslim Kilometresi (Kira Başı)</th><td>${b.kmBas?b.kmBas.toLocaleString('tr-TR')+' km':'—'}</td></tr>
+  <tr><th>İade Kilometresi (Dönüş)</th><td>${b.kmBit?b.kmBit.toLocaleString('tr-TR')+' km':'—'}</td></tr>
+  <tr><th>Toplam Kullanım</th><td><strong>${kmKullanim}</strong></td></tr>
+  <tr><th>Yakıt Durumu (İade)</th><td>${b.yakit||'Belirtilmedi'}</td></tr>
+  <tr><th>Hasar Durumu (İade)</th><td><strong>${b.hasar||'Hasarsız'}</strong>${b.not?'<br><br>Not: '+esc(b.not):''}</td></tr>
+</table>
+
+<h2 style="font-size:13px;text-transform:uppercase;border-bottom:1px solid #333;">3. Beyan</h2>
+<p style="text-align:justify;">KİRACI, yukarıda özellikleri yazılı aracı ${b.hasar==='Hasarsız'?'hasarsız':'yukarıda belirtilen hasar durumuyla'} KİRAYA VEREN'e teslim ettiğini, kilometre ve yakıt bilgilerinin doğru olduğunu beyan eder. KİRAYA VEREN, aracı yukarıda yazılı durumda teslim almıştır. Hasar tespiti sonrasında çıkacak giderler (tamir, eksik yakıt, ceza vb.) sözleşme hükümlerine göre KİRACI'ya yansıtılır. Bu tutanak, aralarındaki kira sözleşmesinin ekidir.</p>
+
+<div class="imza">
+  <div class="imza-box"><div class="imza-line">KİRAYA VEREN / Yetkili</div></div>
+  <div class="imza-box"><div class="imza-line">KİRACI / Yetkili</div></div>
+</div>
+</body></html>`;
+}
+function iadeTutanakAc(v, b){
+  const html = iadeTutanakHtml(v, b);
+  let w = null;
+  try{ w = window.open('','_blank'); }catch(e){}
+  if(w && w.document){
+    w.document.open('text/html');
+    w.document.write(html);
+    w.document.close();
+    setTimeout(()=>{ try{ w.focus(); w.print(); }catch(e){} }, 600);
+  }else{
+    try{
+      const blob = new Blob([html], {type:'text/html'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `iade_tutanagi_${v.plaka.replace(/\s+/g,'-')}_${b.iadeTarih}.html`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url), 5000);
+      showToast('Pencere engellendi — İade Tutanağı HTML olarak indirildi. Açıp Ctrl+P ile PDF yapabilirsiniz.', true);
+    }catch(e){ showToast('İade tutanağı oluşturulamadı: '+e.message, true); }
+  }
 }
 
 async function saveIade(id){
@@ -4154,12 +4236,27 @@ async function saveIade(id){
       not: document.getElementById('iadeNot')?.value?.trim()||'',
     }],
   };
+  // Modal kaldırılmadan önce tutanak verilerini yakala
+  const tutanakIstendi = document.getElementById('iadeTutanak')?.checked;
+  const tYakit = document.getElementById('iadeYakit')?.value||'';
+  const tHasar = document.getElementById('iadeHasar')?.value||'Hasarsız';
+  const tNot = document.getElementById('iadeNot')?.value?.trim()||'';
   await persist();
   render();
   renderStatMasraf();
   document.getElementById('iadeModal')?.remove();
   logActivity('edit', '<b>'+esc(v.plaka)+'</b> kiradan iade alındı — '+iadeTarih+(kmBit?', iade km: '+kmBit.toLocaleString('tr-TR'):''));
   showToast(v.plaka+' başarıyla iade alındı, durum "Müsait" olarak güncellendi.');
+  if(tutanakIstendi){
+    const soz = (sozlesmeler||[]).find(r=>(r.plakalar||[]).includes(v.plaka) && r.bitisISO && r.bitisISO>=iadeTarih);
+    iadeTutanakAc(v, {
+      tutanakTarihi: fmtTarih(iadeTarih),
+      kiraci: (soz&&soz.kiraci)||v.yer||v.kiraciAdi||'',
+      kiraciVKN: (soz&&soz.kiraciVKN)||'',
+      kiraBas, iadeTarih, kmBas, kmBit,
+      yakit: tYakit, hasar: tHasar, not: tNot,
+    });
+  }
 }
 
 // ===== Sözleşme uzatma =====
