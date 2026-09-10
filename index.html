@@ -1178,7 +1178,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-09.24</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-09.25</div>
     </div>
   </aside>
 
@@ -6183,10 +6183,14 @@ function dashYedekUyarisiGoster(){
     if(!el.isConnected) return;
     const gun = k ? Math.floor((Date.now()-new Date(k.zaman).getTime())/86400000) : null;
     if(k && gun<=7) return;
+    const bulut = !!window.__cloudSyncActive;
+    const ilkMetin = bulut
+      ? '<b>Henüz hiç yedek almadınız</b> — veriler bulutta senkronize ediliyor ama dosya yedeği her zaman iyi bir güvencedir.'
+      : '<b>Henüz hiç yedek almadınız</b> — veriler yalnızca bu cihazda saklanıyor, cihaz değişince kaybolur.';
     el.innerHTML = `
       <div style="display:flex;align-items:center;gap:10px;margin:0 0 12px;padding:10px 14px;border-radius:10px;background:rgba(255,159,10,.1);border:1px solid rgba(255,159,10,.3);cursor:pointer;" onclick="switchPage('excel')">
         <span style="color:#FF9F0A;flex-shrink:0;display:flex;">${ICO('download',16)}</span>
-        <span style="font-size:13px;color:var(--text-2);flex:1;">${!k ? '<b>Henüz hiç yedek almadınız</b> — veriler yalnızca bu cihazda saklanıyor, cihaz değişince kaybolur.' : `<b>Son yedek ${gun} gün önce alındı</b> (${esc(k.kullanici)}). Yedek almak için dokunun.`}</span>
+        <span style="font-size:13px;color:var(--text-2);flex:1;">${!k ? ilkMetin : `<b>Son yedek ${gun} gün önce alındı</b> (${esc(k.kullanici)}). Yedek almak için dokunun.`}</span>
         <span style="font-size:12px;font-weight:600;color:#FF9F0A;white-space:nowrap;">Yedekle →</span>
       </div>`;
   });
