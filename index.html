@@ -1191,7 +1191,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-10.37</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-10.38</div>
     </div>
   </aside>
 
@@ -1475,13 +1475,24 @@
     <div class="modal-tabs">
       <button class="modal-tab active" data-tab="tab-temel"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M19 17h2v-6l-3-5H4l-3 5v6h2"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="16.5" cy="17.5" r="2.5"/></svg>Temel</button>
       <button class="modal-tab" data-tab="tab-belgeler"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z"/><path d="M14 2v6h6"/></svg>Belgeler</button>
-      <button class="modal-tab" data-tab="tab-kira"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M11 14h2a2 2 0 1 0 0-4h-3c-.6 0-1.1.2-1.4.6L3 16"/><path d="m7 20 1.6-1.4c.3-.4.8-.6 1.4-.6h4c1.1 0 2.1-.4 2.8-1.2l4.6-4.4a2 2 0 0 0-2.75-2.91L13.5 12"/><path d="M2 15l6 6"/></svg>Kira &amp; Teslim</button>
+      <button class="modal-tab" data-tab="tab-kira" id="tabKiraBtn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M11 14h2a2 2 0 1 0 0-4h-3c-.6 0-1.1.2-1.4.6L3 16"/><path d="m7 20 1.6-1.4c.3-.4.8-.6 1.4-.6h4c1.1 0 2.1-.4 2.8-1.2l4.6-4.4a2 2 0 0 0-2.75-2.91L13.5 12"/><path d="M2 15l6 6"/></svg>Kira &amp; Teslim</button>
     </div>
     <input type="hidden" id="editId">
     <div class="modal-body">
 
       <!-- TAB 1: Temel Bilgiler -->
       <div class="modal-tab-panel active" id="tab-temel">
+        <!-- Ruhsat hızlı yükleme: dosyayı seç, AI tüm alanları doldursun -->
+        <div id="ruhsatHizliBox" style="background:linear-gradient(135deg,rgba(46,124,246,.08),rgba(46,124,246,.03));border:1px dashed rgba(46,124,246,.45);border-radius:12px;padding:16px;margin-bottom:16px;text-align:center;">
+          <div style="font-size:13.5px;font-weight:700;color:var(--paper);margin-bottom:3px;">📷 Araç ruhsatını yükle — gerisini panel doldursun</div>
+          <div style="font-size:12px;color:var(--text-3);margin-bottom:10px;">Ruhsat fotoğrafını veya PDF'ini seç; plaka, marka, model, yıl ve seri no otomatik okunur.</div>
+          <label for="fRuhsatHizli" id="ruhsatHizliLabel" style="display:inline-flex;align-items:center;gap:8px;background:var(--accent-blue);color:#fff;padding:9px 20px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg>
+            Ruhsat Seç
+          </label>
+          <input type="file" id="fRuhsatHizli" accept="application/pdf,image/*" style="display:none;">
+          <div id="ruhsatHizliStatus" style="display:none;margin-top:10px;font-size:12.5px;padding:8px 12px;border-radius:8px;text-align:left;"></div>
+        </div>
         <div class="field-row">
           <div class="field"><label>Plaka</label><input type="text" id="fPlaka" placeholder="34 ABC 123"></div>
           <div class="field"><label>Araç cinsi</label><input type="text" id="fCins" placeholder="Otomobil / Kamyonet"></div>
@@ -1498,23 +1509,25 @@
           <div class="field"><label>Model yılı</label><input type="number" id="fYil" placeholder="2022"></div>
           <div class="field"><label>Bağlı şirket</label><input type="text" id="fSirket" placeholder="Şirket adı"></div>
         </div>
-        <div class="field-row">
-          <div class="field">
-            <label>Kiralama türü</label>
-            <select id="fKiralamaTuru"><option value="soförsüz">Şoförsüz</option><option value="şoförlü">Şoförlü</option></select>
+        <div id="kiraEkleGizli" style="display:none;">
+          <div class="field-row">
+            <div class="field">
+              <label>Kiralama türü</label>
+              <select id="fKiralamaTuru"><option value="soförsüz">Şoförsüz</option><option value="şoförlü">Şoförlü</option></select>
+            </div>
+            <div class="field" id="fSoforUcretiWrap">
+              <label>Şoför ücreti (aylık ₺)</label>
+              <input type="number" id="fSoforUcreti" min="0" placeholder="0">
+            </div>
           </div>
-          <div class="field" id="fSoforUcretiWrap">
-            <label>Şoför ücreti (aylık ₺)</label>
-            <input type="number" id="fSoforUcreti" min="0" placeholder="0">
-          </div>
+          <div class="field"><label>Kullanan şoför</label><input type="text" id="fSofor" placeholder="Ad Soyad"></div>
+          <div class="field"><label>Çalıştığı yer / Kiracı</label><input type="text" id="fYer" placeholder="Konya Hastane, İnşaat sahası..."></div>
         </div>
-        <div class="field"><label>Kullanan şoför</label><input type="text" id="fSofor" placeholder="Ad Soyad"></div>
-        <div class="field"><label>Çalıştığı yer / Kiracı</label><input type="text" id="fYer" placeholder="Konya Hastane, İnşaat sahası..."></div>
         <div class="field-row">
           <div class="field"><label>Durum</label>
             <select id="fDurum"><option>Müsait</option><option>Kirada</option><option>Serviste</option><option>Pert</option><option>Satıldı</option></select>
           </div>
-          <div class="field"><label>Aylık kira (₺)</label><input type="number" id="fKira" min="0" placeholder="0"></div>
+          <div id="kiraEkleGizli2" style="display:none;"><div class="field"><label>Aylık kira (₺)</label><input type="number" id="fKira" min="0" placeholder="0"></div></div>
         </div>
         <div class="field-row">
           <div class="field"><label>Kayıt tarihi</label><input type="date" id="fTarih"></div>
@@ -4070,6 +4083,52 @@ async function runDocAutoFill(d){
 }
 DOC_TYPES.forEach(wireDocType);
 
+// ===== Ruhsat hızlı yükleme (Temel sekmesi üstündeki kutu) =====
+// Seçilen dosyayı Belgeler sekmesindeki ruhsat girişine aktarır; mevcut AI
+// otomatik doldurma akışını tetikler ve sonucu kutu içinde gösterir. Böylece
+// kullanıcı ruhsatı tek yerden yükler, alanlar kendiliğinden dolar ve belge de
+// araca kaydedilir.
+document.getElementById('fRuhsatHizli').addEventListener('change', async (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const status = document.getElementById('ruhsatHizliStatus');
+  const show = (msg, isErr)=>{
+    status.style.display='block';
+    status.style.background = isErr?'rgba(220,38,38,.08)':'rgba(22,163,74,.08)';
+    status.style.color = isErr?'#DC2626':'#16A34A';
+    status.textContent = msg;
+  };
+  if(file.size > 3.5*1024*1024){ show("Dosya 3,5MB'ı geçemez.", true); e.target.value=''; return; }
+  const d = DOC_TYPES.find(x=>x.key==='ruhsat');
+  try{
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    const target = document.getElementById(d.fileId);
+    target.files = dt.files;
+    target.dispatchEvent(new Event('change'));
+  }catch(err){
+    show('Dosya aktarılamadı; "Belgeler" sekmesinden ruhsatı yükleyin.', true);
+    e.target.value='';
+    return;
+  }
+  if(!getGeminiKey()){
+    show('Ruhsat belgeye eklendi. AI anahtarı tanımlı olmadığından otomatik okuma yapılamadı; alanları elle doldurun.', true);
+    return;
+  }
+  show('Ruhsat okunuyor, bilgiler çıkarılıyor…', false);
+  const t0 = Date.now();
+  while((docState.ruhsat.extracting || docState.ruhsat.reading) && Date.now()-t0 < 60000){
+    await new Promise(r=>setTimeout(r,300));
+  }
+  const res = document.getElementById(d.resultId);
+  const resGorunur = res && res.style.display!=='none';
+  if(resGorunur && res.classList.contains('ok')){
+    show('✓ ' + res.textContent.trim() + ' — Belgeler sekmesinde de kayıtlı.', false);
+  }else{
+    show(resGorunur ? res.textContent.trim() : 'Okuma başarısız oldu; alanları elle doldurabilirsin.', true);
+  }
+});
+
 function setFieldValueFlash(id, value){
   const el = document.getElementById(id);
   el.value = value;
@@ -4131,6 +4190,17 @@ function openAdd(){
   resetModalTabs();
   initTeslimFotoUI();
   initKiralamaTuruToggle();
+  // Eklemeye basitleştirilmiş görünüm: kira/sözleşme alanları gizli,
+  // sadece araç kimliği + belgeler kalır. Düzenlemede tamamı görünür.
+  const kg1=document.getElementById('kiraEkleGizli'), kg2=document.getElementById('kiraEkleGizli2');
+  if(kg1) kg1.style.display='none';
+  if(kg2) kg2.style.display='none';
+  const tk=document.getElementById('tabKiraBtn');
+  if(tk) tk.style.display='none';
+  const rhs=document.getElementById('ruhsatHizliStatus');
+  if(rhs) rhs.style.display='none';
+  const rhf=document.getElementById('fRuhsatHizli');
+  if(rhf) rhf.value='';
   overlay.classList.add('show');
 }
 function openEditWithDurum(id, durum){
@@ -5360,6 +5430,12 @@ function openEdit(id){
   const v = vehicles.find(x=>x.id===id); if(!v) return;
   document.getElementById('modalTitle').textContent='Araç düzenle';
   document.getElementById('editId').value=id;
+  // Düzenleme modunda tüm alanlar görünür (kira/sözleşme dahil)
+  const kg1=document.getElementById('kiraEkleGizli'), kg2=document.getElementById('kiraEkleGizli2');
+  if(kg1) kg1.style.display='';
+  if(kg2) kg2.style.display='block';
+  const tk=document.getElementById('tabKiraBtn');
+  if(tk) tk.style.display='';
   document.getElementById('fPlaka').value=v.plaka||'';
   document.getElementById('fCins').value=v.aracCinsi||'';
   document.getElementById('fMarka').value=v.marka||'';
