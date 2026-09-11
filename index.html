@@ -1111,7 +1111,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-10.49</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-10.50</div>
     </div>
   </div>
 </div>
@@ -1222,7 +1222,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-10.49</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.2);text-align:center;padding:6px 0;">Sürüm: 2026-09-10.50</div>
     </div>
   </aside>
 
@@ -3936,18 +3936,18 @@ function wireDocType(d){
   document.getElementById(d.autoBtnId).onclick = ()=>runDocAutoFill(d);
 }
 
-// Gemini API'ye istek — artık DOĞRUDAN Google'a değil, kendi Netlify sunucu fonksiyonumuza
-// (netlify/functions/gemini-proxy.js) gidiyor. Gerçek GEMINI_API_KEY yalnızca o fonksiyonun
-// sunucu ortamında duruyor; tarayıcıya, localStorage'a ya da Firestore'a hiç yazılmıyor.
+// Gemini API'ye istek — artık DOĞRUDAN Google'a değil, kendi Cloudflare Worker sunucu
+// fonksiyonumuza gidiyor. Gerçek GEMINI_API_KEY yalnızca o Worker'ın ortamında (Secret olarak)
+// duruyor; tarayıcıya, localStorage'a ya da Firestore'a hiç yazılmıyor.
 // Not: GitHub Pages üzerinden açılan kopya da bu fonksiyonu çağırabilsin diye adres mutlak
-// (Netlify domain'i sabit yazılı) — Netlify sitenizin adresi değişirse burayı güncelleyin.
+// (Cloudflare Worker adresi sabit yazılı) — Worker adresiniz değişirse burayı güncelleyin.
 const GEMINI_MODELS = [
   'gemini-3.5-flash-lite',
   'gemini-3.5-flash',
   'gemini-3.1-flash-lite',
   'gemini-2.5-flash',
 ];
-const GEMINI_PROXY_URL = 'https://delightful-kangaroo-d4ba2e.netlify.app/.netlify/functions/gemini-proxy';
+const GEMINI_PROXY_URL = 'https://filo-gemini-proxy.hasan-huseyin-pekdogru.workers.dev/';
 
 function getGeminiKey(){
   // Geriye dönük uyumluluk: kod tabanında onlarca yer "AI özelliği aktif mi" diye bunun
