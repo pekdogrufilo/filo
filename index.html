@@ -1177,7 +1177,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-10.55</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-10.56</div>
     </div>
   </div>
 </div>
@@ -1297,7 +1297,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-10.55</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-10.56</div>
     </div>
   </aside>
 
@@ -5508,7 +5508,10 @@ function openVehicleDetail(id){
         <!-- Araç Geçmişi — kronolojik zaman tüneli -->
         ${gecmis.length ? `
         <div style="background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:14px;">
-          <div style="font-size:12px;font-weight:700;color:var(--paper);margin-bottom:12px;">${ICO('clock',13)} Araç Geçmişi <span style="font-weight:400;color:var(--steel-300);">(${gecmis.length} olay)</span></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+            <div style="font-size:12px;font-weight:700;color:var(--paper);">${ICO('clock',13)} Araç Geçmişi <span style="font-weight:400;color:var(--steel-300);">(${gecmis.length} olay)</span></div>
+            <button onclick="aracServisGecmisiPdf('${id}')" style="background:rgba(46,124,246,.1);border:1px solid rgba(46,124,246,.2);color:var(--accent-blue);padding:5px 12px;border-radius:8px;font-size:11.5px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;">${ICO('download',12)} Tam Geçmiş PDF</button>
+          </div>
           <div style="display:flex;flex-direction:column;">
             ${gecmis.map(g=>{
               const stil = {
@@ -5540,6 +5543,112 @@ function openVehicleDetail(id){
 
   document.body.appendChild(el);
   el.onclick = e=>{ if(e.target===el) el.remove(); };
+}
+
+// ===== Araç bazlı tam dijital servis geçmişi — tek tıkla PDF/paylaşılabilir rapor =====
+function aracServisGecmisiPdf(id){
+  const v = vehicles.find(x=>x.id===id);
+  if(!v){ showToast('Araç bulunamadı.', true); return; }
+
+  const vMasraf = expenses.filter(e=>e.vehicleId===id || normPlaka(e.plaka)===normPlaka(v.plaka)).sort((a,b)=>(b.tarih||'').localeCompare(a.tarih||''));
+  const toplamMasraf = vMasraf.reduce((s,e)=>s+(Number(e.tutar)||0),0);
+  const kmGecmisi = v.kmGecmisi || [];
+  const hasarlar = Array.isArray(v.hasarlar) ? v.hasarlar : [];
+  const otoDocs = Array.isArray(v.otoBelgeler) ? v.otoBelgeler : [];
+  const gecmis = [
+    ...vMasraf.map(e=>({d:e.tarih||'', baslik:(e.tip||'Masraf').charAt(0).toLocaleUpperCase('tr-TR')+(e.tip||'Masraf').slice(1), detay:e.not||e.aciklama||e.firma||'', tutar:e.tutar, tarihTxt:fmtTarih(e.tarih||'')})),
+    ...hasarlar.map(h=>({d:h.tarih||'', baslik:'Hasar / Kaza', detay:h.aciklama||'', tutar:h.tutar, tarihTxt:fmtTarih(h.tarih||'')})),
+    ...otoDocs.map(o=>({d:(o.tarih||'').slice(0,10)||'', baslik:o.tur==='diger'?'Belge yüklendi':(o.tur.charAt(0).toLocaleUpperCase('tr-TR')+o.tur.slice(1))+' belgesi', detay:o.adi, tutar:null, tarihTxt:fmtTarih((o.tarih||'').slice(0,10))||'tarih yok'})),
+    ...kmGecmisi.map(k=>({d:k.donem?k.donem+'-01':'', baslik:'Km raporu', detay:(k.toplamKm?Number(k.toplamKm).toLocaleString('tr-TR')+' km':''), tutar:null, tarihTxt:k.donem||''})),
+    ...(v.teslimTarih?[{d:v.teslimTarih, baslik:'Araç teslim edildi', detay:v.teslimKm?Number(v.teslimKm).toLocaleString('tr-TR')+' km':'', tutar:null, tarihTxt:fmtTarih(v.teslimTarih)}]:[]),
+    ...(v.durumOlaylari||[]).map(o=>({d:o.tarih||'', baslik:o.tip==='satis'?'Araç satıldı':'Pert kaydı (kaza)', detay:o.aciklama||'', tutar:o.tutar||null, tarihTxt:fmtTarih(o.tarih||'')})),
+    ...(v.servisGirisleri||[]).flatMap(k=>[
+      {d:k.giris||'', baslik:'Servise girdi', detay:[k.yer, k.islem].filter(Boolean).join(' · '), tutar:k.tutar, tarihTxt:fmtTarih(k.giris||'')},
+      ...(k.cikis ? [{d:k.cikis, baslik:'Servisten çıktı', detay:[k.yer, (()=>{ try{ const g=new Date(k.giris), c=new Date(k.cikis); const n=Math.round((c-g)/86400000); return n>=0?n+' gün serviste':''; }catch(e){ return ''; } })()].filter(Boolean).join(' · '), tutar:null, tarihTxt:fmtTarih(k.cikis)}] : []),
+    ]),
+  ].filter(g=>g.d).sort((a,b)=>(b.d||'').localeCompare(a.d||''));
+
+  const belgeler = [
+    {ad:'Sigorta', tarih:v.sigortaTarihi},
+    {ad:'Kasko', tarih:v.kaskoBitis},
+    {ad:'Muayene', tarih:v.muayeneTarihi},
+    {ad:'Sözleşme', tarih:v.sozlesmeBitis},
+    {ad:'Kira Bitişi', tarih:v.kiraBitis},
+  ].filter(b=>b.tarih);
+
+  const html = aracServisGecmisiHtml(v, {vMasraf, toplamMasraf, kmGecmisi, gecmis, belgeler});
+  let w = null;
+  try{ w = window.open('','_blank'); }catch(e){}
+  if(w && w.document){
+    w.document.open('text/html');
+    w.document.write(html);
+    w.document.close();
+    setTimeout(()=>{ try{ w.focus(); w.print(); }catch(e){} }, 600);
+    showToast('Yazdır penceresi açıldı — PDF olarak kaydedin.');
+  }else{
+    try{
+      const blob = new Blob([html], {type:'text/html'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `servis-gecmisi_${(v.plaka||'arac').replace(/\s+/g,'-')}.html`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url), 5000);
+      showToast('Tarayıcı pencere açmayı engelledi — rapor HTML dosyası olarak indirildi. Açıp Ctrl+P ile PDF yapabilirsiniz.', true);
+    }catch(e){
+      showToast('Rapor oluşturulamadı: '+e.message, true);
+    }
+  }
+}
+function aracServisGecmisiHtml(v, data){
+  const logoSrc = (document.querySelector('.lock-logo-wrap img')||{}).src||'';
+  const logoTag = logoSrc ? `<img src="${logoSrc}" alt="" style="display:block;margin:0 auto 10px;max-height:60px;">` : '';
+  const {vMasraf, toplamMasraf, kmGecmisi, gecmis, belgeler} = data;
+  return `<!DOCTYPE html>
+<html lang="tr"><head><meta charset="UTF-8"><title>Servis Geçmişi — ${esc(v.plaka)}</title>
+<style>
+  body{font-family:Arial,sans-serif;font-size:12px;line-height:1.6;color:#000;max-width:800px;margin:0 auto;padding:20px;}
+  h1{text-align:center;font-size:16px;text-transform:uppercase;border-bottom:2px solid #000;padding-bottom:8px;}
+  h2{font-size:13px;text-transform:uppercase;border-bottom:1px solid #333;margin-top:20px;}
+  table{width:100%;border-collapse:collapse;margin:10px 0;}
+  td,th{border:1px solid #999;padding:6px 8px;font-size:11.5px;}
+  th{background:#f0f0f0;font-weight:bold;}
+  .toplam-row td{font-weight:bold;background:#f7f7f7;}
+  @media print{body{padding:0;} @page{margin:15mm;}}
+</style></head>
+<body>
+${logoTag}
+<h1>Araç Dijital Servis Geçmişi Raporu</h1>
+<p style="text-align:center;font-size:11px;">${esc(v.plaka)} — ${esc([v.marka,v.model,v.versiyon].filter(Boolean).join(' ')||'—')} | Oluşturma Tarihi: ${fmtTarih(todayISO())}</p>
+
+<h2>Araç Bilgileri</h2>
+<table>
+ <tr><th>Plaka</th><td>${esc(v.plaka)}</td><th>Model Yılı</th><td>${esc(v.modelYili||'—')}</td></tr>
+ <tr><th>Marka/Model</th><td>${esc([v.marka,v.model,v.versiyon].filter(Boolean).join(' ')||'—')}</td><th>Renk</th><td>${esc(v.renk||'—')}</td></tr>
+ <tr><th>Durum</th><td>${esc(v.durum||'—')}</td><th>Çalıştığı Yer</th><td>${esc(v.yer||v.kiraciAdi||'—')}</td></tr>
+</table>
+
+${belgeler.length ? `<h2>Belge Durumu</h2><table><tr><th>Belge</th><th>Tarih</th><th>Durum</th></tr>
+${belgeler.map(b=>{ const dl=daysLeft(b.tarih); const durum = dl===null?'—':dl<0?`${Math.abs(dl)} gün gecikti`:dl===0?'Bugün':`${dl} gün kaldı`; return `<tr><td>${esc(b.ad)}</td><td>${fmtTarih(b.tarih)}</td><td>${esc(durum)}</td></tr>`; }).join('')}
+</table>` : ''}
+
+${kmGecmisi.length ? `<h2>Kilometre Geçmişi</h2><table><tr><th>Dönem</th><th>Aylık Km</th><th>Bitiş Km</th></tr>
+${kmGecmisi.slice().reverse().map(k=>`<tr><td>${esc(k.donem||'—')}</td><td>${(k.toplamKm||0).toLocaleString('tr-TR')} km</td><td>${k.bitKm?k.bitKm.toLocaleString('tr-TR')+' km':'—'}</td></tr>`).join('')}
+</table>` : ''}
+
+<h2>Masraf Geçmişi (${vMasraf.length} kayıt — Toplam ${fmtTL2(toplamMasraf)})</h2>
+${vMasraf.length ? `<table><tr><th>Tarih</th><th>Tip</th><th>Not</th><th>Tutar</th></tr>
+${vMasraf.map(e=>`<tr><td>${fmtTarih(e.tarih)}</td><td>${esc(e.tip||'—')}</td><td>${esc(e.not||'—')}</td><td>${fmtTL2(e.tutar||0)}</td></tr>`).join('')}
+<tr class="toplam-row"><td colspan="3" style="text-align:right;">TOPLAM</td><td>${fmtTL2(toplamMasraf)}</td></tr>
+</table>` : '<p>Masraf kaydı yok.</p>'}
+
+<h2>Kronolojik Araç Geçmişi (${gecmis.length} olay)</h2>
+${gecmis.length ? `<table><tr><th>Tarih</th><th>Olay</th><th>Detay</th><th>Tutar</th></tr>
+${gecmis.map(g=>`<tr><td>${esc(g.tarihTxt||'—')}</td><td>${esc(g.baslik||'—')}</td><td>${esc(g.detay||'—')}</td><td>${g.tutar!=null&&g.tutar!==''?fmtTL2(g.tutar):'—'}</td></tr>`).join('')}
+</table>` : '<p>Kayıtlı olay yok.</p>'}
+
+<p style="margin-top:24px;font-size:10px;color:#666;text-align:center;">Bu rapor Pekdoğru Filo Kontrol Paneli tarafından otomatik oluşturulmuştur.</p>
+</body></html>`;
 }
 
 // ===== Hasar / Kaza kayıtları =====
