@@ -1184,7 +1184,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-10.58</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-10.59</div>
     </div>
   </div>
 </div>
@@ -1304,7 +1304,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-10.58</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-10.59</div>
     </div>
   </aside>
 
@@ -7732,7 +7732,7 @@ function renderMasrafTable(){
   const wrap = document.getElementById('masrafTableWrap');
   const count = document.getElementById('masrafSayac');
   if(count) count.textContent = window.__masrafArama ? `${filtered.length} / ${expenses.length} kayıt` : `${expenses.length} kayıt · Toplam ${fmtTL2(expenses.reduce((s,e)=>s+(Number(e.tutar)||0),0))}`;
-  if(wrap) wrap.innerHTML = filtered.length ? `<table class="mini-table"><thead><tr><th>Plaka</th><th>Tip</th><th>Tarih</th><th>Not</th><th style="text-align:right">Tutar</th><th></th></tr></thead><tbody id="masrafTableBody">${masrafRowsHTML(filtered)}</tbody></table>` : `<div class="log-empty">${window.__masrafArama ? 'Aramanla eşleşen masraf bulunamadı.' : 'Henüz masraf kaydedilmedi.'}</div>`;
+  if(wrap) wrap.innerHTML = filtered.length ? `<table class="mini-table"><thead><tr><th>Plaka</th><th>Tip</th><th>Tarih</th><th>Not</th><th style="text-align:right">Tutar</th><th></th></tr></thead><tbody id="masrafTableBody">${masrafRowsHTML(filtered)}</tbody></table>` : `${window.__masrafArama ? '<div class="log-empty">Aramanla eşleşen masraf bulunamadı.</div>' : '<div class="empty-state"><div class="empty-state-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div class="empty-state-title">Henüz masraf kaydedilmedi</div><div class="empty-state-desc">Yakıt, tamir, bakım, lastik gibi araç masraflarını yukarıdaki formdan ekleyerek takibe başlayın.</div></div>'}`;
   wireMasrafDeleteButtons();
 }
 function renderMasrafPage(){
@@ -7767,7 +7767,7 @@ function renderMasrafPage(){
         <h3 style="margin:0;">Tüm Masraflar <span id="masrafSayac" style="font-weight:400;font-size:13px;color:var(--steel-100)">${expenses.length} kayıt · Toplam ${fmtTL2(toplam)}</span></h3>
         <input type="text" id="mArama" value="${esc(window.__masrafArama||'')}" placeholder="Plaka, tip veya not'a göre ara..." autocomplete="off" style="max-width:260px;background:var(--surface-2);border:1px solid var(--line);color:var(--paper);padding:8px 12px;border-radius:8px;font-family:inherit;font-size:13px;">
       </div>
-      <div id="masrafTableWrap" class="table-scroll">${sorted.length ? `<table class="mini-table"><thead><tr><th>Plaka</th><th>Tip</th><th>Tarih</th><th>Not</th><th style="text-align:right">Tutar</th><th></th></tr></thead><tbody id="masrafTableBody">${rows}</tbody></table>` : `<div class="log-empty">${window.__masrafArama ? 'Aramanla eşleşen masraf bulunamadı.' : 'Henüz masraf kaydedilmedi.'}</div>`}</div>
+      <div id="masrafTableWrap" class="table-scroll">${sorted.length ? `<table class="mini-table"><thead><tr><th>Plaka</th><th>Tip</th><th>Tarih</th><th>Not</th><th style="text-align:right">Tutar</th><th></th></tr></thead><tbody id="masrafTableBody">${rows}</tbody></table>` : `${window.__masrafArama ? '<div class="log-empty">Aramanla eşleşen masraf bulunamadı.</div>' : '<div class="empty-state"><div class="empty-state-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div class="empty-state-title">Henüz masraf kaydedilmedi</div><div class="empty-state-desc">Yakıt, tamir, bakım, lastik gibi araç masraflarını yukarıdaki formdan ekleyerek takibe başlayın.</div></div>'}`}</div>
     </div>
   `;
   document.getElementById('mArama').oninput = (e)=>{ window.__masrafArama = e.target.value; renderMasrafTable(); };
@@ -10055,7 +10055,14 @@ function renderMusterilerPage(){
     </div>
 
     ${musteriler.length===0 ? `
-      <div class="dcard"><div class="log-empty">${q?'Bu aramaya uygun müşteri yok.':'Henüz müşteri kaydı yok. Araç kartlarında "Çalıştığı Yer" veya "Kiracı" alanını doldurun.'}</div></div>
+      <div class="dcard">${q ? '<div class="log-empty">Bu aramaya uygun müşteri yok.</div>' : `
+        <div class="empty-state">
+          <div class="empty-state-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+          <div class="empty-state-title">Henüz müşteri kaydı yok</div>
+          <div class="empty-state-desc">Müşteriler, araç kiralama/sözleşme kayıtlarından otomatik türetilir. Bir araç kiralayarak veya araç kartında "Kiracı" alanını doldurarak ilk müşterinizi burada görün.</div>
+          <button class="empty-state-cta" onclick="switchPage('kiralama')">Araç Kirala</button>
+        </div>
+      `}</div>
     ` : musteriler.map((m,i)=>{
       const acikMi = acik===i;
       const initial = m.ad.trim().charAt(0).toLocaleUpperCase('tr-TR');
