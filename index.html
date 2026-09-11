@@ -743,7 +743,9 @@
   .simple-list-page{max-width:900px;}
   .settings-card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:22px 24px;margin-bottom:16px;transition:border-color .2s ease;}
   .settings-card:hover{border-color:var(--steel-600);}
-  .settings-card h3{font-family:var(--font-ui);font-size:14px;font-weight:600;margin:0 0 5px;display:flex;align-items:center;gap:9px;color:var(--paper);}
+  .settings-card h3{font-family:var(--font-ui);font-size:14px;font-weight:600;margin:0 0 12px;display:flex;align-items:center;gap:11px;color:var(--paper);}
+  .settings-ic{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;}
+  .settings-ic svg{width:16px;height:16px;}
   .settings-card p{font-size:13px;color:var(--steel-300);margin:0 0 16px;line-height:1.55;}
   .settings-card .row-btns{display:flex;gap:10px;flex-wrap:wrap;}
   .settings-btn{background:transparent;border:1px solid var(--line);color:var(--paper);padding:9px 15px;border-radius:8px;font-family:var(--font-ui);font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .15s ease;}
@@ -1175,7 +1177,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-10.53</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-10.55</div>
     </div>
   </div>
 </div>
@@ -1295,7 +1297,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-10.53</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-10.55</div>
     </div>
   </aside>
 
@@ -7480,25 +7482,31 @@ function renderDashboard(){
     </div>
   `;
   page.querySelectorAll('[data-goto]').forEach(el=>{ el.onclick = ()=>switchPage(el.dataset.goto); });
-  page.querySelectorAll('.qbtn').forEach(btn=>{
-    btn.onclick = ()=>{
-      const act = btn.dataset.act;
-      if(act==='yeni-arac' || act==='yeni-sozlesme'){ switchPage('arac-yonetimi'); setTimeout(()=>openAdd(), 80); }
-      else if(act==='arac-kirala'){ openAracKirala(); }
-      else if(act==='iade-al'){
-        const k = vehicles.filter(v=>v.durum==='Kirada');
-        if(!k.length){ showToast('Şu anda kirada araç yok.', true); return; }
-        showVehicleQuickList('Kirada','İade Al — Araç Seçin');
-      }
-      else if(act==='arac-ara'){ switchPage('arac-yonetimi'); setTimeout(()=>document.getElementById('search').focus(), 100); }
-      else if(act==='masraf-ekle'){ switchPage('masraf'); }
-      else if(act==='rapor-olustur'){ switchPage('raporlar'); }
-      else if(act==='excele-aktar'){ exportExcel(); }
-      else if(act==='yedekle'){ backupToJson(); }
-      else if(act==='yedekten-yukle'){ document.getElementById('restoreJsonInput').click(); }
-    };
-  });
+  wireQuickActions(page);
   dashYedekUyarisiGoster();
+}
+
+// Hızlı İşlemler düğmelerinin ortak davranışı — Genel Bakış'ta ve diğer sayfalardaki
+// bağlama duyarlı kısayol satırlarında (data-act ile işaretli .qbtn öğeleri) kullanılır.
+function handleQuickAction(act){
+  if(act==='yeni-arac' || act==='yeni-sozlesme'){ switchPage('arac-yonetimi'); setTimeout(()=>openAdd(), 80); }
+  else if(act==='arac-kirala'){ openAracKirala(); }
+  else if(act==='iade-al'){
+    const k = vehicles.filter(v=>v.durum==='Kirada');
+    if(!k.length){ showToast('Şu anda kirada araç yok.', true); return; }
+    showVehicleQuickList('Kirada','İade Al — Araç Seçin');
+  }
+  else if(act==='arac-ara'){ switchPage('arac-yonetimi'); setTimeout(()=>document.getElementById('search').focus(), 100); }
+  else if(act==='masraf-ekle'){ switchPage('masraf'); }
+  else if(act==='rapor-olustur'){ switchPage('raporlar'); }
+  else if(act==='excele-aktar'){ exportExcel(); }
+  else if(act==='yedekle'){ backupToJson(); }
+  else if(act==='yedekten-yukle'){ document.getElementById('restoreJsonInput').click(); }
+}
+function wireQuickActions(container){
+  (container||document).querySelectorAll('.qbtn[data-act]').forEach(btn=>{
+    btn.onclick = ()=>handleQuickAction(btn.dataset.act);
+  });
 }
 
 // ===== Masraf Yönetimi sayfası (tüm araçlar) =====
@@ -7632,6 +7640,43 @@ function renderMasrafPage(){
 }
 
 // ===== Bakım & Servis sayfası =====
+// ===== AI Bakım Tahmini (basit hesaplama — km geçmişinden günlük ortalama kullanım) =====
+// Gerçek bir AI/harici API çağrısı yapmaz: aracın kmGecmisi (aylık Excel içe aktarım)
+// ve kiraGecmisi (kiralama dönemleri) kayıtlarından toplam km / toplam gün oranıyla
+// günlük ortalama kilometreyi çıkarır, ardından bir sonraki bakıma kalan km'yi bu
+// ortalamaya bölerek kaç gün sonra bakımın geleceğini tahmin eder.
+function bakimTahminiHesapla(v){
+  if(!v.sonBakimKm || !v.bakimPeriyotKm) return null;
+  const mevcutKm = Math.max(
+    Number(v.sonKm)||0,
+    Number(v.teslimKm)||0,
+    ...(v.kmGecmisi||[]).map(k=>Number(k.bitKm)||0)
+  );
+  const kalanKm = Math.round(Number(v.sonBakimKm) + Number(v.bakimPeriyotKm) - mevcutKm);
+
+  let toplamKm = 0, toplamGun = 0;
+  (v.kmGecmisi||[]).forEach(k=>{
+    const km = Number(k.toplamKm)||0;
+    if(km>0){ toplamKm += km; toplamGun += 30; } // aylık dönem varsayımı
+  });
+  (v.kiraGecmisi||[]).forEach(k=>{
+    if(!k.bas || !k.bitis) return;
+    const gun = Math.round((new Date(k.bitis)-new Date(k.bas))/86400000);
+    const km = Number(k.kullanim)||0;
+    if(gun>0 && km>0){ toplamKm += km; toplamGun += gun; }
+  });
+
+  const gunlukOrt = toplamGun>0 ? (toplamKm/toplamGun) : null;
+  const tahminiGun = (gunlukOrt && gunlukOrt>0.5) ? Math.round(kalanKm/gunlukOrt) : null;
+  let tahminiTarih = null;
+  if(tahminiGun!==null){
+    const d = new Date();
+    d.setDate(d.getDate()+tahminiGun);
+    tahminiTarih = d.toISOString().slice(0,10);
+  }
+  return {mevcutKm, kalanKm, gunlukOrt, tahminiGun, tahminiTarih};
+}
+
 function renderBakimPage(){
   const page = document.getElementById('page-bakim');
   const serviste = vehicles.filter(v=>v.durum==='Serviste');
@@ -7643,6 +7688,14 @@ function renderBakimPage(){
     const db = daysLeft(b.sonrakiServisTarihi)||9999;
     return da-db;
   });
+  const bakimTahminleri = vehicles
+    .map(v=>({v, t:bakimTahminiHesapla(v)}))
+    .filter(x=>x.t)
+    .sort((a,b)=>{
+      const ga = a.t.tahminiGun!==null ? a.t.tahminiGun : (a.t.kalanKm/1000+9999);
+      const gb = b.t.tahminiGun!==null ? b.t.tahminiGun : (b.t.kalanKm/1000+9999);
+      return ga-gb;
+    });
 
   page.innerHTML = `
     <div class="dcard" style="margin-bottom:16px;">
@@ -7729,6 +7782,34 @@ function renderBakimPage(){
           </tr>`;
         }).join('')}</tbody>
       </table></div>` : `<div class="log-empty">Henüz planlı servis kaydı yok. <a onclick="openServisPlanla()" style="color:var(--accent-blue);cursor:pointer">Servis planla →</a></div>`}
+    </div>
+
+    <div class="dcard" style="margin-bottom:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:4px;">
+        <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>AI Bakım Tahmini <span style="font-weight:400;font-size:13px;color:var(--steel-100)">${bakimTahminleri.length} araç</span></h3>
+      </div>
+      <p style="font-size:12.5px;color:var(--steel-300);margin-bottom:14px;">Yapay zekâ servisine bağlanmaz — aracın geçmiş kilometre kullanımından (km geçmişi + kira dönemleri) günlük ortalama kullanım hesaplanır ve bir sonraki periyodik bakıma kaç gün kaldığı bu ortalamaya göre tahmin edilir.</p>
+      ${bakimTahminleri.length ? `<div class="table-scroll"><table class="mini-table">
+        <thead><tr><th>Plaka</th><th>Araç</th><th>Kalan km</th><th>Günlük Ort. Kullanım</th><th>Tahmini Bakım Tarihi</th></tr></thead>
+        <tbody>${bakimTahminleri.map(({v,t})=>{
+          const gecti = t.kalanKm<=0;
+          const kmTxt = gecti ? `<span style="color:var(--safety);font-weight:700;">${Math.abs(t.kalanKm).toLocaleString('tr-TR')} km gecikti</span>` : `${t.kalanKm.toLocaleString('tr-TR')} km`;
+          const ortTxt = t.gunlukOrt ? `${Math.round(t.gunlukOrt).toLocaleString('tr-TR')} km/gün` : '<span style="color:var(--steel-300)">veri yetersiz</span>';
+          let tahminTxt = '<span style="color:var(--steel-300)">tahmin edilemiyor</span>';
+          if(t.tahminiGun!==null){
+            if(t.tahminiGun<=0) tahminTxt = '<span style="color:var(--safety);font-weight:700;">şimdi gerekiyor</span>';
+            else if(t.tahminiGun<=14) tahminTxt = `<span style="color:#C98A3E;font-weight:600;">~${t.tahminiGun} gün sonra (${fmtTarih(t.tahminiTarih)})</span>`;
+            else tahminTxt = `~${t.tahminiGun} gün sonra (${fmtTarih(t.tahminiTarih)})`;
+          }
+          return `<tr>
+            <td><span class="mini-plaka">${esc(v.plaka)}</span></td>
+            <td>${esc([v.marka,v.model].filter(Boolean).join(' ')||'—')}</td>
+            <td style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${kmTxt}</td>
+            <td style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${ortTxt}</td>
+            <td>${tahminTxt}</td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table></div>` : `<div class="log-empty">Tahmin için araç kartında "Son Bakım Km" ve "Bakım Periyodu (km)" alanlarının doldurulmuş olması gerekiyor.</div>`}
     </div>
 
     <div class="dcard">
@@ -8818,6 +8899,17 @@ function renderKiralamaPage(){
   });
 
   page.innerHTML = `
+    <div class="dcard" style="margin-bottom:16px;border:1px solid rgba(46,124,246,.25);">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:12px;">
+        <h3 style="margin:0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/></svg>Hızlı İşlemler</h3>
+      </div>
+      <div class="quick-grid" style="grid-template-columns:repeat(auto-fit,minmax(110px,1fr));">
+        <button class="qbtn" data-act="arac-kirala"><div class="qic" style="background:#16A34A;color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8v8h6l4 4V4L9 8H3Z"/></svg></div><span>Araç Kirala</span></button>
+        <button class="qbtn" data-act="iade-al"><div class="qic" style="background:#DC2626;color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></div><span>İade Al</span></button>
+        <button class="qbtn" data-act="yeni-sozlesme"><div class="qic" style="background:#C98A3E;color:#fff">${DASH_ICONS.doc}</div><span>Yeni Sözleşme</span></button>
+      </div>
+    </div>
+
     <div class="dash-stats" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:20px;">
       <div class="dstat" style="cursor:default;">
         <div class="dstat-ic" style="background:rgba(22,163,74,.15);color:#16A34A;">${DASH_ICONS.check}</div>
@@ -9121,6 +9213,7 @@ function renderKiralamaPage(){
       }).join('') : '<div class="log-empty">Henüz iade kaydı yok. "İade Al" butonuyla kira dönemlerini kayıt altına alabilirsin.</div>'}
     </div>
   `;
+  wireQuickActions(page);
 }
 
 // ===== Belge yükleme kısayolu =====
@@ -10451,7 +10544,7 @@ function renderAyarlarPage(){
   page.innerHTML = `
     <div class="simple-list-page">
       <div class="settings-card">
-        <h3><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg> Görünüm</h3>
+        <h3><span class="settings-ic" style="background:#7C3AED"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></span> Görünüm</h3>
         <p>Panel açık veya koyu temada görüntülenebilir. Tercihin bu cihazda hatırlanır.</p>
         <label style="display:flex;align-items:center;gap:10px;cursor:pointer;width:fit-content;">
           <input type="checkbox" id="apThemeSwitch" style="width:38px;height:22px;accent-color:var(--accent-blue);cursor:pointer;">
@@ -10459,12 +10552,12 @@ function renderAyarlarPage(){
         </label>
       </div>
       <div class="settings-card">
-        <h3><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg> Uygulama Olarak Kur</h3>
+        <h3><span class="settings-ic" style="background:#2E7CF6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg></span> Uygulama Olarak Kur</h3>
         <p>${isStandalone() ? 'Zaten uygulama olarak kurulu görünüyor.' : 'Telefonuna kurup ana ekrandan tek dokunuşla, tam ekran açabilirsin.'}</p>
         <div class="row-btns"><button class="settings-btn" id="apInstall">Kur / Talimatları göster</button></div>
       </div>
       <div class="settings-card">
-        <h3>${DASH_ICONS.shield} Kilit &amp; Şifre</h3>
+        <h3><span class="settings-ic" style="background:#DC2626">${DASH_ICONS.shield}</span> Kilit &amp; Şifre</h3>
         <p>Paneli açan herkesin doğru şifreyi bilmesi gerekir.</p>
         <div class="row-btns">
           <button class="settings-btn" id="apLock">Şimdi kilitle</button>
@@ -10472,28 +10565,28 @@ function renderAyarlarPage(){
         </div>
       </div>
       <div class="settings-card" id="staffPwCard">
-        <h3><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Personel Erişimi</h3>
+        <h3><span class="settings-ic" style="background:#0891B2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span> Personel Erişimi</h3>
         <p>Personel şifresiyle giriş yapanlar kira tutarlarını, gelir analizini ve masraf rakamlarını göremez. Araç bilgileri, belgeler ve muayene/sigorta takibi görünür kalır.</p>
         <div class="row-btns">
           <button class="settings-btn" id="apStaffPw">Personel şifresini ayarla</button>
         </div>
       </div>
       <div class="settings-card">
-        <h3><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg> Hatırlatma E-postası</h3>
+        <h3><span class="settings-ic" style="background:#D97706"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg></span> Hatırlatma E-postası</h3>
         <p>Acil durumlar için e-posta taslağı oluşturulacak adres. Bulut senkron bağlıysa bu adres günlük otomatik hatırlatmada da kullanılır; bulut bağlı değilken yalnızca panelden manuel taslak için geçerlidir.</p>
         <div class="row-btns"><button class="settings-btn" id="apEmail">Ayarla</button></div>
       </div>
       <div class="settings-card">
-        <h3><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10Z"/></svg> Bulut Senkronizasyonu</h3>
+        <h3><span class="settings-ic" style="background:#16A34A"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10Z"/></svg></span> Bulut Senkronizasyonu</h3>
         <p>${window.__cloudSyncActive ? 'Aktif — tüm cihazlarda aynı veriyi görüyorsun.' : 'Kapalı — veriler sadece bu cihazda tutuluyor.'}</p>
         <div class="row-btns"><button class="settings-btn" id="apCloud">${window.__cloudSyncActive ? 'Yönet' : 'Bağlan'}</button></div>
       </div>
       <div class="settings-card">
-        <h3><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg> AI Otomatik Doldurma (Gemini)</h3>
+        <h3><span class="settings-ic" style="background:#6366F1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg></span> AI Otomatik Doldurma (Gemini)</h3>
         <p style="font-size:13px;color:var(--text-2);">Belge okuma artık güvenli bir sunucu üzerinden çalışıyor — anahtar tarayıcıda tutulmuyor, buraya bir şey girmene gerek yok. <span style="color:#16A34A;">✓ Aktif</span></p>
       </div>
       <div class="settings-card">
-        <h3><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg> Yedekleme</h3>
+        <h3><span class="settings-ic" style="background:#64748B"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg></span> Yedekleme</h3>
         <p>Tüm veriyi (araçlar, masraflar, kayıtlı sözleşmeler, etkinlik geçmişi) tek bir dosyaya indir, ya da bir yedekten geri yükle.</p>
         <div class="row-btns">
           <button class="settings-btn" id="apBackup">Yedekle (JSON)</button>
