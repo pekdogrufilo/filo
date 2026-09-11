@@ -657,6 +657,13 @@
   .dg-141{grid-template-columns:1.4fr 1fr;}
   .dg-1120{grid-template-columns:1fr 1fr 320px;}
   @media (max-width:1100px){.dash-grid,.dg-21,.dg-3,.dg-141,.dg-1120{grid-template-columns:1fr;}}
+  /* Genel Bakış: sürüklenebilir widget'lar (rol bazına göre ayrı ayrı hatırlanır) */
+  .dash-widget{position:relative;margin-top:16px;}
+  .dash-widget-handle{position:absolute;top:-11px;left:50%;transform:translateX(-50%);width:34px;height:16px;border-radius:0 0 8px 8px;background:var(--surface-2);border:1px solid var(--line);border-top:none;display:flex;align-items:center;justify-content:center;cursor:grab;opacity:0;transition:opacity .15s;z-index:3;color:var(--steel-300);}
+  .dash-widget:hover .dash-widget-handle{opacity:1;}
+  .dash-widget-handle:active{cursor:grabbing;}
+  .dash-widget.dragging{opacity:.45;}
+  .dash-widget.dash-widget-dragover{outline:2px dashed var(--accent-blue);outline-offset:4px;border-radius:12px;}
   /* ATS PRO stilinde dağılım listesi + yaklaşan periyot */
   .fd-row{display:flex;align-items:center;gap:8px;font-size:12.5px;margin-top:11px;}
   .fd-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
@@ -1177,7 +1184,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-10.56</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-10.57</div>
     </div>
   </div>
 </div>
@@ -1297,7 +1304,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-10.56</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-10.57</div>
     </div>
   </aside>
 
@@ -7317,6 +7324,55 @@ function closeVehicleQuickList(){
   if(el) el.remove();
 }
 
+// ===== Genel Bakış: rol bazlı, sürüklenebilir widget sıralaması =====
+// Her rol (Yönetici / Personel) kendi widget sırasını ayrı hatırlar; localStorage'a kaydedilir.
+function dashWidgetOrderKey(){ return 'filoPaneli_dashOrder_' + (isAdmin() ? 'admin' : 'personel'); }
+function dashApplyWidgetOrder(container){
+  let saved = null;
+  try{ saved = JSON.parse(localStorage.getItem(dashWidgetOrderKey())||'null'); }catch(e){ saved = null; }
+  if(!Array.isArray(saved) || !saved.length) return;
+  const widgets = Array.from(container.querySelectorAll(':scope > .dash-widget'));
+  const map = {};
+  widgets.forEach(w=>{ map[w.dataset.widgetKey] = w; });
+  saved.forEach(k=>{ if(map[k]) container.appendChild(map[k]); });
+}
+function dashSaveWidgetOrder(container){
+  const order = Array.from(container.querySelectorAll(':scope > .dash-widget')).map(w=>w.dataset.widgetKey);
+  try{ localStorage.setItem(dashWidgetOrderKey(), JSON.stringify(order)); }catch(e){}
+}
+let dashDragSrc = null;
+function dashWidgetDragStart(e){
+  dashDragSrc = e.currentTarget;
+  e.currentTarget.classList.add('dragging');
+  try{ e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', e.currentTarget.dataset.widgetKey||''); }catch(err){}
+}
+function dashWidgetDragOver(e){
+  e.preventDefault();
+  if(!dashDragSrc || e.currentTarget===dashDragSrc) return;
+  e.currentTarget.classList.add('dash-widget-dragover');
+}
+function dashWidgetDragLeave(e){ e.currentTarget.classList.remove('dash-widget-dragover'); }
+function dashWidgetDrop(e){
+  e.preventDefault();
+  const target = e.currentTarget;
+  target.classList.remove('dash-widget-dragover');
+  if(!dashDragSrc || target===dashDragSrc) return;
+  const container = target.parentElement;
+  if(!container || dashDragSrc.parentElement!==container) return;
+  const children = Array.from(container.children);
+  const srcIdx = children.indexOf(dashDragSrc);
+  const tgtIdx = children.indexOf(target);
+  if(srcIdx<tgtIdx) target.after(dashDragSrc); else target.before(dashDragSrc);
+  dashSaveWidgetOrder(container);
+}
+function dashWidgetDragEnd(e){
+  e.currentTarget.classList.remove('dragging');
+  document.querySelectorAll('.dash-widget-dragover').forEach(el=>el.classList.remove('dash-widget-dragover'));
+  dashDragSrc = null;
+}
+const DASH_WIDGET_ATTRS = 'draggable="true" ondragstart="dashWidgetDragStart(event)" ondragover="dashWidgetDragOver(event)" ondragleave="dashWidgetDragLeave(event)" ondrop="dashWidgetDrop(event)" ondragend="dashWidgetDragEnd(event)"';
+const DASH_WIDGET_HANDLE = '<div class="dash-widget-handle" title="Sürükleyerek widget sırasını değiştir">⠿</div>';
+
 function renderDashboard(){
   const total = vehicles.length;
   const kirada = vehicles.filter(v=>v.durum==='Kirada').length;
@@ -7378,6 +7434,7 @@ function renderDashboard(){
   const page = document.getElementById('page-genel-bakis');
   page.innerHTML = `
     <div id="dashYedekUyari"></div>
+    <div class="dash-widget" data-widget-key="kpi" ${DASH_WIDGET_ATTRS}>${DASH_WIDGET_HANDLE}
     <div class="dash-stats">
       <div class="dstat dstat-strong" style="--accent-c:#2E7CF6;background:linear-gradient(135deg,rgba(46,124,246,.14),rgba(46,124,246,.03))" onclick="showVehicleQuickList('Toplam','Tüm Araçlar')">
         <div class="dstat-ic" style="background:rgba(46,124,246,.12);color:#2E7CF6">${DASH_ICONS.car}</div>
@@ -7427,7 +7484,7 @@ function renderDashboard(){
           <div class="d" style="color:var(--steel-300);font-weight:400;">tüm zamanlar</div>
         </div>
       </div>
-      <div class="dstat dstat-strong" style="--accent-c:#2E7CF6;background:linear-gradient(135deg,rgba(46,124,246,.14),rgba(46,124,246,.03));cursor:default;">
+      <div class="dstat dstat-strong" data-admin-only style="--accent-c:#2E7CF6;background:linear-gradient(135deg,rgba(46,124,246,.14),rgba(46,124,246,.03));cursor:default;">
         <div class="dstat-ic" style="background:rgba(46,124,246,.12);color:#2E7CF6">${DASH_ICONS.trend}</div>
         <div class="dstat-txt">
           <div class="l">Aylık Kira Geliri</div>
@@ -7436,7 +7493,9 @@ function renderDashboard(){
         </div>
       </div>
     </div>
-    <div class="dcard" id="bugunCard" style="margin-top:16px;border-left:4px solid ${bugunKritik>0?'#DC2626':(bugunUyari>0?'#EA580C':'#16A34A')};box-shadow:var(--shadow-md);">
+    </div>
+    <div class="dash-widget" data-widget-key="bugun" ${DASH_WIDGET_ATTRS}>${DASH_WIDGET_HANDLE}
+    <div class="dcard" id="bugunCard" style="border-left:4px solid ${bugunKritik>0?'#DC2626':(bugunUyari>0?'#EA580C':'#16A34A')};box-shadow:var(--shadow-md);">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
         <h3 style="margin:0;display:flex;align-items:center;gap:10px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Bugün Yapılacaklar
           ${bugunYapilacaklar.length ? `<span style="font-size:11px;font-weight:700;padding:2px 9px;border-radius:12px;background:${bugunKritik>0?'rgba(220,38,38,.15)':'rgba(234,88,12,.15)'};color:${bugunKritik>0?'#DC2626':'#EA580C'};">${bugunKritik>0?bugunKritik+' kritik · ':''}${bugunUyari} uyarı</span>` : `<span style="font-size:11px;font-weight:700;padding:2px 9px;border-radius:12px;background:rgba(22,163,74,.15);color:#16A34A;">Temiz</span>`}
@@ -7456,7 +7515,9 @@ function renderDashboard(){
         return rows + (kalan>0 ? `<div style="font-size:12px;color:var(--steel-300);text-align:center;padding:4px 0;">+${kalan} işlem daha — <a data-goto="bildirimler" style="color:var(--accent-blue);text-decoration:none;cursor:pointer;">Aksiyon Merkezi'nde gör</a></div>` : '');
       })()}
     </div>
-    <div class="dcard" style="margin-top:16px;border:1px solid rgba(46,124,246,.25);box-shadow:var(--shadow-md);">
+    </div>
+    <div class="dash-widget" data-widget-key="hizli" ${DASH_WIDGET_ATTRS}>${DASH_WIDGET_HANDLE}
+    <div class="dcard" style="border:1px solid rgba(46,124,246,.25);box-shadow:var(--shadow-md);">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:12px;">
         <h3 style="margin:0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/></svg>Hızlı İşlemler</h3>
         <span style="font-size:12px;color:var(--text-3);">Tek tıkla en sık yapılan işlemler</span>
@@ -7474,6 +7535,8 @@ function renderDashboard(){
         <button class="qbtn" data-act="yedekten-yukle"><div class="qic" style="background:#0891B2;color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg></div><span>Yedekten Geri Yükle</span></button>
       </div>
     </div>
+    </div>
+    <div class="dash-widget" data-widget-key="dagilim-masraf-periyot" ${DASH_WIDGET_ATTRS}>${DASH_WIDGET_HANDLE}
     <div class="dash-grid dg-3">
       <div class="dcard">
         <h3>Filo Araç Dağılımı <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;background:rgba(46,124,246,.12);color:#2E7CF6;">Doluluk %${pct(kirada)}</span></h3>
@@ -7509,7 +7572,7 @@ function renderDashboard(){
         <div class="fd-row"><span class="fd-dot" style="background:#8B5CF6"></span><span class="fd-l">Yakında Belgesi Bitecek</span><span class="fd-v">${yakindaBitecekPlakalar.size}</span></div>
         <div class="fd-row"><span class="fd-dot" style="background:#2E7CF6"></span><span class="fd-l">Aktif Müşteri</span><span class="fd-v">${aktifMusteri}</span></div>
       </div>
-      <div class="dcard">
+      <div class="dcard" data-admin-only>
         <h3>Aylık Masraf (Son 6 Ay) ${(()=>{ const gec = series.values.length>=2 ? series.values[series.values.length-2] : 0; const tr = gec>0 && masrafBuAy>0 ? Math.round((masrafBuAy-gec)/gec*100) : 0; return tr ? `<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;background:${tr>0?'rgba(220,38,38,.12)':'rgba(22,163,74,.12)'};color:${tr>0?'#DC2626':'#16A34A'}">${tr>0?'▲':'▼'} %${Math.abs(tr)}</span>` : ''; })()}</h3>
         ${svgBarChart(series.values, series.labels, 320, 180, '#4E92FF')}
       </div>
@@ -7528,7 +7591,9 @@ function renderDashboard(){
         })()}
       </div>
     </div>
-    <div class="dash-grid dg-3" style="margin-top:16px;grid-template-columns:1fr 1fr;">
+    </div>
+    <div class="dash-widget" data-widget-key="kirali-musteri" data-admin-only ${DASH_WIDGET_ATTRS}>${DASH_WIDGET_HANDLE}
+    <div class="dash-grid dg-3" style="grid-template-columns:1fr 1fr;">
       <div class="dcard">
         <h3>En Yüksek Kiralı Araçlar <a data-goto="arac-yonetimi" style="font-size:11px;font-weight:400;color:var(--accent-blue);text-decoration:none;">Tümü →</a></h3>
         ${topKiraChartHTML()}
@@ -7538,7 +7603,9 @@ function renderDashboard(){
         ${topMusteriChartHTML()}
       </div>
     </div>
-    <div class="dash-grid dg-3" style="margin-top:16px;grid-template-columns:1fr 1fr;">
+    </div>
+    <div class="dash-widget" data-widget-key="masraf-gelir" data-admin-only ${DASH_WIDGET_ATTRS}>${DASH_WIDGET_HANDLE}
+    <div class="dash-grid dg-3" style="grid-template-columns:1fr 1fr;">
       <div class="dcard">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
           <h3 style="margin:0;">Masraf Dağılımı</h3>
@@ -7558,7 +7625,9 @@ function renderDashboard(){
         ${(()=>{ const inc=computeMonthlyIncomeSeries(); return svgDualLineChart(inc.values, series.values, series.labels, 320, 180); })()}
       </div>
     </div>
-    <div class="dash-grid dg-141" style="margin-top:16px;">
+    </div>
+    <div class="dash-widget" data-widget-key="aksiyon-araclar" ${DASH_WIDGET_ATTRS}>${DASH_WIDGET_HANDLE}
+    <div class="dash-grid dg-141">
       <div class="dcard">
         <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/></svg>Aksiyon Merkezi <a data-goto="bildirimler" style="font-size:12px;font-weight:400;color:var(--accent-blue);text-decoration:none;">Tümünü Gör →</a></h3>
         <div>${renderKritikUyarilarList(urgent)}</div>
@@ -7568,7 +7637,9 @@ function renderDashboard(){
         ${renderMiniVehicleTable()}
       </div>
     </div>
-    <div class="dash-grid dg-141" style="margin-top:16px;grid-template-columns:1.6fr 1fr;">
+    </div>
+    <div class="dash-widget" data-widget-key="islemler-etkinlik" ${DASH_WIDGET_ATTRS}>${DASH_WIDGET_HANDLE}
+    <div class="dash-grid dg-141" style="grid-template-columns:1.6fr 1fr;">
       <div class="dcard">
         <h3>Son İşlemler <span style="font-size:11px;font-weight:500;color:var(--steel-300);">kiralamalar · iadeler · masraflar</span></h3>
         ${sonIslemler.length===0 ? '<div class="log-empty">Henüz işlem kaydı yok.</div>' : sonIslemler.map((r,i)=>{
@@ -7589,10 +7660,13 @@ function renderDashboard(){
         <div>${renderActivityListForDash()}</div>
       </div>
     </div>
+    </div>
   `;
   page.querySelectorAll('[data-goto]').forEach(el=>{ el.onclick = ()=>switchPage(el.dataset.goto); });
   wireQuickActions(page);
   dashYedekUyarisiGoster();
+  dashApplyWidgetOrder(page);
+  applyRoleVisibility();
 }
 
 // Hızlı İşlemler düğmelerinin ortak davranışı — Genel Bakış'ta ve diğer sayfalardaki
