@@ -1184,7 +1184,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-10.63</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-10.64</div>
     </div>
   </div>
 </div>
@@ -1304,7 +1304,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-10.63</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-10.64</div>
     </div>
   </aside>
 
@@ -5273,6 +5273,9 @@ function openVehicleDetail(id){
   // Km geçmişi
   const kmGecmisi = v.kmGecmisi || [];
 
+  // Hakediş (kira) geçmişi
+  const hakedisGecmisi = v.hakedisGecmisi || [];
+
   // Hasar/kaza kayıtları
   const hasarlar = Array.isArray(v.hasarlar) ? v.hasarlar : [];
 
@@ -5283,6 +5286,7 @@ function openVehicleDetail(id){
     ...hasarlar.map(h=>({d:h.tarih||'', tip:'hasar', baslik:'Hasar / Kaza', detay:h.aciklama||'', tutar:h.tutar, tarihTxt:fmtTarih(h.tarih||''), onclick:h.fotoKey?`hasarFotoGor('${id}','${h.id}')`:''})),
     ...otoDocs.map(o=>({d:(o.tarih||'').slice(0,10)||'', tip:o.tur==='servis'?'servis':'belge', baslik:o.tur==='diger'?'Belge yüklendi':(o.tur.charAt(0).toLocaleUpperCase('tr-TR')+o.tur.slice(1))+' belgesi', detay:o.adi, tutar:null, tarihTxt:fmtTarih((o.tarih||'').slice(0,10))||'tarih yok', onclick:`viewOtoDoc('${id}',${otoDocs.indexOf(o)})`})),
     ...kmGecmisi.map(k=>({d:k.donem?k.donem+'-01':'', tip:'km', baslik:'Km raporu', detay:(k.toplamKm?Number(k.toplamKm).toLocaleString('tr-TR')+' km':''), tutar:null, tarihTxt:k.donem||'', onclick:''})),
+    ...(isAdmin() ? hakedisGecmisi.map(h=>({d:h.donemKey?h.donemKey+'-01':'', tip:'hakedis', baslik:'Hakediş kaydedildi', detay:h.donem||'', tutar:h.tutar, tarihTxt:h.donem||'', onclick:''})) : []),
     ...(v.teslimTarih?[{d:v.teslimTarih, tip:'teslim', baslik:'Araç teslim edildi', detay:v.teslimKm?Number(v.teslimKm).toLocaleString('tr-TR')+' km':'', tutar:null, tarihTxt:fmtTarih(v.teslimTarih), onclick:''}]:[]),
     ...(v.durumOlaylari||[]).map(o=>({d:o.tarih||'', tip:o.tip==='satis'?'satis':'pert', baslik:o.tip==='satis'?'Araç satıldı':'Pert kaydı (kaza)', detay:o.aciklama||'', tutar:o.tutar||null, tarihTxt:fmtTarih(o.tarih||''), onclick:''})),
     ...(v.servisGirisleri||[]).flatMap(k=>[
@@ -5429,6 +5433,20 @@ function openVehicleDetail(id){
           </div>
         </div>` : ''}
 
+        <!-- Hakediş Geçmişi (sadece yönetici) -->
+        ${(hakedisGecmisi.length && isAdmin()) ? `
+        <div style="background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:14px;">
+          <div style="font-size:12px;font-weight:700;color:var(--paper);margin-bottom:10px;">${ICO('money',13)} Hakediş Geçmişi</div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            ${[...hakedisGecmisi].sort((a,b)=>(b.donemKey||'').localeCompare(a.donemKey||'')).map(h=>`
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line);">
+                <span style="font-size:12px;color:var(--steel-300);">${esc(h.donem||'—')}</span>
+                <span style="font-size:13px;font-weight:600;color:#16A34A;">${fmtTL2_role(h.tutar||0)}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>` : ''}
+
         <!-- Masraf Geçmişi -->
         <div style="background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:14px;">
           <div style="font-size:12px;font-weight:700;color:var(--paper);margin-bottom:10px;">${ICO('money',13)} Masraf Geçmişi ${vMasraf.length ? `<span style="font-weight:400;color:var(--steel-300);">(${vMasraf.length} kayıt)</span>` : ''}</div>
@@ -5536,6 +5554,7 @@ function openVehicleDetail(id){
                 servis:{ico:ICO('wrench',14), renk:'#D97706'},
                 belge: {ico:ICO('filetext',14), renk:'#2E7CF6'},
                 km:    {ico:ICO('car',14), renk:'#2E7CF6'},
+                hakedis:{ico:ICO('money',14), renk:'#16A34A'},
                 teslim:{ico:ICO('key',14), renk:'#16A34A'},
                 pert:  {ico:ICO('crash',14), renk:'#6B7280'},
                 satis: {ico:ICO('money',14), renk:'#0891B2'},
@@ -5546,7 +5565,7 @@ function openVehicleDetail(id){
                   <div style="font-size:12.5px;color:var(--paper);"><b style="color:${stil.renk};">${esc(g.baslik)}</b>${g.detay?` <span style="color:var(--steel-300);font-size:11.5px;">${esc(g.detay)}</span>`:''}</div>
                   <div style="font-size:11px;color:var(--steel-500);margin-top:1px;">${esc(g.tarihTxt)}</div>
                 </div>
-                ${g.tutar!=null&&g.tutar!==''&&g.tutar!==0?`<div style="font-size:12.5px;font-weight:700;color:#DC2626;flex-shrink:0;">${fmtTL2(g.tutar)}</div>`:''}
+                ${g.tutar!=null&&g.tutar!==''&&g.tutar!==0?`<div style="font-size:12.5px;font-weight:700;color:${g.tip==='hakedis'?'#16A34A':'#DC2626'};flex-shrink:0;">${g.tip==='hakedis'?fmtTL2_role(g.tutar):fmtTL2(g.tutar)}</div>`:''}
                 ${g.onclick?`<button onclick="${g.onclick}" style="background:rgba(46,124,246,.1);border:1px solid rgba(46,124,246,.2);color:var(--accent-blue);cursor:pointer;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;flex-shrink:0;">Gör</button>`:''}
               </div>`;
             }).join('')}
@@ -5569,6 +5588,7 @@ function aracServisGecmisiPdf(id){
   const vMasraf = expenses.filter(e=>e.vehicleId===id || normPlaka(e.plaka)===normPlaka(v.plaka)).sort((a,b)=>(b.tarih||'').localeCompare(a.tarih||''));
   const toplamMasraf = vMasraf.reduce((s,e)=>s+(Number(e.tutar)||0),0);
   const kmGecmisi = v.kmGecmisi || [];
+  const hakedisGecmisi = v.hakedisGecmisi || [];
   const hasarlar = Array.isArray(v.hasarlar) ? v.hasarlar : [];
   const otoDocs = Array.isArray(v.otoBelgeler) ? v.otoBelgeler : [];
   const gecmis = [
@@ -5576,6 +5596,7 @@ function aracServisGecmisiPdf(id){
     ...hasarlar.map(h=>({d:h.tarih||'', baslik:'Hasar / Kaza', detay:h.aciklama||'', tutar:h.tutar, tarihTxt:fmtTarih(h.tarih||'')})),
     ...otoDocs.map(o=>({d:(o.tarih||'').slice(0,10)||'', baslik:o.tur==='diger'?'Belge yüklendi':(o.tur.charAt(0).toLocaleUpperCase('tr-TR')+o.tur.slice(1))+' belgesi', detay:o.adi, tutar:null, tarihTxt:fmtTarih((o.tarih||'').slice(0,10))||'tarih yok'})),
     ...kmGecmisi.map(k=>({d:k.donem?k.donem+'-01':'', baslik:'Km raporu', detay:(k.toplamKm?Number(k.toplamKm).toLocaleString('tr-TR')+' km':''), tutar:null, tarihTxt:k.donem||''})),
+    ...(isAdmin() ? hakedisGecmisi.map(h=>({d:h.donemKey?h.donemKey+'-01':'', baslik:'Hakediş kaydedildi', detay:h.donem||'', tutar:h.tutar, tarihTxt:h.donem||''})) : []),
     ...(v.teslimTarih?[{d:v.teslimTarih, baslik:'Araç teslim edildi', detay:v.teslimKm?Number(v.teslimKm).toLocaleString('tr-TR')+' km':'', tutar:null, tarihTxt:fmtTarih(v.teslimTarih)}]:[]),
     ...(v.durumOlaylari||[]).map(o=>({d:o.tarih||'', baslik:o.tip==='satis'?'Araç satıldı':'Pert kaydı (kaza)', detay:o.aciklama||'', tutar:o.tutar||null, tarihTxt:fmtTarih(o.tarih||'')})),
     ...(v.servisGirisleri||[]).flatMap(k=>[
@@ -5592,7 +5613,7 @@ function aracServisGecmisiPdf(id){
     {ad:'Kira Bitişi', tarih:v.kiraBitis},
   ].filter(b=>b.tarih);
 
-  const html = aracServisGecmisiHtml(v, {vMasraf, toplamMasraf, kmGecmisi, gecmis, belgeler});
+  const html = aracServisGecmisiHtml(v, {vMasraf, toplamMasraf, kmGecmisi, hakedisGecmisi:(isAdmin()?hakedisGecmisi:[]), gecmis, belgeler});
   let w = null;
   try{ w = window.open('','_blank'); }catch(e){}
   if(w && w.document){
@@ -5619,7 +5640,7 @@ function aracServisGecmisiPdf(id){
 function aracServisGecmisiHtml(v, data){
   const logoSrc = (document.querySelector('.lock-logo-wrap img')||{}).src||'';
   const logoTag = logoSrc ? `<img src="${logoSrc}" alt="" style="display:block;margin:0 auto 10px;max-height:60px;">` : '';
-  const {vMasraf, toplamMasraf, kmGecmisi, gecmis, belgeler} = data;
+  const {vMasraf, toplamMasraf, kmGecmisi, hakedisGecmisi=[], gecmis, belgeler} = data;
   return `<!DOCTYPE html>
 <html lang="tr"><head><meta charset="UTF-8"><title>Servis Geçmişi — ${esc(v.plaka)}</title>
 <style>
@@ -5650,6 +5671,10 @@ ${belgeler.map(b=>{ const dl=daysLeft(b.tarih); const durum = dl===null?'—':dl
 
 ${kmGecmisi.length ? `<h2>Kilometre Geçmişi</h2><table><tr><th>Dönem</th><th>Aylık Km</th><th>Bitiş Km</th></tr>
 ${kmGecmisi.slice().reverse().map(k=>`<tr><td>${esc(k.donem||'—')}</td><td>${(k.toplamKm||0).toLocaleString('tr-TR')} km</td><td>${k.bitKm?k.bitKm.toLocaleString('tr-TR')+' km':'—'}</td></tr>`).join('')}
+</table>` : ''}
+
+${hakedisGecmisi.length ? `<h2>Hakediş Geçmişi</h2><table><tr><th>Dönem</th><th>Tutar</th></tr>
+${[...hakedisGecmisi].sort((a,b)=>(b.donemKey||'').localeCompare(a.donemKey||'')).map(h=>`<tr><td>${esc(h.donem||'—')}</td><td>${fmtTL2(h.tutar||0)}</td></tr>`).join('')}
 </table>` : ''}
 
 <h2>Masraf Geçmişi (${vMasraf.length} kayıt — Toplam ${fmtTL2(toplamMasraf)})</h2>
@@ -6881,10 +6906,22 @@ function computeMonthlyIncomeSeries(){
       label: d.toLocaleDateString('tr-TR', {month:'short'})
     });
   }
-  const values = months.map(m=> vehicles.filter(v=>v.durum==='Kirada' && Number(v.kira)>0 && (!v.teslimTarih || v.teslimTarih<=m.sonGun)).reduce((s,v)=>s+Number(v.kira),0));
-  return {values, labels: months.map(m=>m.label)};
+  let gercekAySayisi = 0;
+  const values = months.map(m=>{
+    let toplam = 0, buAyGercek = false;
+    vehicles.forEach(v=>{
+      const kayit = (v.hakedisGecmisi||[]).find(h=>h.donemKey===m.key);
+      if(kayit){ toplam += Number(kayit.tutar)||0; buAyGercek = true; }
+      else if(v.durum==='Kirada' && Number(v.kira)>0 && (!v.teslimTarih || v.teslimTarih<=m.sonGun)){
+        toplam += Number(v.kira)||0;
+      }
+    });
+    if(buAyGercek) gercekAySayisi++;
+    return toplam;
+  });
+  return {values, labels: months.map(m=>m.label), gercekAySayisi, toplamAySayisi: months.length};
 }
-function svgDualLineChart(a, b, labels, width, height){
+function svgDualLineChart(a, b, labels, width, height, labelA){
   const idA='da'+(__chartIdCounter++), idB='db'+(__chartIdCounter++);
   const pad={l:52,r:10,t:14,b:24};
   const w=width-pad.l-pad.r, h=height-pad.t-pad.b;
@@ -6921,7 +6958,7 @@ function svgDualLineChart(a, b, labels, width, height){
     ${labelEls}
   </svg>
   <div style="display:flex;gap:16px;margin-top:6px;font-size:11px;color:var(--text-3);">
-    <span style="display:flex;align-items:center;gap:5px;"><span style="width:14px;height:3px;border-radius:2px;background:#4E92FF;display:inline-block;"></span>Aylık Kira Geliri (tahmini)</span>
+    <span style="display:flex;align-items:center;gap:5px;"><span style="width:14px;height:3px;border-radius:2px;background:#4E92FF;display:inline-block;"></span>${esc(labelA||'Aylık Kira Geliri (tahmini)')}</span>
     <span style="display:flex;align-items:center;gap:5px;"><span style="width:14px;height:3px;border-radius:2px;background:#F5A83C;display:inline-block;"></span>Masraf</span>
   </div>`;
 }
@@ -7724,7 +7761,7 @@ function renderDashboard(){
       </div>
       <div class="dcard">
         <h3>Gelir vs Masraf (Son 6 Ay) <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;background:${netKar>=0?'rgba(22,163,74,.12)':'rgba(220,38,38,.12)'};color:${netKar>=0?'#16A34A':'#DC2626'}">Net ${isAdmin()?fmtTL2(netKar):'—'}</span></h3>
-        ${(()=>{ const inc=computeMonthlyIncomeSeries(); return svgDualLineChart(inc.values, series.values, series.labels, 320, 180); })()}
+        ${(()=>{ const inc=computeMonthlyIncomeSeries(); const lbl = inc.gercekAySayisi===0?'Aylık Kira Geliri (tahmini)':inc.gercekAySayisi>=inc.toplamAySayisi?'Aylık Kira Geliri (gerçek)':'Aylık Kira Geliri (gerçek + tahmini)'; return svgDualLineChart(inc.values, series.values, series.labels, 320, 180, lbl); })()}
       </div>
     </div>
     </div>
@@ -9048,6 +9085,12 @@ async function sozlesmeDocx(d){
 }
 
 // ===== Kira (hakediş) fiyatlarını Excel'den güncelle =====
+function donemKeyToLabel(key){
+  const aylar = ['','Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+  const m = /^(\d{4})-(\d{2})$/.exec(key||'');
+  if(!m) return key||'—';
+  return `${aylar[parseInt(m[2],10)]||m[2]} ${m[1]}`;
+}
 function kiraTutarParse(val){
   if(val==null) return 0;
   if(typeof val==='number') return val;
@@ -9064,6 +9107,13 @@ async function kiraFiyatYukle(file){
   if(!file) return;
   const log = document.getElementById('kiraYuklemeLog');
   if(!log) return;
+  const donemInput = document.getElementById('kiraDonemInput');
+  const donemKey = donemInput ? donemInput.value : '';
+  if(!donemKey){
+    log.innerHTML = '<div style="color:var(--red)">Lütfen önce bu dosyanın hangi aya ait olduğunu seç (Hakediş Dönemi).</div>';
+    return;
+  }
+  const donemLabel = donemKeyToLabel(donemKey);
   log.innerHTML = '<div style="color:var(--text-2);font-size:13px;">Dosya okunuyor...</div>';
   try{
     const data = await new Promise((res,rej)=>{ const fr=new FileReader(); fr.onload=e=>res(e.target.result); fr.onerror=rej; fr.readAsArrayBuffer(file); });
@@ -9107,22 +9157,33 @@ async function kiraFiyatYukle(file){
       const v = vehicles.find(x=>normPlaka(x.plaka)===np);
       if(!v){ eslesmeyen.push(hamPlaka); continue; }
       if(tutar<=0){ eslesmeyen.push(hamPlaka+' (tutar okunamadı)'); continue; }
+      // Dönem bazlı geçmişe kaydet (aynı dönem tekrar yüklenirse üzerine yazılır)
+      const gecmis = v.hakedisGecmisi || [];
+      const mevcutIdx = gecmis.findIndex(h=>h.donemKey===donemKey);
+      const yeniKayit = {donemKey, donem:donemLabel, tutar, kaynak:file.name, tarih:todayISO()};
+      const eskiKayitTutar = mevcutIdx>=0 ? gecmis[mevcutIdx].tutar : null;
+      if(mevcutIdx>=0) gecmis[mevcutIdx] = yeniKayit; else gecmis.push(yeniKayit);
+      v.hakedisGecmisi = gecmis;
+      // Güncel kira alanını, geçmişteki en yeni döneme göre belirle (eski ay geriye dönük yüklense bile güncel değeri bozmaz)
+      const enYeni = [...gecmis].sort((a,b)=>(b.donemKey||'').localeCompare(a.donemKey||''))[0];
       const eski = Number(v.kira)||0;
-      if(eski!==tutar){ v.kira = tutar; guncellenen++; detay.push({plaka:v.plaka, eski, yeni:tutar}); }
+      if(enYeni) v.kira = enYeni.tutar;
+      if(eskiKayitTutar===null || eskiKayitTutar!==tutar){ guncellenen++; detay.push({plaka:v.plaka, eski:eskiKayitTutar===null?eski:eskiKayitTutar, yeni:tutar}); }
       else ayni++;
     }
     if(guncellenen>0) await persist();
-    if(guncellenen>0) logActivity('import', "Kira fiyatları Excel'den güncellendi — <b>"+guncellenen+' araç</b>');
+    if(guncellenen>0) logActivity('import', `${donemLabel} hakedişi Excel'den yüklendi — <b>`+guncellenen+' araç</b>');
     const eskiToplam = detay.reduce((s,d)=>s+d.eski,0);
     const yeniToplam = detay.reduce((s,d)=>s+d.yeni,0);
     const ozetHtml = `
       <div style="background:rgba(22,163,74,.08);border:1px solid rgba(22,163,74,.25);border-radius:10px;padding:12px 14px;">
-        <div style="color:#16A34A;font-size:13px;font-weight:700;margin-bottom:6px;">✅ ${guncellenen} aracın kirası güncellendi${ayni?`, ${ayni} araçta değişiklik yok`:''}.</div>
-        ${detay.length?`<div style="font-size:12px;color:var(--text-2);margin-bottom:4px;">Aylık kira geliri: <b>${fmtTL2_role(eskiToplam)} → ${fmtTL2_role(yeniToplam)}</b> (${fmtTL2_role(yeniToplam-eskiToplam)} değişim)</div>`:''}
+        <div style="color:#16A34A;font-size:13px;font-weight:700;margin-bottom:6px;">✅ <b>${esc(donemLabel)}</b> dönemi için ${guncellenen} aracın hakedişi kaydedildi${ayni?`, ${ayni} araçta değişiklik yok`:''}.</div>
+        ${detay.length?`<div style="font-size:12px;color:var(--text-2);margin-bottom:4px;">${esc(donemLabel)} toplam hakediş: <b>${fmtTL2_role(yeniToplam)}</b></div>`:''}
         ${detay.length?`<div style="max-height:180px;overflow-y:auto;font-size:12px;color:var(--text-2);border-top:1px solid var(--border);margin-top:8px;padding-top:8px;">${detay.map(d=>`<div style="display:flex;justify-content:space-between;gap:10px;padding:2px 0;"><span><span class="mini-plaka" style="font-size:10.5px;">${esc(d.plaka)}</span> ${fmtTL2_role(d.eski)} → <b style="color:var(--text);">${fmtTL2_role(d.yeni)}</b></span></div>`).join('')}</div>`:''}
         ${eslesmeyen.length?`<div style="font-size:12px;color:#D97706;margin-top:8px;">⚠️ Eşleşmeyen ${eslesmeyen.length} kayıt: ${esc(eslesmeyen.slice(0,10).join(', '))}${eslesmeyen.length>10?' …':''}</div>`:''}
+        <div style="font-size:11.5px;color:var(--text-3);margin-top:8px;">Bu dönem daha önce yüklendiyse üzerine yazıldı. Panodaki gelir grafiği artık bu ay için gerçek hakediş tutarını kullanacak.</div>
       </div>`;
-    showToast(guncellenen+' aracın kira fiyatı güncellendi.');
+    showToast(donemLabel+' hakedişi kaydedildi — '+guncellenen+' araç.');
     renderCurrentPage();
     const logEl = document.getElementById('kiraYuklemeLog');
     if(logEl) logEl.innerHTML = ozetHtml;
@@ -10776,7 +10837,11 @@ function renderExcelPage(){
     <!-- Kira (Hakediş) Fiyatları Güncelle -->
     <div class="dcard" style="margin-bottom:14px;">
       <h3 style="margin-bottom:6px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>Kira Fiyatları Güncelle (Hakediş / Fatura)</h3>
-      <p style="color:var(--text-2);font-size:13px;margin-bottom:14px;">Plaka ve aylık kira/hakediş tutarı içeren Excel dosyasını (veya fatura listesi Excel'i) yükle. Sistem tüm sayfaları tarar, plakaları eşleştirir ve her aracın güncel kira fiyatını otomatik kaydeder; kira gelirleri anında güncellenir.</p>
+      <p style="color:var(--text-2);font-size:13px;margin-bottom:14px;">Plaka ve aylık kira/hakediş tutarı içeren Excel dosyasını (veya fatura listesi Excel'i) yükle. Sistem tüm sayfaları tarar, plakaları eşleştirir ve her aracın güncel kira fiyatını otomatik kaydeder; kira gelirleri anında güncellenir. Geçmiş aylara ait hakediş dosyalarını da ayrı ayrı, ait olduğu ayı seçerek yükleyebilirsin — panodaki gelir grafiği o aylar için gerçek verileri gösterir.</p>
+      <div style="margin-bottom:12px;">
+        <label style="display:block;font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:6px;">Bu dosya hangi aya ait? (Hakediş Dönemi)</label>
+        <input type="month" id="kiraDonemInput" class="input" style="max-width:220px;" value="${new Date().toISOString().slice(0,7)}">
+      </div>
       <div id="kiraYuklemeArea" style="border:2px dashed var(--border);border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:border-color .2s ease;"
         ondragover="event.preventDefault();this.style.borderColor='var(--accent-blue)'"
         ondragleave="this.style.borderColor='var(--border)'"
