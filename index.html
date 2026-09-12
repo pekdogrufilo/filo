@@ -1226,7 +1226,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-12.80</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-12.81</div>
     </div>
   </div>
 </div>
@@ -1346,7 +1346,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-12.80</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-12.81</div>
     </div>
   </aside>
 
@@ -5564,10 +5564,11 @@ function openVehicleDetail(id){
     const hak = Math.round(v.kmLimiti*ay);
     const kullanilan = mevcutKm - teslimKmNum;
     const asim = kullanilan - hak;
+    const asimTutar = (asim>0 && v.kmAsimFiyat) ? asim*Number(v.kmAsimFiyat) : null;
     const mesaj = asim>0
-      ? `${asim.toLocaleString('tr-TR')} km aşım — ${kullanilan.toLocaleString('tr-TR')} km yapılmış, ${hak.toLocaleString('tr-TR')} km hakkı vardı (${ay.toLocaleString('tr-TR',{maximumFractionDigits:1})} ay × ${Number(v.kmLimiti).toLocaleString('tr-TR')} km)`
+      ? `${asim.toLocaleString('tr-TR')} km aşım — ${kullanilan.toLocaleString('tr-TR')} km yapılmış, ${hak.toLocaleString('tr-TR')} km hakkı vardı (${ay.toLocaleString('tr-TR',{maximumFractionDigits:1})} ay × ${Number(v.kmLimiti).toLocaleString('tr-TR')} km)${asimTutar!=null?` — tahmini <b>${fmtTL2(asimTutar)}</b> aşım bedeli (${asim.toLocaleString('tr-TR')} km × ${fmtTL2(v.kmAsimFiyat)})`:''}`
       : `${Math.abs(asim).toLocaleString('tr-TR')} km hakkı kaldı — ${kullanilan.toLocaleString('tr-TR')} km yapılmış, ${hak.toLocaleString('tr-TR')} km hakkı var`;
-    return {mevcutKm, asim, mesaj};
+    return {mevcutKm, asim, asimTutar, mesaj};
   })();
 
   const el = document.createElement('div');
@@ -5627,6 +5628,7 @@ function openVehicleDetail(id){
             <div><div style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;">Teslim Tarihi</div><div style="font-size:13px;font-weight:600;color:${v.teslimTarih?'var(--paper)':'#D97706'};">${v.teslimTarih?fmtTarih(v.teslimTarih):'girilmemiş'}</div></div>
             <div><div style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;">Teslim Km</div><div style="font-size:13px;font-weight:600;color:var(--paper);">${v.teslimKm?Number(v.teslimKm).toLocaleString('tr-TR')+' km':'—'}</div></div>
             <div><div style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;">Aylık Km Limiti</div><div style="font-size:13px;font-weight:600;color:${v.kmLimiti?'var(--paper)':'#D97706'};">${v.kmLimiti?Number(v.kmLimiti).toLocaleString('tr-TR')+' km/ay':'girilmemiş'}</div></div>
+            <div><div style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;">Km Aşım Ücreti</div><div style="font-size:13px;font-weight:600;color:var(--paper);">${v.kmAsimFiyat?fmtTL2(v.kmAsimFiyat)+'/km':'—'}</div></div>
             <div><div style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;">Güncel Km (bilinen)</div><div style="font-size:13px;font-weight:600;color:var(--paper);">${kmDurum.mevcutKm?kmDurum.mevcutKm.toLocaleString('tr-TR')+' km':'—'}</div></div>
           </div>
           ${kmDurum.mesaj ? `<div style="margin-top:12px;padding:9px 12px;border-radius:8px;background:${kmDurum.asim>0?'rgba(220,38,38,.1)':'rgba(22,163,74,.1)'};border:1px solid ${kmDurum.asim>0?'rgba(220,38,38,.25)':'rgba(22,163,74,.25)'};font-size:12.5px;color:${kmDurum.asim>0?'#DC2626':'#16A34A'};font-weight:600;">${kmDurum.mesaj}</div>` : ''}
@@ -10266,7 +10268,21 @@ const OTO_BELGE_TURLERI = {
   ruhsat:   {label:'Ruhsat',           prefix:'ruhsat_',        adiF:'ruhsatBelgeAdi',  tipF:'ruhsatBelgeTip',  tarihF:null},
   sozlesme: {label:'Kira sözleşmesi',  prefix:'contract_',      adiF:'sozlesmeAdi',     tipF:'sozlesmeTip',     tarihF:'sozlesmeBitis'},
 };
-const OTO_BELGE_SYSTEM = 'Sen bir araç belgesi (poliçe, ruhsat, muayene raporu, kira sözleşmesi, masraf fişi, servis kaydı vb.) okuyan asistansın. SADECE şu JSON nesnesini döndür, başka hiçbir metin veya kod bloğu ekleme:\n{"plaka": string|null, "belgeTuru": "sigorta"|"kasko"|"muayene"|"ruhsat"|"sozlesme"|"masraf"|"servis"|"vize"|"diger", "tarih": "YYYY-MM-DD"|null, "belgeNo": string|null}\nKurallar: "plaka" belgedeki araç plakası (Türk formatı: 2 rakam + 2-3 harf + 2-4 rakam, ör. 42 ABC 123). "belgeTuru" belgenin türü — sigorta poliçesi ise "sigorta", kasko ise "kasko", muayene raporu ise "muayene", tescil/ruhsat ise "ruhsat", kira sözleşmesi ise "sozlesme", masraf/yakıt fişi ise "masraf", servis/bakım kaydı ise "servis", vize/uluslararası belge ise "vize", hiçbiri değilse "diger". "tarih" belgenin geçerlilik bitiş tarihi (poliçe/muayene/sözleşme) ya da fiş/rapor tarihi — YYYY-MM-DD formatında; bulamazsan null. Emin değilsen null yaz, tahmin yürütme.';
+const OTO_BELGE_SYSTEM = 'Sen bir araç belgesi (poliçe, ruhsat, muayene raporu, kira sözleşmesi, masraf fişi, servis kaydı vb.) okuyan asistansın. SADECE şu JSON nesnesini döndür, başka hiçbir metin veya kod bloğu ekleme:\n{"plaka": string|null, "belgeTuru": "sigorta"|"kasko"|"muayene"|"ruhsat"|"sozlesme"|"masraf"|"servis"|"vize"|"diger", "tarih": "YYYY-MM-DD"|null, "belgeNo": string|null, "kiraTutari": sayı|null, "kmLimiti": sayı|null, "kmAsimUcreti": sayı|null}\nKurallar: "plaka" belgedeki araç plakası (Türk formatı: 2 rakam + 2-3 harf + 2-4 rakam, ör. 42 ABC 123). "belgeTuru" belgenin türü — sigorta poliçesi ise "sigorta", kasko ise "kasko", muayene raporu ise "muayene", tescil/ruhsat ise "ruhsat", kira sözleşmesi ise "sozlesme", masraf/yakıt fişi ise "masraf", servis/bakım kaydı ise "servis", vize/uluslararası belge ise "vize", hiçbiri değilse "diger". "tarih" belgenin geçerlilik bitiş tarihi (poliçe/muayene/sözleşme) ya da fiş/rapor tarihi — YYYY-MM-DD formatında; bulamazsan null. "belgeTuru" "sozlesme" ise EK OLARAK şunları da oku, başka hiçbir belge türünde bu üç alanı doldurma (null bırak): "kiraTutari" aylık kira bedeli (KDV hariç, sadece sayı, TL), "kmLimiti" aylık kilometre kullanım limiti (sadece sayı, km), "kmAsimUcreti" bu limiti aşan her kilometre için uygulanan birim ücret (KDV hariç, sadece sayı, TL/km — sözleşmede "aşım ücreti", "fazla km bedeli" gibi ifadelerle geçebilir). Emin değilsen null yaz, tahmin yürütme.';
+
+// v.81: "km limiti vs yazmadı, aşım ücreti okumuyor" geri bildirimi üzerine eklendi — sözleşme
+// türü belgelerde artık plaka+tarihin yanında kira tutarı, aylık km limiti ve km aşım ücreti de
+// okunup araç kaydına yazılıyor. Okunan bir alan boş/eksikse mevcut değer KORUNUR, asla
+// sıfırlanmaz. Bu fonksiyon Belge Yükleme sayfası (otoBelgeSec/belgeTopluTek) ve AI Filo
+// Asistanı'ndaki "Evrak Gönder" (aiBelgeYukle/aiPendingBelgeCozumle) ile ortak kullanılıyor.
+function sozlesmeAlanlariUygula(v, bilgi){
+  if(!bilgi) return false;
+  let degisti = false;
+  if(bilgi.kiraTutari!=null && !isNaN(Number(bilgi.kiraTutari)) && Number(bilgi.kiraTutari)>0){ v.kira = Number(bilgi.kiraTutari); degisti = true; }
+  if(bilgi.kmLimiti!=null && !isNaN(Number(bilgi.kmLimiti)) && Number(bilgi.kmLimiti)>0){ v.kmLimiti = Number(bilgi.kmLimiti); degisti = true; }
+  if(bilgi.kmAsimUcreti!=null && !isNaN(Number(bilgi.kmAsimUcreti)) && Number(bilgi.kmAsimUcreti)>0){ v.kmAsimFiyat = Number(bilgi.kmAsimUcreti); degisti = true; }
+  return degisti;
+}
 async function otoBelgeSec(file, statusEl){
   if(!file) return;
   if(file.size > 10*1024*1024){ showToast('Dosya çok büyük (en fazla 10 MB).', true); return; }
@@ -10329,10 +10345,12 @@ async function otoBelgeSec(file, statusEl){
     }else{
       await belgeAracaEkle(v, tur, file.name, onceden.mime, onceden.dataUrl, okunanTarih);
     }
+    const sozAlanGuncellendi = tur==='sozlesme' ? sozlesmeAlanlariUygula(v, bilgi) : false;
     await persist();
     logActivity('Belge yüklendi', `${v.plaka} — ${std?std.label:(tur==='diger'?'Belge':tur)} (${file.name})`).catch(()=>{});
     const tarihMsg = okunanTarih && std && std.tarihF ? `, tarih ${fmtTarih(okunanTarih)} olarak güncellendi` : '';
-    showToast(`Kaydedildi: ${esc(v.plaka)} — ${std?std.label:esc(tur)} "${esc(file.name)}"${tarihMsg}.`);
+    const sozMsg = sozAlanGuncellendi ? ', kira/km limiti/aşım ücreti güncellendi' : '';
+    showToast(`Kaydedildi: ${esc(v.plaka)} — ${std?std.label:esc(tur)} "${esc(file.name)}"${tarihMsg}${sozMsg}.`);
     renderBelgelerPage();
   }catch(e){
     console.error(e);
@@ -10507,6 +10525,7 @@ async function belgeTopluTek(file, fallbackId){
     }else{
       await belgeAracaEkle(v, tur, file.name, onceden.mime, onceden.dataUrl, okunanTarih);
     }
+    if(tur==='sozlesme') sozlesmeAlanlariUygula(v, bilgi);
     await persist();
     logActivity('Belge yüklendi', `${v.plaka} — ${std?std.label:tur} (${file.name})`).catch(()=>{});
     return {durum:'ok', plaka:v.plaka, etiket: std?std.label:(tur==='diger'?'Genel belge':tur), tarih: okunanTarih};
@@ -11372,11 +11391,13 @@ async function aiBelgeYukle(file){
     }else{
       await belgeAracaEkle(v, tur, file.name, onceden.mime, onceden.dataUrl, okunanTarih);
     }
+    const sozAlanGuncellendi = tur==='sozlesme' ? sozlesmeAlanlariUygula(v, bilgi) : false;
     await persist();
     logActivity('Belge yüklendi', `${v.plaka} — ${std?std.label:tur} (${file.name}) [AI Asistanı]`).catch(()=>{});
     const etiket = std ? std.label : (tur==='diger'?'Genel belge':tur);
     const tarihMsg = okunanTarih && std && std.tarihF ? ` Bitiş tarihi <b>${fmtTarih(okunanTarih)}</b> olarak güncellendi.` : '';
-    aiMessages.push({role:'assistant', content: `✅ Bu bir <b>${esc(etiket)}</b> — <b>${esc(v.plaka)}</b> aracının kaydına ekledim.${tarihMsg} <button onclick="switchPage('arac-yonetimi');setTimeout(()=>openVehicleDetail('${v.id}'),100)" style="margin-left:6px;background:rgba(46,124,246,.1);border:1px solid rgba(46,124,246,.2);color:var(--accent-blue);padding:3px 10px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;">Araca Git</button>`});
+    const sozMsg = sozAlanGuncellendi ? ` Kira/km limiti/aşım ücreti bilgileri de sözleşmeden okunup güncellendi.` : '';
+    aiMessages.push({role:'assistant', content: `✅ Bu bir <b>${esc(etiket)}</b> — <b>${esc(v.plaka)}</b> aracının kaydına ekledim.${tarihMsg}${sozMsg} <button onclick="switchPage('arac-yonetimi');setTimeout(()=>openVehicleDetail('${v.id}'),100)" style="margin-left:6px;background:rgba(46,124,246,.1);border:1px solid rgba(46,124,246,.2);color:var(--accent-blue);padding:3px 10px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;">Araca Git</button>`});
     renderAiPage();
   }catch(e){
     aiMessages.push({role:'assistant', content: `<span style="color:var(--safety);">Belge okunamadı: ${esc(e.message||'bilinmeyen hata')}</span>`});
@@ -11413,11 +11434,13 @@ async function aiPendingBelgeCozumle(txt){
     }else{
       await belgeAracaEkle(v, tur, pending.file.name, onceden.mime, onceden.dataUrl, okunanTarih);
     }
+    const sozAlanGuncellendi = tur==='sozlesme' ? sozlesmeAlanlariUygula(v, bilgi) : false;
     await persist();
     logActivity('Belge yüklendi', `${v.plaka} — ${std?std.label:tur} (${pending.file.name}) [AI Asistanı]`).catch(()=>{});
     const etiket = std ? std.label : (tur==='diger'?'Genel belge':tur);
     const tarihMsg = okunanTarih && std && std.tarihF ? ` Bitiş tarihi <b>${fmtTarih(okunanTarih)}</b> olarak güncellendi.` : '';
-    aiMessages.push({role:'assistant', content: `✅ <b>${esc(etiket)}</b> olarak <b>${esc(v.plaka)}</b> aracının kaydına ekledim.${tarihMsg}`});
+    const sozMsg = sozAlanGuncellendi ? ` Kira/km limiti/aşım ücreti bilgileri de sözleşmeden okunup güncellendi.` : '';
+    aiMessages.push({role:'assistant', content: `✅ <b>${esc(etiket)}</b> olarak <b>${esc(v.plaka)}</b> aracının kaydına ekledim.${tarihMsg}${sozMsg}`});
     renderAiPage();
   }catch(e){
     aiMessages.push({role:'assistant', content: `<span style="color:var(--safety);">Kaydedilemedi: ${esc(e.message||'hata')}</span>`});
@@ -11579,6 +11602,8 @@ async function aiSend(mesaj){
           const ay = monthsBetweenDates(v.teslimTarih, bugun);
           if(ay>0){ kmHakki = Math.round(v.kmLimiti*ay); kmKullanilan = kmMevcut-kmTeslim; kmAsimi = kmKullanilan-kmHakki; }
         }
+        // v.81: sözleşmeden okunan/girilen km aşım birim ücreti artık araca kayıtlı — aşım varsa TL tutarı da hesaplanır.
+        const kmAsimTutari = (kmAsimi>0 && v.kmAsimFiyat) ? Math.round(kmAsimi*Number(v.kmAsimFiyat)) : null;
         const hasarlar = Array.isArray(v.hasarlar) ? v.hasarlar.map(h=>({tarih:h.tarih||'', aciklama:h.aciklama||'', tutar:h.tutar||null})) : [];
         return {
           plaka: v.plaka,
@@ -11613,6 +11638,8 @@ async function aiSend(mesaj){
           teslimKm: v.teslimKm||null,
           guncelKm: kmMevcut||null,
           kmKullanilan, kmHakki, kmAsimi, // kmAsimi pozitifse aşım var, negatif/0/null ise aşım yok
+          kmAsimFiyat: v.kmAsimFiyat||null, // TL/km birim aşım ücreti (sözleşmeden okunan/girilen)
+          kmAsimTutari, // kmAsimi>0 VE kmAsimFiyat varsa hesaplanan tahmini TL tutar, aksi halde null
           hasarSayisi: hasarlar.length,
           hasarlar: hasarlar.slice(-5),
           ...(isAdmin() ? {hakedisGecmisi: (v.hakedisGecmisi||[]).slice(-6).map(h=>({donem:h.donem||'', tutar:h.tutar||0}))} : {}),
@@ -11675,6 +11702,7 @@ KM AŞIMI / HASAR / HAKEDİŞ İÇİN:
 - Bir aracın km aşımında olup olmadığını SADECE kmAsimi alanına bak: sayı VE pozitifse (>0) aşım VAR, null/negatif/0 ise aşım YOK veya henüz hesaplanamıyor (kmLimiti veya teslimTarih eksikse kmAsimi hep null olur — bu durumda "bu araç için km limiti/teslim tarihi girilmemiş" de, "aşım yok" DEME)
 - km aşımı olan tüm araçlar: kmAsimliAraclar listesi — bu listedeki plakalarla birebir aynı cevap ver
 - guncelKm/kmKullanilan/kmHakki alanları km aşımı sorularında destekleyici detay olarak kullanılabilir
+- Aşımın TL karşılığı: kmAsimFiyat (TL/km birim aşım ücreti, sözleşmeden okunmuş/girilmişse dolu) ve kmAsimTutari (kmAsimi>0 VE kmAsimFiyat varsa hesaplanmış tahmini toplam TL) alanlarına bak — kmAsimFiyat null ise "bu araç için km aşım ücreti kayıtlı değil" de, tutar UYDURMA
 - Hasar/kaza kaydı olan araçlar: hasarliAraclar listesi; bir aracın hasar geçmişi için o aracın "hasarlar" dizisine (tarih/açıklama/tutar) bak, hasarSayisi 0 ise "hasar kaydı yok" de
 - hakedisYuklenmemisAraclar SADECE yönetici rolünde veride bulunur (varsa: bu ayın kira/hakediş bilgisi henüz sisteme yüklenmemiş kiradaki araçlar); bu alan veride yoksa bu konuda soru gelirse "bu bilgiye erişimin yok" de, uydurma
 - Kira/hakediş TUTARLARI (kira, hakedisGecmisi) SADECE yönetici rolünde veride bulunur; veride yoksa bu soruları cevaplama, "bu bilgiye erişimin yok" de
@@ -11686,7 +11714,8 @@ SIKÇA SORULAN SORULAR:
 - "Belgeleri tam araç?" → sigortaDl ve muayeneDl >30 olanlar (null olanlar hariç)
 - "Sözleşmesi biten araçlar?" → kiraDl <=30 olanlar
 - "Önümüzdeki 30 günde belgesi bitecekler?" → ilgili *Dl alanı 0-30 arası olanlar
-- "Km aşımı olan araçlar hangileri?" → kmAsimliAraclar listesini göster, her biri için kmAsimi/kmKullanilan/kmHakki ile detaylandır
+- "Km aşımı olan araçlar hangileri?" → kmAsimliAraclar listesini göster, her biri için kmAsimi/kmKullanilan/kmHakki ile detaylandır, kmAsimTutari doluysa TL tutarını da ekle
+- "X aracının km aşım ücreti / aşımı ne kadar tutar?" → kmAsimFiyat (TL/km) ve kmAsimTutari (toplam TL) alanlarını göster; kmAsimFiyat null ise "sözleşmede km aşım ücreti kayıtlı değil" de
 - "X aracının hasar geçmişi nedir?" → o aracın hasarlar dizisini göster
 - "Bu ayın hakedişi yüklenmemiş araçlar?" → hakedisYuklenmemisAraclar (veride yoksa yetkin olmadığını belirt)
 
