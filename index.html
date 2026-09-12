@@ -300,6 +300,10 @@
   .modal-tab{background:none;border:none;color:var(--steel-300);font-family:var(--font-ui);font-size:13px;font-weight:500;padding:8px 14px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s ease,border-color .15s ease;}
   .modal-tab:hover{color:var(--paper);}
   .modal-tab.active{color:var(--paper);border-bottom-color:var(--accent-blue);font-weight:600;}
+  .kiop-tab.active{color:var(--paper);border-bottom-color:#C9A961;}
+  .kiop-liste-item{display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--line);}
+  .kiop-liste-item:last-child{border-bottom:none;}
+  .kiop-liste-item:hover{background:var(--surface-2);}
   .modal-body{overflow-y:auto;padding:20px 22px;flex:1;}
   .modal-tab-panel{display:none;}
   .modal-tab-panel.active{display:block;}
@@ -1222,7 +1226,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-10.70</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-10.71</div>
     </div>
   </div>
 </div>
@@ -1342,7 +1346,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-10.70</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-10.71</div>
     </div>
   </aside>
 
@@ -1637,7 +1641,6 @@
     <div class="modal-tabs">
       <button class="modal-tab active" data-tab="tab-temel"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M19 17h2v-6l-3-5H4l-3 5v6h2"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="16.5" cy="17.5" r="2.5"/></svg>Temel</button>
       <button class="modal-tab" data-tab="tab-belgeler"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z"/><path d="M14 2v6h6"/></svg>Belgeler</button>
-      <button class="modal-tab" data-tab="tab-kira" id="tabKiraBtn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M11 14h2a2 2 0 1 0 0-4h-3c-.6 0-1.1.2-1.4.6L3 16"/><path d="m7 20 1.6-1.4c.3-.4.8-.6 1.4-.6h4c1.1 0 2.1-.4 2.8-1.2l4.6-4.4a2 2 0 0 0-2.75-2.91L13.5 12"/><path d="M2 15l6 6"/></svg>Kira &amp; Teslim</button>
     </div>
     <input type="hidden" id="editId">
     <div class="modal-body">
@@ -1777,10 +1780,7 @@
           </button>
           <div class="doc-autofill-result" id="ruhsatBelgeAutoFillResult"></div>
         </div>
-      </div>
-
-      <!-- TAB 3: Kira & Teslim -->
-      <div class="modal-tab-panel" id="tab-kira">
+        <div id="belgelerKiraGizli">
         <div class="doc-section-title">Kira Sözleşmesi</div>
         <div class="field-row">
           <div class="field"><label>Sözleşme bitiş tarihi</label><input type="date" id="fSozlesmeBitis"></div>
@@ -1806,47 +1806,6 @@
           </button>
           <div class="doc-autofill-result" id="autoFillResult"></div>
         </div>
-        <div class="doc-section-title">Araç Teslimi (Kira Başı)</div>
-        <div class="field-row">
-          <div class="field"><label>Teslim tarihi</label><input type="date" id="fTeslimTarih"></div>
-          <div class="field"><label>Teslim km</label><input type="number" id="fTeslimKm" min="0" placeholder="0"></div>
-        </div>
-        <div class="field"><label>Aylık km limiti</label><input type="number" id="fKmLimiti" min="0" placeholder="Örn: 3000"></div>
-        <div class="field-row">
-          <div class="field"><label>Son bakım km</label><input type="number" id="fBakimKm" min="0" placeholder="0"></div>
-          <div class="field"><label>Bakım periyodu (km)</label><input type="number" id="fBakimPeriyot" min="0" placeholder="10000"></div>
-        </div>
-        <div class="field">
-          <label>Teslim fotoğrafı 1 (ön/genel, en fazla 3,5MB)</label>
-          <input type="file" id="fTeslimFoto1" accept="image/*">
-          <div id="teslimFoto1Mevcut" class="doc-mevcut">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg>
-            <span id="teslimFoto1Adi"></span>
-            <button type="button" id="teslimFoto1Kaldir" class="doc-kaldir">Kaldır</button>
-          </div>
-        </div>
-        <div class="field">
-          <label>Teslim fotoğrafı 2 (km göstergesi fotoğrafı veya "teslim km" yazan fatura — PDF de olur)</label>
-          <input type="file" id="fTeslimFoto2" accept="image/*,application/pdf">
-          <div id="teslimFoto2Mevcut" class="doc-mevcut">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg>
-            <span id="teslimFoto2Adi"></span>
-            <button type="button" id="teslimFoto2Kaldir" class="doc-kaldir">Kaldır</button>
-          </div>
-          <button type="button" id="teslimKmOkuBtn" class="doc-autofill-btn" onclick="runKmFotoOku(teslimFotoState.teslimFoto2&&teslimFotoState.teslimFoto2.data,'fTeslimKm','teslimKmOkuBtn','teslimKmOkuSonuc',document.getElementById('fPlaka')?.value||'')">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>
-            <span>Fotoğraftan km oku (AI)</span>
-          </button>
-          <div class="doc-autofill-result" id="teslimKmOkuSonuc"></div>
-        </div>
-        <div class="field">
-          <label>Teslim fotoğrafı 3 (opsiyonel)</label>
-          <input type="file" id="fTeslimFoto3" accept="image/*">
-          <div id="teslimFoto3Mevcut" class="doc-mevcut">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg>
-            <span id="teslimFoto3Adi"></span>
-            <button type="button" id="teslimFoto3Kaldir" class="doc-kaldir">Kaldır</button>
-          </div>
         </div>
       </div>
 
@@ -3976,8 +3935,14 @@ TESLIM_FOTO_KEYS.forEach(k=>{ teslimFotoState[k] = {data:null, name:null, remove
 
 function initTeslimFotoUI(){
   TESLIM_FOTO_KEYS.forEach(k=>{
-    const input = document.getElementById('f'+k.charAt(0).toUpperCase()+k.slice(1));
+    let input = document.getElementById('f'+k.charAt(0).toUpperCase()+k.slice(1));
     if(!input) return;
+    // Araç seçimi değiştikçe bu fonksiyon tekrar tekrar çağrılabiliyor (sayfa
+    // yeniden render edilmeden) — eski dinleyicilerin üst üste binmemesi için
+    // inputu klonlayıp değiştiriyoruz (temiz bir dinleyici kümesiyle başlıyoruz).
+    const clone = input.cloneNode(true);
+    input.replaceWith(clone);
+    input = clone;
     input.addEventListener('change', async e=>{
       const file = e.target.files[0];
       if(!file) return;
@@ -3990,7 +3955,7 @@ function initTeslimFotoUI(){
       if(k==='teslimFoto2' && getGeminiKey()){
         const okuBtn = document.getElementById('teslimKmOkuBtn');
         if(okuBtn) okuBtn.style.display = 'flex';
-        runKmFotoOku(data, 'fTeslimKm', 'teslimKmOkuBtn', 'teslimKmOkuSonuc', document.getElementById('fPlaka')?.value||'');
+        runKmFotoOku(data, 'fTeslimKm', 'teslimKmOkuBtn', 'teslimKmOkuSonuc', kiOpSelectedVehicle()?.plaka||'');
       }
     });
     const kaldir = document.getElementById(k+'Kaldir');
@@ -4565,7 +4530,7 @@ async function viewOtoDoc(vehicleId, index){
 }
 
 function clearForm(){
-  ['fPlaka','fCins','fMarka','fModel','fVersiyon','fDonanim','fYil','fSirket','fSofor','fYer','fKira','fTarih','fMuayene','fSigorta','fRuhsatSeri','fMuayeneSeri','fSigortaNo','fKaskoNo','fKaskoBitis','fSozlesmeBitis','fKiraciAdi','fKiraciTel','fKiraciVergi','fKiraciEhliyet','fKiraciAdres','fTeslimTarih','fTeslimKm','fKmLimiti','fBakimKm','fBakimPeriyot','fSoforUcreti'].forEach(id=>document.getElementById(id).value='');
+  ['fPlaka','fCins','fMarka','fModel','fVersiyon','fDonanim','fYil','fSirket','fSofor','fYer','fKira','fTarih','fMuayene','fSigorta','fRuhsatSeri','fMuayeneSeri','fSigortaNo','fKaskoNo','fKaskoBitis','fSozlesmeBitis','fKiraciAdi','fKiraciTel','fKiraciVergi','fKiraciEhliyet','fKiraciAdres','fSoforUcreti'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('fKiralamaTuru').value='soförsüz';
   document.getElementById('fDurum').value='Müsait';
   document.getElementById('fMuayeneRandevu').checked=false;
@@ -4582,15 +4547,14 @@ function openAdd(){
   document.getElementById('editId').value='';
   clearForm();
   resetModalTabs();
-  initTeslimFotoUI();
   initKiralamaTuruToggle();
   // Eklemeye basitleştirilmiş görünüm: kira/sözleşme alanları gizli,
-  // sadece araç kimliği + belgeler kalır. Düzenlemede tamamı görünür.
+  // sadece araç kimliği + belgeler kalır. Kira/teslim/iade artık "Kira İşlemleri" sayfasında.
   const kg1=document.getElementById('kiraEkleGizli'), kg2=document.getElementById('kiraEkleGizli2');
   if(kg1) kg1.style.display='none';
   if(kg2) kg2.style.display='none';
-  const tk=document.getElementById('tabKiraBtn');
-  if(tk) tk.style.display='none';
+  const bkg=document.getElementById('belgelerKiraGizli');
+  if(bkg) bkg.style.display='none';
   const rhs=document.getElementById('ruhsatHizliStatus');
   if(rhs) rhs.style.display='none';
   const rhf=document.getElementById('fRuhsatHizli');
@@ -4604,8 +4568,9 @@ function openEditWithDurum(id, durum){
     // Durum alanını belirtilen değere ayarla
     const fDurum = document.getElementById('fDurum');
     if(fDurum) fDurum.value = durum;
-    // Kullanıcının dikkatini kira sözleşmesi bölümüne çek
+    // Kullanıcının dikkatini kira sözleşmesi bölümüne çek (artık Belgeler sekmesinde)
     setTimeout(()=>{
+      document.querySelector('.modal-tab[data-tab="tab-belgeler"]')?.click();
       const sozlesmeDiv = Array.from(document.querySelectorAll('.doc-section-title')).find(el=>el.textContent.includes('Kira'));
       if(sozlesmeDiv) sozlesmeDiv.scrollIntoView({behavior:'smooth', block:'center'});
     }, 200);
@@ -6038,8 +6003,8 @@ function openEdit(id){
   const kg1=document.getElementById('kiraEkleGizli'), kg2=document.getElementById('kiraEkleGizli2');
   if(kg1) kg1.style.display='';
   if(kg2) kg2.style.display='block';
-  const tk=document.getElementById('tabKiraBtn');
-  if(tk) tk.style.display='';
+  const bkg=document.getElementById('belgelerKiraGizli');
+  if(bkg) bkg.style.display='';
   document.getElementById('fPlaka').value=v.plaka||'';
   document.getElementById('fCins').value=v.aracCinsi||'';
   document.getElementById('fMarka').value=v.marka||'';
@@ -6067,22 +6032,15 @@ function openEdit(id){
   document.getElementById('fKiraciVergi').value=v.kiraciVergi||'';
   document.getElementById('fKiraciEhliyet').value=v.kiraciEhliyet||'';
   document.getElementById('fKiraciAdres').value=v.kiraciAdres||'';
-  document.getElementById('fTeslimTarih').value=v.teslimTarih||'';
-  document.getElementById('fTeslimKm').value=v.teslimKm||'';
-  document.getElementById('fKmLimiti').value=v.kmLimiti||'';
-  document.getElementById('fBakimKm').value=v.sonBakimKm||'';
-  document.getElementById('fBakimPeriyot').value=v.bakimPeriyotKm||'';
   document.getElementById('fKiralamaTuru').value=v.kiralamaTuru||'soförsüz';
   document.getElementById('fSoforUcreti').value=v.soforUcreti||'';
   document.getElementById('formErr').style.display='none';
   resetAllDocsUI();
   DOC_TYPES.forEach(d=>{ if(v[d.vehicleAdiField]) showDocName(d, v[d.vehicleAdiField]); });
-  loadTeslimFotoUI(v);
   const saveBtnEl = document.getElementById('saveBtn');
   saveBtnEl.disabled = false;
   saveBtnEl.textContent = 'Kaydet';
   resetModalTabs();
-  initTeslimFotoUI();
   initKiralamaTuruToggle();
   overlay.classList.add('show');
 }
@@ -6506,15 +6464,16 @@ document.getElementById('saveBtn').onclick = async ()=>{
       kiraciVergi: document.getElementById('fKiraciVergi').value.trim(),
       kiraciEhliyet: document.getElementById('fKiraciEhliyet').value.trim(),
       kiraciAdres: document.getElementById('fKiraciAdres').value.trim(),
-      teslimTarih: document.getElementById('fTeslimTarih').value,
-      teslimKm: Number(document.getElementById('fTeslimKm').value)||undefined,
-      kmLimiti: Number(document.getElementById('fKmLimiti').value)||undefined,
-      sonBakimKm: Number(document.getElementById('fBakimKm').value)||undefined,
-      bakimPeriyotKm: Number(document.getElementById('fBakimPeriyot').value)||undefined,
       kiralamaTuru: document.getElementById('fKiralamaTuru').value||'soförsüz',
       soforUcreti: Number(document.getElementById('fSoforUcreti').value)||undefined,
       ...docFields,
-      ...await buildTeslimFotoFields(vehicleId),
+      // Araç teslimi (teslim tarihi/km, km limiti, bakım km, teslim fotoğrafları) artık
+      // "Kira İşlemleri" sayfasından yönetiliyor (bu formda alanları yok) — mevcut kaydı koru.
+      ...(orig ? {
+        teslimTarih: orig.teslimTarih, teslimKm: orig.teslimKm, kmLimiti: orig.kmLimiti,
+        sonBakimKm: orig.sonBakimKm, bakimPeriyotKm: orig.bakimPeriyotKm,
+        teslimFoto1Adi: orig.teslimFoto1Adi, teslimFoto2Adi: orig.teslimFoto2Adi, teslimFoto3Adi: orig.teslimFoto3Adi,
+      } : {}),
     };
     if(id){
       vehicles = vehicles.map(v=>v.id===id?data:v);
@@ -9539,6 +9498,84 @@ function renderKiralamaPage(){
       </div>
     </div>
 
+    <div class="dcard" style="margin-bottom:16px;">
+      <h3 style="margin-bottom:2px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8v8h6l4 4V4L9 8H3Z"/></svg>Kira İşlemleri</h3>
+      <p style="font-size:13px;color:var(--text-2);margin:2px 0 14px;">Bir araç seçip kiralama, teslim veya iade işlemini buradan yönetin.</p>
+      <div class="field" style="max-width:420px;position:relative;margin-bottom:0;">
+        <label>Araç seç</label>
+        <input type="text" id="kiOpAra" placeholder="Plaka veya model ara..." autocomplete="off" oninput="kiOpFiltrele()" onfocus="kiOpFiltrele()">
+        <div id="kiOpListe" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:5;max-height:220px;overflow-y:auto;background:var(--surface);border:1px solid var(--border-2);border-radius:8px;box-shadow:var(--shadow-md,0 8px 24px rgba(0,0,0,.25));margin-top:2px;"></div>
+      </div>
+      <div id="kiOpSecili" style="display:none;margin-top:16px;">
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;margin-bottom:12px;flex-wrap:wrap;">
+          <span class="mini-plaka" id="kiOpPlaka"></span>
+          <span style="font-size:13px;font-weight:600;" id="kiOpModel"></span>
+          <span style="font-size:12px;color:var(--text-3);" id="kiOpDurum"></span>
+          <button type="button" onclick="kiOpKapat()" style="margin-left:auto;background:none;border:none;color:var(--text-3);cursor:pointer;padding:4px;" title="Seçimi kaldır">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div style="display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:14px;">
+          <button type="button" class="kiop-tab active" data-t="kirala" onclick="kiOpSetTab('kirala')" style="background:none;border:none;color:var(--text-3);font-family:inherit;font-size:12.5px;font-weight:600;padding:9px 4px;margin-right:20px;cursor:pointer;border-bottom:2px solid transparent;">① Kiralama</button>
+          <button type="button" class="kiop-tab" data-t="teslim" onclick="kiOpSetTab('teslim')" style="background:none;border:none;color:var(--text-3);font-family:inherit;font-size:12.5px;font-weight:600;padding:9px 4px;margin-right:20px;cursor:pointer;border-bottom:2px solid transparent;">② Teslim</button>
+          <button type="button" class="kiop-tab" data-t="iade" onclick="kiOpSetTab('iade')" style="background:none;border:none;color:var(--text-3);font-family:inherit;font-size:12.5px;font-weight:600;padding:9px 4px;cursor:pointer;border-bottom:2px solid transparent;">③ İade</button>
+        </div>
+        <div class="kiop-pane" data-p="kirala">
+          <p style="font-size:13px;color:var(--text-2);margin:0 0 12px;">Bu aracı yeni bir kiracıya vermek için "Araç Kirala" akışını başlatın — kiracı bilgileri ve kira koşulları girilir, 23 maddelik sözleşme otomatik hazırlanır.</p>
+          <button class="add-btn" onclick="openAracKirala(kiOpSelectedId)">Araç Kirala — Sözleşme Oluştur</button>
+        </div>
+        <div class="kiop-pane" data-p="teslim" style="display:none;">
+          <div class="doc-section-title" style="margin-top:0;">Araç Teslimi (Kira Başı)</div>
+          <div class="field-row">
+            <div class="field"><label>Teslim tarihi</label><input type="date" id="fTeslimTarih"></div>
+            <div class="field"><label>Teslim km</label><input type="number" id="fTeslimKm" min="0" placeholder="0"></div>
+          </div>
+          <div class="field"><label>Aylık km limiti</label><input type="number" id="fKmLimiti" min="0" placeholder="Örn: 3000"></div>
+          <div class="field-row">
+            <div class="field"><label>Son bakım km</label><input type="number" id="fBakimKm" min="0" placeholder="0"></div>
+            <div class="field"><label>Bakım periyodu (km)</label><input type="number" id="fBakimPeriyot" min="0" placeholder="10000"></div>
+          </div>
+          <div class="field">
+            <label>Teslim fotoğrafı 1 (ön/genel, en fazla 3,5MB)</label>
+            <input type="file" id="fTeslimFoto1" accept="image/*">
+            <div id="teslimFoto1Mevcut" class="doc-mevcut">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg>
+              <span id="teslimFoto1Adi"></span>
+              <button type="button" id="teslimFoto1Kaldir" class="doc-kaldir">Kaldır</button>
+            </div>
+          </div>
+          <div class="field">
+            <label>Teslim fotoğrafı 2 (km göstergesi fotoğrafı veya "teslim km" yazan fatura — PDF de olur)</label>
+            <input type="file" id="fTeslimFoto2" accept="image/*,application/pdf">
+            <div id="teslimFoto2Mevcut" class="doc-mevcut">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg>
+              <span id="teslimFoto2Adi"></span>
+              <button type="button" id="teslimFoto2Kaldir" class="doc-kaldir">Kaldır</button>
+            </div>
+            <button type="button" id="teslimKmOkuBtn" class="doc-autofill-btn" onclick="runKmFotoOku(teslimFotoState.teslimFoto2&&teslimFotoState.teslimFoto2.data,'fTeslimKm','teslimKmOkuBtn','teslimKmOkuSonuc',kiOpSelectedVehicle()?.plaka||'')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>
+              <span>Fotoğraftan km oku (AI)</span>
+            </button>
+            <div class="doc-autofill-result" id="teslimKmOkuSonuc"></div>
+          </div>
+          <div class="field">
+            <label>Teslim fotoğrafı 3 (opsiyonel)</label>
+            <input type="file" id="fTeslimFoto3" accept="image/*">
+            <div id="teslimFoto3Mevcut" class="doc-mevcut">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg>
+              <span id="teslimFoto3Adi"></span>
+              <button type="button" id="teslimFoto3Kaldir" class="doc-kaldir">Kaldır</button>
+            </div>
+          </div>
+          <button class="add-btn" onclick="saveTeslimBilgisi()">Teslim Bilgilerini Kaydet</button>
+        </div>
+        <div class="kiop-pane" data-p="iade" style="display:none;">
+          <p style="font-size:13px;color:var(--text-2);margin:0 0 12px;">Bu aracı kiradan iade almak, km kullanım hakkını/aşımını hesaplamak ve iade tutanağı oluşturmak için:</p>
+          <button class="add-btn" style="background:#C9A961;" onclick="openIadeForm(kiOpSelectedId)">İade Al</button>
+        </div>
+      </div>
+    </div>
+
     <div class="dash-stats" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:20px;">
       <div class="dstat" style="cursor:default;">
         <div class="dstat-ic" style="background:rgba(22,163,74,.15);color:#16A34A;">${DASH_ICONS.check}</div>
@@ -9849,6 +9886,91 @@ function renderKiralamaPage(){
     </div>
   `;
   wireQuickActions(page);
+}
+
+// ===== Kira İşlemleri sayfası: araç seç + Kiralama/Teslim/İade sekmeleri =====
+let kiOpSelectedId = null;
+function kiOpSelectedVehicle(){ return vehicles.find(x=>x.id===kiOpSelectedId) || null; }
+function kiOpFiltrele(){
+  const q = (document.getElementById('kiOpAra')?.value||'').toLocaleLowerCase('tr-TR').trim();
+  const listeEl = document.getElementById('kiOpListe');
+  if(!listeEl) return;
+  const eslesen = vehicles.filter(v=>{
+    if(!q) return true;
+    const hay = (v.plaka+' '+(v.marka||'')+' '+(v.model||'')).toLocaleLowerCase('tr-TR');
+    return hay.includes(q);
+  }).slice(0, 30);
+  if(!eslesen.length){
+    listeEl.innerHTML = '<div class="kiop-liste-item" style="cursor:default;color:var(--text-3);">Araç bulunamadı.</div>';
+  }else{
+    listeEl.innerHTML = eslesen.map(v=>{
+      const st = v.durum==='Kirada'?'🔴':(v.durum==='Serviste'?'🟡':v.durum==='Pert'?'⚫':v.durum==='Satıldı'?'🔵':'🟢');
+      return `<div class="kiop-liste-item" onclick="kiOpSelect('${v.id}')">
+        <span class="mini-plaka" style="font-size:12px;">${esc(v.plaka)}</span>
+        <span style="color:var(--text-2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc([v.marka,v.model].filter(Boolean).join(' ')||'Araç')}</span>
+        <span title="${esc(v.durum||'')}">${st}</span>
+      </div>`;
+    }).join('');
+  }
+  listeEl.style.display = 'block';
+}
+function kiOpSelect(id){
+  const v = vehicles.find(x=>x.id===id);
+  if(!v) return;
+  kiOpSelectedId = id;
+  const listeEl = document.getElementById('kiOpListe');
+  if(listeEl) listeEl.style.display = 'none';
+  const araEl = document.getElementById('kiOpAra');
+  if(araEl) araEl.value = v.plaka;
+  document.getElementById('kiOpSecili').style.display = '';
+  document.getElementById('kiOpPlaka').textContent = v.plaka;
+  document.getElementById('kiOpModel').textContent = [v.marka,v.model].filter(Boolean).join(' ')||'—';
+  document.getElementById('kiOpDurum').textContent = v.durum||'';
+  document.getElementById('fTeslimTarih').value = v.teslimTarih||'';
+  document.getElementById('fTeslimKm').value = v.teslimKm||'';
+  document.getElementById('fKmLimiti').value = v.kmLimiti||'';
+  document.getElementById('fBakimKm').value = v.sonBakimKm||'';
+  document.getElementById('fBakimPeriyot').value = v.bakimPeriyotKm||'';
+  loadTeslimFotoUI(v);
+  initTeslimFotoUI();
+  kiOpSetTab(v.durum==='Kirada' ? 'iade' : (v.durum==='Müsait' ? 'kirala' : 'teslim'));
+}
+function kiOpKapat(){
+  kiOpSelectedId = null;
+  document.getElementById('kiOpSecili').style.display = 'none';
+  const araEl = document.getElementById('kiOpAra');
+  if(araEl) araEl.value = '';
+  const listeEl = document.getElementById('kiOpListe');
+  if(listeEl) listeEl.style.display = 'none';
+}
+function kiOpSetTab(t){
+  document.querySelectorAll('.kiop-tab').forEach(b=>b.classList.toggle('active', b.dataset.t===t));
+  document.querySelectorAll('.kiop-pane').forEach(p=>p.style.display = p.dataset.p===t ? '' : 'none');
+}
+document.addEventListener('click', e=>{
+  const wrap = document.getElementById('kiOpAra');
+  const listeEl = document.getElementById('kiOpListe');
+  if(!wrap || !listeEl) return;
+  if(e.target!==wrap && !listeEl.contains(e.target)) listeEl.style.display = 'none';
+});
+async function saveTeslimBilgisi(){
+  const v = kiOpSelectedVehicle();
+  if(!v){ showToast('Önce bir araç seçin.', true); return; }
+  const teslimFields = await buildTeslimFotoFields(v.id);
+  Object.assign(v, {
+    teslimTarih: document.getElementById('fTeslimTarih').value,
+    teslimKm: Number(document.getElementById('fTeslimKm').value)||undefined,
+    kmLimiti: Number(document.getElementById('fKmLimiti').value)||undefined,
+    sonBakimKm: Number(document.getElementById('fBakimKm').value)||undefined,
+    bakimPeriyotKm: Number(document.getElementById('fBakimPeriyot').value)||undefined,
+    ...teslimFields,
+  });
+  await persist();
+  renderKiralamaPage();
+  kiOpSelect(v.id);
+  kiOpSetTab('teslim');
+  logActivity('edit', `Teslim bilgileri güncellendi: <b>${esc(v.plaka)}</b>`);
+  showToast('Teslim bilgileri kaydedildi.');
 }
 
 // ===== Belge yükleme kısayolu =====
