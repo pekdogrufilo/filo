@@ -1222,7 +1222,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-10.66</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-10.67</div>
     </div>
   </div>
 </div>
@@ -1342,7 +1342,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-10.66</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-10.67</div>
     </div>
   </aside>
 
@@ -8096,19 +8096,19 @@ function renderBakimPage(){
 
     <div class="dash-stats" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:20px;">
       <div class="dstat" style="cursor:default;">
-        <div class="dstat-ic" style="background:var(--safety)">${DASH_ICONS.wrench}</div>
+        <div class="dstat-ic" style="background:${serviste.length>0?'#DC2626':'#64748B'}">${DASH_ICONS.wrench}</div>
         <div class="dstat-txt"><div class="n">${serviste.length}</div><div class="l">Serviste</div></div>
       </div>
       <div class="dstat" style="cursor:default;">
-        <div class="dstat-ic" style="background:#C98A3E">${DASH_ICONS.clock}</div>
+        <div class="dstat-ic" style="background:${yakinMuayene.length>0?'#D97706':'#64748B'}">${DASH_ICONS.clock}</div>
         <div class="dstat-txt"><div class="n">${yakinMuayene.length}</div><div class="l">Yaklaşan Muayene</div></div>
       </div>
       <div class="dstat" style="cursor:default;">
-        <div class="dstat-ic" style="background:var(--accent-blue)">${DASH_ICONS.check}</div>
+        <div class="dstat-ic" style="background:#64748B">${DASH_ICONS.check}</div>
         <div class="dstat-txt"><div class="n">${planliServis.length}</div><div class="l">Planlı Servis</div></div>
       </div>
       <div class="dstat" style="cursor:default;">
-        <div class="dstat-ic" style="background:#38A169">${DASH_ICONS.trend}</div>
+        <div class="dstat-ic" style="background:#64748B">${DASH_ICONS.trend}</div>
         <div class="dstat-txt"><div class="n">${fmtTL(bakimMasraf.reduce((s,e)=>s+(e.tutar||0),0))}</div><div class="l">Son Bakım Masrafı</div></div>
       </div>
     </div>
@@ -10237,10 +10237,16 @@ function renderMusterilerPage(){
   const cokAracli = musteriler.filter(m=>m.araclar.length>1).length;
   const acik = (typeof window.__musteriAcik==='number') ? window.__musteriAcik : null;
 
+  // Bu kartlar da Genel Bakış'takiyle aynı kurala uyar: bilgi amaçlı sayılar nötr,
+  // renk yalnızca durum bildiren kartlarda (sorunlu müşteri varsa kırmızı, aktif kiralama iyiyse yeşil).
+  const musNotr = '100,116,139', musNotrHex = '#64748B';
+  const problemliSayi = musteriler.filter(m=>m.problemli).length;
+  const problemliHex = problemliSayi>0 ? '#DC2626' : musNotrHex;
+  const problemliRgb = problemliSayi>0 ? '220,38,38' : musNotr;
   page.innerHTML = `
     <div class="dash-stats" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:16px;">
       <div class="dstat" style="cursor:default;">
-        <div class="dstat-ic" style="background:rgba(46,124,246,.15);color:#2E7CF6;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <div class="dstat-ic" style="background:rgba(${musNotr},.15);color:${musNotrHex};"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
         <div class="dstat-txt"><div class="l">Müşteri / Kurum</div><div class="n">${musteriler.length}</div></div>
       </div>
       <div class="dstat" style="cursor:default;">
@@ -10248,16 +10254,16 @@ function renderMusterilerPage(){
         <div class="dstat-txt"><div class="l">Aktif Müşteri</div><div class="n" style="color:#16A34A;">${aktif}</div><div class="d" style="color:#16A34A;">kirada aracı var</div></div>
       </div>
       <div class="dstat" style="cursor:default;">
-        <div class="dstat-ic" style="background:rgba(217,119,6,.15);color:#D97706;">${DASH_ICONS.trend}</div>
+        <div class="dstat-ic" style="background:rgba(${musNotr},.15);color:${musNotrHex};">${DASH_ICONS.trend}</div>
         <div class="dstat-txt"><div class="l">Aylık Kira Toplamı</div><div class="n">${fmtCompactTL(toplamKira)}</div><div class="d">aktif kiralamalar</div></div>
       </div>
       <div class="dstat" style="cursor:default;">
-        <div class="dstat-ic" style="background:rgba(124,58,237,.15);color:#7C3AED;">${DASH_ICONS.clock}</div>
+        <div class="dstat-ic" style="background:rgba(${musNotr},.15);color:${musNotrHex};">${DASH_ICONS.clock}</div>
         <div class="dstat-txt"><div class="l">Çok Araçlı Müşteri</div><div class="n">${cokAracli}</div><div class="d">2+ araç</div></div>
       </div>
       <div class="dstat" style="cursor:default;">
-        <div class="dstat-ic" style="background:rgba(220,38,38,.15);color:#DC2626;">${DASH_ICONS.warn}</div>
-        <div class="dstat-txt"><div class="l">Problemli Müşteri</div><div class="n" style="color:${musteriler.filter(m=>m.problemli).length?'#DC2626':'inherit'};">${musteriler.filter(m=>m.problemli).length}</div><div class="d">süresi geçmiş kayıt</div></div>
+        <div class="dstat-ic" style="background:rgba(${problemliRgb},.15);color:${problemliHex};">${DASH_ICONS.warn}</div>
+        <div class="dstat-txt"><div class="l">Problemli Müşteri</div><div class="n" style="color:${problemliHex};">${problemliSayi}</div><div class="d">süresi geçmiş kayıt</div></div>
       </div>
     </div>
 
@@ -10898,7 +10904,14 @@ function renderExcelPage(){
       <p style="color:var(--text-2);font-size:13px;margin-bottom:14px;">Plaka ve aylık kira/hakediş tutarı içeren Excel dosyasını (veya fatura listesi Excel'i) yükle. Sistem tüm sayfaları tarar, plakaları eşleştirir ve her aracın güncel kira fiyatını otomatik kaydeder; kira gelirleri anında güncellenir. Geçmiş aylara ait hakediş dosyalarını da ayrı ayrı, ait olduğu ayı seçerek yükleyebilirsin — panodaki gelir grafiği o aylar için gerçek verileri gösterir.</p>
       <div style="margin-bottom:12px;">
         <label style="display:block;font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:6px;">Bu dosya hangi aya ait? (Hakediş Dönemi)</label>
-        <input type="month" id="kiraDonemInput" class="input" style="max-width:220px;" value="${new Date().toISOString().slice(0,7)}">
+        <!-- Tarayıcı type="month" alanını işletim sistemi diline göre gösterir (ör. "September 2026") —
+             tamamen Türkçe panelde bu İngilizce görünüyordu. Gerçek input'u görünmez tutup üstüne
+             Türkçe ay adını gösteren bir etiket bindiriyoruz; tıklamalar (pointer-events:none) alttaki
+             takvim seçiciye geçiyor, değer değiştiğinde etiket de güncelleniyor. -->
+        <div class="field" style="position:relative;max-width:220px;margin-bottom:0;">
+          <input type="month" id="kiraDonemInput" style="width:100%;color:transparent;" value="${new Date().toISOString().slice(0,7)}" oninput="document.getElementById('kiraDonemLabel').textContent = donemKeyToLabel(this.value)">
+          <div id="kiraDonemLabel" style="position:absolute;left:13px;top:0;bottom:0;display:flex;align-items:center;font-size:14px;color:var(--paper);pointer-events:none;">${donemKeyToLabel(new Date().toISOString().slice(0,7))}</div>
+        </div>
       </div>
       <div id="kiraYuklemeArea" style="border:2px dashed var(--border);border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:border-color .2s ease;"
         ondragover="event.preventDefault();this.style.borderColor='var(--accent-blue)'"
