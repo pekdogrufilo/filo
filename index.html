@@ -1226,7 +1226,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-12.74</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-12.75</div>
     </div>
   </div>
 </div>
@@ -1346,7 +1346,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-12.74</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-12.75</div>
     </div>
   </aside>
 
@@ -7770,6 +7770,29 @@ function renderDashboard(){
     urgent.forEach(u=>{
       if(u.dl<0) items.push({kritik:true, renk:'#DC2626', bg:'rgba(220,38,38,.1)', etiket:'Belge', plaka:u.plaka, aci:u.tip+' — '+Math.abs(u.dl)+' gün geçti', act:"switchPage('bildirimler')", btn:''});
       else items.push({kritik:false, renk:'#EA580C', bg:'rgba(234,88,12,.1)', etiket:'Belge', plaka:u.plaka, aci:u.tip+' — '+u.dl+' gün kaldı', act:"switchPage('bildirimler')", btn:''});
+    });
+    // Km aşımı uyarısı — aktif kirada (veya kiracısı olup geçici olarak serviste olan) araçlarda,
+    // teslim tarihinden bugüne kadar aylık km limitine göre hak edilen km ile gerçek kullanım
+    // (sonKm/kmGecmisi/teslimKm üzerinden bilinen en güncel km) karşılaştırılır. Bu, İade Al
+    // sırasında yapılan kesin aşım hesabından (saveIade/updateIadeKmHakki) bağımsız, sözleşme
+    // devam ederken erken uyarı vermek için her gün otomatik yeniden hesaplanan canlı bir kontrol.
+    vehicles.forEach(v=>{
+      if(!(v.durum==='Kirada' || v.durum==='Serviste')) return;
+      const kmLimiti = Number(v.kmLimiti)||0;
+      if(!kmLimiti || !v.teslimTarih) return;
+      const mevcutKm = Math.max(Number(v.sonKm)||0, Number(v.teslimKm)||0, ...(v.kmGecmisi||[]).map(k=>Number(k.bitKm)||0));
+      const teslimKm = Number(v.teslimKm)||0;
+      if(!mevcutKm || mevcutKm<=teslimKm) return;
+      const ay = monthsBetweenDates(v.teslimTarih, todayISO());
+      if(ay<=0) return;
+      const hak = Math.round(kmLimiti*ay);
+      const kullanilan = mevcutKm - teslimKm;
+      const asim = kullanilan - hak;
+      if(asim>0){
+        items.push({kritik:true, renk:'#DC2626', bg:'rgba(220,38,38,.1)', etiket:'Km Aşımı', plaka:v.plaka,
+          aci: asim.toLocaleString('tr-TR')+' km aşım — '+kullanilan.toLocaleString('tr-TR')+' km yapılmış, '+hak.toLocaleString('tr-TR')+' km hakkı vardı ('+ay.toLocaleString('tr-TR',{maximumFractionDigits:1})+' ay × '+kmLimiti.toLocaleString('tr-TR')+' km)',
+          act:"switchPage('arac-yonetimi')", btn:''});
+      }
     });
     // Bu ayın hakedişi henüz yüklenmediyse hatırlat (ayın 5'inden itibaren, sadece yönetici görür)
     if(isAdmin()){
