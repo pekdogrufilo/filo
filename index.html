@@ -1226,7 +1226,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-12.81</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-12.82</div>
     </div>
   </div>
 </div>
@@ -1346,7 +1346,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-12.81</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-12.82</div>
     </div>
   </aside>
 
@@ -7579,6 +7579,8 @@ const ICO_PATHS = {
   download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/>',
   hand:'<path d="M11 14h2a2 2 0 1 0 0-4h-3c-.6 0-1.1.2-1.4.6L3 16"/><path d="m7 20 1.6-1.4c.3-.4.8-.6 1.4-.6h4c1.1 0 2.1-.4 2.8-1.2l4.6-4.4a2 2 0 0 0-2.75-2.91L13.5 12"/><path d="M2 15l6 6"/>',
   camera:'<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/><circle cx="12" cy="13" r="3.5"/>',
+  volume:'<path d="M11 5 6 9H2v6h4l5 4Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 6.5a9 9 0 0 1 0 11"/>',
+  mic:'<path d="M12 2a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3Z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><path d="M12 18v4M8 22h8"/>',
 };
 const ICO = (name, sz=14, sw=2)=>`<svg width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${ICO_PATHS[name]||''}</svg>`;
 
@@ -11129,7 +11131,8 @@ function renderAiPage(){
             <h1 style="font-size:18px;font-weight:700;color:var(--paper);margin:0;">AI Filo Asistanı</h1>
             <div style="font-size:12px;color:var(--steel-300);">Filonuzu analiz edin, sorunları önceden görün, hızlı kararlar alın</div>
           </div>
-          <button onclick="aiMessages=[];renderAiPage()" style="margin-left:auto;background:none;border:1px solid var(--line);color:var(--steel-300);padding:5px 10px;border-radius:7px;font-size:12px;cursor:pointer;">Sıfırla</button>
+          ${aiSesOkumaDestekleniyorMu() ? `<button onclick="aiSesliYanitToggle()" title="${aiSesliYanitAcMi()?'Sesli yanıtı kapat':'Asistan cevapları sesli okusun'}" style="margin-left:auto;background:${aiSesliYanitAcMi()?'rgba(46,124,246,.12)':'none'};border:1px solid ${aiSesliYanitAcMi()?'rgba(46,124,246,.3)':'var(--line)'};color:${aiSesliYanitAcMi()?'var(--accent-blue)':'var(--steel-300)'};padding:5px 10px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;">${ICO('volume',13)} Sesli Yanıt: ${aiSesliYanitAcMi()?'Açık':'Kapalı'}</button>` : ''}
+          <button onclick="aiMessages=[];__aiSonSesliOkunanIndex=-1;window.__aiAkis=null;window.__aiPendingBelge=null;window.__aiIadeBeklenenPlaka=false;renderAiPage()" style="${aiSesOkumaDestekleniyorMu()?'':'margin-left:auto;'}background:none;border:1px solid var(--line);color:var(--steel-300);padding:5px 10px;border-radius:7px;font-size:12px;cursor:pointer;">Sıfırla</button>
         </div>
       </div>
 
@@ -11180,7 +11183,7 @@ function renderAiPage(){
           <div style="font-size:32px;margin-bottom:8px;">🤖</div>
           <div style="font-size:15px;font-weight:600;color:var(--paper);margin-bottom:4px;">Size nasıl yardımcı olabilirim?</div>
           <div style="font-size:13px;">Filo verinizi analiz etmek, belge durumlarını sorgulamak veya masraf raporları için bir şey sorun.</div>
-        </div>` : aiMessages.map(m=>renderAiMessage(m)).join('')}
+        </div>` : aiMessages.map((m,idx)=>renderAiMessage(m,idx)).join('')}
       </div>
 
       <!-- Input -->
@@ -11189,6 +11192,7 @@ function renderAiPage(){
           style="flex:1;background:none;border:none;color:var(--paper);font-family:inherit;font-size:14px;resize:none;outline:none;line-height:1.5;max-height:120px;"
           onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();aiSendFromInput();}"
           oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+        ${aiSesTanimaDestekleniyorMu() ? `<button id="aiMikBtn" onclick="aiMikrofonBaslat()" title="Mikrofonla konuş" style="background:var(--surface-2);color:var(--text-2);border:1px solid var(--border);width:36px;height:36px;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${ICO('mic',16)}</button>` : ''}
         <button onclick="aiSendFromInput()" style="background:var(--accent-blue);color:#fff;border:none;width:36px;height:36px;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4 20-7z"/></svg>
         </button>
@@ -11199,9 +11203,10 @@ function renderAiPage(){
   // Scroll to bottom
   const box = document.getElementById('aiChatBox');
   if(box) box.scrollTop = box.scrollHeight;
+  aiPageSesKontrol();
 }
 
-function renderAiMessage(m){
+function renderAiMessage(m, idx){
   if(m.role==='user'){
     return `<div style="display:flex;justify-content:flex-end;">
       <div style="background:var(--accent-blue);color:#fff;padding:10px 14px;border-radius:12px 12px 3px 12px;font-size:14px;max-width:80%;line-height:1.5;">${esc(m.content)}</div>
@@ -11212,7 +11217,10 @@ function renderAiMessage(m){
     <div style="width:28px;height:28px;border-radius:8px;background:var(--accent-blue);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M12 2a4 4 0 0 1 4 4v1h1a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3v-8a3 3 0 0 1 3-3h1V6a4 4 0 0 1 4-4z"/><circle cx="9" cy="13" r="1" fill="#fff"/><circle cx="15" cy="13" r="1" fill="#fff"/></svg>
     </div>
-    <div style="background:var(--surface);border:1px solid var(--line);padding:12px 16px;border-radius:3px 12px 12px 12px;font-size:14px;max-width:85%;line-height:1.6;color:var(--paper);">${m.content}</div>
+    <div style="flex:1;min-width:0;">
+      <div style="background:var(--surface);border:1px solid var(--line);padding:12px 16px;border-radius:3px 12px 12px 12px;font-size:14px;max-width:85%;line-height:1.6;color:var(--paper);">${m.content}</div>
+      ${aiSesOkumaDestekleniyorMu() ? `<button onclick="aiMetniSesliOku(aiMessages[${idx}].content)" title="Sesli dinle" style="margin-top:4px;background:none;border:none;color:var(--steel-300);cursor:pointer;padding:2px 4px;display:flex;align-items:center;gap:3px;font-size:11px;">${ICO('volume',12)} Dinle</button>` : ''}
+    </div>
   </div>`;
 }
 
@@ -11224,7 +11232,223 @@ function aiSendFromInput(){
   inp.value = '';
   inp.style.height = 'auto';
   if(window.__aiPendingBelge){ aiPendingBelgeCozumle(txt); return; }
+  if(window.__aiAkis){ aiAkisYanitla(txt); return; }
+  const iadeNiyet = aiIadeNiyetiVarMi(txt);
+  if(iadeNiyet.varMi){
+    if(iadeNiyet.vehicle){ aiIadeAkisiBaslat(iadeNiyet.vehicle, txt); return; }
+    aiMessages.push({role:'user', content: esc(txt)});
+    aiMessages.push({role:'assistant', content: 'İade almak istediğin aracın plakasını yazar mısın?'});
+    window.__aiIadeBeklenenPlaka = true;
+    renderAiPage();
+    return;
+  }
+  if(window.__aiIadeBeklenenPlaka){
+    window.__aiIadeBeklenenPlaka = false;
+    const norm = plakaNormalize(txt);
+    const v = vehicles.find(x=>x.plaka && norm.includes(plakaNormalize(x.plaka)));
+    if(v){ aiIadeAkisiBaslat(v, txt); return; }
+    aiMessages.push({role:'user', content: esc(txt)});
+    aiMessages.push({role:'assistant', content: 'Bu plakayla eşleşen bir araç bulamadım — tekrar dener misin? (ör: 42 AKU 776)'});
+    window.__aiIadeBeklenenPlaka = true;
+    renderAiPage();
+    return;
+  }
   aiSend(txt);
+}
+
+// ===== v.82: Sesli komut / sesli yanıt — tarayıcının yerleşik Web Speech API'si, ekstra
+// servis/API anahtarı gerekmiyor, desteklenmeyen taraycılarda ilgili butonlar hiç gösterilmiyor. =====
+function aiSesTanimaDestekleniyorMu(){ return !!(window.SpeechRecognition || window.webkitSpeechRecognition); }
+function aiSesOkumaDestekleniyorMu(){ return !!window.speechSynthesis; }
+let __aiRecognition = null;
+let __aiDinliyor = false;
+function aiMikrofonBaslat(){
+  if(__aiDinliyor){ aiMikrofonDurdur(); return; }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){ showToast('Tarayıcın sesli komutu desteklemiyor.', true); return; }
+  try{
+    const inp = document.getElementById('aiInput');
+    const baseVal = inp ? inp.value : '';
+    __aiRecognition = new SR();
+    __aiRecognition.lang = 'tr-TR';
+    __aiRecognition.interimResults = true;
+    __aiRecognition.continuous = false;
+    __aiRecognition.onresult = (e)=>{
+      let metin = '';
+      for(let i=0;i<e.results.length;i++) metin += e.results[i][0].transcript;
+      const el = document.getElementById('aiInput');
+      if(el){ el.value = (baseVal?baseVal+' ':'') + metin; el.style.height='auto'; el.style.height=el.scrollHeight+'px'; }
+    };
+    __aiRecognition.onerror = (e)=>{
+      __aiDinliyor = false;
+      aiMikrofonUIGuncelle(false);
+      if(e.error!=='aborted' && e.error!=='no-speech') showToast('Sesli komut hatası: '+e.error, true);
+    };
+    __aiRecognition.onend = ()=>{ __aiDinliyor = false; aiMikrofonUIGuncelle(false); };
+    __aiRecognition.start();
+    __aiDinliyor = true;
+    aiMikrofonUIGuncelle(true);
+  }catch(err){
+    showToast('Mikrofon başlatılamadı: '+(err.message||'bilinmeyen hata'), true);
+  }
+}
+function aiMikrofonDurdur(){
+  if(__aiRecognition){ try{ __aiRecognition.stop(); }catch(e){} }
+  __aiDinliyor = false;
+  aiMikrofonUIGuncelle(false);
+}
+function aiMikrofonUIGuncelle(dinliyor){
+  const btn = document.getElementById('aiMikBtn');
+  if(!btn) return;
+  btn.style.background = dinliyor ? 'var(--safety)' : 'var(--surface-2)';
+  btn.style.color = dinliyor ? '#fff' : 'var(--text-2)';
+  btn.title = dinliyor ? 'Dinleniyor... durdurmak için tıkla' : 'Mikrofonla konuş';
+}
+function aiSesliYanitAcMi(){
+  try{ return localStorage.getItem('aiSesliYanit')==='1'; }catch(e){ return false; }
+}
+function aiSesliYanitToggle(){
+  const yeni = !aiSesliYanitAcMi();
+  try{ localStorage.setItem('aiSesliYanit', yeni?'1':'0'); }catch(e){}
+  if(!yeni && window.speechSynthesis) try{ window.speechSynthesis.cancel(); }catch(e){}
+  renderAiPage();
+}
+function aiMetniSesliOku(html){
+  if(!window.speechSynthesis) return;
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  const metin = (tmp.textContent||'').trim();
+  if(!metin) return;
+  try{
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(metin);
+    u.lang = 'tr-TR';
+    const sesler = window.speechSynthesis.getVoices();
+    const trSes = sesler.find(s=>s.lang && s.lang.toLowerCase().startsWith('tr'));
+    if(trSes) u.voice = trSes;
+    window.speechSynthesis.speak(u);
+  }catch(e){}
+}
+let __aiSonSesliOkunanIndex = -1;
+function aiPageSesKontrol(){
+  if(!aiSesliYanitAcMi() || !aiMessages.length) return;
+  const sonIndex = aiMessages.length-1;
+  const son = aiMessages[sonIndex];
+  if(son.role==='assistant' && sonIndex!==__aiSonSesliOkunanIndex){
+    __aiSonSesliOkunanIndex = sonIndex;
+    aiMetniSesliOku(son.content);
+  }
+}
+
+// ===== v.82: Çok adımlı "İade Al" sohbet akışı — asistan sohbet içinde iade tarihi/km/yakıt/hasar
+// bilgilerini sırayla toplar, sonunda gerçek "İade Al" formunu bu bilgilerle DOLU açar; fotoğrafları
+// eklemek ve son "İadeyi Kaydet"e basmak yine kullanıcıda kalır — asistan veriyi kendisi yazmaz, sadece
+// hazırlar (gerçek veri değişiklikleri her zaman uygulamanın kendi formu üzerinden yapılır ilkesiyle uyumlu). =====
+window.__aiAkis = null; // {tur:'iade', vehicleId, adim, veri:{}}
+window.__aiIadeBeklenenPlaka = false;
+function aiIadeNiyetiVarMi(txt){
+  const lower = (txt||'').toLocaleLowerCase('tr-TR');
+  const tetikleyiciler = ['iade al','iade et','iade almak','iade etmek','iadesini al','kiradan iade','kiradan al','teslim al','teslim almak'];
+  if(!tetikleyiciler.some(t=>lower.includes(t))) return {varMi:false};
+  const norm = plakaNormalize(txt);
+  const v = vehicles.find(x=>x.plaka && norm.includes(plakaNormalize(x.plaka)));
+  return {varMi:true, vehicle:v||null};
+}
+function aiIadeAkisiBaslat(v, txt){
+  aiMessages.push({role:'user', content: esc(txt)});
+  if(v.durum!=='Kirada'){
+    aiMessages.push({role:'assistant', content: `<b>${esc(v.plaka)}</b> şu an "${esc(v.durum||'—')}" durumunda, kirada görünmüyor — iade alınacak aktif bir kiralaması yok gibi.`});
+    renderAiPage();
+    return;
+  }
+  window.__aiAkis = {tur:'iade', vehicleId:v.id, adim:0, veri:{}};
+  aiMessages.push({role:'assistant', content: `<b>${esc(v.plaka)}</b> için iade sürecini birlikte hazırlayalım. Birkaç şey soracağım, sonunda "İade Al" formunu bu bilgilerle dolu açacağım — fotoğrafları eklemek ve son onayı vermek sende kalacak. (İstediğin an "iptal" yazarak vazgeçebilirsin.)<br><br>İade tarihi ne zaman? ("bugün" yazabilirsin ya da gg.aa.yyyy)`});
+  renderAiPage();
+}
+async function aiAkisYanitla(txt){
+  const akis = window.__aiAkis;
+  if(!akis){ aiSend(txt); return; }
+  const lower = txt.trim().toLocaleLowerCase('tr-TR');
+  aiMessages.push({role:'user', content: esc(txt)});
+  if(['iptal','vazgeç','vazgec','dur','boşver','bosver'].includes(lower)){
+    window.__aiAkis = null;
+    aiMessages.push({role:'assistant', content: 'İade süreci iptal edildi, formu açmadım.'});
+    renderAiPage();
+    return;
+  }
+  const v = vehicles.find(x=>x.id===akis.vehicleId);
+  if(!v){
+    window.__aiAkis = null;
+    aiMessages.push({role:'assistant', content: 'Araç kaydını bulamadım, işlemi iptal ettim.'});
+    renderAiPage();
+    return;
+  }
+  if(akis.tur==='iade'){
+    if(akis.adim===0){
+      let tarih = todayISO();
+      if(!/bugün|bugun/.test(lower)){
+        const m = txt.match(/(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})/);
+        if(m) tarih = `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+        else{
+          const iso = normalizeExtractedDate ? normalizeExtractedDate(txt) : '';
+          if(iso) tarih = iso;
+        }
+      }
+      akis.veri.iadeTarihi = tarih;
+      akis.adim = 1;
+      aiMessages.push({role:'assistant', content: `İade tarihi: <b>${fmtTarih(tarih)}</b>. Şimdi iade km'sini (göstergedeki güncel km) yazar mısın?`});
+    }else if(akis.adim===1){
+      const km = Number(String(txt).replace(/[^0-9]/g,''));
+      if(!km){ aiMessages.push({role:'assistant', content:'Km değerini sayı olarak yazar mısın? (ör: 108791)'}); renderAiPage(); return; }
+      akis.veri.kmBitis = km;
+      akis.adim = 2;
+      aiMessages.push({role:'assistant', content: `İade km: <b>${km.toLocaleString('tr-TR')} km</b>. Yakıt durumu nasıl — Dolu, 3/4, Yarım, 1/4 yoksa Boş mu?`});
+    }else if(akis.adim===2){
+      const eslesme = {dolu:'Dolu','3/4':'3/4','3 4':'3/4',yarim:'Yarım','yarım':'Yarım','1/4':'1/4','1 4':'1/4',bos:'Boş','boş':'Boş'};
+      const key = lower.replace(/\s+/g,' ').trim();
+      const yakit = eslesme[key] || eslesme[key.replace(/\s/g,'')] || null;
+      if(!yakit){ aiMessages.push({role:'assistant', content:'Şunlardan birini yazar mısın: Dolu, 3/4, Yarım, 1/4, Boş'}); renderAiPage(); return; }
+      akis.veri.yakit = yakit;
+      akis.adim = 3;
+      aiMessages.push({role:'assistant', content: `Yakıt: <b>${yakit}</b>. Araçta hasar var mı — Hasarsız, Minör hasar yoksa Büyük hasar mı?`});
+    }else if(akis.adim===3){
+      let hasar = null;
+      if(/hasarsız|hasarsiz|^yok$|^hayır$|^hayir$/.test(lower)) hasar='Hasarsız';
+      else if(/min[oö]r|k[uü]çük|kucuk/.test(lower)) hasar='Minör hasar';
+      else if(/b[uü]y[uü]k|ağır|agir/.test(lower)) hasar='Büyük hasar';
+      if(!hasar){ aiMessages.push({role:'assistant', content:'Hasarsız, Minör hasar ya da Büyük hasar olarak yazar mısın?'}); renderAiPage(); return; }
+      akis.veri.hasar = hasar;
+      if(hasar==='Hasarsız'){ akis.veri.not=''; aiIadeAkisiTamamla(v, akis); return; }
+      akis.adim = 4;
+      aiMessages.push({role:'assistant', content: 'Hasarı kısaca tarif eder misin? (ör: sağ ön çamurlukta çizik)'});
+    }else if(akis.adim===4){
+      akis.veri.not = txt.trim();
+      aiIadeAkisiTamamla(v, akis);
+      return;
+    }
+  }
+  renderAiPage();
+}
+function aiIadeAkisiTamamla(v, akis){
+  window.__aiAkis = null;
+  const veri = akis.veri;
+  window.__aiIadeOnDoldur = {vehicleId:v.id, ...veri};
+  const ozet = `İade tarihi: <b>${fmtTarih(veri.iadeTarihi)}</b> · İade km: <b>${Number(veri.kmBitis).toLocaleString('tr-TR')} km</b> · Yakıt: <b>${veri.yakit}</b> · Hasar: <b>${veri.hasar}</b>${veri.not?` (${esc(veri.not)})`:''}`;
+  aiMessages.push({role:'assistant', content: `Topladığım bilgiler:<br>${ozet}<br><br>Şimdi "İade Al" formunu bu bilgilerle dolu açıyorum. Fotoğrafları ekleyip kontrol ettikten sonra son onayı ("İadeyi Kaydet") sen vereceksin — gerçek kaydı asistan otomatik yapmıyor. <button onclick="switchPage('arac-yonetimi');setTimeout(()=>{openIadeForm('${v.id}');aiIadeOnDoldurUygula();},150)" style="margin-left:6px;background:var(--accent-blue);color:#fff;border:none;padding:5px 14px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;">İade Formunu Aç</button>`});
+  renderAiPage();
+}
+function aiIadeOnDoldurUygula(){
+  const d = window.__aiIadeOnDoldur;
+  if(!d) return;
+  window.__aiIadeOnDoldur = null;
+  const setVal = (id,val)=>{ const el=document.getElementById(id); if(el && val!=null && val!=='') el.value = val; };
+  setVal('iadeIadeTarih', d.iadeTarihi);
+  setVal('iadeKmBitis', d.kmBitis);
+  const yEl = document.getElementById('iadeYakit'); if(yEl && d.yakit) yEl.value = d.yakit;
+  const hEl = document.getElementById('iadeHasar'); if(hEl && d.hasar) hEl.value = d.hasar;
+  setVal('iadeNot', d.not);
+  if(typeof updateIadeKmDiff==='function') updateIadeKmDiff();
+  showToast('Asistanın topladığı bilgiler forma dolduruldu — fotoğrafları ekleyip kontrol et.');
 }
 
 async function sartnameYukle(file){
@@ -11682,7 +11906,7 @@ BUGÜNÜN TARİHİ: ${bugun} (tarih hesaplarını bu güne göre yap)
 - Web: www.pekdogru.com
 
 TEMEL KURALLAR:
-- Türkçe konuş, resmi ama anlaşılır
+- Türkçe konuş; üslubun samimi ve doğal olsun, bir meslektaşla konuşur gibi — gereksiz resmi/rapor dili kullanma ("aşağıda... sunulmuştur", "belirtilen hususlar" gibi kalıplardan kaçın), ama net ve öz kal
 - SADECE aşağıdaki FİLO VERİSİNE dayanarak cevap ver
 - Veride olmayan bir aracı, tutarı veya tarihi ASLA uydurma — emin olmadığın bilgiyi verme
 - Sayıları verideki haliyle aynen kullan, yuvarlama, kendinden toplama/çıkarma yapma
@@ -11691,6 +11915,11 @@ TEMEL KURALLAR:
 - Para birimini ₺ olarak göster (1.234,56 ₺ formatında)
 - Tablolar, listeler ve özetler kullan — düz paragraf yazma
 - Veri yoksa "Bu konuda yeterli veri bulunmuyor" de
+
+TAKİP SORULARI VE SOHBET SÜREKLİLİĞİ:
+- Bir soruyu cevaplamak için gereken bilgi eksik veya belirsizse (ör. hangi araç/plaka olduğu, hangi tarih aralığı, "bu ay" derken hangi ay) tahmin yürütüp yanlış cevap vermek yerine KISA bir takip sorusu sor
+- Konuşma geçmişini her zaman dikkate al — kullanıcı önceki mesajına ek bilgi verdiyse (ör. az önce sorduğun plakayı şimdi yazdıysa) onu kaldığın yerden tamamla, baştan başlama veya tekrar sorma
+- Kullanıcı konuyu değiştirirse eski bağlamda ısrar etme, yeni soruya odaklan
 
 İHALE SORULARI İÇİN:
 - "İhaleye uygun araç" = sigorta VE muayenesi kayıtlı ve 30 günden fazla günü kalmış (sigortaDl>30 VE muayeneDl>30), serviste değil
