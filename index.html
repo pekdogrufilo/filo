@@ -1826,13 +1826,18 @@
           </div>
         </div>
         <div class="field">
-          <label>Teslim fotoğrafı 2 (km göstergesi)</label>
+          <label>Teslim fotoğrafı 2 (km göstergesi veya üzerinde "teslim km" yazan fatura/belge)</label>
           <input type="file" id="fTeslimFoto2" accept="image/*">
           <div id="teslimFoto2Mevcut" class="doc-mevcut">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg>
             <span id="teslimFoto2Adi"></span>
             <button type="button" id="teslimFoto2Kaldir" class="doc-kaldir">Kaldır</button>
           </div>
+          <button type="button" id="teslimKmOkuBtn" class="doc-autofill-btn" onclick="runKmFotoOku(teslimFotoState.teslimFoto2&&teslimFotoState.teslimFoto2.data,'fTeslimKm','teslimKmOkuBtn','teslimKmOkuSonuc')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>
+            <span>Fotoğraftan km oku (AI)</span>
+          </button>
+          <div class="doc-autofill-result" id="teslimKmOkuSonuc"></div>
         </div>
         <div class="field">
           <label>Teslim fotoğrafı 3 (opsiyonel)</label>
@@ -3982,6 +3987,11 @@ function initTeslimFotoUI(){
       const mevcut = document.getElementById(k+'Mevcut');
       const adi = document.getElementById(k+'Adi');
       if(mevcut && adi){ adi.textContent=file.name+' (yeni)'; mevcut.style.display='flex'; }
+      if(k==='teslimFoto2' && getGeminiKey()){
+        const okuBtn = document.getElementById('teslimKmOkuBtn');
+        if(okuBtn) okuBtn.style.display = 'flex';
+        runKmFotoOku(data, 'fTeslimKm', 'teslimKmOkuBtn', 'teslimKmOkuSonuc');
+      }
     });
     const kaldir = document.getElementById(k+'Kaldir');
     if(kaldir) kaldir.onclick = ()=>{
@@ -3989,6 +3999,12 @@ function initTeslimFotoUI(){
       input.value='';
       const mevcut = document.getElementById(k+'Mevcut');
       if(mevcut) mevcut.style.display='none';
+      if(k==='teslimFoto2'){
+        const okuBtn = document.getElementById('teslimKmOkuBtn');
+        const okuSonuc = document.getElementById('teslimKmOkuSonuc');
+        if(okuBtn) okuBtn.style.display = 'none';
+        if(okuSonuc) okuSonuc.style.display = 'none';
+      }
     };
   });
 }
@@ -4010,6 +4026,10 @@ function resetTeslimFotoUI(){
     const mevcut = document.getElementById(k+'Mevcut');
     if(mevcut) mevcut.style.display='none';
   });
+  const okuBtn = document.getElementById('teslimKmOkuBtn');
+  const okuSonuc = document.getElementById('teslimKmOkuSonuc');
+  if(okuBtn) okuBtn.style.display = 'none';
+  if(okuSonuc) okuSonuc.style.display = 'none';
 }
 
 function loadTeslimFotoUI(v){
@@ -4023,6 +4043,10 @@ function loadTeslimFotoUI(v){
     if(savedName && mevcut && adi){ adi.textContent=savedName; mevcut.style.display='flex'; }
     else if(mevcut){ mevcut.style.display='none'; }
   });
+  const okuBtn = document.getElementById('teslimKmOkuBtn');
+  const okuSonuc = document.getElementById('teslimKmOkuSonuc');
+  if(okuBtn) okuBtn.style.display = 'none';
+  if(okuSonuc) okuSonuc.style.display = 'none';
 }
 
 async function buildTeslimFotoFields(id){
@@ -4066,6 +4090,10 @@ function initIadeFotoUI(v){
     const savedName = v && v[k+'Adi'];
     if(savedName && mevcut && adi){ adi.textContent = savedName+' (mevcut)'; mevcut.style.display='flex'; }
     else if(mevcut){ mevcut.style.display='none'; }
+    const okuBtn = document.getElementById('iadeKmOkuBtn');
+    const okuSonuc = document.getElementById('iadeKmOkuSonuc');
+    if(okuBtn) okuBtn.style.display = 'none';
+    if(okuSonuc) okuSonuc.style.display = 'none';
     input.addEventListener('change', async e=>{
       const file = e.target.files[0];
       if(!file) return;
@@ -4073,12 +4101,20 @@ function initIadeFotoUI(v){
       const data = await new Promise(r=>{ const fr=new FileReader(); fr.onload=()=>r(fr.result); fr.readAsDataURL(file); });
       iadeFotoState[k] = {data, name:file.name, remove:false};
       if(mevcut && adi){ adi.textContent=file.name+' (yeni)'; mevcut.style.display='flex'; }
+      if(k==='iadeFoto2' && getGeminiKey()){
+        if(okuBtn) okuBtn.style.display = 'flex';
+        runKmFotoOku(data, 'iadeKmBitis', 'iadeKmOkuBtn', 'iadeKmOkuSonuc');
+      }
     });
     const kaldir = document.getElementById(k+'Kaldir');
     if(kaldir) kaldir.onclick = ()=>{
       iadeFotoState[k] = {data:null, name:null, remove:true};
       input.value='';
       if(mevcut) mevcut.style.display='none';
+      if(k==='iadeFoto2'){
+        if(okuBtn) okuBtn.style.display = 'none';
+        if(okuSonuc) okuSonuc.style.display = 'none';
+      }
     };
   });
 }
@@ -4106,6 +4142,53 @@ function monthsBetweenDates(d1, d2){
   const diffDays = (b-a)/86400000;
   if(!isFinite(diffDays) || diffDays<=0) return 0;
   return diffDays/30;
+}
+
+// ===== Km göstergesi / fatura fotoğrafından AI ile km okuma =====
+// Görsel ya bir odometre/km göstergesi fotoğrafı ya da üzerine "teslim km: X" gibi
+// bir not düşülmüş fatura/belge fotoğrafı olabilir — ikisini de okumayı dener.
+async function runKmFotoOku(dataUrl, kmFieldId, btnId, resultId){
+  const btn = document.getElementById(btnId);
+  const resultEl = document.getElementById(resultId);
+  function showResult(msg, isErr){
+    if(!resultEl) return;
+    resultEl.className = 'doc-autofill-result ' + (isErr ? 'err' : 'ok');
+    resultEl.style.display = 'block';
+    resultEl.innerHTML = `<button type="button" class="dr-close" aria-label="Kapat">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>${esc(msg)}`;
+    const closeBtn = resultEl.querySelector('.dr-close');
+    if(closeBtn) closeBtn.onclick = ()=>{ resultEl.style.display='none'; };
+  }
+  if(!dataUrl){ showResult('Önce bir fotoğraf seçin.', true); return; }
+  if(!getGeminiKey()){ showResult('AI okuma özelliği şu anda kullanılamıyor.', true); return; }
+  if(resultEl) resultEl.style.display = 'none';
+  if(btn) btn.disabled = true;
+  try{
+    const base64 = dataUrl.split(',')[1];
+    const mime = (dataUrl.match(/^data:([^;]+);/)||[])[1] || 'image/jpeg';
+    const system = 'Sen bir filo kiralama şirketinde araç kilometre bilgisini fotoğraflardan/belgelerden okuyan bir asistansın. Sana verilen görsel şunlardan biri olabilir: (1) bir aracın km göstergesi/odometre ekranının fotoğrafı, (2) üzerine "teslim km", "km" gibi bir not veya rakam elle ya da yazıyla düşülmüş bir fatura/belge fotoğrafı. Görseldeki kilometre değerini bul ve SADECE şu JSON formatında yanıt ver, başka açıklama ekleme: {"km": <sayı>}. Kilometre değeri hiçbir şekilde bulunamıyorsa {"km": null} döndür.';
+    const contentBlock = { type:'image', source:{ type:'base64', media_type: mime, data: base64 } };
+    const json = await callGeminiDirect(system, 'Bu görseldeki kilometre değerini oku ve istenen JSON formatında döndür.', contentBlock);
+    const textBlock = (json.content||[]).find(c=>c.type==='text');
+    if(!textBlock || !textBlock.text) throw new Error('Yanıt boş geldi.');
+    let cleaned = textBlock.text.replace(/```json|```/g,'').trim();
+    const firstBrace = cleaned.indexOf('{');
+    const lastBrace = cleaned.lastIndexOf('}');
+    if(firstBrace!==-1 && lastBrace>firstBrace){ cleaned = cleaned.slice(firstBrace, lastBrace+1); }
+    let extracted;
+    try{ extracted = JSON.parse(cleaned); }catch(parseErr){ throw new Error('Yanıt beklenmeyen bir formatta geldi.'); }
+    const km = Number(extracted && extracted.km);
+    if(!km || km<=0) throw new Error('Fotoğrafta net bir km değeri bulunamadı.');
+    const field = document.getElementById(kmFieldId);
+    if(field){ field.value = km; field.dispatchEvent(new Event('input')); }
+    showResult(`✓ Km okundu: ${km.toLocaleString('tr-TR')} km — lütfen kontrol edip kaydedin.`, false);
+  }catch(e){
+    console.error('Km foto okuma hatası:', e);
+    showResult('Km fotoğraftan/belgeden okunamadı: '+(e.message||'bilinmeyen hata')+'. Alanı elle girebilirsiniz.', true);
+  }finally{
+    if(btn) btn.disabled = false;
+  }
 }
 
 function resetDocUI(d){
@@ -4576,13 +4659,18 @@ function openIadeForm(id){
           </div>
         </div>
         <div class="iade-field">
-          <label>İade fotoğrafı 2 (km göstergesi)</label>
+          <label>İade fotoğrafı 2 (km göstergesi veya üzerinde "km" yazan belge)</label>
           <input type="file" id="fIadeFoto2" accept="image/*">
           <div id="iadeFoto2Mevcut" class="doc-mevcut" style="display:none;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg>
             <span id="iadeFoto2Adi"></span>
             <button type="button" id="iadeFoto2Kaldir" class="doc-kaldir">Kaldır</button>
           </div>
+          <button type="button" id="iadeKmOkuBtn" class="doc-autofill-btn" onclick="runKmFotoOku(iadeFotoState.iadeFoto2&&iadeFotoState.iadeFoto2.data,'iadeKmBitis','iadeKmOkuBtn','iadeKmOkuSonuc')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>
+            <span>Fotoğraftan km oku (AI)</span>
+          </button>
+          <div class="doc-autofill-result" id="iadeKmOkuSonuc"></div>
         </div>
         <div class="iade-section">Durum Bilgisi</div>
         <div class="iade-row">
