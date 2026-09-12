@@ -1226,7 +1226,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-10.71</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-10.72</div>
     </div>
   </div>
 </div>
@@ -1346,7 +1346,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-10.71</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-10.72</div>
     </div>
   </aside>
 
@@ -6819,7 +6819,7 @@ const PAGE_META = {
   'kiralama': {title:'Kiralama İşlemleri', sub:'Kiradaki araçlar ve kiracı bilgileri'},
   'musteriler': {title:'Müşteriler', sub:'Kiracı ve kurumlar: araçlar, kira toplamı ve geçmiş'},
   'masraf': {title:'Masraf Yönetimi', sub:'Tüm araçlardaki masrafları görüntüle ve ekle'},
-  'bakim': {title:'Bakım & Servis', sub:'Serviste olan araçlar ve yaklaşan muayeneler'},
+  'bakim': {title:'Bakım & Servis', sub:'Serviste olan araçlar ve servis planlaması'},
   'belgeler': {title:'Belgeler', sub:'Yüklenen sözleşme, poliçe ve raporlar'},
   'raporlar': {title:'Raporlar', sub:'Yazdırılabilir özet ve fatura raporları'},
   'bildirimler': {title:'Bildirimler', sub:'Yaklaşan ve geçmiş tarihli belgeler'},
@@ -8246,7 +8246,6 @@ function renderBakimPage(){
   const serviste = vehicles.filter(v=>v.durum==='Serviste');
   const bakimMasraf = [...expenses].filter(e=>['Tamir','Bakım','Lastik'].includes(e.tip)).sort((a,b)=>(b.tarih||'').localeCompare(a.tarih||'')).slice(0,20);
   const tumBakimMasraf = [...expenses].filter(e=>['Tamir','Bakım','Lastik'].includes(e.tip)).sort((a,b)=>(b.tarih||'').localeCompare(a.tarih||''));
-  const yakinMuayene = vehicles.filter(v=>v.muayeneTarihi && daysLeft(v.muayeneTarihi)<=30).sort((a,b)=>daysLeft(a.muayeneTarihi)-daysLeft(b.muayeneTarihi));
   const planliServis = vehicles.filter(v=>v.sonrakiServisTarihi || v.sonrakiServisKm).sort((a,b)=>{
     const da = daysLeft(a.sonrakiServisTarihi)||9999;
     const db = daysLeft(b.sonrakiServisTarihi)||9999;
@@ -8284,10 +8283,6 @@ function renderBakimPage(){
         <div class="dstat-txt"><div class="n">${serviste.length}</div><div class="l">Serviste</div></div>
       </div>
       <div class="dstat" style="cursor:default;">
-        <div class="dstat-ic" style="background:${yakinMuayene.length>0?'#D97706':'#64748B'}">${DASH_ICONS.clock}</div>
-        <div class="dstat-txt"><div class="n">${yakinMuayene.length}</div><div class="l">Yaklaşan Muayene</div></div>
-      </div>
-      <div class="dstat" style="cursor:default;">
         <div class="dstat-ic" style="background:#64748B">${DASH_ICONS.check}</div>
         <div class="dstat-txt"><div class="n">${planliServis.length}</div><div class="l">Planlı Servis</div></div>
       </div>
@@ -8297,35 +8292,19 @@ function renderBakimPage(){
       </div>
     </div>
 
-    <div class="dash-grid" style="grid-template-columns:1fr 1fr;margin-bottom:16px;">
-      <div class="dcard">
-        <h3>Serviste Olan Araçlar <span style="font-weight:400;font-size:13px;color:var(--steel-100)">${serviste.length}</span></h3>
-        ${serviste.length ? serviste.map(v=>`
-          <div class="alert-list-item">
-            <div class="aic" style="background:var(--coral-dim);color:#F3A392">${DASH_ICONS.wrench}</div>
-            <div class="atxt">
-              <div class="atitle">${esc(v.plaka)} — ${esc([v.marka,v.model].filter(Boolean).join(' ')||'—')}</div>
-              <div class="asub">${esc(v.servisNotu||v.yer||'Neden gönderildiği belirtilmemiş')}</div>
-            </div>
-            <button onclick="closeVehicleQuickList();switchPage('arac-yonetimi');setTimeout(()=>openEdit('${v.id}'),80);"
-              style="background:none;border:1px solid var(--line);color:var(--paper);font-size:12px;padding:4px 10px;border-radius:6px;cursor:pointer;flex-shrink:0;">Düzenle</button>
+    <div class="dcard" style="margin-bottom:16px;">
+      <h3>Serviste Olan Araçlar <span style="font-weight:400;font-size:13px;color:var(--steel-100)">${serviste.length}</span></h3>
+      ${serviste.length ? serviste.map(v=>`
+        <div class="alert-list-item">
+          <div class="aic" style="background:var(--coral-dim);color:#F3A392">${DASH_ICONS.wrench}</div>
+          <div class="atxt">
+            <div class="atitle">${esc(v.plaka)} — ${esc([v.marka,v.model].filter(Boolean).join(' ')||'—')}</div>
+            <div class="asub">${esc(v.servisNotu||v.yer||'Neden gönderildiği belirtilmemiş')}</div>
           </div>
-        `).join('') : '<div class="log-empty">Serviste araç yok.</div>'}
-      </div>
-      <div class="dcard">
-        <h3>Yaklaşan Muayeneler <span style="font-weight:400;font-size:13px;color:var(--steel-100)">${yakinMuayene.length}</span></h3>
-        ${yakinMuayene.length ? yakinMuayene.map(v=>{
-          const dl = daysLeft(v.muayeneTarihi);
-          const dtxt = dl<0 ? `<span style="color:var(--safety)">${Math.abs(dl)} gün gecikti!</span>` : (dl===0?'<span style="color:var(--safety)">Bugün!</span>':`<span style="color:#C98A3E">${dl} gün kaldı</span>`);
-          return `<div class="alert-list-item">
-            <div class="aic" style="background:#3D2E13;color:#C98A3E">${DASH_ICONS.clock}</div>
-            <div class="atxt">
-              <div class="atitle">${esc(v.plaka)} — ${esc([v.marka,v.model].filter(Boolean).join(' ')||'—')}</div>
-              <div class="asub">${esc(fmtTarih(v.muayeneTarihi))} · ${dtxt}</div>
-            </div>
-          </div>`;
-        }).join('') : '<div class="log-empty">Yaklaşan muayene yok (30 gün içinde).</div>'}
-      </div>
+          <button onclick="closeVehicleQuickList();switchPage('arac-yonetimi');setTimeout(()=>openEdit('${v.id}'),80);"
+            style="background:none;border:1px solid var(--line);color:var(--paper);font-size:12px;padding:4px 10px;border-radius:6px;cursor:pointer;flex-shrink:0;">Düzenle</button>
+        </div>
+      `).join('') : '<div class="log-empty">Serviste araç yok.</div>'}
     </div>
 
     <div class="dcard" style="margin-bottom:16px;">
