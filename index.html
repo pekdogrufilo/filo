@@ -326,6 +326,12 @@
   .doc-autofill-result .dr-close:hover{opacity:1;}
   .field input:focus,.field select:focus{outline:none;border-color:var(--accent-blue);box-shadow:0 0 0 3px rgba(66,153,225,.15);}
   .field input.invalid{border-color:var(--coral);box-shadow:0 0 0 3px rgba(140,52,48,.2);}
+  /* Boş tarih/ay alanlarında tarayıcının ham "gg/aa/yyyy" yer tutucusu, panelin diğer placeholder metinleriyle
+     aynı soluk tonda görünsün — dolduğunda normal metin rengine döner. */
+  input[type="date"]:placeholder-shown,input[type="month"]:placeholder-shown{color:var(--steel-300);}
+  input[type="date"]::-webkit-calendar-picker-indicator{cursor:pointer;opacity:.55;transition:opacity .15s ease;}
+  input[type="date"]::-webkit-calendar-picker-indicator:hover{opacity:1;}
+  html:not([data-theme="light"]) input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.82);}
   .err{color:var(--coral);font-size:13px;margin-top:5px;display:none;}
   .modal-actions{display:flex;gap:10px;padding:14px 22px;border-top:1px solid var(--line);flex-shrink:0;}
   .modal-actions button{flex:1;padding:11px;border-radius:8px;font-family:var(--font-ui);font-weight:600;font-size:14px;cursor:pointer;border:none;transition:transform .12s var(--ease), box-shadow .12s var(--ease);}
@@ -650,6 +656,14 @@
   .dstat-strong .dstat-ic{width:42px;height:42px;border-radius:12px;box-shadow:0 4px 14px rgba(0,0,0,.22);}
   .dstat-strong .dstat-txt .n{font-size:28px;font-weight:700;letter-spacing:-.4px;}
   .dstat-strong .dstat-txt .l{font-size:12.5px;text-transform:uppercase;letter-spacing:.4px;font-weight:600;}
+  /* Tek başına kalan son kart (ör. Aylık Kira Geliri) tam satırı kaplayan "öne çıkan" bir özet şeridine dönüşür — grid'in dengesiz 5+1 bitmesini önler */
+  .dstat-wide{grid-column:1/-1;display:flex;flex-direction:row;align-items:center;gap:18px;padding:18px 24px;}
+  .dstat-wide .dstat-ic{width:46px;height:46px;}
+  .dstat-wide .dstat-txt{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;}
+  .dstat-wide .dstat-txt .l{margin:0;}
+  .dstat-wide .dstat-txt .n{font-size:26px;}
+  .dstat-wide .dstat-txt .d{margin:0;}
+  @media(max-width:900px){.dstat-wide{flex-direction:column;align-items:flex-start;gap:10px;}.dstat-wide .dstat-txt{flex-direction:column;gap:2px;}}
 
   .dash-grid{display:grid;grid-template-columns:1fr 1fr 320px;gap:20px;align-items:start;}
   .dg-21{grid-template-columns:1.6fr 1fr;}
@@ -707,7 +721,10 @@
   .activity-list-item .atxt{font-size:13px;line-height:1.4;}
   .activity-list-item .atime{font-size:12px;color:var(--steel-300);margin-top:2px;}
 
-  .quick-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  /* Buton sayısı azken (ör. 3 buton) grid'in 1fr sütunları tüm satırı gerip butonları
+     devasa gösteriyordu — sabit bir üst sınır + sola yaslama ile buton boyutu her yerde
+     tutarlı kalır, az sayıda buton olduğunda da orantılı görünür. */
+  .quick-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,132px));justify-content:start;gap:10px;}
   .qbtn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;background:var(--surface-2);border:1px solid var(--line);border-radius:11px;padding:14px 8px;cursor:pointer;transition:all .12s ease;color:var(--paper);font-family:var(--font-ui);}
   .qbtn:hover{border-color:var(--steel-300);transform:translateY(-1px);background:#363130;}
   .qbtn .qic{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;}
@@ -1139,6 +1156,27 @@
   .vk-chip.amber{background:rgba(251,191,36,.16);color:#fcd34d;}
   .vk-ok-line{display:flex;align-items:center;gap:6px;margin-top:8px;font-size:11.5px;color:rgba(255,255,255,.6);}
   html[data-theme="dark"] .vk-head{background:linear-gradient(135deg,#0f1c2e 0%,#16283e 45%,#1d3a5f 100%);}
+  /* Açık temada araç kartının gövdesi/alt barı da lacivert kalıyordu (sabit hex renkler) —
+     beyaz sayfanın ortasında koyu ada gibi duruyordu. Başlık şeridi markalı lacivert
+     kalsın (cüzdan kartı hissi), ama gövde/segment/alt bar sayfanın açık yüzeyine dönsün. */
+  html[data-theme="light"] .vk-seg-row,
+  html[data-theme="light"] .vk-body-pad{background:#fff;}
+  html[data-theme="light"] .vk-foot{background:#FBFBFD;border-top-color:var(--line);}
+  html[data-theme="light"] .vk-seg .bar{background:rgba(0,0,0,.07);}
+  html[data-theme="light"] .vk-seg .lbl{color:var(--text-3);}
+  html[data-theme="light"] .vk-seg .gun{color:var(--text-3);}
+  html[data-theme="light"] .vk-ok-line{color:var(--text-2);}
+  html[data-theme="light"] .vk-price{color:var(--text);}
+  html[data-theme="light"] .vk-price small{color:var(--text-3);}
+  html[data-theme="light"] .vk-acts button{background:var(--surface-2);color:var(--text-2);}
+  html[data-theme="light"] .vk-acts button.vk-det{background:var(--accent-blue);color:#fff;}
+  html[data-theme="light"] .vk-acts button.vk-sil:hover{color:var(--red);}
+  html[data-theme="light"] .vk-chip.red{background:var(--red-dim);color:var(--red);}
+  html[data-theme="light"] .vk-chip.amber{background:var(--amber-dim);color:#B5730A;}
+  html[data-theme="light"] .vk-body-pad .seri-chip{background:var(--surface-2);color:var(--text-2);}
+  html[data-theme="light"] .vk-body-pad .seri-chip .sc-v{color:var(--text);}
+  html[data-theme="light"] .vk-body-pad .seri-copy{background:rgba(46,124,246,.12);color:var(--accent-blue);}
+  html[data-theme="light"] .vk-body-pad .seri-copy.copied{background:rgba(52,199,89,.18);color:#1d8a4e;}
   /* Aksiyon çubuğu: hairline ayırıcılar */
   .card-actions button{border-right:none;}
   .card-actions button:not(:first-child){border-left:1px solid var(--line);}
@@ -1184,7 +1222,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-10.65</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-10.66</div>
     </div>
   </div>
 </div>
@@ -1304,7 +1342,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-10.65</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-10.66</div>
     </div>
   </aside>
 
@@ -7580,14 +7618,23 @@ function renderDashboard(){
     masraf:{c:'#DC2626', bg:'rgba(220,38,38,.1)', et:'Masraf'},
   };
 
+  // KPI kart renk sistemi: sadece durum bildiren kartlar renklenir (dolu=yeşil, dikkat=kırmızı),
+  // bilgi amaçlı kartlar nötr tonda kalır — böylece göz doğrudan dikkat gereken karta gider.
+  const kpiNotr = '100,116,139'; // #64748B
+  const kpiNotrHex = '#64748B';
+  const servisteHex = serviste>0 ? '#DC2626' : kpiNotrHex;
+  const servisteRgb = serviste>0 ? '220,38,38' : kpiNotr;
+  const hasarHex = hasarSayisi>0 ? '#DC2626' : kpiNotrHex;
+  const hasarRgb = hasarSayisi>0 ? '220,38,38' : kpiNotr;
+
   const page = document.getElementById('page-genel-bakis');
   page.innerHTML = `
     <div id="dashYedekUyari"></div>
     ${filoSaglikSkoruHTML()}
     <div class="dash-widget" data-widget-key="kpi" ${DASH_WIDGET_ATTRS}>${DASH_WIDGET_HANDLE}
     <div class="dash-stats">
-      <div class="dstat dstat-strong" style="--accent-c:#2E7CF6;background:linear-gradient(135deg,rgba(46,124,246,.14),rgba(46,124,246,.03))" onclick="showVehicleQuickList('Toplam','Tüm Araçlar')">
-        <div class="dstat-ic" style="background:rgba(46,124,246,.12);color:#2E7CF6">${DASH_ICONS.car}</div>
+      <div class="dstat dstat-strong" style="--accent-c:${kpiNotrHex};background:linear-gradient(135deg,rgba(${kpiNotr},.14),rgba(${kpiNotr},.03))" onclick="showVehicleQuickList('Toplam','Tüm Araçlar')">
+        <div class="dstat-ic" style="background:rgba(${kpiNotr},.14);color:${kpiNotrHex}">${DASH_ICONS.car}</div>
         <div class="dstat-txt">
           <div class="l">Toplam Araç</div>
           <div class="n">${total}</div>
@@ -7602,43 +7649,43 @@ function renderDashboard(){
           <div class="d" style="color:#16A34A">%${pct(kirada)} doluluk</div>
         </div>
       </div>
-      <div class="dstat dstat-strong" style="--accent-c:#D97706;background:linear-gradient(135deg,rgba(217,119,6,.14),rgba(217,119,6,.03))" onclick="showVehicleQuickList('Müsait','Müsait Araçlar')">
-        <div class="dstat-ic" style="background:rgba(217,119,6,.12);color:#D97706">${DASH_ICONS.clock}</div>
+      <div class="dstat dstat-strong" style="--accent-c:${kpiNotrHex};background:linear-gradient(135deg,rgba(${kpiNotr},.14),rgba(${kpiNotr},.03))" onclick="showVehicleQuickList('Müsait','Müsait Araçlar')">
+        <div class="dstat-ic" style="background:rgba(${kpiNotr},.14);color:${kpiNotrHex}">${DASH_ICONS.clock}</div>
         <div class="dstat-txt">
           <div class="l">Müsait Araç</div>
-          <div class="n" style="color:#D97706">${musait}</div>
+          <div class="n">${musait}</div>
           <div class="d" style="color:var(--steel-300);font-weight:400;">%${pct(musait)} boşta</div>
         </div>
       </div>
-      <div class="dstat dstat-strong" style="--accent-c:#DC2626;background:linear-gradient(135deg,rgba(220,38,38,.14),rgba(220,38,38,.03))" onclick="showVehicleQuickList('Serviste','Servisteki Araçlar')">
-        <div class="dstat-ic" style="background:rgba(220,38,38,.12);color:#DC2626">${DASH_ICONS.wrench}</div>
+      <div class="dstat dstat-strong" style="--accent-c:${servisteHex};background:linear-gradient(135deg,rgba(${servisteRgb},.14),rgba(${servisteRgb},.03))" onclick="showVehicleQuickList('Serviste','Servisteki Araçlar')">
+        <div class="dstat-ic" style="background:rgba(${servisteRgb},.14);color:${servisteHex}">${DASH_ICONS.wrench}</div>
         <div class="dstat-txt">
           <div class="l">Serviste</div>
-          <div class="n" style="color:${serviste>0?'#DC2626':'var(--steel-100)'}">${serviste}</div>
+          <div class="n" style="color:${servisteHex}">${serviste}</div>
           <div class="d" style="color:var(--steel-300);font-weight:400;">${serviste>0?'Bakımda':'Tüm araçlar aktif'}</div>
         </div>
       </div>
-      <div class="dstat dstat-strong" style="--accent-c:#5856D6;background:linear-gradient(135deg,rgba(88,86,214,.14),rgba(88,86,214,.03))" onclick="switchPage('musteriler')">
-        <div class="dstat-ic" style="background:rgba(88,86,214,.12);color:#5856D6">${DASH_ICONS.users}</div>
+      <div class="dstat dstat-strong" style="--accent-c:${kpiNotrHex};background:linear-gradient(135deg,rgba(${kpiNotr},.14),rgba(${kpiNotr},.03))" onclick="switchPage('musteriler')">
+        <div class="dstat-ic" style="background:rgba(${kpiNotr},.14);color:${kpiNotrHex}">${DASH_ICONS.users}</div>
         <div class="dstat-txt">
           <div class="l">Müşteri</div>
-          <div class="n" style="color:#5856D6">${musteriSayisi}</div>
+          <div class="n">${musteriSayisi}</div>
           <div class="d" style="color:var(--steel-300);font-weight:400;">${aktifMusteri} kiracı aktif</div>
         </div>
       </div>
-      <div class="dstat dstat-strong" style="--accent-c:#FF9F0A;background:linear-gradient(135deg,rgba(255,159,10,.14),rgba(255,159,10,.03));cursor:default;">
-        <div class="dstat-ic" style="background:rgba(255,159,10,.14);color:#FF9F0A">${DASH_ICONS.warn}</div>
+      <div class="dstat dstat-strong" style="--accent-c:${hasarHex};background:linear-gradient(135deg,rgba(${hasarRgb},.14),rgba(${hasarRgb},.03));cursor:default;">
+        <div class="dstat-ic" style="background:rgba(${hasarRgb},.14);color:${hasarHex}">${DASH_ICONS.warn}</div>
         <div class="dstat-txt">
           <div class="l">Hasar Kaydı</div>
-          <div class="n" style="color:${hasarSayisi>0?'#FF9F0A':'var(--steel-100)'}">${hasarSayisi}</div>
+          <div class="n" style="color:${hasarHex}">${hasarSayisi}</div>
           <div class="d" style="color:var(--steel-300);font-weight:400;">tüm zamanlar</div>
         </div>
       </div>
-      <div class="dstat dstat-strong" data-admin-only style="--accent-c:#2E7CF6;background:linear-gradient(135deg,rgba(46,124,246,.14),rgba(46,124,246,.03));cursor:default;">
-        <div class="dstat-ic" style="background:rgba(46,124,246,.12);color:#2E7CF6">${DASH_ICONS.trend}</div>
+      <div class="dstat dstat-strong dstat-wide" data-admin-only style="--accent-c:#16A34A;background:linear-gradient(135deg,rgba(22,163,74,.14),rgba(22,163,74,.03));cursor:default;">
+        <div class="dstat-ic" style="background:rgba(22,163,74,.12);color:#16A34A">${DASH_ICONS.trend}</div>
         <div class="dstat-txt">
           <div class="l">Aylık Kira Geliri</div>
-          <div class="n" style="color:#2E7CF6">${fmtTL_role(gelir)}</div>
+          <div class="n" style="color:#16A34A">${fmtTL_role(gelir)}</div>
           <div class="d" style="color:var(--steel-300);font-weight:400;">${kirada} aktif kiralama</div>
         </div>
       </div>
@@ -7672,7 +7719,7 @@ function renderDashboard(){
         <h3 style="margin:0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/></svg>Hızlı İşlemler</h3>
         <span style="font-size:12px;color:var(--text-3);">Tek tıkla en sık yapılan işlemler</span>
       </div>
-      <div class="quick-grid" style="grid-template-columns:repeat(auto-fit,minmax(110px,1fr));">
+      <div class="quick-grid">
         <button class="qbtn" data-act="arac-kirala"><div class="qic" style="background:#16A34A;color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8v8h6l4 4V4L9 8H3Z"/></svg></div><span>Araç Kirala</span></button>
         <button class="qbtn" data-act="iade-al"><div class="qic" style="background:#DC2626;color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></div><span>İade Al</span></button>
         <button class="qbtn" data-act="yeni-arac"><div class="qic" style="background:var(--accent-blue);color:#fff">${DASH_ICONS.car}</div><span>Yeni Araç Ekle</span></button>
@@ -9260,7 +9307,7 @@ function renderKiralamaPage(){
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:12px;">
         <h3 style="margin:0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/></svg>Hızlı İşlemler</h3>
       </div>
-      <div class="quick-grid" style="grid-template-columns:repeat(auto-fit,minmax(110px,1fr));">
+      <div class="quick-grid">
         <button class="qbtn" data-act="arac-kirala"><div class="qic" style="background:#16A34A;color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8v8h6l4 4V4L9 8H3Z"/></svg></div><span>Araç Kirala</span></button>
         <button class="qbtn" data-act="iade-al"><div class="qic" style="background:#DC2626;color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></div><span>İade Al</span></button>
         <button class="qbtn" data-act="yeni-sozlesme"><div class="qic" style="background:#C98A3E;color:#fff">${DASH_ICONS.doc}</div><span>Yeni Sözleşme</span></button>
@@ -10219,7 +10266,7 @@ function renderMusterilerPage(){
         <h3 style="margin:0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/></svg>Hızlı İşlemler</h3>
         <span style="font-size:12px;color:var(--text-3);">Yeni bir müşteri, araç kiralayarak veya sözleşme oluşturarak eklenir</span>
       </div>
-      <div class="quick-grid" style="grid-template-columns:repeat(auto-fit,minmax(110px,1fr));">
+      <div class="quick-grid">
         <button class="qbtn" data-act="arac-kirala"><div class="qic" style="background:#16A34A;color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8v8h6l4 4V4L9 8H3Z"/></svg></div><span>Araç Kirala</span></button>
         <button class="qbtn" data-act="yeni-sozlesme"><div class="qic" style="background:#C98A3E;color:#fff">${DASH_ICONS.doc}</div><span>Yeni Sözleşme</span></button>
         <button class="qbtn" data-act="rapor-olustur"><div class="qic" style="background:var(--accent-blue);color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg></div><span>Rapor Oluştur</span></button>
