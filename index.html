@@ -1226,7 +1226,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-10.73</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-12.74</div>
     </div>
   </div>
 </div>
@@ -1346,7 +1346,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-10.73</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-12.74</div>
     </div>
   </aside>
 
@@ -8865,6 +8865,36 @@ async function sozlesmeOlustur(format){
     tarih: new Date().toLocaleDateString('tr-TR'),
     sozNo: 'SOZ-'+new Date().getFullYear()+'-'+Date.now().toString().slice(-4),
   };
+
+  // Araç kaydını da güncelle — "Yeni Sözleşme" ile oluşturulan sözleşme yalnızca
+  // belge/kayıt listesine (sozlesmeler) düşüyordu, aracın durum/kira bilgilerine hiç
+  // işlenmiyordu; bu yüzden sözleşmesi olan bir araç sistemde "Müsait" görünmeye devam
+  // edebiliyordu. "Araç Kirala" (kirayaVerVeSozlesme) ile aynı alanlar burada da yazılıyor.
+  const vIdx = vehicles.findIndex(x=>x.id===vehicleId);
+  if(vIdx>-1){
+    const kiraNum = kira ? Number(kira) : (v.kira||0);
+    const kmLimitNum = kmLimit!=='' && kmLimit!=null ? Number(kmLimit) : (v.kmLimiti||undefined);
+    const teslimKmNum = km ? Number(km) : (v.teslimKm||0);
+    vehicles[vIdx] = {
+      ...v,
+      durum: 'Kirada',
+      kiraciAdi: kiraci,
+      kiraciVergi: kiraciVKNInp||v.kiraciVergi||'',
+      kiraciAdres: kiraciAdresInp||v.kiraciAdres||'',
+      kira: kiraNum,
+      kiraBitis: bitis,
+      sozlesmeBitis: bitis,
+      teslimKm: teslimKmNum,
+      teslimTarih: bas||v.teslimTarih||'',
+      kmLimiti: kmLimitNum,
+      renk: renk||v.renk||'',
+      kiraGecmisi: [...(v.kiraGecmisi||[]), {bas, bitis, yer: kiraci, teslimKm: teslimKmNum, iadeKm:0, yakit:'', hasar:'', not: notlar||''}],
+    };
+    await persist();
+    render();
+    if(window.__currentPage && window.__currentPage!=='arac-yonetimi') renderCurrentPage();
+    logActivity('edit', `<b>${esc(v.plaka)}</b> kiraya verildi — ${esc(kiraci)} · ${fmtTarih(bas)} → ${fmtTarih(bitis)} · sözleşme oluşturuldu`);
+  }
 
   // Doğrudan oluştur — GitHub Pages'te /api olmadığından sunucu denemesi yapılmaz
   await sozKaydet(sozData, bas, bitis);
