@@ -1226,7 +1226,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-12.82</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-12.83</div>
     </div>
   </div>
 </div>
@@ -1346,7 +1346,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-12.82</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-12.83</div>
     </div>
   </aside>
 
@@ -10270,20 +10270,47 @@ const OTO_BELGE_TURLERI = {
   ruhsat:   {label:'Ruhsat',           prefix:'ruhsat_',        adiF:'ruhsatBelgeAdi',  tipF:'ruhsatBelgeTip',  tarihF:null},
   sozlesme: {label:'Kira sözleşmesi',  prefix:'contract_',      adiF:'sozlesmeAdi',     tipF:'sozlesmeTip',     tarihF:'sozlesmeBitis'},
 };
-const OTO_BELGE_SYSTEM = 'Sen bir araç belgesi (poliçe, ruhsat, muayene raporu, kira sözleşmesi, masraf fişi, servis kaydı vb.) okuyan asistansın. SADECE şu JSON nesnesini döndür, başka hiçbir metin veya kod bloğu ekleme:\n{"plaka": string|null, "belgeTuru": "sigorta"|"kasko"|"muayene"|"ruhsat"|"sozlesme"|"masraf"|"servis"|"vize"|"diger", "tarih": "YYYY-MM-DD"|null, "belgeNo": string|null, "kiraTutari": sayı|null, "kmLimiti": sayı|null, "kmAsimUcreti": sayı|null}\nKurallar: "plaka" belgedeki araç plakası (Türk formatı: 2 rakam + 2-3 harf + 2-4 rakam, ör. 42 ABC 123). "belgeTuru" belgenin türü — sigorta poliçesi ise "sigorta", kasko ise "kasko", muayene raporu ise "muayene", tescil/ruhsat ise "ruhsat", kira sözleşmesi ise "sozlesme", masraf/yakıt fişi ise "masraf", servis/bakım kaydı ise "servis", vize/uluslararası belge ise "vize", hiçbiri değilse "diger". "tarih" belgenin geçerlilik bitiş tarihi (poliçe/muayene/sözleşme) ya da fiş/rapor tarihi — YYYY-MM-DD formatında; bulamazsan null. "belgeTuru" "sozlesme" ise EK OLARAK şunları da oku, başka hiçbir belge türünde bu üç alanı doldurma (null bırak): "kiraTutari" aylık kira bedeli (KDV hariç, sadece sayı, TL), "kmLimiti" aylık kilometre kullanım limiti (sadece sayı, km), "kmAsimUcreti" bu limiti aşan her kilometre için uygulanan birim ücret (KDV hariç, sadece sayı, TL/km — sözleşmede "aşım ücreti", "fazla km bedeli" gibi ifadelerle geçebilir). Emin değilsen null yaz, tahmin yürütme.';
+const OTO_BELGE_SYSTEM = 'Sen bir araç belgesi (poliçe, ruhsat, muayene raporu, kira sözleşmesi, masraf fişi, servis kaydı vb.) okuyan asistansın. SADECE şu JSON nesnesini döndür, başka hiçbir metin veya kod bloğu ekleme:\n{"plaka": string|null, "belgeTuru": "sigorta"|"kasko"|"muayene"|"ruhsat"|"sozlesme"|"masraf"|"servis"|"vize"|"diger", "tarih": "YYYY-MM-DD"|null, "belgeNo": string|null, "kiraTutari": sayı|null, "kmLimiti": sayı|null, "kmAsimUcreti": sayı|null, "teslimTarihi": "YYYY-MM-DD"|null, "teslimKm": sayı|null}\nKurallar: "plaka" belgedeki araç plakası (Türk formatı: 2 rakam + 2-3 harf + 2-4 rakam, ör. 42 ABC 123). "belgeTuru" belgenin türü — sigorta poliçesi ise "sigorta", kasko ise "kasko", muayene raporu ise "muayene", tescil/ruhsat ise "ruhsat", kira sözleşmesi ise "sozlesme", masraf/yakıt fişi ise "masraf", servis/bakım kaydı ise "servis", vize/uluslararası belge ise "vize", hiçbiri değilse "diger". "tarih" belgenin geçerlilik bitiş tarihi (poliçe/muayene/sözleşme) ya da fiş/rapor tarihi — YYYY-MM-DD formatında; bulamazsan null. "belgeTuru" "sozlesme" ise EK OLARAK şunları da oku, başka hiçbir belge türünde bu beş alanı doldurma (null bırak): "kiraTutari" aylık kira bedeli (KDV hariç, sadece sayı, TL), "kmLimiti" aylık kilometre kullanım limiti (sadece sayı, km), "kmAsimUcreti" bu limiti aşan her kilometre için uygulanan birim ücret (KDV hariç, sadece sayı, TL/km — sözleşmede "aşım ücreti", "fazla km bedeli" gibi ifadelerle geçebilir), "teslimTarihi" aracın kiracıya TESLİM EDİLDİĞİ tarih (sözleşme başlangıç/teslim tarihi — sözleşmenin genel geçerlilik/imza tarihiyle karıştırma, aracın fiilen teslim edildiği tarihi ara — YYYY-MM-DD), "teslimKm" aracın teslim anındaki kilometresi (sözleşmede "teslim km", "başlangıç km", "kilometre" gibi ifadelerle geçebilir, sadece sayı). Emin değilsen null yaz, tahmin yürütme.';
 
 // v.81: "km limiti vs yazmadı, aşım ücreti okumuyor" geri bildirimi üzerine eklendi — sözleşme
 // türü belgelerde artık plaka+tarihin yanında kira tutarı, aylık km limiti ve km aşım ücreti de
 // okunup araç kaydına yazılıyor. Okunan bir alan boş/eksikse mevcut değer KORUNUR, asla
 // sıfırlanmaz. Bu fonksiyon Belge Yükleme sayfası (otoBelgeSec/belgeTopluTek) ve AI Filo
 // Asistanı'ndaki "Evrak Gönder" (aiBelgeYukle/aiPendingBelgeCozumle) ile ortak kullanılıyor.
+// v.83: "teslim km/tarihi var ama AI okumuyor" geri bildirimi üzerine eklendi — sözleşmeden artık
+// teslim tarihi/km de okunuyor. Km aşımı hesabının temeli oldukları ve genelde teslim tutanağı/
+// faturasından (ör. 42AKU776'da olduğu gibi) daha kesin şekilde zaten girilmiş olabilecekleri için,
+// kira/kmLimiti/kmAsimFiyat'ın aksine bu ikisi MEVCUT bir değerin ÜZERİNE YAZILMAZ — sadece alan
+// boşsa doldurulur; doluysa ve sözleşmedeki farklıysa kullanıcıya çelişki olarak bildirilir, sessizce
+// değiştirilmez. Dönen nesne {degisti, doldurulan[], celiski[]} — mesaj metni sozlesmeMesajOlustur ile üretilir.
 function sozlesmeAlanlariUygula(v, bilgi){
-  if(!bilgi) return false;
-  let degisti = false;
-  if(bilgi.kiraTutari!=null && !isNaN(Number(bilgi.kiraTutari)) && Number(bilgi.kiraTutari)>0){ v.kira = Number(bilgi.kiraTutari); degisti = true; }
-  if(bilgi.kmLimiti!=null && !isNaN(Number(bilgi.kmLimiti)) && Number(bilgi.kmLimiti)>0){ v.kmLimiti = Number(bilgi.kmLimiti); degisti = true; }
-  if(bilgi.kmAsimUcreti!=null && !isNaN(Number(bilgi.kmAsimUcreti)) && Number(bilgi.kmAsimUcreti)>0){ v.kmAsimFiyat = Number(bilgi.kmAsimUcreti); degisti = true; }
-  return degisti;
+  const sonuc = {degisti:false, doldurulan:[], celiski:[]};
+  if(!bilgi) return sonuc;
+  if(bilgi.kiraTutari!=null && !isNaN(Number(bilgi.kiraTutari)) && Number(bilgi.kiraTutari)>0){ v.kira = Number(bilgi.kiraTutari); sonuc.degisti = true; sonuc.doldurulan.push('kira tutarı'); }
+  if(bilgi.kmLimiti!=null && !isNaN(Number(bilgi.kmLimiti)) && Number(bilgi.kmLimiti)>0){ v.kmLimiti = Number(bilgi.kmLimiti); sonuc.degisti = true; sonuc.doldurulan.push('aylık km limiti'); }
+  if(bilgi.kmAsimUcreti!=null && !isNaN(Number(bilgi.kmAsimUcreti)) && Number(bilgi.kmAsimUcreti)>0){ v.kmAsimFiyat = Number(bilgi.kmAsimUcreti); sonuc.degisti = true; sonuc.doldurulan.push('km aşım ücreti'); }
+  if(bilgi.teslimTarihi){
+    const isoTarih = normalizeExtractedDate(bilgi.teslimTarihi);
+    if(isoTarih){
+      if(!v.teslimTarih){ v.teslimTarih = isoTarih; sonuc.degisti = true; sonuc.doldurulan.push('teslim tarihi'); }
+      else if(v.teslimTarih!==isoTarih){ sonuc.celiski.push(`teslim tarihi: kayıtta ${fmtTarih(v.teslimTarih)} var, sözleşmede ${fmtTarih(isoTarih)} yazıyor — değiştirmedim`); }
+    }
+  }
+  if(bilgi.teslimKm!=null && !isNaN(Number(bilgi.teslimKm)) && Number(bilgi.teslimKm)>0){
+    const km = Number(bilgi.teslimKm);
+    if(!v.teslimKm){ v.teslimKm = km; sonuc.degisti = true; sonuc.doldurulan.push('teslim km'); }
+    else if(Number(v.teslimKm)!==km){ sonuc.celiski.push(`teslim km: kayıtta ${Number(v.teslimKm).toLocaleString('tr-TR')} km var, sözleşmede ${km.toLocaleString('tr-TR')} km yazıyor — değiştirmedim`); }
+  }
+  return sonuc;
+}
+function sozlesmeMesajOlustur(sonuc){
+  if(!sonuc) return '';
+  const parcalar = [];
+  if(sonuc.doldurulan && sonuc.doldurulan.length) parcalar.push(`${sonuc.doldurulan.join(', ')} sözleşmeden okunup güncellendi.`);
+  if(sonuc.celiski && sonuc.celiski.length) parcalar.push(`Not: ${sonuc.celiski.join('; ')}.`);
+  if(!parcalar.length) return '';
+  const metin = parcalar.join(' ');
+  return ' ' + metin.charAt(0).toUpperCase() + metin.slice(1);
 }
 async function otoBelgeSec(file, statusEl){
   if(!file) return;
@@ -10347,12 +10374,12 @@ async function otoBelgeSec(file, statusEl){
     }else{
       await belgeAracaEkle(v, tur, file.name, onceden.mime, onceden.dataUrl, okunanTarih);
     }
-    const sozAlanGuncellendi = tur==='sozlesme' ? sozlesmeAlanlariUygula(v, bilgi) : false;
+    const sozSonuc = tur==='sozlesme' ? sozlesmeAlanlariUygula(v, bilgi) : null;
     await persist();
     logActivity('Belge yüklendi', `${v.plaka} — ${std?std.label:(tur==='diger'?'Belge':tur)} (${file.name})`).catch(()=>{});
     const tarihMsg = okunanTarih && std && std.tarihF ? `, tarih ${fmtTarih(okunanTarih)} olarak güncellendi` : '';
-    const sozMsg = sozAlanGuncellendi ? ', kira/km limiti/aşım ücreti güncellendi' : '';
-    showToast(`Kaydedildi: ${esc(v.plaka)} — ${std?std.label:esc(tur)} "${esc(file.name)}"${tarihMsg}${sozMsg}.`);
+    const sozMsg = sozlesmeMesajOlustur(sozSonuc);
+    showToast(`Kaydedildi: ${esc(v.plaka)} — ${std?std.label:esc(tur)} "${esc(file.name)}"${tarihMsg}.${sozMsg}`);
     renderBelgelerPage();
   }catch(e){
     console.error(e);
@@ -11615,12 +11642,12 @@ async function aiBelgeYukle(file){
     }else{
       await belgeAracaEkle(v, tur, file.name, onceden.mime, onceden.dataUrl, okunanTarih);
     }
-    const sozAlanGuncellendi = tur==='sozlesme' ? sozlesmeAlanlariUygula(v, bilgi) : false;
+    const sozSonuc = tur==='sozlesme' ? sozlesmeAlanlariUygula(v, bilgi) : null;
     await persist();
     logActivity('Belge yüklendi', `${v.plaka} — ${std?std.label:tur} (${file.name}) [AI Asistanı]`).catch(()=>{});
     const etiket = std ? std.label : (tur==='diger'?'Genel belge':tur);
     const tarihMsg = okunanTarih && std && std.tarihF ? ` Bitiş tarihi <b>${fmtTarih(okunanTarih)}</b> olarak güncellendi.` : '';
-    const sozMsg = sozAlanGuncellendi ? ` Kira/km limiti/aşım ücreti bilgileri de sözleşmeden okunup güncellendi.` : '';
+    const sozMsg = esc(sozlesmeMesajOlustur(sozSonuc));
     aiMessages.push({role:'assistant', content: `✅ Bu bir <b>${esc(etiket)}</b> — <b>${esc(v.plaka)}</b> aracının kaydına ekledim.${tarihMsg}${sozMsg} <button onclick="switchPage('arac-yonetimi');setTimeout(()=>openVehicleDetail('${v.id}'),100)" style="margin-left:6px;background:rgba(46,124,246,.1);border:1px solid rgba(46,124,246,.2);color:var(--accent-blue);padding:3px 10px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;">Araca Git</button>`});
     renderAiPage();
   }catch(e){
@@ -11658,12 +11685,12 @@ async function aiPendingBelgeCozumle(txt){
     }else{
       await belgeAracaEkle(v, tur, pending.file.name, onceden.mime, onceden.dataUrl, okunanTarih);
     }
-    const sozAlanGuncellendi = tur==='sozlesme' ? sozlesmeAlanlariUygula(v, bilgi) : false;
+    const sozSonuc = tur==='sozlesme' ? sozlesmeAlanlariUygula(v, bilgi) : null;
     await persist();
     logActivity('Belge yüklendi', `${v.plaka} — ${std?std.label:tur} (${pending.file.name}) [AI Asistanı]`).catch(()=>{});
     const etiket = std ? std.label : (tur==='diger'?'Genel belge':tur);
     const tarihMsg = okunanTarih && std && std.tarihF ? ` Bitiş tarihi <b>${fmtTarih(okunanTarih)}</b> olarak güncellendi.` : '';
-    const sozMsg = sozAlanGuncellendi ? ` Kira/km limiti/aşım ücreti bilgileri de sözleşmeden okunup güncellendi.` : '';
+    const sozMsg = esc(sozlesmeMesajOlustur(sozSonuc));
     aiMessages.push({role:'assistant', content: `✅ <b>${esc(etiket)}</b> olarak <b>${esc(v.plaka)}</b> aracının kaydına ekledim.${tarihMsg}${sozMsg}`});
     renderAiPage();
   }catch(e){
