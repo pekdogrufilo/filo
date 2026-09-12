@@ -1226,7 +1226,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-12.83</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-12.84</div>
     </div>
   </div>
 </div>
@@ -1346,7 +1346,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-12.83</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-12.84</div>
     </div>
   </aside>
 
@@ -11161,6 +11161,12 @@ function renderAiPage(){
           ${aiSesOkumaDestekleniyorMu() ? `<button onclick="aiSesliYanitToggle()" title="${aiSesliYanitAcMi()?'Sesli yanıtı kapat':'Asistan cevapları sesli okusun'}" style="margin-left:auto;background:${aiSesliYanitAcMi()?'rgba(46,124,246,.12)':'none'};border:1px solid ${aiSesliYanitAcMi()?'rgba(46,124,246,.3)':'var(--line)'};color:${aiSesliYanitAcMi()?'var(--accent-blue)':'var(--steel-300)'};padding:5px 10px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;">${ICO('volume',13)} Sesli Yanıt: ${aiSesliYanitAcMi()?'Açık':'Kapalı'}</button>` : ''}
           <button onclick="aiMessages=[];__aiSonSesliOkunanIndex=-1;window.__aiAkis=null;window.__aiPendingBelge=null;window.__aiIadeBeklenenPlaka=false;renderAiPage()" style="${aiSesOkumaDestekleniyorMu()?'':'margin-left:auto;'}background:none;border:1px solid var(--line);color:var(--steel-300);padding:5px 10px;border-radius:7px;font-size:12px;cursor:pointer;">Sıfırla</button>
         </div>
+        ${aiSesOkumaDestekleniyorMu() && aiSesliYanitAcMi() ? `
+        <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+          <span style="font-size:11px;color:var(--steel-300);white-space:nowrap;display:flex;align-items:center;gap:4px;">${ICO('volume',12)} Ses:</span>
+          <select id="aiSesSecimi" onchange="aiSesSec(this.value)" style="flex:1;max-width:340px;background:var(--surface);border:1px solid var(--line);color:var(--paper);font-size:12px;padding:5px 8px;border-radius:6px;">${aiSesSecimiHTML()}</select>
+          <button onclick="aiSesDene()" style="background:var(--surface-2);border:1px solid var(--border);color:var(--text-2);padding:5px 12px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;white-space:nowrap;">Dene</button>
+        </div>` : ''}
       </div>
 
       <!-- Şartname Yükleme -->
@@ -11340,6 +11346,45 @@ function aiSesliYanitToggle(){
   if(!yeni && window.speechSynthesis) try{ window.speechSynthesis.cancel(); }catch(e){}
   renderAiPage();
 }
+// v.84: "Sesi çok kötü" geri bildirimi üzerine eklendi — tarayıcıda/işletim sisteminde genelde
+// birden fazla ses kayıtlı olur (farklı kadın/erkek, farklı kalitede motor); artık kullanıcı
+// bunlardan istediğini seçip "Dene" ile dinleyebiliyor. Seçim tarayıcıya özgü localStorage'da
+// tutulur (ses listesi cihazdan cihaza değişir, bu yüzden fleet verisine değil buraya kaydedilir).
+function aiSesListesi(){
+  if(!window.speechSynthesis) return [];
+  try{ return window.speechSynthesis.getVoices() || []; }catch(e){ return []; }
+}
+function aiKayitliSesAdi(){
+  try{ return localStorage.getItem('aiSesAdi') || ''; }catch(e){ return ''; }
+}
+function aiSesSec(adi){
+  try{ localStorage.setItem('aiSesAdi', adi||''); }catch(e){}
+}
+function aiSeciliSesNesnesi(){
+  const adi = aiKayitliSesAdi();
+  const sesler = aiSesListesi();
+  if(adi){ const bulunan = sesler.find(s=>s.name===adi); if(bulunan) return bulunan; }
+  return sesler.find(s=>s.lang && s.lang.toLowerCase().startsWith('tr')) || null;
+}
+function aiSesSecimiHTML(){
+  const sesler = aiSesListesi();
+  const secili = aiKayitliSesAdi();
+  if(!sesler.length) return `<option value="">Sesler yükleniyor...</option>`;
+  const tr = sesler.filter(s=>s.lang && s.lang.toLowerCase().startsWith('tr'));
+  const diger = sesler.filter(s=>!(s.lang && s.lang.toLowerCase().startsWith('tr')));
+  const opt = s => `<option value="${esc(s.name)}" ${s.name===secili?'selected':''}>${esc(s.name)} (${esc(s.lang)})</option>`;
+  let html = `<option value="">Sistem varsayılanı${tr.length?' (bulunan bir Türkçe ses otomatik seçilir)':''}</option>`;
+  if(tr.length) html += `<optgroup label="Türkçe sesler">${tr.map(opt).join('')}</optgroup>`;
+  if(diger.length) html += `<optgroup label="Diğer diller">${diger.map(opt).join('')}</optgroup>`;
+  return html;
+}
+function aiSesDene(){
+  aiMetniSesliOku('Merhaba, ben Pekdoğru Filo Asistanı. Sesim şimdi böyle duyuluyor.');
+}
+if(window.speechSynthesis && !window.__aiSesListenerBagli){
+  window.__aiSesListenerBagli = true;
+  window.speechSynthesis.onvoiceschanged = ()=>{ if(document.getElementById('page-ai')) renderAiPage(); };
+}
 function aiMetniSesliOku(html){
   if(!window.speechSynthesis) return;
   const tmp = document.createElement('div');
@@ -11350,9 +11395,8 @@ function aiMetniSesliOku(html){
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(metin);
     u.lang = 'tr-TR';
-    const sesler = window.speechSynthesis.getVoices();
-    const trSes = sesler.find(s=>s.lang && s.lang.toLowerCase().startsWith('tr'));
-    if(trSes) u.voice = trSes;
+    const secili = aiSeciliSesNesnesi();
+    if(secili){ u.voice = secili; u.lang = secili.lang || 'tr-TR'; }
     window.speechSynthesis.speak(u);
   }catch(e){}
 }
