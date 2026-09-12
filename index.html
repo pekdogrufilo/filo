@@ -1222,7 +1222,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-10.69</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-10.70</div>
     </div>
   </div>
 </div>
@@ -1342,7 +1342,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-10.69</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-10.70</div>
     </div>
   </aside>
 
@@ -4172,7 +4172,8 @@ async function runKmFotoOku(dataUrl, kmFieldId, btnId, resultId, plaka){
       ? { type:'image', source:{ type:'base64', media_type: mime, data: base64 } }
       : { type:'document', source:{ type:'base64', media_type: 'application/pdf', data: base64 } };
     const plakaNote = plaka ? ` Bu kilometre bilgisi ${plaka} plakalı araca ait olacak. Görsel/belgede BİRDEN FAZLA aracın/plakanın kilometre bilgisi varsa (ör. aynı faturada birkaç plaka listeleniyorsa), SADECE ${plaka} plakasına ait satırı/değeri bul, diğer plakaların kilometrelerini kesinlikle kullanma.` : '';
-    const system = 'Sen bir filo kiralama şirketinde araç kilometre bilgisini fotoğraflardan/belgelerden okuyan bir asistansın. Sana verilen görsel ya da belge (PDF olabilir) şunlardan biri olabilir: (1) bir aracın km göstergesi/odometre ekranının fotoğrafı, (2) üzerinde "teslim km", "araç teslim kilometreleri", "km" gibi bir not, tablo veya rakam bulunan bir fatura/belge.' + plakaNote + ' İlgili kilometre değerini bul ve SADECE şu JSON formatında yanıt ver, başka açıklama ekleme: {"km": <sayı>}. Kilometre değeri hiçbir şekilde bulunamıyorsa (veya belirtilen plakaya ait satır yoksa) {"km": null} döndür.';
+    const odometreNotu = ' ÖNEMLİ: Fotoğraf bir araç km göstergesi/odometre ekranı ise dikkatli ol — birçok araç panelinde km göstergesinin SON HANESİ (birler basamağı) diğer rakamlardan belirgin şekilde DAHA KÜÇÜK PUNTO ile gösterilir (ör. "10879" büyük rakamlarla yazılıp yanında küçük puntolu bir "1" daha olabilir, gerçek değer "108791"dir). Bu küçük son haneyi asla atlama veya gözden kaçırma; göstergedeki TÜM haneleri (büyük olsun küçük olsun) tek tek say ve eksiksiz oku.';
+    const system = 'Sen bir filo kiralama şirketinde araç kilometre bilgisini fotoğraflardan/belgelerden okuyan bir asistansın. Sana verilen görsel ya da belge (PDF olabilir) şunlardan biri olabilir: (1) bir aracın km göstergesi/odometre ekranının fotoğrafı, (2) üzerinde "teslim km", "araç teslim kilometreleri", "km" gibi bir not, tablo veya rakam bulunan bir fatura/belge.' + odometreNotu + plakaNote + ' İlgili kilometre değerini bul ve SADECE şu JSON formatında yanıt ver, başka açıklama ekleme: {"km": <sayı>}. Kilometre değeri hiçbir şekilde bulunamıyorsa (veya belirtilen plakaya ait satır yoksa) {"km": null} döndür.';
     const json = await callGeminiDirect(system, 'İlgili kilometre değerini oku ve istenen JSON formatında döndür.', contentBlock);
     const textBlock = (json.content||[]).find(c=>c.type==='text');
     if(!textBlock || !textBlock.text) throw new Error('Yanıt boş geldi.');
