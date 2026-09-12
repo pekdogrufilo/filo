@@ -1226,7 +1226,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-12.79</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-12.80</div>
     </div>
   </div>
 </div>
@@ -1346,7 +1346,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-12.79</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-12.80</div>
     </div>
   </aside>
 
@@ -1722,7 +1722,7 @@
       <div class="modal-tab-panel" id="tab-belgeler">
         <div class="doc-section-title">Sigorta Poliçesi</div>
         <div class="field">
-          <label>Sigorta poliçesi (PDF veya görsel, en fazla 3,5MB)</label>
+          <label>Sigorta poliçesi (PDF veya görsel, en fazla 10MB)</label>
           <input type="file" id="fPolice" accept="application/pdf,image/*">
           <div id="policeMevcut" class="doc-mevcut">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z"/><path d="M14 2v6h6"/></svg>
@@ -1737,7 +1737,7 @@
         </div>
         <div class="doc-section-title">Kasko</div>
         <div class="field">
-          <label>Kasko belgesi (PDF veya görsel, en fazla 3,5MB)</label>
+          <label>Kasko belgesi (PDF veya görsel, en fazla 10MB)</label>
           <input type="file" id="fKaskoBelge" accept="application/pdf,image/*">
           <div id="kaskoBelgeMevcut" class="doc-mevcut">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z"/><path d="M14 2v6h6"/></svg>
@@ -1752,7 +1752,7 @@
         </div>
         <div class="doc-section-title">Muayene Belgesi</div>
         <div class="field">
-          <label>Muayene belgesi (PDF veya görsel, en fazla 3,5MB)</label>
+          <label>Muayene belgesi (PDF veya görsel, en fazla 10MB)</label>
           <input type="file" id="fMuayeneBelge" accept="application/pdf,image/*">
           <div id="muayeneBelgeMevcut" class="doc-mevcut">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z"/><path d="M14 2v6h6"/></svg>
@@ -1767,7 +1767,7 @@
         </div>
         <div class="doc-section-title">Ruhsat</div>
         <div class="field">
-          <label>Ruhsat belgesi (PDF veya görsel, en fazla 3,5MB)</label>
+          <label>Ruhsat belgesi (PDF veya görsel, en fazla 10MB)</label>
           <input type="file" id="fRuhsatBelge" accept="application/pdf,image/*">
           <div id="ruhsatBelgeMevcut" class="doc-mevcut">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z"/><path d="M14 2v6h6"/></svg>
@@ -1793,7 +1793,7 @@
         </div>
         <div class="field"><label>Kiracı adresi</label><input type="text" id="fKiraciAdres" placeholder="Sözleşmede görünecek adres"></div>
         <div class="field">
-          <label>Kira sözleşmesi (PDF veya görsel, en fazla 3,5MB)</label>
+          <label>Kira sözleşmesi (PDF veya görsel, en fazla 10MB)</label>
           <input type="file" id="fSozlesme" accept="application/pdf,image/*">
           <div id="sozlesmeMevcut" class="doc-mevcut">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z"/><path d="M14 2v6h6"/></svg>
@@ -3946,7 +3946,7 @@ function initTeslimFotoUI(){
     input.addEventListener('change', async e=>{
       const file = e.target.files[0];
       if(!file) return;
-      if(file.size > 3.5*1024*1024){ showToast('Dosya 3,5MB\'ı geçemez.', true); input.value=''; return; }
+      if(file.size > 10*1024*1024){ showToast('Dosya 10MB\'ı geçemez.', true); input.value=''; return; }
       const data = await new Promise(r=>{ const fr=new FileReader(); fr.onload=()=>r(fr.result); fr.readAsDataURL(file); });
       teslimFotoState[k] = {data, name:file.name, remove:false};
       const mevcut = document.getElementById(k+'Mevcut');
@@ -4062,7 +4062,7 @@ function initIadeFotoUI(v){
     input.addEventListener('change', async e=>{
       const file = e.target.files[0];
       if(!file) return;
-      if(file.size > 3.5*1024*1024){ showToast('Dosya 3,5MB\'ı geçemez.', true); input.value=''; return; }
+      if(file.size > 10*1024*1024){ showToast('Dosya 10MB\'ı geçemez.', true); input.value=''; return; }
       const data = await new Promise(r=>{ const fr=new FileReader(); fr.onload=()=>r(fr.result); fr.readAsDataURL(file); });
       iadeFotoState[k] = {data, name:file.name, remove:false};
       if(mevcut && adi){ adi.textContent=file.name+' (yeni)'; mevcut.style.display='flex'; }
@@ -4176,13 +4176,19 @@ function showDocName(d, name){
 }
 function resetAllDocsUI(){ DOC_TYPES.forEach(resetDocUI); resetTeslimFotoUI(); }
 
+// v.80: dosya boyutu sınırı, taranmış sözleşme PDF'leri genelde 4-8MB olduğu için ("sözleşme
+// tarama olduğu için büyük oluyor") tüm belge/fotoğraf yükleme noktalarında 3,5MB'tan 10MB'a
+// çıkarıldı (bu app'teki HER "dosya çok büyük" kontrolü aynı anda güncellendi — sigorta/kasko/
+// muayene/ruhsat/sözleşme, teslim/iade fotoğrafı, hasar fotoğrafı, fiş/masraf, Belge Yükleme
+// sayfası ve AI Filo Asistanı'ndaki evrak gönderme dahil). IndexedDB deposu yüzlerce MB
+// kaldırabildiği için bu artış depolama açısından sorun yaratmıyor.
 function wireDocType(d){
   document.getElementById(d.fileId).addEventListener('change', (e)=>{
     const file = e.target.files[0];
     if(!file) return;
-    const MAX = 3.5*1024*1024;
+    const MAX = 10*1024*1024;
     if(file.size > MAX){
-      showToast('Dosya çok büyük. En fazla 3,5MB yükleyebilirsin.', true);
+      showToast('Dosya çok büyük. En fazla 10MB yükleyebilirsin.', true);
       e.target.value = '';
       return;
     }
@@ -4413,7 +4419,7 @@ document.getElementById('fRuhsatHizli').addEventListener('change', async (e)=>{
     status.style.color = isErr?'#DC2626':'#16A34A';
     status.textContent = msg;
   };
-  if(file.size > 3.5*1024*1024){ show("Dosya 3,5MB'ı geçemez.", true); e.target.value=''; return; }
+  if(file.size > 10*1024*1024){ show("Dosya 10MB'ı geçemez.", true); e.target.value=''; return; }
   const d = DOC_TYPES.find(x=>x.key==='ruhsat');
   const st = docState[d.key];
   // Belgeler sekmesindeki ruhsat girişini görsel olarak senkron tutmayı deniyoruz,
@@ -4620,7 +4626,7 @@ function openIadeForm(id){
         <div class="iade-km-diff" id="iadeKmHakki"></div>
         <div class="iade-section">İade Fotoğrafları</div>
         <div class="iade-field">
-          <label>İade fotoğrafı 1 (ön/genel, en fazla 3,5MB)</label>
+          <label>İade fotoğrafı 1 (ön/genel, en fazla 10MB)</label>
           <input type="file" id="fIadeFoto1" accept="image/*">
           <div id="iadeFoto1Mevcut" class="doc-mevcut" style="display:none;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg>
@@ -5982,7 +5988,7 @@ async function hasarKaydet(id){
   if(!tarih){ showToast('Hasar tarihi seçin.', true); return; }
   if(!aciklama){ showToast('Açıklama girin.', true); return; }
   const dosyalar = [...(fotoInp.files||[])];
-  if(dosyalar.some(f=>f.size > 3.5*1024*1024)){ showToast('Bazı fotoğraflar çok büyük (en fazla 3,5 MB).', true); return; }
+  if(dosyalar.some(f=>f.size > 10*1024*1024)){ showToast('Bazı fotoğraflar çok büyük (en fazla 10 MB).', true); return; }
   const h = {id:'h'+Date.now(), tarih, aciklama, tutar: tutar===''?null:Number(tutar), fotoKey:null, fotolar:[]};
   try{
     for(let i=0;i<dosyalar.length;i++){
@@ -9782,7 +9788,7 @@ function renderKiralamaPage(){
             <div class="field"><label>Bakım periyodu (km)</label><input type="number" id="fBakimPeriyot" min="0" placeholder="10000"></div>
           </div>
           <div class="field">
-            <label>Teslim fotoğrafı 1 (ön/genel, en fazla 3,5MB)</label>
+            <label>Teslim fotoğrafı 1 (ön/genel, en fazla 10MB)</label>
             <input type="file" id="fTeslimFoto1" accept="image/*">
             <div id="teslimFoto1Mevcut" class="doc-mevcut">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg>
@@ -10263,7 +10269,7 @@ const OTO_BELGE_TURLERI = {
 const OTO_BELGE_SYSTEM = 'Sen bir araç belgesi (poliçe, ruhsat, muayene raporu, kira sözleşmesi, masraf fişi, servis kaydı vb.) okuyan asistansın. SADECE şu JSON nesnesini döndür, başka hiçbir metin veya kod bloğu ekleme:\n{"plaka": string|null, "belgeTuru": "sigorta"|"kasko"|"muayene"|"ruhsat"|"sozlesme"|"masraf"|"servis"|"vize"|"diger", "tarih": "YYYY-MM-DD"|null, "belgeNo": string|null}\nKurallar: "plaka" belgedeki araç plakası (Türk formatı: 2 rakam + 2-3 harf + 2-4 rakam, ör. 42 ABC 123). "belgeTuru" belgenin türü — sigorta poliçesi ise "sigorta", kasko ise "kasko", muayene raporu ise "muayene", tescil/ruhsat ise "ruhsat", kira sözleşmesi ise "sozlesme", masraf/yakıt fişi ise "masraf", servis/bakım kaydı ise "servis", vize/uluslararası belge ise "vize", hiçbiri değilse "diger". "tarih" belgenin geçerlilik bitiş tarihi (poliçe/muayene/sözleşme) ya da fiş/rapor tarihi — YYYY-MM-DD formatında; bulamazsan null. Emin değilsen null yaz, tahmin yürütme.';
 async function otoBelgeSec(file, statusEl){
   if(!file) return;
-  if(file.size > 3.5*1024*1024){ showToast('Dosya çok büyük (en fazla 3,5 MB).', true); return; }
+  if(file.size > 10*1024*1024){ showToast('Dosya çok büyük (en fazla 10 MB).', true); return; }
   const setBusy = t=>{ [statusEl, document.getElementById('otoBelgeBtnText')].filter(Boolean).forEach(el=>{ el.textContent = t; }); };
   setBusy('Okunuyor…');
 
@@ -10371,7 +10377,7 @@ function renderDocUploadPage(){
       <div id="duDrop" style="border:2px dashed var(--border-2);border-radius:14px;padding:28px 16px;text-align:center;cursor:pointer;transition:all .15s ease;background:var(--surface-2);">
         <div style="color:var(--accent-blue);margin-bottom:8px;display:flex;justify-content:center;">${ICO('download',26,1.6)}</div>
         <div style="font-size:13.5px;font-weight:600;color:var(--text);">Sürükleip bırakın veya <span style="color:var(--accent-blue);">dosya seçin</span></div>
-        <div style="font-size:11.5px;color:var(--text-3);margin-top:4px;">PDF veya görsel · en fazla 3,5 MB · birden fazla dosya seçebilirsiniz</div>
+        <div style="font-size:11.5px;color:var(--text-3);margin-top:4px;">PDF veya görsel · en fazla 10 MB · birden fazla dosya seçebilirsiniz</div>
       </div>
       <input type="file" id="duFile" accept=".pdf,image/*" multiple style="display:none">
       <div id="duStatus" style="display:none;margin-top:12px;font-size:13px;color:var(--text-2);background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;white-space:pre-line;"></div>
@@ -10478,7 +10484,7 @@ async function belgeAnalizEt(onceden){
 }
 async function belgeTopluTek(file, fallbackId){
   try{
-    if(file.size > 3.5*1024*1024) return {durum:'hata', mesaj:'3,5 MB sınırı aşıldı'};
+    if(file.size > 10*1024*1024) return {durum:'hata', mesaj:'10 MB sınırı aşıldı'};
     const onceden = await belgeVeriOku(file);
     const bilgi = getGeminiKey() ? await belgeAnalizEt(onceden) : null;
     const tur = ((bilgi&&bilgi.belgeTuru)||'diger').toLowerCase();
@@ -11316,7 +11322,7 @@ window.__aiPendingBelge = null; // plaka okunamayan belge — kullanıcı bir so
 
 async function aiBelgeYukle(file){
   if(!file) return;
-  if(file.size > 3.5*1024*1024){ showToast('Dosya çok büyük (en fazla 3,5 MB).', true); return; }
+  if(file.size > 10*1024*1024){ showToast('Dosya çok büyük (en fazla 10 MB).', true); return; }
   const key = getGeminiKey();
   aiMessages.push({role:'user', content: `📎 <strong>${esc(file.name)}</strong> gönderildi — inceleniyor...`});
   renderAiPage();
