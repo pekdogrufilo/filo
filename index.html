@@ -1222,7 +1222,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-10.68</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-10.69</div>
     </div>
   </div>
 </div>
@@ -1342,7 +1342,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-10.68</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-10.69</div>
     </div>
   </aside>
 
@@ -1826,14 +1826,14 @@
           </div>
         </div>
         <div class="field">
-          <label>Teslim fotoğrafı 2 (km göstergesi veya üzerinde "teslim km" yazan fatura/belge)</label>
-          <input type="file" id="fTeslimFoto2" accept="image/*">
+          <label>Teslim fotoğrafı 2 (km göstergesi fotoğrafı veya "teslim km" yazan fatura — PDF de olur)</label>
+          <input type="file" id="fTeslimFoto2" accept="image/*,application/pdf">
           <div id="teslimFoto2Mevcut" class="doc-mevcut">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg>
             <span id="teslimFoto2Adi"></span>
             <button type="button" id="teslimFoto2Kaldir" class="doc-kaldir">Kaldır</button>
           </div>
-          <button type="button" id="teslimKmOkuBtn" class="doc-autofill-btn" onclick="runKmFotoOku(teslimFotoState.teslimFoto2&&teslimFotoState.teslimFoto2.data,'fTeslimKm','teslimKmOkuBtn','teslimKmOkuSonuc')">
+          <button type="button" id="teslimKmOkuBtn" class="doc-autofill-btn" onclick="runKmFotoOku(teslimFotoState.teslimFoto2&&teslimFotoState.teslimFoto2.data,'fTeslimKm','teslimKmOkuBtn','teslimKmOkuSonuc',document.getElementById('fPlaka')?.value||'')">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>
             <span>Fotoğraftan km oku (AI)</span>
           </button>
@@ -3990,7 +3990,7 @@ function initTeslimFotoUI(){
       if(k==='teslimFoto2' && getGeminiKey()){
         const okuBtn = document.getElementById('teslimKmOkuBtn');
         if(okuBtn) okuBtn.style.display = 'flex';
-        runKmFotoOku(data, 'fTeslimKm', 'teslimKmOkuBtn', 'teslimKmOkuSonuc');
+        runKmFotoOku(data, 'fTeslimKm', 'teslimKmOkuBtn', 'teslimKmOkuSonuc', document.getElementById('fPlaka')?.value||'');
       }
     });
     const kaldir = document.getElementById(k+'Kaldir');
@@ -4103,7 +4103,7 @@ function initIadeFotoUI(v){
       if(mevcut && adi){ adi.textContent=file.name+' (yeni)'; mevcut.style.display='flex'; }
       if(k==='iadeFoto2' && getGeminiKey()){
         if(okuBtn) okuBtn.style.display = 'flex';
-        runKmFotoOku(data, 'iadeKmBitis', 'iadeKmOkuBtn', 'iadeKmOkuSonuc');
+        runKmFotoOku(data, 'iadeKmBitis', 'iadeKmOkuBtn', 'iadeKmOkuSonuc', (v&&v.plaka)||'');
       }
     });
     const kaldir = document.getElementById(k+'Kaldir');
@@ -4147,7 +4147,7 @@ function monthsBetweenDates(d1, d2){
 // ===== Km göstergesi / fatura fotoğrafından AI ile km okuma =====
 // Görsel ya bir odometre/km göstergesi fotoğrafı ya da üzerine "teslim km: X" gibi
 // bir not düşülmüş fatura/belge fotoğrafı olabilir — ikisini de okumayı dener.
-async function runKmFotoOku(dataUrl, kmFieldId, btnId, resultId){
+async function runKmFotoOku(dataUrl, kmFieldId, btnId, resultId, plaka){
   const btn = document.getElementById(btnId);
   const resultEl = document.getElementById(resultId);
   function showResult(msg, isErr){
@@ -4160,16 +4160,20 @@ async function runKmFotoOku(dataUrl, kmFieldId, btnId, resultId){
     const closeBtn = resultEl.querySelector('.dr-close');
     if(closeBtn) closeBtn.onclick = ()=>{ resultEl.style.display='none'; };
   }
-  if(!dataUrl){ showResult('Önce bir fotoğraf seçin.', true); return; }
+  if(!dataUrl){ showResult('Önce bir fotoğraf veya belge seçin.', true); return; }
   if(!getGeminiKey()){ showResult('AI okuma özelliği şu anda kullanılamıyor.', true); return; }
   if(resultEl) resultEl.style.display = 'none';
   if(btn) btn.disabled = true;
   try{
     const base64 = dataUrl.split(',')[1];
     const mime = (dataUrl.match(/^data:([^;]+);/)||[])[1] || 'image/jpeg';
-    const system = 'Sen bir filo kiralama şirketinde araç kilometre bilgisini fotoğraflardan/belgelerden okuyan bir asistansın. Sana verilen görsel şunlardan biri olabilir: (1) bir aracın km göstergesi/odometre ekranının fotoğrafı, (2) üzerine "teslim km", "km" gibi bir not veya rakam elle ya da yazıyla düşülmüş bir fatura/belge fotoğrafı. Görseldeki kilometre değerini bul ve SADECE şu JSON formatında yanıt ver, başka açıklama ekleme: {"km": <sayı>}. Kilometre değeri hiçbir şekilde bulunamıyorsa {"km": null} döndür.';
-    const contentBlock = { type:'image', source:{ type:'base64', media_type: mime, data: base64 } };
-    const json = await callGeminiDirect(system, 'Bu görseldeki kilometre değerini oku ve istenen JSON formatında döndür.', contentBlock);
+    const isImage = mime.startsWith('image/');
+    const contentBlock = isImage
+      ? { type:'image', source:{ type:'base64', media_type: mime, data: base64 } }
+      : { type:'document', source:{ type:'base64', media_type: 'application/pdf', data: base64 } };
+    const plakaNote = plaka ? ` Bu kilometre bilgisi ${plaka} plakalı araca ait olacak. Görsel/belgede BİRDEN FAZLA aracın/plakanın kilometre bilgisi varsa (ör. aynı faturada birkaç plaka listeleniyorsa), SADECE ${plaka} plakasına ait satırı/değeri bul, diğer plakaların kilometrelerini kesinlikle kullanma.` : '';
+    const system = 'Sen bir filo kiralama şirketinde araç kilometre bilgisini fotoğraflardan/belgelerden okuyan bir asistansın. Sana verilen görsel ya da belge (PDF olabilir) şunlardan biri olabilir: (1) bir aracın km göstergesi/odometre ekranının fotoğrafı, (2) üzerinde "teslim km", "araç teslim kilometreleri", "km" gibi bir not, tablo veya rakam bulunan bir fatura/belge.' + plakaNote + ' İlgili kilometre değerini bul ve SADECE şu JSON formatında yanıt ver, başka açıklama ekleme: {"km": <sayı>}. Kilometre değeri hiçbir şekilde bulunamıyorsa (veya belirtilen plakaya ait satır yoksa) {"km": null} döndür.';
+    const json = await callGeminiDirect(system, 'İlgili kilometre değerini oku ve istenen JSON formatında döndür.', contentBlock);
     const textBlock = (json.content||[]).find(c=>c.type==='text');
     if(!textBlock || !textBlock.text) throw new Error('Yanıt boş geldi.');
     let cleaned = textBlock.text.replace(/```json|```/g,'').trim();
@@ -4659,14 +4663,14 @@ function openIadeForm(id){
           </div>
         </div>
         <div class="iade-field">
-          <label>İade fotoğrafı 2 (km göstergesi veya üzerinde "km" yazan belge)</label>
-          <input type="file" id="fIadeFoto2" accept="image/*">
+          <label>İade fotoğrafı 2 (km göstergesi fotoğrafı veya "km" yazan belge — PDF de olur)</label>
+          <input type="file" id="fIadeFoto2" accept="image/*,application/pdf">
           <div id="iadeFoto2Mevcut" class="doc-mevcut" style="display:none;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg>
             <span id="iadeFoto2Adi"></span>
             <button type="button" id="iadeFoto2Kaldir" class="doc-kaldir">Kaldır</button>
           </div>
-          <button type="button" id="iadeKmOkuBtn" class="doc-autofill-btn" onclick="runKmFotoOku(iadeFotoState.iadeFoto2&&iadeFotoState.iadeFoto2.data,'iadeKmBitis','iadeKmOkuBtn','iadeKmOkuSonuc')">
+          <button type="button" id="iadeKmOkuBtn" class="doc-autofill-btn" onclick="runKmFotoOku(iadeFotoState.iadeFoto2&&iadeFotoState.iadeFoto2.data,'iadeKmBitis','iadeKmOkuBtn','iadeKmOkuSonuc','${esc(v.plaka)}')">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>
             <span>Fotoğraftan km oku (AI)</span>
           </button>
