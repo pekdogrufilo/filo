@@ -1226,7 +1226,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-12.84</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-13.85</div>
     </div>
   </div>
 </div>
@@ -1346,7 +1346,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-12.84</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-13.85</div>
     </div>
   </aside>
 
@@ -1995,7 +1995,9 @@ function clearCloudConfig(){
 }
 
 // ===== AI ayarları =====
-// Gemini API anahtarı Ayarlar sayfasından yönetilir; eski proxy adresi sistemi kaldırıldı.
+// v.85: bu yorum eskiden "anahtar Ayarlar sayfasından yönetilir" diyordu — artık doğru değil,
+// bkz. getGeminiKey() (~satır 4249): gerçek anahtar sunucudaki Cloudflare Worker'da duruyor,
+// kullanıcının Ayarlar'da girecek/yöneteceği bir anahtar yok.
 
 function loadScriptOnce(src){
   return new Promise((resolve, reject)=>{
@@ -2114,6 +2116,31 @@ async function initCloudSync(){
     return false;
   }
 }
+
+// v.85: şirket unvanı eskiden en az 3 farklı yerde (rapor altbilgisi, AI sesli tanıtım cümlesi,
+// AI sistem promptları) elle yazılıydı — biri güncellenip diğerleri unutulursa tutarsızlık
+// oluşurdu. Artık hepsi bu iki sabitten okunuyor. (Ayrıca kullanılmayan, hiçbir Ayarlar ekranından
+// yazılmayan "filoPaneli_firmAdi" localStorage anahtarı kaldırıldı — bkz. applyRoleVisibility.)
+const FIRMA_ADI = 'Pekdoğru Filo Kiralama';
+const FIRMA_UNVANI = 'Pekdoğru Otomotiv Turizm Taşımacılık Nakliye Hayvancılık Ticaret Limited Şirketi';
+
+// v.85: eskiden beklenmeyen bir JS hatası (ör. bir render fonksiyonunda beklenmedik veri şekli)
+// sessizce oluyordu — kullanıcı ekranın "donduğunu"/tepkisiz kaldığını görüyordu ama NEDEN
+// bilmiyordu, konsolu açması gerekiyordu. Artık en azından bir toast ile haber veriliyor.
+// Art arda aynı anda birçok hata gelirse (ör. bir render döngüsü tekrar tekrar patlarsa) toast
+// spam'i olmasın diye 4 saniyede bir kez gösteriliyor; ayrıntı yine de konsola yazılıyor.
+(function(){
+  let sonToastZamani = 0;
+  function hataBildir(mesaj, detay){
+    console.error('[Global hata]', mesaj, detay);
+    const simdi = Date.now();
+    if(simdi - sonToastZamani < 4000) return;
+    sonToastZamani = simdi;
+    try{ showToast('Beklenmeyen bir hata oluştu: ' + (mesaj||'bilinmeyen hata') + '. Sorun devam ederse sayfayı yenilemeyi deneyin.', true); }catch(e){}
+  }
+  window.addEventListener('error', (e)=>{ hataBildir(e && e.message, e && e.error); });
+  window.addEventListener('unhandledrejection', (e)=>{ hataBildir((e && e.reason && e.reason.message) || String(e && e.reason || ''), e && e.reason); });
+})();
 
 let vehicles = [];
 let arsiv = [];
@@ -2256,13 +2283,21 @@ function updateThemeToggleUI(){
   if(apToggle) apToggle.checked = isLight;
 }
 
-function urgentList(){
+// v.85: esikGun parametresi eklendi (varsayılan 7 — mevcut tüm çağrı yerleri davranışını
+// korur: bell rozeti, açılış ekranı, dashboard "Kritik Uyarılar" widget'ı gerçekten ≤7 gün
+// kalan öğeleri görmeye devam eder). Bildirimler sayfası artık urgentList(30) çağırarak
+// uygulamanın geri kalanının (belgeler sayfası, printSummary) kullandığı 30 günlük "yaklaşan"
+// penceresiyle hizalanıyor — bu sayede sayfadaki "🔴 Kritik (≤7 gün)" filtresi gerçek bir alt
+// küme haline geliyor (eskiden liste zaten hep ≤7 gündü, filtre hiçbir şey değiştirmiyordu).
+function urgentList(esikGun){
+  const esik = esikGun!=null ? esikGun : 7;
+  const kmEsik = esik>7 ? 2000 : 500;
   const rows = [];
   vehicles.forEach(v=>{
     [['Sigorta', v.sigortaTarihi], ['Muayene', v.muayeneTarihi], ['Kira Bitişi', v.kiraBitis], ['Sözleşme Bitişi', v.sozlesmeBitis], ['Kasko Bitişi', v.kaskoBitis]].forEach(([tip, tarih])=>{
       if(!tarih) return;
       const dl = daysLeft(tarih);
-      if(dl<=7) rows.push({plaka:v.plaka, tip, dl});
+      if(dl<=esik) rows.push({plaka:v.plaka, tip, dl});
     });
     // Km bazlı bakım uyarısı
     if(v.sonBakimKm && v.bakimPeriyotKm){
@@ -2272,14 +2307,14 @@ function urgentList(){
         ...(v.kmGecmisi||[]).map(k=>Number(k.bitKm)||0)
       );
       const kalan = Math.round(v.sonBakimKm + v.bakimPeriyotKm - mevcutKm);
-      if(kalan<=500) rows.push({plaka:v.plaka, tip:'Bakım (km)', dl: kalan<=0 ? 0 : 5, km: kalan});
+      if(kalan<=kmEsik) rows.push({plaka:v.plaka, tip:'Bakım (km)', dl: kalan<=0 ? 0 : (kalan<=500?5:20), km: kalan});
     }
   });
   // Kayıtlı sözleşme bitişleri (arşivden — toplu kiralamalar dahil)
   (sozlesmeler||[]).forEach(r=>{
     if(!r.bitisISO) return;
     const dl = daysLeft(r.bitisISO);
-    if(dl<=7) rows.push({plaka:r.aracOzet||'—', tip:'Sözleşme bitişi '+r.sozNo, dl, kiraci:r.kiraci||''});
+    if(dl<=esik) rows.push({plaka:r.aracOzet||'—', tip:'Sözleşme bitişi '+r.sozNo, dl, kiraci:r.kiraci||''});
   });
   return rows;
 }
@@ -2501,7 +2536,9 @@ document.getElementById('cloudDisconnect').onclick = ()=>{
 document.getElementById('menuAiSettings').onclick = ()=>{
   document.getElementById('settingsMenu').classList.remove('show');
   switchPage('ayarlar');
-  showToast('Gemini API anahtarını Ayarlar → AI bölümünden yönetebilirsiniz.');
+  // v.85: bu mesaj hâlâ eski, elle Gemini anahtarı girilen sürüme aitti — belge okuma artık
+  // sunucu (Cloudflare Worker) üzerinden çalışıyor, Ayarlar'da girilecek bir anahtar yok.
+  showToast('AI belge okuma zaten aktif — Ayarlar → "AI Otomatik Doldurma" kartında ek bir işlem gerekmiyor.');
 };
 
 function renderReminderModal(list){
@@ -5283,6 +5320,10 @@ async function kirayaVerVeSozlesme(format){
       // gidiyordu, araç kaydına işlenmiyordu — iade sırasında bu yüzden boş geliyordu).
       teslimTarih: bas||v.teslimTarih||'',
       kmLimiti: kmLimit!=='' && kmLimit!=null ? Number(kmLimit) : (v.kmLimiti||undefined),
+      // v.85: kmAsimFiyat/depozito eskiden sadece yazdırılan sözleşme metnine (sozData) gidiyordu,
+      // araç kaydına hiç yazılmıyordu — bu yüzden Araç Detayı ve AI Filo Asistanı hep boş görüyordu.
+      kmAsimFiyat: kmAsim!=='' && kmAsim!=null && !isNaN(Number(kmAsim)) ? Number(kmAsim) : (v.kmAsimFiyat||undefined),
+      depozito: depozito!=='' && depozito!=null && !isNaN(Number(depozito)) ? Number(depozito) : (v.depozito||undefined),
       renk: renk||v.renk||'',
       kiraGecmisi: [...(v.kiraGecmisi||[]), {bas, bitis, yer: kiraci, teslimKm: teslimKm||v.teslimKm||0, iadeKm:0, yakit:'', hasar:'', not: notlar||''}],
     };
@@ -5503,7 +5544,7 @@ function openVehicleDetail(id){
   if(!v) return;
 
   // Araç masrafları
-  const vMasraf = expenses.filter(e=>e.vehicleId===id || normPlaka(e.plaka)===normPlaka(v.plaka));
+  const vMasraf = expensesForVehicle(v);
   const toplamMasraf = vMasraf.reduce((s,e)=>s+(Number(e.tutar)||0),0);
   const toplamGelir = (Number(v.kira)||0) * 12; // yıllık tahmini
 
@@ -5629,6 +5670,7 @@ function openVehicleDetail(id){
             <div><div style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;">Teslim Km</div><div style="font-size:13px;font-weight:600;color:var(--paper);">${v.teslimKm?Number(v.teslimKm).toLocaleString('tr-TR')+' km':'—'}</div></div>
             <div><div style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;">Aylık Km Limiti</div><div style="font-size:13px;font-weight:600;color:${v.kmLimiti?'var(--paper)':'#D97706'};">${v.kmLimiti?Number(v.kmLimiti).toLocaleString('tr-TR')+' km/ay':'girilmemiş'}</div></div>
             <div><div style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;">Km Aşım Ücreti</div><div style="font-size:13px;font-weight:600;color:var(--paper);">${v.kmAsimFiyat?fmtTL2(v.kmAsimFiyat)+'/km':'—'}</div></div>
+            <div><div style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;">Depozito</div><div style="font-size:13px;font-weight:600;color:var(--paper);">${v.depozito?fmtTL2(v.depozito):'—'}</div></div>
             <div><div style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;">Güncel Km (bilinen)</div><div style="font-size:13px;font-weight:600;color:var(--paper);">${kmDurum.mevcutKm?kmDurum.mevcutKm.toLocaleString('tr-TR')+' km':'—'}</div></div>
           </div>
           ${kmDurum.mesaj ? `<div style="margin-top:12px;padding:9px 12px;border-radius:8px;background:${kmDurum.asim>0?'rgba(220,38,38,.1)':'rgba(22,163,74,.1)'};border:1px solid ${kmDurum.asim>0?'rgba(220,38,38,.25)':'rgba(22,163,74,.25)'};font-size:12.5px;color:${kmDurum.asim>0?'#DC2626':'#16A34A'};font-weight:600;">${kmDurum.mesaj}</div>` : ''}
@@ -5872,7 +5914,7 @@ function aracServisGecmisiPdf(id){
   const v = vehicles.find(x=>x.id===id);
   if(!v){ showToast('Araç bulunamadı.', true); return; }
 
-  const vMasraf = expenses.filter(e=>e.vehicleId===id || normPlaka(e.plaka)===normPlaka(v.plaka)).sort((a,b)=>(b.tarih||'').localeCompare(a.tarih||''));
+  const vMasraf = expensesForVehicle(v).sort((a,b)=>(b.tarih||'').localeCompare(a.tarih||''));
   const toplamMasraf = vMasraf.reduce((s,e)=>s+(Number(e.tutar)||0),0);
   const kmGecmisi = v.kmGecmisi || [];
   const hakedisGecmisi = v.hakedisGecmisi || [];
@@ -5975,7 +6017,7 @@ ${gecmis.length ? `<table><tr><th>Tarih</th><th>Olay</th><th>Detay</th><th>Tutar
 ${gecmis.map(g=>`<tr><td>${esc(g.tarihTxt||'—')}</td><td>${esc(g.baslik||'—')}</td><td>${esc(g.detay||'—')}</td><td>${g.tutar!=null&&g.tutar!==''?fmtTL2(g.tutar):'—'}</td></tr>`).join('')}
 </table>` : '<p>Kayıtlı olay yok.</p>'}
 
-<p style="margin-top:24px;font-size:10px;color:#666;text-align:center;">Bu rapor Pekdoğru Filo Kontrol Paneli tarafından otomatik oluşturulmuştur.</p>
+<p style="margin-top:24px;font-size:10px;color:#666;text-align:center;">Bu rapor ${FIRMA_ADI} Kontrol Paneli tarafından otomatik oluşturulmuştur.</p>
 </body></html>`;
 }
 
@@ -6016,6 +6058,9 @@ async function hasarKaydet(id){
 async function hasarSil(id, hid){
   if(!requireAdmin()) return;
   const v = vehicles.find(x=>x.id===id); if(!v||!Array.isArray(v.hasarlar)) return;
+  // v.85: uygulamadaki diğer kalıcı silme işlemleriyle (masraf, sözleşme, arşiv vb.) tutarlı
+  // olması için onay eklendi — daha önce tek tıkla, geri alınamaz şekilde siliniyordu.
+  if(!confirm('Bu hasar kaydını kalıcı olarak silmek istediğinize emin misiniz?')) return;
   const h = v.hasarlar.find(x=>x.id===hid);
   v.hasarlar = v.hasarlar.filter(x=>x.id!==hid);
   const anahtarlar = h ? [...(h.fotolar||[]), ...(h.fotoKey&&!(h.fotolar||[]).includes(h.fotoKey)?[h.fotoKey]:[])] : [];
@@ -6316,9 +6361,37 @@ async function persistExpenses(){
   await storageAPI.set('expenses', JSON.stringify(expenses)).catch(()=>showToast('Masraf kaydedilemedi.', true));
 }
 function fmtTL2(n){ return Number(n||0).toLocaleString('tr-TR', {maximumFractionDigits:2}) + ' ₺'; }
+// v.85: araç başına masraf toplamı üç farklı yerde üç farklı formülle hesaplanıyordu
+// (sadece vehicleId, sadece plaka, ya da ikisinin OR'u) — bu da aynı araç için sayfadan
+// sayfaya farklı toplamlar göstermesine yol açabiliyordu. Artık hepsi bu tek fonksiyonu kullanıyor
+// (vehicleId eşleşmesi öncelikli, yoksa plaka üzerinden — en toleranslı/doğru eşleşme budur).
+function expensesForVehicle(v){
+  if(!v) return [];
+  return expenses.filter(e=>e.vehicleId===v.id || normPlaka(e.plaka)===normPlaka(v.plaka));
+}
+// v.85: Genel Bakış'taki "Net Kâr" her zaman İÇİNDE BULUNULAN takvim ayının masrafını
+// kullanıyordu (ayın başında henüz masraf girilmemişse net kâr yapay olarak yüksek görünüyordu);
+// Raporlar'daki "Net Aylık Kar" ise masraf kaydı olan EN GÜNCEL ayı baz alıyordu. İki sayfa aynı
+// isimle farklı sayılar gösteriyordu. Artık ikisi de bu tek fonksiyonu kullanıyor.
+function aylikMasrafHedefiHesapla(){
+  const now = new Date();
+  const buAy = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const ayToplamlari = {};
+  let sonAy = null;
+  expenses.forEach(e=>{
+    const k = (e.tarih||'').slice(0,7);
+    if(!k) return;
+    ayToplamlari[k] = (ayToplamlari[k]||0)+(Number(e.tutar)||0);
+    if(!sonAy || k>sonAy) sonAy = k;
+  });
+  const hedefAy = ayToplamlari[buAy]!==undefined ? buAy : sonAy;
+  const tutar = hedefAy ? (ayToplamlari[hedefAy]||0) : 0;
+  const etiket = hedefAy ? (hedefAy===buAy?'bu ay':hedefAy.split('-').reverse().join('.')) : '';
+  return {hedefAy, tutar, etiket, buAy};
+}
 function renderMasrafDrawer(vehicleId){
   const v = vehicles.find(x=>x.id===vehicleId);
-  const list = expenses.filter(e=>e.vehicleId===vehicleId).sort((a,b)=>(b.tarih||'').localeCompare(a.tarih||''));
+  const list = expensesForVehicle(v).sort((a,b)=>(b.tarih||'').localeCompare(a.tarih||''));
   const total = list.reduce((s,e)=>s+(Number(e.tutar)||0),0);
   document.getElementById('masrafToplam').innerHTML = `<span>${list.length} kayıt</span><b>${fmtTL2(total)}</b>`;
   const netEl = document.getElementById('masrafNet');
@@ -6348,8 +6421,14 @@ function renderMasrafDrawer(vehicleId){
   `).join('');
   el.querySelectorAll('.mdel').forEach(b=>b.onclick=async ()=>{
     if(!requireAdmin()) return;
+    // v.85: diğer kalıcı silmelerle (hasar, belge, arşiv vb.) tutarlı olması için onay eklendi —
+    // daha önce tek tıkla, geri alınamaz şekilde siliniyordu.
+    if(!confirm('Bu masraf kaydını kalıcı olarak silmek istediğinize emin misiniz?')) return;
     const exp = expenses.find(x=>x.id===b.dataset.id);
     expenses = expenses.filter(x=>x.id!==b.dataset.id);
+    // v.85: fişin storageAPI'de kalan görseli de temizleniyor — önceden masraf kaydı silinince
+    // ekli fiş fotoğrafı depoda öksüz (hiçbir yerden erişilemeyen) veri olarak kalıyordu.
+    if(exp) await storageAPI.set('fis_'+exp.id, '').catch(()=>{});
     await persistExpenses();
     renderMasrafDrawer(vehicleId);
     renderStatMasraf();
@@ -6775,7 +6854,6 @@ function applyRoleVisibility(){
   const sbUserAvatar = document.getElementById('sbUserAvatar');
   if(sbUserRoleLabel) sbUserRoleLabel.textContent = role==='admin' ? 'Yönetici' : 'Personel';
   if(sbUserName){
-    const firmAdi = localStorage.getItem('filoPaneli_firmAdi') || 'Pekdoğru';
     sbUserName.textContent = role==='admin' ? 'Yönetici' : 'Personel';
   }
   if(sbUserAvatar) sbUserAvatar.textContent = role==='admin' ? 'Y' : 'P';
@@ -7049,6 +7127,12 @@ const BN_CORE_PAGES = ['genel-bakis','arac-yonetimi','kiralama','masraf'];
 
 function switchPage(key){
   if(!PAGE_META[key]) return;
+  // v.85: AI sayfasından ayrılırken mikrofon dinlemeye devam ediyordu (örn. kullanıcı mikrofonu
+  // açık bırakıp başka bir sayfaya geçse bile arka planda dinlemeyi sürdürüyordu). Artık 'ai'
+  // sayfasından çıkılırken otomatik durduruluyor.
+  if(window.__currentPage==='ai' && key!=='ai' && typeof __aiDinliyor!=='undefined' && __aiDinliyor && typeof aiMikrofonDurdur==='function'){
+    aiMikrofonDurdur();
+  }
   document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active', p.dataset.page===key));
   document.querySelectorAll('.sb-item').forEach(b=>b.classList.toggle('active', b.dataset.page===key));
   document.querySelectorAll('.bn-item[data-page]').forEach(b=>b.classList.toggle('active', b.dataset.page===key));
@@ -7737,13 +7821,29 @@ async function servisGirisKaydet(id, kayitId){
   const tutar = Number((document.getElementById('svTutar')||{value:''}).value)||null;
   if(cikis && cikis < giris){ showToast('Çıkış tarihi giriş tarihinden önce olamaz.', true); return; }
   v.servisGirisleri = v.servisGirisleri||[];
+  let kayit;
   if(kayitId){
-    const k = v.servisGirisleri.find(x=>x.id===kayitId);
-    if(k) Object.assign(k, {giris, cikis, yer, islem, tutar});
+    kayit = v.servisGirisleri.find(x=>x.id===kayitId);
+    if(kayit) Object.assign(kayit, {giris, cikis, yer, islem, tutar});
   }else{
-    v.servisGirisleri.push({id:'sv'+Date.now(), giris, cikis, yer, islem, tutar});
+    kayit = {id:'sv'+Date.now(), giris, cikis, yer, islem, tutar};
+    v.servisGirisleri.push(kayit);
   }
   await persist();
+  // v.85: Servis kaydına girilen tutar eskiden hiçbir yere yansımıyordu — Masraf Yönetimi ve
+  // Raporlar'da servis/bakım maliyeti tamamen görünmezdi. Artık bağlantılı bir masraf kaydı
+  // (kaynak:'Servis Kaydı', servisKayitId ile eşleştirilmiş) otomatik oluşturuluyor/güncelleniyor.
+  const mevcutMasraf = kayit ? expenses.find(x=>x.servisKayitId===kayit.id) : null;
+  if(kayit && tutar && tutar>0){
+    if(mevcutMasraf){
+      Object.assign(mevcutMasraf, {plaka:v.plaka, tarih: cikis||giris, tutar, not:[yer,islem].filter(Boolean).join(' · ')});
+    }else{
+      expenses.push({id:cryptoId(), vehicleId:v.id, plaka:v.plaka, tip:'Bakım', tarih: cikis||giris, tutar, not:[yer,islem].filter(Boolean).join(' · '), kaynak:'Servis Kaydı', servisKayitId:kayit.id});
+    }
+  }else if(mevcutMasraf){
+    expenses = expenses.filter(x=>x.id!==mevcutMasraf.id);
+  }
+  await persistExpenses();
   document.getElementById('servisGirisOverlay').remove();
   logActivity('servis', `Servis kaydı: <b>${esc(v.plaka)}</b> · ${cikis?esc(yer||'servis')+' ('+fmtTarih(giris)+' → '+fmtTarih(cikis)+')':esc(yer||'servis')+' · hâlâ serviste'}`);
   const detay = document.getElementById('vehicleDetailOverlay');
@@ -7756,8 +7856,15 @@ async function servisGirisSil(id, kayitId){
   if(!confirm('Bu servis kaydı silinsin mi?')) return;
   v.servisGirisleri = (v.servisGirisleri||[]).filter(k=>k.id!==kayitId);
   await persist();
+  // v.85: bağlantılı masraf kaydı da (varsa) temizlensin, yetim (orphan) kayıt kalmasın.
+  const bagliMasraf = expenses.find(x=>x.servisKayitId===kayitId);
+  if(bagliMasraf){
+    expenses = expenses.filter(x=>x.id!==bagliMasraf.id);
+    await persistExpenses();
+  }
   const detay = document.getElementById('vehicleDetailOverlay');
   if(detay){ detay.remove(); openVehicleDetail(id); }
+  renderStatMasraf();
   showToast('Servis kaydı silindi.');
 }
 
@@ -7956,9 +8063,8 @@ function renderDashboard(){
   const musait = vehicles.filter(v=>v.durum==='Müsait').length;
   const serviste = vehicles.filter(v=>v.durum==='Serviste').length;
   const gelir = vehicles.filter(v=>v.durum==='Kirada').reduce((s,v)=>s+(Number(v.kira)||0),0);
-  const now = new Date();
-  const ym = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-  const masrafBuAy = expenses.filter(e=>(e.tarih||'').slice(0,7)===ym).reduce((s,e)=>s+(Number(e.tutar)||0),0);
+  const _aylikMasrafHedefi = aylikMasrafHedefiHesapla();
+  const masrafBuAy = _aylikMasrafHedefi.tutar;
   const netKar = gelir - masrafBuAy;
   const urgent = urgentList();
   const pct = (n)=> total? Math.round(n/total*100) : 0;
@@ -8242,7 +8348,7 @@ function renderDashboard(){
         </div>
       </div>
       <div class="dcard">
-        <h3>Gelir vs Masraf (Son 6 Ay) <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;background:${netKar>=0?'rgba(22,163,74,.12)':'rgba(220,38,38,.12)'};color:${netKar>=0?'#16A34A':'#DC2626'}">Net ${isAdmin()?fmtTL2(netKar):'—'}</span></h3>
+        <h3>Gelir vs Masraf (Son 6 Ay) <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;background:${netKar>=0?'rgba(22,163,74,.12)':'rgba(220,38,38,.12)'};color:${netKar>=0?'#16A34A':'#DC2626'}">Net ${isAdmin()?fmtTL2(netKar):'—'}${_aylikMasrafHedefi.etiket && _aylikMasrafHedefi.etiket!=='bu ay' ? ' ('+_aylikMasrafHedefi.etiket+')' : ''}</span></h3>
         ${(()=>{ const inc=computeMonthlyIncomeSeries(); const lbl = inc.gercekAySayisi===0?'Aylık Kira Geliri (tahmini)':inc.gercekAySayisi>=inc.toplamAySayisi?'Aylık Kira Geliri (gerçek)':'Aylık Kira Geliri (gerçek + tahmini)'; return svgDualLineChart(inc.values, series.values, series.labels, 320, 180, lbl); })()}
       </div>
     </div>
@@ -8347,8 +8453,10 @@ function masrafRowsHTML(list){
 function wireMasrafDeleteButtons(){
   document.querySelectorAll('.mdel').forEach(b=>b.onclick = async ()=>{
     if(!requireAdmin()) return;
+    if(!confirm('Bu masraf kaydını kalıcı olarak silmek istediğinize emin misiniz?')) return;
     const exp = expenses.find(x=>x.id===b.dataset.id);
     expenses = expenses.filter(x=>x.id!==b.dataset.id);
+    if(exp) await storageAPI.set('fis_'+exp.id, '').catch(()=>{});
     await persistExpenses();
     renderStatMasraf();
     renderMasrafTable();
@@ -8706,7 +8814,7 @@ async function fisOku(file){
 
   const key = getGeminiKey();
   if(!key){
-    log.innerHTML = '<div style="color:var(--safety);font-size:13px;">⚠️ Gemini API anahtarı ayarlanmamış. Ayarlar → AI bölümünden girin.</div>';
+    log.innerHTML = '<div style="color:var(--safety);font-size:13px;">⚠️ AI belge okuma servisine şu anda ulaşılamıyor. Lütfen daha sonra tekrar deneyin.</div>';
     return;
   }
 
@@ -8868,6 +8976,15 @@ async function fisTopluKaydet(){
   const fisMime = window.__fisMime || null;
 
   for(const k of kayitlar){
+    // v.85: tekli masraf ekleme (mEkleBtn/mpEkleBtn/aiMasrafKaydet) tutarı ≤0 veya NaN ise reddediyordu,
+    // ama toplu fiş kaydında bu kontrol hiç yoktu — AI'nin yanlış okuduğu bir tutar (0, boş, negatif)
+    // sessizce 0₺ masraf olarak kaydediliyordu. Artık aynı kural burada da uygulanıyor.
+    const tutarNum = Number(k.tutar);
+    if(!tutarNum || isNaN(tutarNum) || tutarNum<=0){
+      atlanan++;
+      uyarilar.push(`${k.plaka||'—'} — ${k.tarih||'—'} — geçersiz tutar (${k.tutar??'boş'}), atlandı`);
+      continue;
+    }
     const dupVar = expenses.some(e=>
       (e.vehicleId===k.vehicleId || normPlaka(e.plaka)===normPlaka(k.plaka||'')) &&
       e.tarih===k.tarih &&
@@ -8892,7 +9009,7 @@ async function fisTopluKaydet(){
       plaka: vehicles.find(v=>v.id===k.vehicleId)?.plaka||'',
       tip: k.tip||'Tamir',
       tarih: k.tarih||todayISO(),
-      tutar: Number(k.tutar)||0,
+      tutar: tutarNum,
       not: k.not||'',
       hasFis: !!fisBase64
     });
@@ -9055,6 +9172,10 @@ function sozlesmeAracSecildi(){
 }
 
 async function sozlesmeOlustur(format){
+  // v.85: bu ekran aracın durumunu/kiracı bilgisini kirayaVerVeSozlesme ile aynı şekilde
+  // değiştirdiği halde admin kontrolü yoktu — personel rolü buradan araç durumunu
+  // değiştirebiliyordu. kirayaVerVeSozlesme ile tutarlı hale getirildi.
+  if(!requireAdmin()) return;
   const vehicleId = document.getElementById('sozArac')?.value;
   const kiraci = document.getElementById('sozKiraci')?.value?.trim();
   const bas = document.getElementById('sozBaslangic')?.value;
@@ -9074,6 +9195,7 @@ async function sozlesmeOlustur(format){
   if(!vehicleId){ showToast('Lütfen araç seçin.',true); return; }
   if(!kiraci){ showToast('Lütfen kiracı adını girin.',true); return; }
   if(!bas || !bitis){ showToast('Lütfen tarih aralığını girin.',true); return; }
+  if(bitis<=bas){ showToast('Bitiş tarihi başlangıçtan sonra olmalı.', true); return; }
 
   const v = vehicles.find(x=>x.id===vehicleId);
   if(!v) return;
@@ -9117,6 +9239,10 @@ async function sozlesmeOlustur(format){
     const kiraNum = kira ? Number(kira) : (v.kira||0);
     const kmLimitNum = kmLimit!=='' && kmLimit!=null ? Number(kmLimit) : (v.kmLimiti||undefined);
     const teslimKmNum = km ? Number(km) : (v.teslimKm||0);
+    // v.85: kmAsimFiyat/depozito eskiden sadece yazdırılan sözleşme metnine (sozData) gidiyordu,
+    // araç kaydına hiç yazılmıyordu (kirayaVerVeSozlesme'deki aynı hatanın karşılığı).
+    const kmAsimNum = kmAsim!=='' && kmAsim!=null && !isNaN(Number(kmAsim)) ? Number(kmAsim) : (v.kmAsimFiyat||undefined);
+    const depozitoNum = depozito!=='' && depozito!=null && !isNaN(Number(depozito)) ? Number(depozito) : (v.depozito||undefined);
     vehicles[vIdx] = {
       ...v,
       durum: 'Kirada',
@@ -9129,6 +9255,8 @@ async function sozlesmeOlustur(format){
       teslimKm: teslimKmNum,
       teslimTarih: bas||v.teslimTarih||'',
       kmLimiti: kmLimitNum,
+      kmAsimFiyat: kmAsimNum,
+      depozito: depozitoNum,
       renk: renk||v.renk||'',
       kiraGecmisi: [...(v.kiraGecmisi||[]), {bas, bitis, yer: kiraci, teslimKm: teslimKmNum, iadeKm:0, yakit:'', hasar:'', not: notlar||''}],
     };
@@ -10218,10 +10346,22 @@ document.addEventListener('click', e=>{
 async function saveTeslimBilgisi(){
   const v = kiOpSelectedVehicle();
   if(!v){ showToast('Önce bir araç seçin.', true); return; }
+  const yeniTeslimKm = Number(document.getElementById('fTeslimKm').value)||undefined;
+  // v.85: teslim km'si km aşımı hesabının temeli olduğu halde burada hiç korunmuyordu — İade Al
+  // ekranındaki (updateIadeKmDiff) aynı korumanın karşılığı eklendi: negatif değer reddedilir,
+  // bilinen en son km'den yüksek ya da önceki teslim km'den çok düşük bir değer onay ister.
+  if(yeniTeslimKm!=null && yeniTeslimKm<0){ showToast('Teslim km negatif olamaz.', true); return; }
+  const mevcutBilinenKm = Math.max(Number(v.sonKm)||0, Number(v.teslimKm)||0, ...(v.kmGecmisi||[]).map(k=>Number(k.bitKm)||0));
+  if(yeniTeslimKm!=null && mevcutBilinenKm>0 && yeniTeslimKm>mevcutBilinenKm){
+    if(!confirm(`Girilen teslim km (${yeniTeslimKm.toLocaleString('tr-TR')}) aracın bilinen en son km değerinden (${mevcutBilinenKm.toLocaleString('tr-TR')}) yüksek — bu genelde bir yazım hatasıdır. Yine de kaydedilsin mi?`)) return;
+  }
+  if(v.teslimKm && yeniTeslimKm!=null && yeniTeslimKm < v.teslimKm*0.5){
+    if(!confirm(`Girilen teslim km (${yeniTeslimKm.toLocaleString('tr-TR')}) önceki kayıtlı teslim km'sinden (${Number(v.teslimKm).toLocaleString('tr-TR')}) çok düşük. Yine de kaydedilsin mi?`)) return;
+  }
   const teslimFields = await buildTeslimFotoFields(v.id);
   Object.assign(v, {
     teslimTarih: document.getElementById('fTeslimTarih').value,
-    teslimKm: Number(document.getElementById('fTeslimKm').value)||undefined,
+    teslimKm: yeniTeslimKm,
     kmLimiti: Number(document.getElementById('fKmLimiti').value)||undefined,
     sonBakimKm: Number(document.getElementById('fBakimKm').value)||undefined,
     bakimPeriyotKm: Number(document.getElementById('fBakimPeriyot').value)||undefined,
@@ -10334,10 +10474,10 @@ async function otoBelgeSec(file, statusEl){
       if(fallbackId){
         await belgeAracaEkle(vehicles.find(v=>v.id===fallbackId), 'diger', file.name, file.type, dataUrl, null);
         await persist();
-        showToast(`Kaydedildi: ${esc(vehicles.find(v=>v.id===fallbackId).plaka)} aracına "${esc(file.name)}" eklendi (otomatik okuma için Gemini anahtarı gerekir).`);
+        showToast(`Kaydedildi: ${esc(vehicles.find(v=>v.id===fallbackId).plaka)} aracına "${esc(file.name)}" eklendi (otomatik okuma servisine şu an ulaşılamadı).`);
         renderBelgelerPage();
       }else{
-        showToast('Kaydedilmedi: Otomatik okuma için Ayarlar → AI bölümünden Gemini anahtarı girin veya soldan araç seçip tekrar deneyin.', true);
+        showToast('Kaydedilmedi: Otomatik okuma servisine şu an ulaşılamıyor. Lütfen soldan araç seçip tekrar deneyin.', true);
       }
       setBusy('Belge Yükle');
       return;
@@ -10481,6 +10621,8 @@ async function otoBelgeSil(vehicleId, key){
   if(!requireAdmin()) return;
   const v = vehicles.find(x=>x.id===vehicleId);
   if(!v || !Array.isArray(v.otoBelgeler)) return;
+  // v.85: diğer kalıcı silmelerle tutarlı olması için onay eklendi.
+  if(!confirm('Bu belgeyi kalıcı olarak silmek istediğinize emin misiniz?')) return;
   const silinen = v.otoBelgeler.find(o=>o.key===key);
   v.otoBelgeler = v.otoBelgeler.filter(o=>o.key!==key);
   await storageAPI.set(key, '').catch(()=>{});
@@ -10722,24 +10864,15 @@ function renderRaporlarPage(){
   // Araç bazlı karlılık hesapla
   // Aylık masraf: artık yıllık toplamın 12'ye bölümü DEĞİL — masraf kaydı olan
   // en güncel ayın gerçek toplamı kullanılır (bu ay kayıt yoksa önceki aya düşer).
-  const _now = new Date();
-  const _buAy = `${_now.getFullYear()}-${String(_now.getMonth()+1).padStart(2,'0')}`;
-  const _ayToplamlari = {};
-  let _sonAy = null;
-  expenses.forEach(e=>{
-    const k = (e.tarih||'').slice(0,7);
-    if(!k) return;
-    _ayToplamlari[k] = (_ayToplamlari[k]||0)+(Number(e.tutar)||0);
-    if(!_sonAy || k>_sonAy) _sonAy = k;
-  });
-  const hedefAy = _ayToplamlari[_buAy]!==undefined ? _buAy : _sonAy;
-  const hedefAyEtiket = hedefAy ? (hedefAy===_buAy?'bu ay':hedefAy.split('-').reverse().join('.')) : '';
+  // v.85: bu mantık Genel Bakış'taki Net Kâr ile de hizalanması için aylikMasrafHedefiHesapla()'ya taşındı.
+  const {hedefAy, etiket: hedefAyEtiket} = aylikMasrafHedefiHesapla();
 
   const karlilik = vehicles.map(v=>{
     const aylikGelir = Number(v.kira)||0;
-    const toplamMasraf = expenses.filter(e=>normPlaka(e.plaka)===normPlaka(v.plaka)).reduce((s,e)=>s+(Number(e.tutar)||0),0);
-    const masrafSayisi = expenses.filter(e=>normPlaka(e.plaka)===normPlaka(v.plaka)).length;
-    const aylikMasrafTahmini = hedefAy ? expenses.filter(e=>normPlaka(e.plaka)===normPlaka(v.plaka) && (e.tarih||'').slice(0,7)===hedefAy).reduce((s,e)=>s+(Number(e.tutar)||0),0) : 0;
+    const vMasrafListesi = expensesForVehicle(v);
+    const toplamMasraf = vMasrafListesi.reduce((s,e)=>s+(Number(e.tutar)||0),0);
+    const masrafSayisi = vMasrafListesi.length;
+    const aylikMasrafTahmini = hedefAy ? vMasrafListesi.filter(e=>(e.tarih||'').slice(0,7)===hedefAy).reduce((s,e)=>s+(Number(e.tutar)||0),0) : 0;
     const aylikKar = aylikGelir - aylikMasrafTahmini;
     return { v, aylikGelir, toplamMasraf, masrafSayisi, aylikMasrafTahmini, aylikKar };
   }).filter(x=>x.aylikGelir>0 || x.toplamMasraf>0)
@@ -10759,7 +10892,7 @@ function renderRaporlarPage(){
       <div class="dash-stats" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px;">
         <div class="dstat" style="cursor:default;">
           <div class="dstat-ic" style="background:#38A169">${DASH_ICONS.trend}</div>
-          <div class="dstat-txt"><div class="n">${fmtTL(toplamGelir)}</div><div class="l">Aylık Kira Geliri</div></div>
+          <div class="dstat-txt"><div class="n">${fmtTL_role(toplamGelir)}</div><div class="l">Aylık Kira Geliri</div></div>
         </div>
         <div class="dstat" style="cursor:default;">
           <div class="dstat-ic" style="background:var(--safety)">${DASH_ICONS.wrench}</div>
@@ -10767,7 +10900,7 @@ function renderRaporlarPage(){
         </div>
         <div class="dstat" style="cursor:default;">
           <div class="dstat-ic" style="background:${toplamKar>=0?'#38A169':'var(--safety)'}">${DASH_ICONS.check}</div>
-          <div class="dstat-txt"><div class="n" style="color:${toplamKar>=0?'#68D391':'#FC8181'}">${fmtTL(toplamKar)}</div><div class="l">Net Aylık Kar</div></div>
+          <div class="dstat-txt"><div class="n" style="color:${toplamKar>=0?'#68D391':'#FC8181'}">${fmtTL_role(toplamKar)}</div><div class="l">Net Aylık Kar</div></div>
         </div>
       </div>
       ${karlilik.length ? `<div class="table-scroll"><table class="mini-table">
@@ -10821,9 +10954,13 @@ function renderRaporlarPage(){
   };
   document.getElementById('rpExcelKarlilik').onclick = ()=>{
     if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenmedi.',true); return; }
+    // v.85: ekrandaki kira/kâr rakamları personelden fmtTL2_role ile gizleniyordu ama bu Excel
+    // dışa aktarımı ham sayıları hiç maskelemeden dosyaya yazıyordu — personel bu butonla ekranda
+    // görmediği kira tutarlarını dosya olarak indirebiliyordu. Artık admin değilse gizleniyor.
+    const gizli = !isAdmin();
     const data = [['Plaka','Araç','Durum','Aylık Kira','Toplam Masraf','Tahmini Aylık Kar']];
     karlilik.forEach(({v,aylikGelir,toplamMasraf,aylikKar})=>{
-      data.push([v.plaka,[v.marka,v.model].filter(Boolean).join(' '),v.durum,aylikGelir,toplamMasraf,Math.round(aylikKar)]);
+      data.push([v.plaka,[v.marka,v.model].filter(Boolean).join(' '),v.durum,gizli?'***':aylikGelir,toplamMasraf,gizli?'***':Math.round(aylikKar)]);
     });
     const ws = XLSX.utils.aoa_to_sheet(data);
     const wb = XLSX.utils.book_new();
@@ -11065,7 +11202,10 @@ function hatirlatEposta(plaka, tip){
 
 function renderBildirimlerPage(){
   const page = document.getElementById('page-bildirimler');
-  const list = urgentList().sort((a,b)=>a.dl-b.dl);
+  // v.85: eskiden urgentList() (≤7 gün) çağrılıyordu, bu da "Tümü" listesinin zaten hep ≤7 gün
+  // olması ve "Kritik (≤7 gün)" filtresinin hiçbir şey değiştirmemesi anlamına geliyordu. Artık
+  // uygulamanın geri kalanıyla tutarlı 30 günlük "yaklaşan" penceresi kullanılıyor.
+  const list = urgentList(30).sort((a,b)=>a.dl-b.dl);
   const okunmuslar = JSON.parse(localStorage.getItem('okunanBildirimler')||'[]');
   const filter = window.__bildirimFilter || 'hepsi';
 
@@ -11241,8 +11381,12 @@ function renderAiPage(){
 
 function renderAiMessage(m, idx){
   if(m.role==='user'){
+    // v.85: aiBelgeYukle/aiSendSartname kullanıcı adına dosya-eki bildirim mesajları oluşturuyor
+    // ve bunların içinde <strong>dosya adı</strong> gibi kasıtlı HTML var (dosya adının kendisi
+    // zaten esc() ile korunuyor). Bu iki çağrı m.raw=true işaretliyor; raw olmayan normal
+    // kullanıcı mesajları eskisi gibi esc() ile kaçırılmaya devam ediyor.
     return `<div style="display:flex;justify-content:flex-end;">
-      <div style="background:var(--accent-blue);color:#fff;padding:10px 14px;border-radius:12px 12px 3px 12px;font-size:14px;max-width:80%;line-height:1.5;">${esc(m.content)}</div>
+      <div style="background:var(--accent-blue);color:#fff;padding:10px 14px;border-radius:12px 12px 3px 12px;font-size:14px;max-width:80%;line-height:1.5;">${m.raw ? m.content : esc(m.content)}</div>
     </div>`;
   }
   // AI mesajı — HTML içerebilir
@@ -11268,8 +11412,13 @@ function aiSendFromInput(){
   if(window.__aiAkis){ aiAkisYanitla(txt); return; }
   const iadeNiyet = aiIadeNiyetiVarMi(txt);
   if(iadeNiyet.varMi){
+    // v.85: eskiden burada __aiIadeBeklenenPlaka sıfırlanmıyordu — eğer flag zaten true iken
+    // (plaka soruluyorken) kullanıcının yanıtı HEM tetikleyici kelimeyi HEM geçerli bir plakayı
+    // içeriyorsa (örn. "42 IAD 001 iade almak istiyorum") akış burada başlatılıp fonksiyondan
+    // çıkılıyor, flag true takılı kalıyor ve BİR SONRAKİ mesaj yanlışlıkla plaka yanıtı sanılıyordu.
+    window.__aiIadeBeklenenPlaka = false;
     if(iadeNiyet.vehicle){ aiIadeAkisiBaslat(iadeNiyet.vehicle, txt); return; }
-    aiMessages.push({role:'user', content: esc(txt)});
+    aiMessages.push({role:'user', content: txt});
     aiMessages.push({role:'assistant', content: 'İade almak istediğin aracın plakasını yazar mısın?'});
     window.__aiIadeBeklenenPlaka = true;
     renderAiPage();
@@ -11280,7 +11429,7 @@ function aiSendFromInput(){
     const norm = plakaNormalize(txt);
     const v = vehicles.find(x=>x.plaka && norm.includes(plakaNormalize(x.plaka)));
     if(v){ aiIadeAkisiBaslat(v, txt); return; }
-    aiMessages.push({role:'user', content: esc(txt)});
+    aiMessages.push({role:'user', content: txt});
     aiMessages.push({role:'assistant', content: 'Bu plakayla eşleşen bir araç bulamadım — tekrar dener misin? (ör: 42 AKU 776)'});
     window.__aiIadeBeklenenPlaka = true;
     renderAiPage();
@@ -11295,6 +11444,10 @@ function aiSesTanimaDestekleniyorMu(){ return !!(window.SpeechRecognition || win
 function aiSesOkumaDestekleniyorMu(){ return !!window.speechSynthesis; }
 let __aiRecognition = null;
 let __aiDinliyor = false;
+// v.85: her başlatmada artan bir token — eski (stale) bir SpeechRecognition örneğinin
+// onend/onerror'ı, arada yeni bir tanıma başlatılmışsa (ör. kullanıcı hızlıca durdur/başlat
+// yaptığında) artık güncel olmayan __aiDinliyor/UI state'ini yanlışlıkla ezmesin diye kullanılıyor.
+let __aiMikrofonToken = 0;
 function aiMikrofonBaslat(){
   if(__aiDinliyor){ aiMikrofonDurdur(); return; }
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -11302,22 +11455,25 @@ function aiMikrofonBaslat(){
   try{
     const inp = document.getElementById('aiInput');
     const baseVal = inp ? inp.value : '';
+    const token = ++__aiMikrofonToken;
     __aiRecognition = new SR();
     __aiRecognition.lang = 'tr-TR';
     __aiRecognition.interimResults = true;
     __aiRecognition.continuous = false;
     __aiRecognition.onresult = (e)=>{
+      if(token!==__aiMikrofonToken) return;
       let metin = '';
       for(let i=0;i<e.results.length;i++) metin += e.results[i][0].transcript;
       const el = document.getElementById('aiInput');
       if(el){ el.value = (baseVal?baseVal+' ':'') + metin; el.style.height='auto'; el.style.height=el.scrollHeight+'px'; }
     };
     __aiRecognition.onerror = (e)=>{
+      if(token!==__aiMikrofonToken) return;
       __aiDinliyor = false;
       aiMikrofonUIGuncelle(false);
       if(e.error!=='aborted' && e.error!=='no-speech') showToast('Sesli komut hatası: '+e.error, true);
     };
-    __aiRecognition.onend = ()=>{ __aiDinliyor = false; aiMikrofonUIGuncelle(false); };
+    __aiRecognition.onend = ()=>{ if(token!==__aiMikrofonToken) return; __aiDinliyor = false; aiMikrofonUIGuncelle(false); };
     __aiRecognition.start();
     __aiDinliyor = true;
     aiMikrofonUIGuncelle(true);
@@ -11326,6 +11482,9 @@ function aiMikrofonBaslat(){
   }
 }
 function aiMikrofonDurdur(){
+  // Token'ı burada artırmak, tam bu anda tetiklenecek olan stop()'un kendi onend'ini de
+  // "eski" işaretler — state zaten aşağıda elle güncelleniyor, o yüzden çakışma olmaz.
+  __aiMikrofonToken++;
   if(__aiRecognition){ try{ __aiRecognition.stop(); }catch(e){} }
   __aiDinliyor = false;
   aiMikrofonUIGuncelle(false);
@@ -11379,7 +11538,7 @@ function aiSesSecimiHTML(){
   return html;
 }
 function aiSesDene(){
-  aiMetniSesliOku('Merhaba, ben Pekdoğru Filo Asistanı. Sesim şimdi böyle duyuluyor.');
+  aiMetniSesliOku(`Merhaba, ben ${FIRMA_ADI} Asistanı. Sesim şimdi böyle duyuluyor.`);
 }
 if(window.speechSynthesis && !window.__aiSesListenerBagli){
   window.__aiSesListenerBagli = true;
@@ -11426,7 +11585,9 @@ function aiIadeNiyetiVarMi(txt){
   return {varMi:true, vehicle:v||null};
 }
 function aiIadeAkisiBaslat(v, txt){
-  aiMessages.push({role:'user', content: esc(txt)});
+  // v.85: renderAiMessage zaten role==='user' mesajlarını esc() ile kaçırıyor (satır ~11361) —
+  // burada da esc(txt) yapılırsa çift kaçış oluşur (örn. "&" → "&amp;" → "&amp;amp;").
+  aiMessages.push({role:'user', content: txt});
   if(v.durum!=='Kirada'){
     aiMessages.push({role:'assistant', content: `<b>${esc(v.plaka)}</b> şu an "${esc(v.durum||'—')}" durumunda, kirada görünmüyor — iade alınacak aktif bir kiralaması yok gibi.`});
     renderAiPage();
@@ -11440,10 +11601,23 @@ async function aiAkisYanitla(txt){
   const akis = window.__aiAkis;
   if(!akis){ aiSend(txt); return; }
   const lower = txt.trim().toLocaleLowerCase('tr-TR');
-  aiMessages.push({role:'user', content: esc(txt)});
+  // v.85: renderAiMessage zaten role==='user' mesajlarını esc() ile kaçırıyor (satır ~11361) —
+  // burada da esc(txt) yapılırsa çift kaçış oluşur (örn. "&" → "&amp;" → "&amp;amp;").
+  aiMessages.push({role:'user', content: txt});
   if(['iptal','vazgeç','vazgec','dur','boşver','bosver'].includes(lower)){
     window.__aiAkis = null;
     aiMessages.push({role:'assistant', content: 'İade süreci iptal edildi, formu açmadım.'});
+    renderAiPage();
+    return;
+  }
+  // v.85: akış devam ederken kullanıcı YENİ bir "iade al" isteği yazarsa (ör. başka bir araç
+  // için, ya da aynı araç için tekrar) bu mesaj eskiden sessizce mevcut akışın bir sonraki
+  // adımına verilen bir cevap sanılıyor, saçma sonuçlar üretiyordu (ör. km adımında plakadaki
+  // rakamlar km olarak algılanabiliyordu). Artık bu durum tespit edilip kullanıcıya soruluyor.
+  const yeniIadeNiyeti = aiIadeNiyetiVarMi(txt);
+  if(yeniIadeNiyeti.varMi){
+    const mevcutArac = vehicles.find(x=>x.id===akis.vehicleId);
+    aiMessages.push({role:'assistant', content: `Şu anda <b>${esc(mevcutArac?mevcutArac.plaka:'bir araç')}</b> için iade sürecindeyiz (adım ${akis.adim+1}/5). Önce bu soruyu yanıtla, ya da yeni bir işlem başlatmak için "iptal" yaz.`});
     renderAiPage();
     return;
   }
@@ -11454,10 +11628,24 @@ async function aiAkisYanitla(txt){
     renderAiPage();
     return;
   }
+  // v.85: akış başlarken araç "Kirada" olduğu kontrol ediliyordu ama akış sürerken (birkaç mesaj
+  // boyunca) başka biri panelden iadeyi zaten tamamlamış/durumu değiştirmiş olabilir. Her adımda
+  // tekrar kontrol edip tutarsız bir forma yönlendirmeden önce durduruyoruz.
+  if(akis.tur==='iade' && v.durum!=='Kirada'){
+    window.__aiAkis = null;
+    aiMessages.push({role:'assistant', content: `<b>${esc(v.plaka)}</b> artık "${esc(v.durum||'—')}" durumunda — kirada görünmüyor, iade sürecini iptal ettim.`});
+    renderAiPage();
+    return;
+  }
   if(akis.tur==='iade'){
     if(akis.adim===0){
-      let tarih = todayISO();
-      if(!/bugün|bugun/.test(lower)){
+      // v.85: eskiden "bugün" denmezse VE tarih parse edilemezse bile tarih sessizce bugüne
+      // düşüyordu (kullanıcı belirsiz/anlaşılmaz bir şey yazdığında bunu fark etmeden "bugün"
+      // onaylamış oluyordu). Artık parse edilemeyen giriş tekrar soruluyor.
+      let tarih = null;
+      if(/bugün|bugun/.test(lower)){
+        tarih = todayISO();
+      }else{
         const m = txt.match(/(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})/);
         if(m) tarih = `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
         else{
@@ -11465,12 +11653,27 @@ async function aiAkisYanitla(txt){
           if(iso) tarih = iso;
         }
       }
+      if(!tarih){
+        aiMessages.push({role:'assistant', content:'Tarihi anlayamadım — "bugün" yazabilir ya da gg.aa.yyyy formatında girebilirsin (ör: 15.03.2026).'});
+        renderAiPage();
+        return;
+      }
       akis.veri.iadeTarihi = tarih;
       akis.adim = 1;
       aiMessages.push({role:'assistant', content: `İade tarihi: <b>${fmtTarih(tarih)}</b>. Şimdi iade km'sini (göstergedeki güncel km) yazar mısın?`});
     }else if(akis.adim===1){
-      const km = Number(String(txt).replace(/[^0-9]/g,''));
-      if(!km){ aiMessages.push({role:'assistant', content:'Km değerini sayı olarak yazar mısın? (ör: 108791)'}); renderAiPage(); return; }
+      // v.85: eskiden metindeki TÜM rakamlar çekilip birleştiriliyordu — "bilmiyorum ama 2 gün
+      // önce 500 kadar gitmişti" gibi alakasız bir cümleden bile "2500" gibi bir km üretebiliyordu.
+      // Artık metnin büyük kısmının rakam/boşluk olması ve makul bir km aralığında kalması isteniyor.
+      const rawTxt = txt.trim();
+      const raka = (rawTxt.match(/[0-9]/g)||[]).length;
+      const digitOrani = raka / Math.max(1, rawTxt.replace(/\s/g,'').length);
+      const km = Number(rawTxt.replace(/[^0-9]/g,''));
+      if(!km || digitOrani<0.6 || km<100 || km>2000000){
+        aiMessages.push({role:'assistant', content:'Km değerini sadece rakamlarla yazar mısın? (ör: 108791)'});
+        renderAiPage();
+        return;
+      }
       akis.veri.kmBitis = km;
       akis.adim = 2;
       aiMessages.push({role:'assistant', content: `İade km: <b>${km.toLocaleString('tr-TR')} km</b>. Yakıt durumu nasıl — Dolu, 3/4, Yarım, 1/4 yoksa Boş mu?`});
@@ -11552,11 +11755,11 @@ async function sartnameYukle(file){
 
 async function aiSendSartname(){
   const key = getGeminiKey();
-  if(!key){ showToast('Gemini API anahtarı gerekli.', true); return; }
+  if(!key){ showToast('AI belge okuma servisine şu anda ulaşılamıyor.', true); return; }
   if(!window.__sartnameBase64){ showToast('Önce şartname yükleyin.', true); return; }
 
   const mesaj = 'Bu teknik şartnameyi analiz et ve filomdan uygun araçları belirle.';
-  aiMessages.push({role:'user', content: `📎 <strong>${esc(window.__sartnameAdi||'Şartname')}</strong> yüklendi — uygun araçlar analiz ediliyor...`});
+  aiMessages.push({role:'user', raw:true, content: `📎 <strong>${esc(window.__sartnameAdi||'Şartname')}</strong> yüklendi — uygun araçlar analiz ediliyor...`});
   renderAiPage();
 
   const box = document.getElementById('aiChatBox');
@@ -11580,7 +11783,7 @@ async function aiSendSartname(){
       };
     });
 
-    const sartnameSystem = `Sen Pekdoğru Filo Kiralama şirketinin ihale uzmanı AI asistanısın.
+    const sartnameSystem = `Sen ${FIRMA_ADI} şirketinin ihale uzmanı AI asistanısın.
 
 GÖREV:
 1. Yüklenen teknik şartnameyi oku
@@ -11638,10 +11841,10 @@ async function aiBelgeYukle(file){
   if(!file) return;
   if(file.size > 10*1024*1024){ showToast('Dosya çok büyük (en fazla 10 MB).', true); return; }
   const key = getGeminiKey();
-  aiMessages.push({role:'user', content: `📎 <strong>${esc(file.name)}</strong> gönderildi — inceleniyor...`});
+  aiMessages.push({role:'user', raw:true, content: `📎 <strong>${esc(file.name)}</strong> gönderildi — inceleniyor...`});
   renderAiPage();
   if(!key){
-    aiMessages.push({role:'assistant', content: 'Bunu otomatik okuyabilmem için Ayarlar → AI bölümünden bir Gemini API anahtarı girilmesi gerekiyor.'});
+    aiMessages.push({role:'assistant', content: 'Bunu şu anda okuyamıyorum — AI belge okuma servisine ulaşılamıyor. Lütfen daha sonra tekrar dene.'});
     renderAiPage();
     return;
   }
@@ -11705,7 +11908,9 @@ async function aiBelgeYukle(file){
 async function aiPendingBelgeCozumle(txt){
   const pending = window.__aiPendingBelge;
   window.__aiPendingBelge = null;
-  aiMessages.push({role:'user', content: esc(txt)});
+  // v.85: renderAiMessage zaten role==='user' mesajlarını esc() ile kaçırıyor (satır ~11361) —
+  // burada da esc(txt) yapılırsa çift kaçış oluşur (örn. "&" → "&amp;" → "&amp;amp;").
+  aiMessages.push({role:'user', content: txt});
   const plakaTxt = plakaNormalize(txt);
   const v = plakaTxt ? (vehicles.find(x=>plakaNormalize(x.plaka)===plakaTxt) || vehicles.find(x=>plakaNormalize(x.plaka).includes(plakaTxt))) : null;
   if(!v){
@@ -11823,10 +12028,25 @@ function aiMasrafIptal(batchId, btnEl){
   }
 }
 
+// v.85: Gemini'ye gönderilen konuşma geçmişinde asistan mesajları OLDUĞU GİBİ (HTML: <button
+// onclick=...>, <b>, <div style=...> vb. dahil) gönderiliyordu — model, geçmiş yanıtlarını düz
+// metin yerine markup olarak görüyordu. Bu, ekranda göstermek için render edilen İÇERİĞİ
+// (renderAiMessage) etkilemiyor — sadece API'ye giden kopya düz metne çevriliyor.
+function aiMesajDuzMetne(content){
+  if(content==null) return '';
+  return String(content)
+    .replace(/<button[^>]*>[\s\S]*?<\/button>/gi, '') // "İade Formunu Aç" gibi düğmeleri tamamen çıkar
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(div|p)>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g,' ').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;/g,"'")
+    .replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n')
+    .trim();
+}
 async function aiSend(mesaj){
   const key = getGeminiKey();
   if(!key){
-    showToast('Gemini API anahtarı gerekli. Ayarlar → AI bölümünden girin.', true);
+    showToast('AI Filo Asistanı servisine şu anda ulaşılamıyor.', true);
     return;
   }
 
@@ -11861,7 +12081,7 @@ async function aiSend(mesaj){
 
     // Araç bazlı masraf özeti
     const aracMasraflar = vehicles.map(v=>{
-      const m = expenses.filter(e=>e.vehicleId===v.id || normPlaka(e.plaka)===normPlaka(v.plaka));
+      const m = expensesForVehicle(v);
       return {plaka:v.plaka, marka:v.marka, model:v.model, durum:v.durum, kira:v.kira||0, toplamMasraf:m.reduce((s,e)=>s+(Number(e.tutar)||0),0), masrafSayisi:m.length};
     }).sort((a,b)=>b.toplamMasraf-a.toplamMasraf);
 
@@ -11876,7 +12096,7 @@ async function aiSend(mesaj){
       tahminiNet: gelir - toplamMasraf,
       kritikBelge: urgentBelgeler.length,
       araclar: vehicles.map(v=>{
-        const vMasraf = expenses.filter(e=>e.vehicleId===v.id || normPlaka(e.plaka)===normPlaka(v.plaka));
+        const vMasraf = expensesForVehicle(v);
         const topMasraf = vMasraf.reduce((s,e)=>s+(Number(e.tutar)||0),0);
         const sigortaDl = daysLeft(v.sigortaTarihi);
         const muayeneDl = daysLeft(v.muayeneTarihi);
@@ -11965,12 +12185,12 @@ async function aiSend(mesaj){
       })()} : {}),
     };
 
-    const system = `Sen Pekdoğru Filo Kiralama şirketinin akıllı AI filo yönetim asistanısın.
+    const system = `Sen ${FIRMA_ADI} şirketinin akıllı AI filo yönetim asistanısın.
 
 BUGÜNÜN TARİHİ: ${bugun} (tarih hesaplarını bu güne göre yap)
 
 ŞİRKET HAKKINDA:
-- Pekdoğru Otomotiv Turizm Taşımacılık Nakliye Hayvancılık Ticaret Limited Şirketi
+- ${FIRMA_UNVANI}
 - Operasyonel kiralama (filo kiralama) yapıyor — rent-a-car DEĞİL
 - Devlet kurumlarına ihale ile araç veriyor
 - Binek araçtan ağır vasıtaya kadar geniş filo
@@ -12026,7 +12246,7 @@ ${JSON.stringify(filoOzet, null, 1)}`;
     const geminiMessages = [];
     for(let i=0; i<aiMessages.length-1; i++){
       const m = aiMessages[i];
-      geminiMessages.push({role: m.role==='user'?'user':'model', parts:[{text:m.content}]});
+      geminiMessages.push({role: m.role==='user'?'user':'model', parts:[{text: aiMesajDuzMetne(m.content)}]});
     }
     geminiMessages.push({role:'user', parts:[{text:mesaj}]});
 
