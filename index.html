@@ -831,6 +831,98 @@
     .th-right{gap:6px;}
     .th-cloud span:not(b){display:none;}
   }
+
+  /* v.86: Mobil Genel Bakış sadeleştirme — "mobil çok karışık" geri bildirimine karşılık
+     tasarım canvas'ında (Pekdoğru Mobil Genel Bakış) çizilen sadeleştirilmiş düzenin koda dökümü. */
+  .mobil-ozet{display:none;}
+  .bugun-mobil-more{display:none;}
+  @media (max-width:900px){
+    .dash-stats{display:none;}
+    .mobil-ozet{display:block;margin-bottom:16px;}
+    .mo-fleet{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:15px 16px;box-shadow:var(--shadow-sm);margin-bottom:10px;cursor:pointer;}
+    .mo-fleet-top{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:11px;}
+    .mo-fleet-top .n{font-size:23px;font-weight:700;letter-spacing:-.3px;color:var(--paper);}
+    .mo-fleet-top .l{font-size:12.5px;color:var(--steel-300);}
+    .mo-stackbar{height:8px;border-radius:4px;overflow:hidden;display:flex;background:var(--surface-2);}
+    .mo-stackbar span{height:100%;}
+    .mo-legend{display:flex;justify-content:space-between;margin-top:11px;flex-wrap:wrap;gap:6px;}
+    .mo-legend .it{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--steel-300);}
+    .mo-legend .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+    .mo-legend b{color:var(--paper);font-weight:700;}
+    .mo-kpi-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .mo-kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:13px 15px;box-shadow:var(--shadow-sm);}
+    .mo-kpi .l{font-size:11.5px;color:var(--steel-300);font-weight:600;}
+    .mo-kpi .n{font-size:18px;font-weight:700;margin-top:6px;color:var(--paper);letter-spacing:-.2px;}
+
+    /* Bugün Yapılacaklar — varsayılan 2 madde, gerisi tek bağlantıyla açılır */
+    #bugunCard .bugun-item:nth-of-type(n+4){display:none;}
+    .bugun-desktop-more{display:none !important;}
+    .bugun-mobil-more{display:block;text-align:center;font-size:12.5px;font-weight:600;color:var(--accent-blue);padding:6px 0 0;cursor:pointer;text-decoration:none;}
+
+    /* Sağlık Skoru / grafikler / mini tablolar gibi yoğun widget'lar varsayılan kapalı,
+       tek bir "Detaylı Analiz" satırıyla açılır (bkz. dash-widget'lara eklenen .mobil-detay-body) */
+    .mobil-detay-toggle{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:13px 16px;margin:2px 0 16px;cursor:pointer;box-shadow:var(--shadow-sm);}
+    .mobil-detay-toggle .t{font-size:13.5px;font-weight:600;color:var(--paper);}
+    .mobil-detay-toggle .chev{transition:transform .2s ease;color:var(--steel-300);flex-shrink:0;}
+    #page-genel-bakis.mobil-detay-acik .mobil-detay-toggle .chev{transform:rotate(180deg);}
+    #page-genel-bakis:not(.mobil-detay-acik) .mobil-detay-body{display:none;}
+
+    /* v.86: Mobil Araç Yönetimi sadeleştirme — filtre çipleri tek satır yatay kaydırmalı şerit,
+       istatistik kartları yığın yerine yatay kaydırmalı tek satır olur (bkz. AskUserQuestion:
+       "Araç Yönetimi + Detayı" mockup'ı) */
+    #page-arac-yonetimi .filters{flex-direction:column;align-items:stretch;}
+    .filter-chips{display:flex;flex-wrap:nowrap;gap:7px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;scrollbar-width:none;}
+    .filter-chips::-webkit-scrollbar{display:none;}
+    .filter-chips .chip{flex-shrink:0;}
+    #page-arac-yonetimi .stats{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:132px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;scrollbar-width:none;}
+    #page-arac-yonetimi .stats::-webkit-scrollbar{display:none;}
+  }
+  .mobil-fab{display:none;}
+  @media (max-width:900px){
+    .mobil-fab{position:fixed;right:18px;bottom:calc(74px + env(safe-area-inset-bottom,0px));width:52px;height:52px;border-radius:50%;background:var(--accent-blue);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(46,124,246,.35);z-index:90;cursor:pointer;}
+  }
+
+  /* v.86: Mobil Araç Detayı — sekme çubuğu sadece mobilde görünür; masaüstünde tüm bölümler
+     her zamanki gibi tek sayfada alt alta görünür (davranış değişmez). */
+  .vd-tabs{display:none;}
+  @media (max-width:900px){
+    .vd-tabs{display:flex;gap:4px;margin:-4px 0 14px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:1;}
+    .vd-tab-btn{flex:1;text-align:center;padding:10px 4px;font-size:13px;font-weight:600;color:var(--steel-300);border-bottom:2px solid transparent;margin-bottom:-1px;cursor:pointer;}
+    .vd-tab-btn.active{color:var(--accent-blue);border-color:var(--accent-blue);}
+    .vd-tab-panel{display:none;}
+    .vd-tab-panel.active{display:block;}
+  }
+
+  /* v.86: Mobil İade Al — adım adım akış. Masaüstünde tüm ia-step'ler her zaman görünür
+     (mevcut tek-form davranışı aynen korunur), mobilde tek seferde bir adım görünür. */
+  .ia-progress{display:none;}
+  .ia-mobile-btn{display:none;}
+  @media (max-width:900px){
+    .ia-progress{display:block;height:4px;border-radius:2px;background:var(--surface-2);margin-bottom:16px;overflow:hidden;}
+    .ia-progress-fill{display:block;height:100%;width:33.33%;background:var(--accent-blue);transition:width .2s ease;}
+    .ia-step{display:none;}
+    .ia-step.active{display:block;}
+    .ia-mobile-btn{display:block;flex:1;}
+    .ia-desktop-btn{display:none;}
+    .iade-foot{gap:10px;}
+  }
+
+  /* v.86: Mobil AI Filo Asistanı — hızlı komutlar tek satır yatay kaydırmalı şerit olur,
+     iki yükleme satırı yerine tek ataç ikonu + menüsü kullanılır. Masaüstünde değişiklik yok. */
+  .ai-quick-cmds{display:flex;flex-wrap:wrap;gap:6px;}
+  .ai-attach-wrap{display:none;position:relative;}
+  @media (max-width:900px){
+    .ai-quick-cmds{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;}
+    .ai-quick-cmds::-webkit-scrollbar{display:none;}
+    .ai-quick-cmds button{flex-shrink:0;}
+    .ai-upload-rows{display:none;}
+    .ai-attach-wrap{display:block;}
+    .ai-attach-btn{background:var(--surface-2);color:var(--text-2);border:1px solid var(--border);width:36px;height:36px;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .ai-attach-menu{display:none;position:absolute;bottom:44px;left:0;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow-md);padding:6px;min-width:230px;z-index:5;}
+    .ai-attach-menu.open{display:flex;flex-direction:column;gap:2px;}
+    .ai-attach-menu button{display:flex;align-items:center;gap:8px;background:none;border:none;color:var(--text);font-size:12.5px;font-family:inherit;padding:9px 10px;border-radius:7px;cursor:pointer;text-align:left;white-space:nowrap;}
+    .ai-attach-menu button:hover{background:var(--surface-2);}
+  }
   /* Mobilde sol menü çekmecesi (hamburger ile açılır) */
   @media (max-width:900px){
     .sidebar.show{
@@ -1226,7 +1318,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-13.85</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-13.86</div>
     </div>
   </div>
 </div>
@@ -1346,7 +1438,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-13.85</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-13.86</div>
     </div>
   </aside>
 
@@ -1517,19 +1609,27 @@
       <option value="kira-asc">Kira (artan)</option>
       <option value="kira-desc">Kira (azalan)</option>
     </select>
-    <div class="chip active" data-f="hepsi">Hepsi</div>
-    <div class="chip" data-f="Kirada">Kirada</div>
-    <div class="chip" data-f="Müsait">Müsait</div>
-    <div class="chip" data-f="Serviste">Serviste</div>
-    <div class="chip" data-f="Satıldı">Satıldı</div>
-    <div class="chip" id="chipArsiv" onclick="arsivAc()">🗄 Arşiv (<span id="arsivSayi">0</span>)</div>
-    <div class="chip" id="chipSigorta">🔵 Sigortası yaklaşan</div>
-    <div class="chip" id="chipMuayene">🟠 Muayenesi yaklaşan</div>
-    <div class="chip" id="chipKira">🟣 Kirası yaklaşan</div>
+    <div class="filter-chips">
+      <div class="chip active" data-f="hepsi">Hepsi</div>
+      <div class="chip" data-f="Kirada">Kirada</div>
+      <div class="chip" data-f="Müsait">Müsait</div>
+      <div class="chip" data-f="Serviste">Serviste</div>
+      <div class="chip" data-f="Satıldı">Satıldı</div>
+      <div class="chip" id="chipArsiv" onclick="arsivAc()">🗄 Arşiv (<span id="arsivSayi">0</span>)</div>
+      <div class="chip" id="chipSigorta">🔵 Sigortası yaklaşan</div>
+      <div class="chip" id="chipMuayene">🟠 Muayenesi yaklaşan</div>
+      <div class="chip" id="chipKira">🟣 Kirası yaklaşan</div>
+    </div>
   </div>
   <div class="result-count" id="resultCount"></div>
 
   <div class="grid" id="grid"></div>
+
+  <!-- v.86: Mobilde hızlı "Araç Ekle" için sabit + butonu (mockup'taki FAB) — toolbar'daki
+       "Araç ekle" düğmesiyle aynı openAdd() fonksiyonunu çağırır, ayrı bir davranış eklemez. -->
+  <div class="mobil-fab" onclick="openAdd()" title="Araç ekle">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5v14"/></svg>
+  </div>
 </section>
 
 <section class="page" data-page="kiralama" id="page-kiralama"></section>
@@ -4639,6 +4739,10 @@ function openIadeForm(id){
         </button>
       </div>
       <div class="iade-body">
+        <!-- v.86: Mobilde bu form 3 adımlık bir akışa ayrılır (Tarih/Km → Fotoğraf/Durum → Not/Onay);
+             masaüstünde .ia-step'lerin hepsi her zamanki gibi tek seferde görünür, davranış değişmez. -->
+        <div class="ia-progress"><span class="ia-progress-fill" id="iaProgressFill"></span></div>
+        <div class="ia-step active" data-step="1">
         <div class="iade-section">Kira Dönemi</div>
         <div class="iade-row">
           <div class="iade-field"><label>Kira başlama tarihi</label><input type="date" id="iadeKiraBas" value="${v.teslimTarih||v.kiraBaslama||''}" oninput="updateIadeKmHakki()"></div>
@@ -4661,6 +4765,9 @@ function openIadeForm(id){
         </div>
         <div class="iade-km-diff" id="iadeKmDiff"></div>
         <div class="iade-km-diff" id="iadeKmHakki"></div>
+        </div><!-- /ia-step 1 -->
+
+        <div class="ia-step" data-step="2">
         <div class="iade-section">İade Fotoğrafları</div>
         <div class="iade-field">
           <label>İade fotoğrafı 1 (ön/genel, en fazla 10MB)</label>
@@ -4685,6 +4792,9 @@ function openIadeForm(id){
           </button>
           <div class="doc-autofill-result" id="iadeKmOkuSonuc"></div>
         </div>
+        </div><!-- /ia-step 2 -->
+
+        <div class="ia-step" data-step="3">
         <div class="iade-section">Durum Bilgisi</div>
         <div class="iade-row">
           <div class="iade-field">
@@ -4715,10 +4825,14 @@ function openIadeForm(id){
           <input type="checkbox" id="iadeTutanak" checked style="width:16px;height:16px;accent-color:var(--accent-blue);">
           İade Tutanağı da oluştur (yazdır/PDF)
         </label>
+        </div><!-- /ia-step 3 -->
       </div>
       <div class="iade-foot">
-        <button class="iade-btn-cancel" onclick="document.getElementById('iadeModal').remove()">İptal</button>
-        <button class="iade-btn-save" onclick="saveIade('${v.id}')">İadeyi Kaydet — Müsaite Al</button>
+        <button class="iade-btn-cancel ia-desktop-btn" onclick="document.getElementById('iadeModal').remove()">İptal</button>
+        <button class="ia-mobile-btn ia-back-btn" onclick="iaGoStep(iaCurrentStep-1)">Geri</button>
+        <button class="iade-btn-save ia-desktop-btn" onclick="saveIade('${v.id}')">İadeyi Kaydet — Müsaite Al</button>
+        <button class="ia-mobile-btn ia-next-btn" onclick="iaGoStep(iaCurrentStep+1)">Devam Et</button>
+        <button class="ia-mobile-btn ia-save-btn iade-btn-save" onclick="saveIade('${v.id}')" style="display:none;">Kaydet</button>
       </div>
     </div>
   `;
@@ -4726,6 +4840,27 @@ function openIadeForm(id){
   document.body.appendChild(el);
   initIadeFotoUI(v);
   updateIadeKmDiff();
+  iaGoStep(1);
+}
+// v.86: Mobil İade Al — adım adım akış. Masaüstünde .ia-step'ler CSS ile her zaman görünür
+// kalır ve bu fonksiyonun görsel etkisi yoktur (adım butonları da masaüstünde gizlidir).
+let iaCurrentStep = 1;
+function iaGoStep(step){
+  const steps = document.querySelectorAll('.ia-step');
+  if(!steps.length) return;
+  step = Math.max(1, Math.min(steps.length, step));
+  iaCurrentStep = step;
+  steps.forEach(s=>s.classList.toggle('active', Number(s.dataset.step)===step));
+  const fill = document.getElementById('iaProgressFill');
+  if(fill) fill.style.width = (step/steps.length*100)+'%';
+  const back = document.querySelector('.ia-back-btn');
+  const next = document.querySelector('.ia-next-btn');
+  const save = document.querySelector('.ia-save-btn');
+  if(back) back.style.display = step>1 ? '' : 'none';
+  if(next) next.style.display = step<steps.length ? '' : 'none';
+  if(save) save.style.display = step===steps.length ? '' : 'none';
+  const body = document.querySelector('#iadeModal .iade-body');
+  if(body) body.scrollTop = 0;
 }
 
 function updateIadeKmDiff(){
@@ -5633,6 +5768,17 @@ function openVehicleDetail(id){
 
       <div style="padding:16px 20px;flex:1;">
 
+        <!-- v.86: Mobil Araç Detayı — masaüstünde tek uzun sayfa olarak kalır (bu sekme çubuğu
+             mobil dışında gizli, tüm .vd-tab-panel'ler her zaman görünür); mobilde ise aynı içerik
+             4 sekmeye ayrılır: Genel / Belgeler / Bakım / Geçmiş. -->
+        <div class="vd-tabs">
+          <div class="vd-tab-btn active" data-tab="genel" onclick="vdShowTab('genel')">Genel</div>
+          <div class="vd-tab-btn" data-tab="belgeler" onclick="vdShowTab('belgeler')">Belgeler</div>
+          <div class="vd-tab-btn" data-tab="bakim" onclick="vdShowTab('bakim')">Bakım</div>
+          <div class="vd-tab-btn" data-tab="gecmis" onclick="vdShowTab('gecmis')">Geçmiş</div>
+        </div>
+
+        <div class="vd-tab-panel active" data-tab="genel">
         <!-- Özet kartlar -->
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr ${v.ruhsatSeriNo?'1fr':''};gap:10px;margin-bottom:16px;">
           <div style="background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;">
@@ -5676,7 +5822,9 @@ function openVehicleDetail(id){
           ${kmDurum.mesaj ? `<div style="margin-top:12px;padding:9px 12px;border-radius:8px;background:${kmDurum.asim>0?'rgba(220,38,38,.1)':'rgba(22,163,74,.1)'};border:1px solid ${kmDurum.asim>0?'rgba(220,38,38,.25)':'rgba(22,163,74,.25)'};font-size:12.5px;color:${kmDurum.asim>0?'#DC2626':'#16A34A'};font-weight:600;">${kmDurum.mesaj}</div>` : ''}
           ${(!v.teslimTarih || !v.kmLimiti) && (v.durum==='Kirada'||v.durum==='Serviste') ? `<div style="margin-top:10px;font-size:12px;color:#D97706;">Km aşımı takibi için teslim tarihi ve aylık km limitinin "Kiralama İşlemlerine Git" üzerinden girilmesi gerekiyor.</div>` : ''}
         </div>` : ''}
+        </div><!-- /vd-tab-panel genel -->
 
+        <div class="vd-tab-panel" data-tab="belgeler">
         <!-- Belgeler -->
         ${belgeler.length ? `
         <div style="background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:14px;">
@@ -5738,7 +5886,9 @@ function openVehicleDetail(id){
             </div>`).join('')}
           </div>
         </div>`;})()}
+        </div><!-- /vd-tab-panel belgeler -->
 
+        <div class="vd-tab-panel" data-tab="bakim">
         <!-- Km Geçmişi -->
         <!-- v.77: Excel toplu km yükleme (Veri Aktarımı sayfası) kafa karıştırıcı bulunduğu için,
              tekil araç için fotoğraftan km okuma kısayolu eklendi (kmFotoModalAc). Bu kart artık
@@ -5867,7 +6017,9 @@ function openVehicleDetail(id){
             </div>`;
           }).join('') : '<div style="color:var(--steel-500);font-size:13px;padding:4px 0;">Servis kaydı yok. Kaza sonrası aracın hangi serviste ne kadar kaldığını buraya kaydedin.</div>'}
         </div>
+        </div><!-- /vd-tab-panel bakim -->
 
+        <div class="vd-tab-panel" data-tab="gecmis">
         <!-- Araç Geçmişi — kronolojik zaman tüneli -->
         ${gecmis.length ? `
         <div style="background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:14px;">
@@ -5900,6 +6052,7 @@ function openVehicleDetail(id){
             }).join('')}
           </div>
         </div>` : ''}
+        </div><!-- /vd-tab-panel gecmis -->
 
       </div>
     </div>
@@ -5907,6 +6060,13 @@ function openVehicleDetail(id){
 
   document.body.appendChild(el);
   el.onclick = e=>{ if(e.target===el) el.remove(); };
+}
+// v.86: Mobil Araç Detayı sekme geçişi — masaüstünde hiç çağrılmaz (sekme çubuğu CSS ile gizli).
+function vdShowTab(tab){
+  document.querySelectorAll('.vd-tab-panel').forEach(p=>p.classList.toggle('active', p.dataset.tab===tab));
+  document.querySelectorAll('.vd-tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+  const ov = document.getElementById('vehicleDetailOverlay');
+  if(ov) ov.firstElementChild.scrollTop = 0;
 }
 
 // ===== Araç bazlı tam dijital servis geçmişi — tek tıkla PDF/paylaşılabilir rapor =====
@@ -8024,7 +8184,7 @@ function filoSaglikSkoruHTML(){
   const R = 56, C = 2*Math.PI*R;
   const dash = (C*s.genel/100).toFixed(1);
   return `
-    <div class="dash-widget" data-widget-key="saglik-skoru" ${DASH_WIDGET_ATTRS}>${DASH_WIDGET_HANDLE}
+    <div class="dash-widget mobil-detay-body" data-widget-key="saglik-skoru" ${DASH_WIDGET_ATTRS}>${DASH_WIDGET_HANDLE}
     <div class="dcard" style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;box-shadow:var(--shadow-md);border:1px solid ${s.renk}33;">
       <div style="position:relative;width:132px;height:132px;flex-shrink:0;margin:0 auto;">
         <svg width="132" height="132" viewBox="0 0 132 132">
@@ -8161,6 +8321,27 @@ function renderDashboard(){
   page.innerHTML = `
     <div id="dashYedekUyari"></div>
     ${filoSaglikSkoruHTML()}
+    <!-- v.86: Mobil Genel Bakış sadeleştirme — masaüstündeki dash-stats yerine mobilde tek
+         "Filo Durumu" şeridi + sadece 2 öncelikli KPI gösterilir (bkz. CSS: .mobil-ozet / .dash-stats) -->
+    <div class="mobil-ozet">
+      <div class="mo-fleet" onclick="switchPage('arac-yonetimi')">
+        <div class="mo-fleet-top"><span class="n">${total} <span style="font-size:13px;font-weight:500;color:var(--steel-300);">araç</span></span><span class="l">Toplam filo</span></div>
+        <div class="mo-stackbar">
+          <span style="width:${pct(kirada)}%;background:#2E7CF6"></span>
+          <span style="width:${pct(musait)}%;background:#34C759"></span>
+          <span style="width:${pct(serviste)}%;background:#FF9500"></span>
+        </div>
+        <div class="mo-legend">
+          <div class="it"><span class="dot" style="background:#2E7CF6"></span>Kirada <b>${kirada}</b></div>
+          <div class="it"><span class="dot" style="background:#34C759"></span>Müsait <b>${musait}</b></div>
+          <div class="it"><span class="dot" style="background:#FF9500"></span>Serviste <b>${serviste}</b></div>
+        </div>
+      </div>
+      <div class="mo-kpi-row">
+        <div class="mo-kpi"><div class="l">Bu Ay Kira Geliri</div><div class="n">${fmtTL_role(gelir)}</div></div>
+        <div class="mo-kpi"><div class="l">Net Kâr</div><div class="n">${isAdmin()?fmtTL2(netKar):'—'}</div></div>
+      </div>
+    </div>
     <div class="dash-widget" data-widget-key="kpi" ${DASH_WIDGET_ATTRS}>${DASH_WIDGET_HANDLE}
     <div class="dash-stats">
       <div class="dstat dstat-strong" style="--accent-c:${kpiNotrHex};background:linear-gradient(135deg,rgba(${kpiNotr},.14),rgba(${kpiNotr},.03))" onclick="showVehicleQuickList('Toplam','Tüm Araçlar')">
@@ -8232,14 +8413,19 @@ function renderDashboard(){
       ${bugunYapilacaklar.length===0 ? '<div class="log-empty" style="color:#16A34A;">✓ Bugün için yapılacak işlem yok — filo sorunsuz çalışıyor.</div>' : (()=>{
         const gosterilen = bugunYapilacaklar.slice(0,6);
         const rows = gosterilen.map(i=>`
-          <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;background:${i.bg};margin-bottom:6px;border:1px solid ${i.renk}33;">
+          <div class="bugun-item" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;background:${i.bg};margin-bottom:6px;border:1px solid ${i.renk}33;">
             <span style="font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:${i.renk};width:64px;flex-shrink:0;">${i.etiket}</span>
             ${i.plaka ? `<span class="mini-plaka" style="font-size:11.5px;flex-shrink:0;">${esc(i.plaka)}</span>` : ''}
             <span style="flex:1;font-size:12.5px;color:var(--steel-100);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(i.aci)}</span>
             ${i.btn ? `<button onclick="event.stopPropagation();${i.act}" style="background:${i.renk};border:none;color:#fff;padding:4px 12px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;">${i.btn}</button>` : ''}
           </div>`).join('');
         const kalan = bugunYapilacaklar.length - gosterilen.length;
-        return rows + (kalan>0 ? `<div style="font-size:12px;color:var(--steel-300);text-align:center;padding:4px 0;">+${kalan} işlem daha — <a data-goto="bildirimler" style="color:var(--accent-blue);text-decoration:none;cursor:pointer;">Aksiyon Merkezi'nde gör</a></div>` : '');
+        // v.86: mobilde varsayılan olarak sadece ilk 2 madde görünür (bkz. CSS #bugunCard .bugun-item:nth-of-type(n+4))
+        // — geri kalanı (6'ya kadar gösterilenler dahil) için ayrı, mobile özel bir "daha fazla" bağlantısı gösterilir.
+        const mobilKalan = bugunYapilacaklar.length - 2;
+        return rows
+          + (kalan>0 ? `<div class="bugun-desktop-more" style="font-size:12px;color:var(--steel-300);text-align:center;padding:4px 0;">+${kalan} işlem daha — <a data-goto="bildirimler" style="color:var(--accent-blue);text-decoration:none;cursor:pointer;">Aksiyon Merkezi'nde gör</a></div>` : '')
+          + (mobilKalan>0 ? `<a class="bugun-mobil-more" data-goto="bildirimler">+ ${mobilKalan} tane daha gör</a>` : '');
       })()}
     </div>
     </div>
@@ -8263,7 +8449,11 @@ function renderDashboard(){
       </div>
     </div>
     </div>
-    <div class="dash-widget" data-widget-key="dagilim-masraf-periyot" ${DASH_WIDGET_ATTRS}>${DASH_WIDGET_HANDLE}
+    <div class="mobil-detay-toggle" onclick="document.getElementById('page-genel-bakis').classList.toggle('mobil-detay-acik')">
+      <span class="t">Detaylı Analiz ve Grafikler</span>
+      <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+    </div>
+    <div class="dash-widget mobil-detay-body" data-widget-key="dagilim-masraf-periyot" ${DASH_WIDGET_ATTRS}>${DASH_WIDGET_HANDLE}
     <div class="dash-grid dg-3">
       <div class="dcard">
         <h3>Filo Araç Dağılımı <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;background:rgba(46,124,246,.12);color:#2E7CF6;">Doluluk %${pct(kirada)}</span></h3>
@@ -8319,7 +8509,7 @@ function renderDashboard(){
       </div>
     </div>
     </div>
-    <div class="dash-widget" data-widget-key="kirali-musteri" data-admin-only ${DASH_WIDGET_ATTRS}>${DASH_WIDGET_HANDLE}
+    <div class="dash-widget mobil-detay-body" data-widget-key="kirali-musteri" data-admin-only ${DASH_WIDGET_ATTRS}>${DASH_WIDGET_HANDLE}
     <div class="dash-grid dg-3" style="grid-template-columns:1fr 1fr;">
       <div class="dcard">
         <h3>En Yüksek Kiralı Araçlar <a data-goto="arac-yonetimi" style="font-size:11px;font-weight:400;color:var(--accent-blue);text-decoration:none;">Tümü →</a></h3>
@@ -8331,7 +8521,7 @@ function renderDashboard(){
       </div>
     </div>
     </div>
-    <div class="dash-widget" data-widget-key="masraf-gelir" data-admin-only ${DASH_WIDGET_ATTRS}>${DASH_WIDGET_HANDLE}
+    <div class="dash-widget mobil-detay-body" data-widget-key="masraf-gelir" data-admin-only ${DASH_WIDGET_ATTRS}>${DASH_WIDGET_HANDLE}
     <div class="dash-grid dg-3" style="grid-template-columns:1fr 1fr;">
       <div class="dcard">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
@@ -8353,7 +8543,7 @@ function renderDashboard(){
       </div>
     </div>
     </div>
-    <div class="dash-widget" data-widget-key="aksiyon-araclar" ${DASH_WIDGET_ATTRS}>${DASH_WIDGET_HANDLE}
+    <div class="dash-widget mobil-detay-body" data-widget-key="aksiyon-araclar" ${DASH_WIDGET_ATTRS}>${DASH_WIDGET_HANDLE}
     <div class="dash-grid dg-141">
       <div class="dcard">
         <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/></svg>Aksiyon Merkezi <a data-goto="bildirimler" style="font-size:12px;font-weight:400;color:var(--accent-blue);text-decoration:none;">Tümünü Gör →</a></h3>
@@ -8365,7 +8555,7 @@ function renderDashboard(){
       </div>
     </div>
     </div>
-    <div class="dash-widget" data-widget-key="islemler-etkinlik" ${DASH_WIDGET_ATTRS}>${DASH_WIDGET_HANDLE}
+    <div class="dash-widget mobil-detay-body" data-widget-key="islemler-etkinlik" ${DASH_WIDGET_ATTRS}>${DASH_WIDGET_HANDLE}
     <div class="dash-grid dg-141" style="grid-template-columns:1.6fr 1fr;">
       <div class="dcard">
         <h3>Son İşlemler <span style="font-size:11px;font-weight:500;color:var(--steel-300);">kiralamalar · iadeler · masraflar</span></h3>
@@ -11309,6 +11499,10 @@ function renderAiPage(){
         </div>` : ''}
       </div>
 
+      <!-- v.86: Mobilde bu iki yükleme satırı gizlenir; yerine input çubuğundaki ataç
+           ikonu (.ai-attach-wrap) aynı sartnameInput/aiBelgeInput'u açar. Masaüstünde
+           değişiklik yok, iki satır her zamanki gibi görünür. -->
+      <div class="ai-upload-rows">
       <!-- Şartname Yükleme -->
       <div style="margin-bottom:12px;">
         <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--surface);border:1px solid var(--line);border-radius:10px;cursor:pointer;" onclick="document.getElementById('sartnameInput').click()">
@@ -11327,12 +11521,13 @@ function renderAiPage(){
         </div>
         <input type="file" id="aiBelgeInput" accept="image/*,application/pdf" style="display:none" onchange="aiBelgeYukle(this.files[0]);this.value='';">
       </div>
+      </div><!-- /ai-upload-rows -->
 
       <!-- Hızlı Komutlar -->
       ${aiMessages.length===0 ? `
       <div style="margin-bottom:16px;">
         <div style="font-size:11px;font-weight:600;color:var(--steel-300);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Hızlı Komutlar</div>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        <div class="ai-quick-cmds">
           ${[
             'İhaleye uygun kaç araç var, listele',
             'Müsait araçlarımı listele',
@@ -11361,6 +11556,15 @@ function renderAiPage(){
 
       <!-- Input -->
       <div style="background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px;display:flex;align-items:flex-end;gap:10px;box-shadow:var(--shadow-sm);">
+        <div class="ai-attach-wrap">
+          <button type="button" class="ai-attach-btn" onclick="aiAttachMenuToggle()" title="Dosya ekle">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05 12.25 20.24a5.5 5.5 0 0 1-7.78-7.78l9.19-9.19a3.67 3.67 0 0 1 5.19 5.19L9.66 17.65a1.83 1.83 0 0 1-2.6-2.6l8.49-8.48"/></svg>
+          </button>
+          <div class="ai-attach-menu" id="aiAttachMenu">
+            <button type="button" onclick="document.getElementById('sartnameInput').click();aiAttachMenuToggle(false)">${ICO('paperclip',13)} Teknik şartname yükle</button>
+            <button type="button" onclick="document.getElementById('aiBelgeInput').click();aiAttachMenuToggle(false)">${ICO('camera',13)} Evrak gönder</button>
+          </div>
+        </div>
         <textarea id="aiInput" placeholder="Filo verileriniz hakkında soru sorun..." rows="1"
           style="flex:1;background:none;border:none;color:var(--paper);font-family:inherit;font-size:14px;resize:none;outline:none;line-height:1.5;max-height:120px;"
           onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();aiSendFromInput();}"
@@ -11379,6 +11583,19 @@ function renderAiPage(){
   aiPageSesKontrol();
 }
 
+// v.86: Mobil AI Sohbet — masaüstünde her zaman açık duran şartname/evrak yükleme satırları
+// yerine, mobilde input çubuğundaki tek bir ataç ikonu arkasında küçük bir menü açılır.
+function aiAttachMenuToggle(force){
+  const menu = document.getElementById('aiAttachMenu');
+  if(!menu) return;
+  const open = typeof force==='boolean' ? force : !menu.classList.contains('open');
+  menu.classList.toggle('open', open);
+}
+document.addEventListener('click', e=>{
+  const menu = document.getElementById('aiAttachMenu');
+  if(!menu || !menu.classList.contains('open')) return;
+  if(!e.target.closest('.ai-attach-wrap')) aiAttachMenuToggle(false);
+});
 function renderAiMessage(m, idx){
   if(m.role==='user'){
     // v.85: aiBelgeYukle/aiSendSartname kullanıcı adına dosya-eki bildirim mesajları oluşturuyor
