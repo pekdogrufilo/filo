@@ -1374,7 +1374,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-14.96</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-14.97</div>
     </div>
   </div>
 </div>
@@ -1495,7 +1495,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-14.96</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-14.97</div>
     </div>
   </aside>
 
@@ -8407,6 +8407,7 @@ function renderDashboard(){
         <button onclick="switchPage('kiralamama')" onerror="" style="display:none;"></button>
         <button onclick="switchPage('docupload')" style="padding:8px 16px;border-radius:999px;font-size:12.5px;font-weight:600;cursor:pointer;border:1px solid var(--border-2);background:var(--surface-2);color:var(--text);">Belge Yükle</button>
         <button onclick="window.print()" style="padding:8px 16px;border-radius:999px;font-size:12.5px;font-weight:600;cursor:pointer;border:1px solid var(--border-2);background:var(--surface-2);color:var(--text);">Günlük Özet Yazdır</button>
+        <button onclick="filoTabloGoster()" style="padding:8px 16px;border-radius:999px;font-size:12.5px;font-weight:600;cursor:pointer;border:1px solid #2E7CF6;background:#2E7CF6;color:#fff;">Araç Tablosu</button>
       </div>
     </div>
     <div class="dash-grid dg-141" style="grid-template-columns:1.5fr 1fr;margin-bottom:16px;">
@@ -13081,6 +13082,40 @@ initInstallPrompt();
 
 
 <script>
+// v.97: Araç Tablosu — tüm filonun yoğun tablo görünümü (katman)
+window.filoTabloGoster = function(){
+  const eski = document.getElementById('filoTabloOv');
+  if(eski) eski.remove();
+  const durumRenk = {'Kirada':'#2E7CF6','Serviste':'#FF9500','Müsait':'#34C759','Pert':'#6B7280','Satıldı':'#0891B2'};
+  const sirali = [...vehicles].sort((a,b)=>(a.plaka||'').localeCompare(b.plaka||'','tr'));
+  const ov = document.createElement('div');
+  ov.id = 'filoTabloOv';
+  ov.setAttribute('onclick','if(event.target===this)this.remove()');
+  ov.innerHTML = `<div style="position:fixed;inset:0;z-index:950;background:rgba(10,12,14,.55);display:flex;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:var(--surface);border:1px solid var(--border-2);border-radius:20px;max-width:960px;width:100%;max-height:84vh;overflow:auto;padding:22px;box-shadow:var(--shadow-lg);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div style="font-size:16px;font-weight:800;">Araç Tablosu <span style="font-weight:500;color:var(--text-3);font-size:13px;">${sirali.length} araç</span></div>
+        <button onclick="document.getElementById('filoTabloOv').remove()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-3);line-height:1;">×</button>
+      </div>
+      <table class="mini-table" style="width:100%;">
+        <thead><tr><th>Plaka</th><th>Araç</th><th>Durum</th><th>Yer / Kiracı</th><th>Teslim</th><th>Bitiş</th></tr></thead>
+        <tbody>${sirali.map(v=>{
+          const dr = durumRenk[v.durum]||'#94A3B8';
+          return `<tr style="cursor:pointer;" onclick="openVehicleDetail('${v.id}');document.getElementById('filoTabloOv').remove();">
+            <td><span class="mini-plaka">${esc(v.plaka)}</span></td>
+            <td style="font-size:12.5px;">${esc([v.marka,v.model].filter(Boolean).join(' ')||'—')}</td>
+            <td><span style="font-size:11px;font-weight:700;color:${dr};">● ${esc(v.durum||'—')}</span></td>
+            <td style="font-size:12px;">${esc(v.yer||v.kiraciAdi||'—')}</td>
+            <td style="font-size:12px;">${v.teslimTarih?fmtTarih(v.teslimTarih):'—'}</td>
+            <td style="font-size:12px;">${(v.kiraBitis||v.sozlesmeBitis)?fmtTarih(v.kiraBitis||v.sozlesmeBitis):'—'}</td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+};
+
 // v.92: Sabit "Kaydet" düğmesi — tüm sayfalarda görünür, veriyi kalıcı depoya yazar
 (function(){
   function kaydet(){
