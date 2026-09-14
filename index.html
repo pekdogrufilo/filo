@@ -697,7 +697,7 @@
   .yp-row:last-child{border-bottom:none;}
   .yp-tip{color:var(--steel-100);flex:1;}
   .yp-gun{font-weight:600;white-space:nowrap;}
-  .dcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 22px;transition:border-color .2s ease, box-shadow .2s ease;}
+  .dcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 22px;transition:border-color .2s ease, box-shadow .2s ease;box-shadow:0 1px 3px rgba(20,40,80,.04);}
   .dcard:hover{border-color:var(--border-2);}
   .dcard:hover{border-color:var(--steel-600);}
   .dcard h3{font-family:var(--font-ui);font-size:14px;font-weight:700;margin:0 0 16px;display:flex;align-items:center;justify-content:space-between;letter-spacing:-.1px;color:var(--steel-100);}
@@ -1361,7 +1361,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-14.90</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-14.91</div>
     </div>
   </div>
 </div>
@@ -1482,7 +1482,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-14.90</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-14.91</div>
     </div>
   </aside>
 
@@ -9970,17 +9970,7 @@ function renderKiralamaPage(){
   });
 
   page.innerHTML = `
-    <div class="dcard" style="margin-bottom:16px;border:1px solid rgba(46,124,246,.25);">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:12px;">
-        <h3 style="margin:0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/></svg>Hızlı İşlemler</h3>
-      </div>
-      <div class="quick-grid">
-        <button class="qbtn" data-act="arac-kirala" title="Müsait bir aracı yeni bir kiracıya teslim et — durumu Kirada yapar, teslim/km bilgisiyle kapsamlı sözleşme oluşturur"><div class="qic" style="background:#16A34A;color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8v8h6l4 4V4L9 8H3Z"/></svg></div><span>Araç Kirala</span></button>
-        <button class="qbtn" data-act="iade-al"><div class="qic" style="background:#DC2626;color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></div><span>İade Al</span></button>
-        <button class="qbtn" data-act="yeni-sozlesme" title="Zaten kirada olan (veya bilgileri bilinen) bir araç için ayrı bir sözleşme belgesi/PDF hazırla"><div class="qic" style="background:#C98A3E;color:#fff">${DASH_ICONS.doc}</div><span>Yeni Sözleşme</span></button>
-      </div>
-    </div>
-
+    <!-- v.91: Hızlı İşlemler kartı kaldırıldı (panelde zaten var); sözleşme formu katlanır yapıldı -->
     <div class="dcard" style="margin-bottom:16px;">
       <h3 style="margin-bottom:2px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8v8h6l4 4V4L9 8H3Z"/></svg>Kira İşlemleri</h3>
       <p style="font-size:13px;color:var(--text-2);margin:2px 0 14px;">Bir araç seçip kiralama, teslim veya iade işlemini buradan yönetin.</p>
@@ -10071,10 +10061,6 @@ function renderKiralamaPage(){
       <div class="dstat" style="cursor:default;">
         <div class="dstat-ic" style="background:rgba(220,38,38,.15);color:#DC2626;">${DASH_ICONS.warn}</div>
         <div class="dstat-txt"><div class="l">Süresi Geçmiş</div><div class="n" style="color:#DC2626;">${suresiGecen.length}</div></div>
-      </div>
-      <div class="dstat" style="cursor:default;">
-        <div class="dstat-ic" style="background:rgba(46,124,246,.15);color:#2E7CF6;">${DASH_ICONS.trend}</div>
-        <div class="dstat-txt"><div class="l">Toplam Kira Kaydı</div><div class="n">${toplamKiraSayisi}</div></div>
       </div>
     </div>
 
@@ -10170,8 +10156,13 @@ function renderKiralamaPage(){
       ` : '<div class="log-empty">Şu an kirada araç yok.</div>'}
     </div>
 
-    <div class="dcard" style="margin-bottom:16px;">
-      <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg>Kira Sözleşmesi Oluştur</h3>
+    <details style="margin-bottom:16px;">
+      <summary class="dcard" style="cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg>
+        Kira Sözleşmesi Oluştur
+        <span style="margin-left:auto;font-size:12px;font-weight:500;color:var(--text-3);">aç / kapat</span>
+      </summary>
+      <div class="dcard" style="margin-top:8px;">
       <p style="font-size:13px;color:var(--text-2);margin-bottom:14px;">Araç bilgilerini seçin, sözleşme otomatik oluşturulsun. PDF ve Word olarak indirin.</p>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
         <div class="field">
@@ -10259,7 +10250,8 @@ function renderKiralamaPage(){
         </button>
       </div>
       <div id="sozlesmeLog" style="margin-top:10px;"></div>
-    </div>
+      </div>
+    </details>
 
     <div class="dcard" style="margin-bottom:16px;">
       <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2Z"/></svg>Kayıtlı Sözleşmeler <span style="font-weight:400;font-size:13px;color:var(--steel-100)">${sozlesmeler.length} kayıt</span></h3>
