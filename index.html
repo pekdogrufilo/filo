@@ -1361,7 +1361,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-14.89</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-14.90</div>
     </div>
   </div>
 </div>
@@ -1482,7 +1482,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-14.89</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-14.90</div>
     </div>
   </aside>
 
@@ -8309,34 +8309,9 @@ function renderDashboard(){
   const bugunKritik = bugunYapilacaklar.filter(i=>i.kritik).length;
   const bugunUyari = bugunYapilacaklar.length - bugunKritik;
 
-  // ===== Son İşlemler (tutarsız — parasal veriler Finans sayfasında) =====
-  const sonIslemler = (()=>{
-    const rows=[];
-    vehicles.forEach(v=>{
-      (v.kiraGecmisi||[]).forEach(k=>{
-        if(k.bas) rows.push({t:k.bas, tip:'kiralama', plaka:v.plaka, txt:(k.kiraci||k.yer||'—')+' kiraya verildi'});
-        if(k.iadeKm>0 && k.bitis) rows.push({t:k.bitis, tip:'iade', plaka:v.plaka, txt:(k.kiraci||'—')+' iade edildi'});
-      });
-    });
-    expenses.forEach(e=>{ if(e.tarih) rows.push({t:e.tarih, tip:'masraf', plaka:e.plaka||'', txt:e.tip||'Masraf'}); });
-    rows.sort((a,b)=>(b.t>a.t?1:b.t<a.t?-1:0));
-    return rows.slice(0,7);
-  })();
-  const sonIslemMeta = {
-    kiralama:{c:'#16A34A', bg:'rgba(22,163,74,.1)', et:'Kiraya'},
-    iade:{c:'#2E7CF6', bg:'rgba(46,124,246,.1)', et:'İade'},
-    masraf:{c:'#DC2626', bg:'rgba(220,38,38,.1)', et:'Masraf'},
-  };
+  // ===== Son İşlemler kaldırıldı (v.90) — hareket akışı Bildirimler sayfasında =====
 
-  // Araç durumu çipleri — tüm filo tek bakışta, duruma göre renkli
-  const durumSirasi = {'Kirada':0, 'Serviste':1, 'Müsait':2, 'Pert':3, 'Satıldı':4};
-  const durumRenk = {'Kirada':'#2E7CF6', 'Serviste':'#FF9500', 'Müsait':'#34C759', 'Pert':'#6B7280', 'Satıldı':'#0891B2'};
-  const aracCipleri = [...vehicles]
-    .sort((a,b)=>((durumSirasi[a.durum]??9)-(durumSirasi[b.durum]??9)) || (a.plaka||'').localeCompare(b.plaka||'','tr'))
-    .map(v=>{
-      const renk = durumRenk[v.durum]||'#94A3B8';
-      return `<span onclick="openVehicleDetail('${v.id}')" title="${esc(v.durum||'')} — ${esc([v.marka,v.model].filter(Boolean).join(' '))}" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:8px;background:${renk}1c;border:1px solid ${renk}45;font-family:'SF Mono',SFMono-Regular,Consolas,monospace;font-size:12px;font-weight:700;color:var(--paper);white-space:nowrap;">${esc(v.plaka)}<span style="width:7px;height:7px;border-radius:50%;background:${renk};flex-shrink:0;"></span></span>`;
-    }).join('');
+  // Araç durumu çipleri kaldırıldı (v.90) — araç listesi Araç Yönetimi'nde
 
   const miniKutu = (n, l, renk)=>`<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;">
     <div style="font-size:20px;font-weight:800;color:${renk||'var(--paper)'};line-height:1.2;">${n}</div>
@@ -8347,10 +8322,11 @@ function renderDashboard(){
   page.innerHTML = `
     <div id="dashYedekUyari"></div>
 
-    <!-- v.88: Genel Bakış tamamen yenilendi — tek sütun widget yığını yerine:
-         1) Filo Durumu hero şeridi  2) Bugün Yapılacaklar + Hızlı İşlemler
-         3) Yaklaşan 30 Gün + Araç Durumu çipleri  4) Son İşlemler + Son Etkinlikler.
-         Parasal veriler ve Filo Sağlık Skoru bu sayfadan kaldırıldı (Finans / Raporlar). -->
+    <!-- v.90: Genel Bakış en sade hali — sadece 3 blok:
+         1) Filo Durumu şeridi  2) Bugün Yapılacaklar + Hızlı İşlemler
+         3) Yaklaşan 30 Gün (tam genişlik).
+         Araç çipleri, Son İşlemler ve Son Etkinlikler bu sayfadan kaldırıldı;
+         hareket akışı Bildirimler, araç listesi Araç Yönetimi'nde. -->
     <div class="dcard" style="margin-bottom:16px;box-shadow:var(--shadow-md);">
       <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
         <h3 style="margin:0;">Filo Durumu</h3>
@@ -8416,46 +8392,19 @@ function renderDashboard(){
       </div>
     </div>
 
-    <div class="dash-grid dg-141" style="grid-template-columns:1fr 1.5fr;margin-bottom:16px;">
-      <div class="dcard">
-        <h3>Yaklaşan Periyot (30 Gün) <a data-goto="bildirimler" style="font-size:12px;font-weight:400;color:var(--accent-blue);text-decoration:none;">Tümü →</a></h3>
-        ${(()=>{
-          const tipler=[['Sigorta','sigortaTarihi'],['Muayene','muayeneTarihi'],['Kasko','kaskoBitis'],['Sözleşme','sozlesmeBitis'],['Kira','kiraBitis']];
-          const say={'Sigorta':0,'Muayene':0,'Kasko':0,'Sözleşme':0,'Kira':0};
-          const yak=[];
-          vehicles.forEach(v=>{ tipler.forEach(([ad,alan])=>{ const t=v[alan]; if(!t) return; const dl=daysLeft(t); if(dl!==null && dl<=30){ say[ad]++; yak.push({p:v.plaka, ad, dl}); } }); });
-          yak.sort((a,b)=>a.dl-b.dl);
-          const box=(ad,n,renk)=>`<div class="yp-box"><div class="yp-n" style="color:${n>0?renk:'var(--steel-300)'}">${n}</div><div class="yp-l">${ad}</div></div>`;
-          const liste=yak.slice(0,5).map(r=>`<div class="yp-row"><span class="mini-plaka" style="font-size:11.5px;">${esc(r.p)}</span><span class="yp-tip">${r.ad}</span><span class="yp-gun" style="color:${r.dl<0?'#DC2626':'#EA580C'}">${r.dl<0?Math.abs(r.dl)+' gün geçti':r.dl+' gün'}</span></div>`).join('');
-          return `<div class="yp-grid">${box('Sigorta',say['Sigorta'],'#2E7CF6')}${box('Muayene',say['Muayene'],'#6366F1')}${box('Kasko',say['Kasko'],'#8B5CF6')}${box('Kira/Söz.',say['Kira']+say['Sözleşme'],'#EA580C')}</div>
-          <div style="margin-top:10px;">${yak.length?liste:'<div class="log-empty">30 gün içinde belge bitişi yok.</div>'}</div>`;
-        })()}
-      </div>
-      <div class="dcard">
-        <h3>Araç Durumu <span style="font-weight:400;font-size:12px;color:var(--steel-300);">çipe tıklayın → araç detayı</span></h3>
-        ${total ? `<div style="display:flex;flex-wrap:wrap;gap:6px;max-height:230px;overflow-y:auto;">${aracCipleri}</div>` : '<div class="log-empty">Henüz araç eklenmedi.</div>'}
-      </div>
-    </div>
-
-    <div class="dash-grid dg-141" style="grid-template-columns:1.6fr 1fr;">
-      <div class="dcard">
-        <h3>Son İşlemler <span style="font-size:11px;font-weight:500;color:var(--steel-300);">kiralamalar · iadeler · masraflar</span></h3>
-        ${sonIslemler.length===0 ? '<div class="log-empty">Henüz işlem kaydı yok.</div>' : sonIslemler.map((r,i)=>{
-          const m = sonIslemMeta[r.tip]||sonIslemMeta.masraf;
-          return `
-          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;${i<sonIslemler.length-1?'border-bottom:1px solid var(--border);':''}">
-            <div style="width:28px;height:28px;border-radius:8px;background:${m.bg};color:${m.c};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0;letter-spacing:.3px;">${m.et.slice(0,3).toUpperCase()}</div>
-            <div style="flex:1;min-width:0;">
-              <div style="font-size:12.5px;color:var(--steel-100);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><span class="mini-plaka" style="font-size:10.5px;margin-right:6px;">${esc(r.plaka||'—')}</span>${esc(r.txt)}</div>
-              <div style="font-size:11px;color:var(--steel-300);margin-top:2px;">${fmtTarih(r.t)}</div>
-            </div>
-          </div>`;
-        }).join('')}
-      </div>
-      <div class="dcard">
-        <h3>Son Etkinlikler <a data-goto="bildirimler">Tümünü Gör</a></h3>
-        <div>${renderActivityListForDash()}</div>
-      </div>
+    <div class="dcard">
+      <h3>Yaklaşan Periyot (30 Gün) <a data-goto="bildirimler" style="font-size:12px;font-weight:400;color:var(--accent-blue);text-decoration:none;">Tümü →</a></h3>
+      ${(()=>{
+        const tipler=[['Sigorta','sigortaTarihi'],['Muayene','muayeneTarihi'],['Kasko','kaskoBitis'],['Sözleşme','sozlesmeBitis'],['Kira','kiraBitis']];
+        const say={'Sigorta':0,'Muayene':0,'Kasko':0,'Sözleşme':0,'Kira':0};
+        const yak=[];
+        vehicles.forEach(v=>{ tipler.forEach(([ad,alan])=>{ const t=v[alan]; if(!t) return; const dl=daysLeft(t); if(dl!==null && dl<=30){ say[ad]++; yak.push({p:v.plaka, ad, dl}); } }); });
+        yak.sort((a,b)=>a.dl-b.dl);
+        const box=(ad,n,renk)=>`<div class="yp-box"><div class="yp-n" style="color:${n>0?renk:'var(--steel-300)'}">${n}</div><div class="yp-l">${ad}</div></div>`;
+        const liste=yak.slice(0,6).map(r=>`<div class="yp-row"><span class="mini-plaka" style="font-size:11.5px;">${esc(r.p)}</span><span class="yp-tip">${r.ad}</span><span class="yp-gun" style="color:${r.dl<0?'#DC2626':'#EA580C'}">${r.dl<0?Math.abs(r.dl)+' gün geçti':r.dl+' gün'}</span></div>`).join('');
+        return `<div class="yp-grid">${box('Sigorta',say['Sigorta'],'#2E7CF6')}${box('Muayene',say['Muayene'],'#6366F1')}${box('Kasko',say['Kasko'],'#8B5CF6')}${box('Kira/Söz.',say['Kira']+say['Sözleşme'],'#EA580C')}</div>
+        <div style="margin-top:10px;">${yak.length?liste:'<div class="log-empty">30 gün içinde belge bitişi yok.</div>'}</div>`;
+      })()}
     </div>
   `;
   page.querySelectorAll('[data-goto]').forEach(el=>{ el.onclick = ()=>switchPage(el.dataset.goto); });
