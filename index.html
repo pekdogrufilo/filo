@@ -16,6 +16,12 @@
   #filoKaydetBtn:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(46,124,246,.45);}
   #filoKaydetBtn:active{transform:translateY(0);}
   @media (max-width:900px){#filoKaydetBtn{right:14px;bottom:76px;padding:11px 18px;}}
+  /* v.93: Otomatik kaydet rozeti */
+  #filoOtkRozet{position:fixed;left:22px;bottom:22px;z-index:899;background:rgba(38,161,105,.95);color:#fff;font-family:var(--font-ui);font-size:12.5px;font-weight:600;padding:8px 16px;border-radius:999px;box-shadow:0 6px 18px rgba(38,161,105,.35);opacity:0;transform:translateY(8px);transition:opacity .25s ease, transform .25s ease;pointer-events:none;}
+  #filoOtkRozet.show{opacity:1;transform:translateY(0);}
+  /* v.93: Koyu temada teslim/poliçe fotoğrafları koyu görünmesin — beyaz karneye al */
+  html[data-theme="dark"] img[src^="data:"]{background:#fff;border-radius:8px;padding:4px;box-shadow:0 2px 8px rgba(0,0,0,.4);}
+  html[data-theme="dark"] img[src^="blob:"]{background:#fff;border-radius:8px;padding:4px;box-shadow:0 2px 8px rgba(0,0,0,.4);}
 </style>
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#F5F5F7" id="themeColorMeta">
@@ -1368,7 +1374,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-14.92</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-14.93</div>
     </div>
   </div>
 </div>
@@ -1489,7 +1495,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-14.92</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-14.93</div>
     </div>
   </aside>
 
@@ -2800,6 +2806,26 @@ async function persist(){
       showToast('UYARI: Değişiklikler kaydedilemedi (depolama alanı dolu olabilir). Lütfen Excel yedeği alıp gereksiz belge/fotoğrafları silin.', true);
     }
   }
+  otomatikKayitRozeti();
+}
+// v.93: Otomatik kaydet göstergesi — persist() her çalıştığında sağ altta belirip kaybolur
+let __otkTs = 0;
+function otomatikKayitRozeti(){
+  const now = Date.now();
+  if(now - __otkTs < 800) return; // hızlı ardışık çağrılarda tek rozet
+  __otkTs = now;
+  let el = document.getElementById('filoOtkRozet');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'filoOtkRozet';
+    el.innerHTML = '✓ Otomatik kaydedildi';
+    document.body.appendChild(el);
+  }
+  el.classList.remove('show');
+  void el.offsetWidth;
+  el.classList.add('show');
+  clearTimeout(el.__t);
+  el.__t = setTimeout(()=>el.classList.remove('show'), 1600);
 }
 function cryptoId(){return 'v'+Math.random().toString(36).slice(2,10);}
 
