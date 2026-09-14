@@ -10,6 +10,12 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
 <style>
   :root{--font-ui:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;}
+
+  /* v.92: Sabit Kaydet düğmesi */
+  #filoKaydetBtn{position:fixed;right:22px;bottom:22px;z-index:900;display:flex;align-items:center;gap:7px;background:#2E7CF6;color:#fff;border:none;border-radius:999px;padding:12px 22px;font-family:var(--font-ui);font-size:13.5px;font-weight:700;cursor:pointer;box-shadow:0 8px 24px rgba(46,124,246,.35);transition:transform .15s ease, box-shadow .15s ease;}
+  #filoKaydetBtn:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(46,124,246,.45);}
+  #filoKaydetBtn:active{transform:translateY(0);}
+  @media (max-width:900px){#filoKaydetBtn{right:14px;bottom:76px;padding:11px 18px;}}
 </style>
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#F5F5F7" id="themeColorMeta">
@@ -36,19 +42,19 @@
 <link rel="apple-touch-icon" href="./apple-touch-icon.png">
 <style>
   :root{
-    /* ProGo Dark — koyu lacivert, katmanlı yüzeyler, mavi vurgu */
+    /* Nova Dark — grafit nötrler, yumuşak köşeler (v.92) */
     --font-body:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
     --font-display:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
     --font-mono:'SF Mono',ui-monospace,'Cascadia Mono',Consolas,monospace;
-    --bg:#0A1120;
-    --surface:#121C31;
-    --surface-2:#1A2742;
-    --surface-3:#24334F;
+    --bg:#101314;
+    --surface:#1A1D1E;
+    --surface-2:#232627;
+    --surface-3:#2D3132;
     --border:rgba(255,255,255,.09);
     --border-2:rgba(255,255,255,.17);
-    --text:#F2F6FC;
-    --text-2:#AAB8D0;
-    --text-3:#7183A3;
+    --text:#F4F4F2;
+    --text-2:#B8BCBA;
+    --text-3:#8A8F8D;
     --blue:#4E92FF;
     --blue-dim:rgba(46,124,246,.16);
     --green:#33D57F;
@@ -58,21 +64,21 @@
     --red:#F45B69;
     --red-dim:rgba(244,91,105,.14);
     --purple:#8E6BF1;
-    --radius:12px;
-    --radius-sm:9px;
-    --radius-lg:16px;
+    --radius:16px;
+    --radius-sm:12px;
+    --radius-lg:20px;
     --shadow-sm:0 0 0 1px rgba(255,255,255,.07);
     --shadow-md:0 8px 24px rgba(0,0,0,.45);
     --shadow-lg:0 24px 60px rgba(0,0,0,.6);
     --ease:cubic-bezier(.22,1,.36,1);
-    --asphalt-900:#0A1120;
-    --asphalt-800:#121C31;
-    --asphalt-700:#1A2742;
-    --steel-600:#1A2742;
-    --steel-500:#48587A;
-    --steel-300:#8B95A7;
-    --steel-100:#F2F6FC;
-    --paper:#F2F6FC;
+    --asphalt-900:#101314;
+    --asphalt-800:#1A1D1E;
+    --asphalt-700:#232627;
+    --steel-600:#232627;
+    --steel-500:#545859;
+    --steel-300:#9A9E9C;
+    --steel-100:#F4F4F2;
+    --paper:#F4F4F2;
     --safety:#F45B69;
     --safety-dim:rgba(244,91,105,.14);
     --teal:#33D57F;
@@ -84,22 +90,23 @@
     --gold:#C9962E;
     --gold-dim:rgba(201,150,46,.14);
     --accent-blue:#4E92FF;
-    --sidebar-bg:#0E1626;
-    --surface-glass:rgba(14,20,35,.75);
+    --sidebar-bg:#141718;
+    --surface-glass:rgba(20,23,24,.78);
     --edge-hl:transparent;
-    --fixed-light:#F5F5F7;
-    --fixed-dark:#1C2A44;
+    --fixed-light:#F3F1EC;
+    --fixed-dark:#202425;
   }
     html[data-theme="light"]{
-    --bg:#F5F5F7;
+    /* Nova Light — sıcak kum nötrler (v.92) */
+    --bg:#F3F1EC;
     --surface:#FFFFFF;
-    --surface-2:#F2F2F7;
-    --surface-3:#E5E5EA;
-    --border:rgba(0,0,0,.06);
-    --border-2:rgba(0,0,0,.14);
-    --text:#1D1D1F;
-    --text-2:#6E6E73;
-    --text-3:#8E8E93;
+    --surface-2:#F7F5F0;
+    --surface-3:#EAE7E0;
+    --border:rgba(60,50,30,.08);
+    --border-2:rgba(60,50,30,.18);
+    --text:#26241F;
+    --text-2:#6F6A5F;
+    --text-3:#8F8A7E;
     --blue:#2E7CF6;
     --blue-dim:rgba(46,124,246,.10);
     --green:#34C759;
@@ -108,20 +115,20 @@
     --amber-dim:rgba(255,149,0,.1);
     --red:#FF3B30;
     --red-dim:rgba(255,59,48,.1);
-    --sidebar-bg:#ECECF1;
-    /* Sonoma: yumuşak köşe + katmanlı gölge dili */
-    --radius:16px;
-    --radius-sm:10px;
-    --radius-lg:20px;
-    --asphalt-900:#F5F5F7;
+    --sidebar-bg:#EDE9E1;
+    /* Nova: yumuşak köşe + katmanlı gölge dili */
+    --radius:20px;
+    --radius-sm:12px;
+    --radius-lg:24px;
+    --asphalt-900:#F3F1EC;
     --asphalt-800:#FFFFFF;
-    --asphalt-700:#F2F2F7;
-    --steel-600:#E5E5EA;
-    --steel-500:#8E8E93;
-    --steel-300:#6E6E73;
-    --steel-100:#1D1D1F;
-    --paper:#1D1D1F;
-    --line:rgba(0,0,0,.06);
+    --asphalt-700:#F7F5F0;
+    --steel-600:#EAE7E0;
+    --steel-500:#8F8A7E;
+    --steel-300:#6F6A5F;
+    --steel-100:#26241F;
+    --paper:#26241F;
+    --line:rgba(60,50,30,.08);
     --shadow-sm:0 1px 2px rgba(0,0,0,.05),0 0 0 1px rgba(0,0,0,.03);
     --shadow-md:0 6px 20px rgba(0,0,0,.08);
     --shadow-lg:0 16px 48px rgba(0,0,0,.14);
@@ -1361,7 +1368,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-14.91</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-14.92</div>
     </div>
   </div>
 </div>
@@ -1482,7 +1489,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-14.91</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-14.92</div>
     </div>
   </aside>
 
@@ -13006,5 +13013,27 @@ initInstallPrompt();
   </div>
 </div>
 
+
+<script>
+// v.92: Sabit "Kaydet" düğmesi — tüm sayfalarda görünür, veriyi kalıcı depoya yazar
+(function(){
+  function kaydet(){
+    persist().then(()=>showToast('Değişiklikler kaydedildi.')).catch(()=>showToast('Kaydetme başarısız oldu.', true));
+  }
+  window.filoKaydet = kaydet;
+  function butonEkle(){
+    if(document.getElementById('filoKaydetBtn')) return;
+    const b = document.createElement('button');
+    b.id = 'filoKaydetBtn';
+    b.setAttribute('onclick','filoKaydet()');
+    b.title = 'Tüm veriyi kalıcı depoya kaydet';
+    b.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>Kaydet';
+    document.body.appendChild(b);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', butonEkle);
+  else butonEkle();
+})();
+</script>
 </body>
+
 </html>
