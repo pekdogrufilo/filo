@@ -1374,7 +1374,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-14.95</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-14.96</div>
     </div>
   </div>
 </div>
@@ -1495,7 +1495,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-14.95</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-14.96</div>
     </div>
   </aside>
 
@@ -8397,6 +8397,18 @@ function renderDashboard(){
       </div>
     </div>
 
+    <!-- v.96: Sık İşlemler — tek tıkla doğru akışı başlatan sihirbaz başlatıcıları -->
+    <div class="dcard" style="margin-bottom:16px;padding:14px 16px;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <span style="font-size:12px;font-weight:700;color:var(--text-3);letter-spacing:.4px;margin-right:4px;">SIK İŞLEMLER</span>
+        <button onclick="openMasrafDrawer()" style="padding:8px 16px;border-radius:999px;font-size:12.5px;font-weight:600;cursor:pointer;border:1px solid var(--border-2);background:var(--surface-2);color:var(--text);">Masraf Gir</button>
+        <button onclick="switchPage('excel');setTimeout(()=>{const a=document.getElementById('kiraYuklemeArea');if(a)a.scrollIntoView({behavior:'smooth',block:'center'});},80)" style="padding:8px 16px;border-radius:999px;font-size:12.5px;font-weight:600;cursor:pointer;border:1px solid var(--border-2);background:var(--surface-2);color:var(--text);">Hakediş / Fatura Yükle</button>
+        <button onclick="switchPage('excel');setTimeout(()=>{const a=document.getElementById('kmYuklemeArea');if(a)a.scrollIntoView({behavior:'smooth',block:'center'});},80)" style="padding:8px 16px;border-radius:999px;font-size:12.5px;font-weight:600;cursor:pointer;border:1px solid var(--border-2);background:var(--surface-2);color:var(--text);">Km Raporu Yükle</button>
+        <button onclick="switchPage('kiralamama')" onerror="" style="display:none;"></button>
+        <button onclick="switchPage('docupload')" style="padding:8px 16px;border-radius:999px;font-size:12.5px;font-weight:600;cursor:pointer;border:1px solid var(--border-2);background:var(--surface-2);color:var(--text);">Belge Yükle</button>
+        <button onclick="window.print()" style="padding:8px 16px;border-radius:999px;font-size:12.5px;font-weight:600;cursor:pointer;border:1px solid var(--border-2);background:var(--surface-2);color:var(--text);">Günlük Özet Yazdır</button>
+      </div>
+    </div>
     <div class="dash-grid dg-141" style="grid-template-columns:1.5fr 1fr;margin-bottom:16px;">
       <div class="dcard" id="bugunCard" style="border-left:4px solid ${bugunKritik>0?'#DC2626':(bugunUyari>0?'#EA580C':'#16A34A')};box-shadow:var(--shadow-md);">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
