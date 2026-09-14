@@ -1374,7 +1374,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-14.93</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-14.95</div>
     </div>
   </div>
 </div>
@@ -1495,7 +1495,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-14.93</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-14.95</div>
     </div>
   </aside>
 
@@ -8360,7 +8360,13 @@ function renderDashboard(){
          3) Yaklaşan 30 Gün (tam genişlik).
          Araç çipleri, Son İşlemler ve Son Etkinlikler bu sayfadan kaldırıldı;
          hareket akışı Bildirimler, araç listesi Araç Yönetimi'nde. -->
-    <div class="dcard" style="margin-bottom:16px;box-shadow:var(--shadow-md);">
+    ${total===0 ? `
+    <div class="dcard" style="margin-bottom:16px;text-align:center;padding:34px 22px;border:1px dashed rgba(46,124,246,.35);background:rgba(46,124,246,.04);">
+      <div style="font-size:17px;font-weight:800;margin-bottom:6px;">Filoya ilk aracınızı ekleyin</div>
+      <div style="font-size:13.5px;color:var(--text-2);margin-bottom:16px;">Plaka, marka ve kira bilgisi girin — sigorta, muayene ve kiralamalar otomatik takip edilmeye başlar.</div>
+      <button class="add-btn" data-act="yeni-arac" style="margin:0 auto;">+ İlk Aracı Ekle</button>
+    </div>` : ''}
+    <div class="dcard" style="margin-bottom:16px;box-shadow:var(--shadow-md);${total===0?'display:none;':''}">
       <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
         <h3 style="margin:0;">Filo Durumu</h3>
         <span style="font-size:12.5px;color:var(--text-3);">${bugunTarihi}</span>
@@ -10003,7 +10009,13 @@ function renderKiralamaPage(){
   });
 
   page.innerHTML = `
-    <!-- v.91: Hızlı İşlemler kartı kaldırıldı (panelde zaten var); sözleşme formu katlanır yapıldı -->
+    <!-- v.95: Sayfa üç sekmeye bölündü: İşlemler / Sözleşmeler / Geçmiş -->
+    <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;" id="krTabBar">
+      <button onclick="krTabSet('islem')" data-kr="islem" style="padding:9px 20px;border-radius:999px;font-size:13px;font-weight:700;cursor:pointer;border:1px solid #2E7CF6;background:#2E7CF6;color:#fff;">① İşlemler</button>
+      <button onclick="krTabSet('sozlesme')" data-kr="sozlesme" style="padding:9px 20px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--border-2);background:var(--surface);color:var(--text-2);">② Sözleşmeler</button>
+      <button onclick="krTabSet('gecmis')" data-kr="gecmis" style="padding:9px 20px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--border-2);background:var(--surface);color:var(--text-2);">③ Geçmiş</button>
+    </div>
+    <div class="kr-pane" data-kr="islem">
     <div class="dcard" style="margin-bottom:16px;">
       <h3 style="margin-bottom:2px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8v8h6l4 4V4L9 8H3Z"/></svg>Kira İşlemleri</h3>
       <p style="font-size:13px;color:var(--text-2);margin:2px 0 14px;">Bir araç seçip kiralama, teslim veya iade işlemini buradan yönetin.</p>
@@ -10189,6 +10201,8 @@ function renderKiralamaPage(){
       ` : '<div class="log-empty">Şu an kirada araç yok.</div>'}
     </div>
 
+    </div>
+    <div class="kr-pane" data-kr="sozlesme" style="display:none;">
     <details style="margin-bottom:16px;">
       <summary class="dcard" style="cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg>
@@ -10353,6 +10367,8 @@ function renderKiralamaPage(){
       })()}
     </div>
 
+    </div>
+    <div class="kr-pane" data-kr="gecmis" style="display:none;">
     <div class="dcard" style="margin-bottom:16px;">
       <h3>Kira Geçmişi <span style="font-weight:400;font-size:13px;color:var(--steel-100)">${toplamKiraSayisi} kayıt — ${withHistory.length} araç</span></h3>
       ${(()=>{
@@ -10384,9 +10400,21 @@ function renderKiralamaPage(){
         </table></div>`;
       })()}
     </div>
+    </div>
   `;
   wireQuickActions(page);
 }
+// v.95: Kiralama iç sekmeleri
+window.krTabSet = function(t){
+  document.querySelectorAll('.kr-pane').forEach(p=>p.style.display = p.dataset.kr===t ? '' : 'none');
+  document.querySelectorAll('#krTabBar button').forEach(b=>{
+    const on = b.dataset.kr===t;
+    b.style.background = on ? '#2E7CF6' : 'var(--surface)';
+    b.style.color = on ? '#fff' : 'var(--text-2)';
+    b.style.fontWeight = on ? '700' : '600';
+    b.style.borderColor = on ? '#2E7CF6' : 'var(--border-2)';
+  });
+};
 
 // ===== Kira İşlemleri sayfası: araç seç + Kiralama/Teslim/İade sekmeleri =====
 let kiOpSelectedId = null;
