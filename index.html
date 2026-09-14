@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
@@ -1299,9 +1299,52 @@
     .donut-svg,.chart-line-path,.chart-area,.chart-dot-pulse,.chart-bar{animation:none !important;stroke-dashoffset:0 !important;opacity:1 !important;transform:none !important;}
   }
 </style>
+<style id="focus-layout">
+  @media (min-width:901px){
+    #page-genel-bakis .mobil-detay-toggle{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      max-width:720px;
+      margin:4px 0 18px;
+      padding:12px 16px;
+      background:var(--surface);
+      border:1px solid var(--border);
+      border-radius:12px;
+      box-shadow:var(--shadow-sm);
+      cursor:pointer;
+    }
+    #page-genel-bakis .mobil-detay-toggle .t{
+      color:var(--paper);
+      font-size:13.5px;
+      font-weight:600;
+    }
+    #page-genel-bakis .mobil-detay-toggle .chev{
+      color:var(--steel-300);
+      transition:transform .2s ease;
+    }
+    #page-genel-bakis.mobil-detay-acik .mobil-detay-toggle .chev{transform:rotate(180deg);}
+    #page-genel-bakis:not(.mobil-detay-acik) .mobil-detay-body{display:none;}
+  }
+
+  #page-arac-yonetimi .vk-seg-row{display:none;}
+  #page-arac-yonetimi .vk-head{padding:14px 16px 12px;}
+  #page-arac-yonetimi .vk-body-pad{padding:10px 16px 12px;}
+  #page-arac-yonetimi .vk-foot{padding:9px 16px 11px;}
+  #page-arac-yonetimi .grid{gap:16px;}
+  @media (min-width:901px){
+    #page-arac-yonetimi .filters{row-gap:10px;}
+    #page-arac-yonetimi .filter-chips{
+      display:flex;
+      flex-wrap:wrap;
+      gap:7px;
+      width:100%;
+    }
+  }
+</style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></scrip<script src="/__verdent/inspector.js" defer></script>t>
 </head>
 <body>
 
@@ -1318,7 +1361,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-13.86</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-14.87</div>
     </div>
   </div>
 </div>
@@ -1409,6 +1452,7 @@
       <button class="sb-item" data-page="bakim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14.7 6.3-6.4 6.4a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l6.4-6.4a4 4 0 1 0-3-3Z"/><path d="M8 12 4 16l4 4 4-4"/></svg>Bakım &amp; Servis<span class="sb-badge" id="sbBakimBadge" style="display:none;background:var(--amber);">0</span></button>
 
       <div class="sb-section">FİNANS</div>
+      <button class="sb-item" data-page="finansal-analiz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/><path d="M21 12a9 9 0 1 1-18 0"/></svg>Finans</button>
       <button class="sb-item" data-page="masraf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Masraf Yönetimi</button>
       <button class="sb-item" data-page="raporlar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg>Raporlar</button>
 
@@ -1438,7 +1482,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-13.86</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-14.87</div>
     </div>
   </aside>
 
@@ -1583,9 +1627,6 @@
     <div class="stat ok"><div class="n" id="statMusait">0</div><div class="l">Müsait</div></div>
     <div class="stat"><div class="n" id="statKirada">0</div><div class="l">Kirada</div></div>
     <div class="stat warn"><div class="n" id="statBelge">0</div><div class="l">Belge 30 gün içinde bitiyor</div></div>
-    <div class="stat" data-admin-only><div class="n" id="statGelir">0</div><div class="l">Aylık kira geliri (TL)</div></div>
-    <div class="stat bad"><div class="n" id="statMasraf">0</div><div class="l">Bu ay toplam masraf (TL)</div></div>
-    <div class="stat ok"><div class="n" id="statNetKar">0</div><div class="l">Net kâr (bu ay, TL)</div></div>
   </div>
 
   <div class="alert-panel" id="alertPanel">
@@ -1635,6 +1676,8 @@
 <section class="page" data-page="kiralama" id="page-kiralama"></section>
 <section class="page" data-page="musteriler" id="page-musteriler"></section>
 <section class="page" data-page="masraf" id="page-masraf"></section>
+<section class="page" data-page="finansal-analiz" id="page-finansal-analiz"></section>
+
 <section class="page" data-page="bakim" id="page-bakim"></section>
 <section class="page" data-page="belgeler" id="page-belgeler"></section>
 <section class="page" data-page="docupload" id="page-docupload"></section>
@@ -3129,8 +3172,7 @@ function render(){
       </div>
 
       <div class="vk-foot">
-        <div class="vk-price">${(isAdmin() && v.kira)?`${fmtTL2(v.kira)} <small>/ay</small>`:'&nbsp;'}</div>
-        <div class="vk-acts">
+        <div class="vk-acts" style="margin-left:auto;">
           <button class="vk-det" title="Detay / Geçmiş" onclick="openVehicleDetail('${v.id}')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5"/><path d="M15 12H3"/></svg></button>
           <button class="masraf" data-id="${v.id}" title="Masraflar"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></button>
           <button class="edit" data-id="${v.id}" title="Düzenle"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>
@@ -3154,7 +3196,6 @@ function render(){
     const dm=daysLeft(v.muayeneTarihi), ds=daysLeft(v.sigortaTarihi);
     return (dm!==null && dm<=30) || (ds!==null && ds<=30);
   }).length;
-  document.getElementById('statGelir').textContent = fmtTL(vehicles.filter(v=>v.durum==='Kirada').reduce((s,v)=>s+(v.kira||0),0));
   renderStatMasraf();
 
   grid.querySelectorAll('.edit').forEach(b=>b.onclick=()=>openEdit(b.dataset.id));
@@ -6637,22 +6678,9 @@ document.getElementById('mEkleBtn').onclick = async ()=>{
   logActivity('add', `Masraf eklendi: <b>${esc(v.plaka)}</b> · ${esc(entry.tip)} · ${fmtTL2(tutar)}`);
 };
 function renderStatMasraf(){
-  const now = new Date();
-  const ym = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-  const totalMasraf = expenses.filter(e=>(e.tarih||'').slice(0,7)===ym).reduce((s,e)=>s+(Number(e.tutar)||0),0);
-  const el = document.getElementById('statMasraf');
-  if(el) el.textContent = Number(totalMasraf).toLocaleString('tr-TR');
-  const gelir = vehicles.filter(v=>v.durum==='Kirada').reduce((s,v)=>s+(Number(v.kira)||0),0);
-  const net = gelir - totalMasraf;
-  const netEl = document.getElementById('statNetKar');
-  if(netEl){
-    netEl.textContent = Number(net).toLocaleString('tr-TR');
-    const statCard = netEl.closest('.stat');
-    if(statCard){
-      statCard.classList.remove('ok','bad');
-      statCard.classList.add(net>=0 ? 'ok' : 'bad');
-    }
-  }
+  // v.87: Araç Yönetimi'ndeki parasal istatistik kartları (gelir/masraf/net kâr) kaldırıldı —
+  // parasal özetler yalnızca Finans sayfasında gösteriliyor. İşlev diğer sayfaların
+  // yenilenmesi davranışını korumak için bırakıldı.
   if(window.__currentPage && window.__currentPage!=='arac-yonetimi') renderCurrentPage();
 }
 
@@ -7271,6 +7299,7 @@ const PAGE_META = {
   'kiralama': {title:'Kiralama İşlemleri', sub:'Kiradaki araçlar ve kiracı bilgileri'},
   'musteriler': {title:'Müşteriler', sub:'Kiracı ve kurumlar: araçlar, kira toplamı ve geçmiş'},
   'masraf': {title:'Masraf Yönetimi', sub:'Tüm araçlardaki masrafları görüntüle ve ekle'},
+  'finansal-analiz': {title:'Finans', sub:'Gelir, masraf, kârlılık ve grafiksel özet'},
   'bakim': {title:'Bakım & Servis', sub:'Serviste olan araçlar ve servis planlaması'},
   'belgeler': {title:'Belgeler', sub:'Yüklenen sözleşme, poliçe ve raporlar'},
   'raporlar': {title:'Raporlar', sub:'Yazdırılabilir özet ve fatura raporları'},
@@ -7440,6 +7469,7 @@ function renderCurrentPage(){
   if(key==='genel-bakis') renderDashboard();
   else if(key==='arac-yonetimi') render();
   else if(key==='masraf') renderMasrafPage();
+  else if(key==='finansal-analiz') renderFinansalAnalizPage();
   else if(key==='bakim') renderBakimPage();
   else if(key==='belgeler') renderBelgelerPage();
   else if(key==='raporlar') renderRaporlarPage();
@@ -8337,10 +8367,6 @@ function renderDashboard(){
           <div class="it"><span class="dot" style="background:#FF9500"></span>Serviste <b>${serviste}</b></div>
         </div>
       </div>
-      <div class="mo-kpi-row">
-        <div class="mo-kpi"><div class="l">Bu Ay Kira Geliri</div><div class="n">${fmtTL_role(gelir)}</div></div>
-        <div class="mo-kpi"><div class="l">Net Kâr</div><div class="n">${isAdmin()?fmtTL2(netKar):'—'}</div></div>
-      </div>
     </div>
     <div class="dash-widget" data-widget-key="kpi" ${DASH_WIDGET_ATTRS}>${DASH_WIDGET_HANDLE}
     <div class="dash-stats">
@@ -8390,14 +8416,6 @@ function renderDashboard(){
           <div class="l">Hasar Kaydı</div>
           <div class="n" style="color:${hasarHex}">${hasarSayisi}</div>
           <div class="d" style="color:var(--steel-300);font-weight:400;">tüm zamanlar</div>
-        </div>
-      </div>
-      <div class="dstat dstat-strong dstat-wide" data-admin-only style="--accent-c:#16A34A;background:linear-gradient(135deg,rgba(22,163,74,.14),rgba(22,163,74,.03));cursor:default;">
-        <div class="dstat-ic" style="background:rgba(22,163,74,.12);color:#16A34A">${DASH_ICONS.trend}</div>
-        <div class="dstat-txt">
-          <div class="l">Aylık Kira Geliri</div>
-          <div class="n" style="color:#16A34A">${fmtTL_role(gelir)}</div>
-          <div class="d" style="color:var(--steel-300);font-weight:400;">${kirada} aktif kiralama</div>
         </div>
       </div>
     </div>
@@ -8489,10 +8507,6 @@ function renderDashboard(){
         <div class="fd-row"><span class="fd-dot" style="background:#8B5CF6"></span><span class="fd-l">Yakında Belgesi Bitecek</span><span class="fd-v">${yakindaBitecekPlakalar.size}</span></div>
         <div class="fd-row"><span class="fd-dot" style="background:#2E7CF6"></span><span class="fd-l">Aktif Müşteri</span><span class="fd-v">${aktifMusteri}</span></div>
       </div>
-      <div class="dcard" data-admin-only>
-        <h3>Aylık Masraf (Son 6 Ay) ${(()=>{ const gec = series.values.length>=2 ? series.values[series.values.length-2] : 0; const tr = gec>0 && masrafBuAy>0 ? Math.round((masrafBuAy-gec)/gec*100) : 0; return tr ? `<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;background:${tr>0?'rgba(220,38,38,.12)':'rgba(22,163,74,.12)'};color:${tr>0?'#DC2626':'#16A34A'}">${tr>0?'▲':'▼'} %${Math.abs(tr)}</span>` : ''; })()}</h3>
-        ${svgBarChart(series.values, series.labels, 320, 180, '#4E92FF')}
-      </div>
       <div class="dcard">
         <h3>Yaklaşan Periyot (30 Gün)</h3>
         ${(()=>{
@@ -8506,40 +8520,6 @@ function renderDashboard(){
           return `<div class="yp-grid">${box('Sigorta',say['Sigorta'],'#2E7CF6')}${box('Muayene',say['Muayene'],'#6366F1')}${box('Kasko',say['Kasko'],'#8B5CF6')}${box('Kira/Söz.',say['Kira']+say['Sözleşme'],'#EA580C')}</div>
           <div style="margin-top:10px;">${yak.length?liste:'<div class="log-empty">30 gün içinde belge bitişi yok.</div>'}</div>`;
         })()}
-      </div>
-    </div>
-    </div>
-    <div class="dash-widget mobil-detay-body" data-widget-key="kirali-musteri" data-admin-only ${DASH_WIDGET_ATTRS}>${DASH_WIDGET_HANDLE}
-    <div class="dash-grid dg-3" style="grid-template-columns:1fr 1fr;">
-      <div class="dcard">
-        <h3>En Yüksek Kiralı Araçlar <a data-goto="arac-yonetimi" style="font-size:11px;font-weight:400;color:var(--accent-blue);text-decoration:none;">Tümü →</a></h3>
-        ${topKiraChartHTML()}
-      </div>
-      <div class="dcard">
-        <h3>Müşteri Bazlı Aylık Gelir <a data-goto="musteriler" style="font-size:11px;font-weight:400;color:var(--accent-blue);text-decoration:none;">Tümü →</a></h3>
-        ${topMusteriChartHTML()}
-      </div>
-    </div>
-    </div>
-    <div class="dash-widget mobil-detay-body" data-widget-key="masraf-gelir" data-admin-only ${DASH_WIDGET_ATTRS}>${DASH_WIDGET_HANDLE}
-    <div class="dash-grid dg-3" style="grid-template-columns:1fr 1fr;">
-      <div class="dcard">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-          <h3 style="margin:0;">Masraf Dağılımı</h3>
-          <select id="masrafDonemSec" onchange="renderMasrafDonut(this.value)" style="background:var(--surface-2);border:1px solid var(--line);color:var(--paper);padding:4px 8px;border-radius:7px;font-size:12px;font-family:inherit;cursor:pointer;">
-            <option value="bu-ay">Bu Ay</option>
-            <option value="3-ay">Son 3 Ay</option>
-            <option value="6-ay">Son 6 Ay</option>
-            <option value="tum">Tüm Zamanlar</option>
-          </select>
-        </div>
-        <div id="masrafDonutContainer">
-          ${renderMasrafDonutHTML('bu-ay')}
-        </div>
-      </div>
-      <div class="dcard">
-        <h3>Gelir vs Masraf (Son 6 Ay) <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;background:${netKar>=0?'rgba(22,163,74,.12)':'rgba(220,38,38,.12)'};color:${netKar>=0?'#16A34A':'#DC2626'}">Net ${isAdmin()?fmtTL2(netKar):'—'}${_aylikMasrafHedefi.etiket && _aylikMasrafHedefi.etiket!=='bu ay' ? ' ('+_aylikMasrafHedefi.etiket+')' : ''}</span></h3>
-        ${(()=>{ const inc=computeMonthlyIncomeSeries(); const lbl = inc.gercekAySayisi===0?'Aylık Kira Geliri (tahmini)':inc.gercekAySayisi>=inc.toplamAySayisi?'Aylık Kira Geliri (gerçek)':'Aylık Kira Geliri (gerçek + tahmini)'; return svgDualLineChart(inc.values, series.values, series.labels, 320, 180, lbl); })()}
       </div>
     </div>
     </div>
@@ -8568,7 +8548,6 @@ function renderDashboard(){
               <div style="font-size:12.5px;color:var(--steel-100);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><span class="mini-plaka" style="font-size:10.5px;margin-right:6px;">${esc(r.plaka||'—')}</span>${esc(r.txt)}</div>
               <div style="font-size:11px;color:var(--steel-300);margin-top:2px;">${fmtTarih(r.t)}</div>
             </div>
-            ${r.tutar ? `<div style="font-size:12.5px;font-weight:700;color:${r.tutar>0?'#16A34A':'#DC2626'};white-space:nowrap;">${r.tutar>0?'+':''}${fmtTL2_role(r.tutar)}</div>` : ''}
           </div>`;
         }).join('')}
       </div>
@@ -8582,6 +8561,141 @@ function renderDashboard(){
   page.querySelectorAll('[data-goto]').forEach(el=>{ el.onclick = ()=>switchPage(el.dataset.goto); });
   wireQuickActions(page);
   dashYedekUyarisiGoster();
+  dashApplyWidgetOrder(page);
+  applyRoleVisibility();
+}
+
+// ===== Finansal Analiz sayfası (Genel Bakış'tan ayrılmış grafikler) =====
+function renderFinansalAnalizPage(){
+  const total = vehicles.length;
+  const kirada = vehicles.filter(v=>v.durum==='Kirada').length;
+  const musait = vehicles.filter(v=>v.durum==='Müsait').length;
+  const serviste = vehicles.filter(v=>v.durum==='Serviste').length;
+  const gelir = vehicles.filter(v=>v.durum==='Kirada').reduce((s,v)=>s+(Number(v.kira)||0),0);
+  const _aylikMasrafHedefi = aylikMasrafHedefiHesapla();
+  const masrafBuAy = _aylikMasrafHedefi.tutar;
+  const netKar = gelir - masrafBuAy;
+  const urgent = urgentList();
+  const pct = (n)=> total? Math.round(n/total*100) : 0;
+  const series = computeMonthlyExpenseSeries();
+  const yakindaBitecekPlakalar = new Set(urgent.filter(u=>u.dl<=30).map(u=>u.plaka));
+  const aktifMusteri = new Set(vehicles.filter(v=>v.kiraciAdi).map(v=>v.kiraciAdi)).size;
+
+  const page = document.getElementById('page-finansal-analiz');
+  page.innerHTML = `
+    ${filoSaglikSkoruHTML()}
+    <div class="dash-widget" data-widget-key="fa-ozet" ${DASH_WIDGET_ATTRS}>${DASH_WIDGET_HANDLE}
+    <div class="dash-stats" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:20px;">
+      <div class="dstat dstat-strong" style="--accent-c:#16A34A;background:linear-gradient(135deg,rgba(22,163,74,.14),rgba(22,163,74,.03));cursor:default;">
+        <div class="dstat-ic" style="background:rgba(22,163,74,.12);color:#16A34A">${DASH_ICONS.trend}</div>
+        <div class="dstat-txt"><div class="l">Aylık Kira Geliri</div><div class="n" style="color:#16A34A">${fmtTL_role(gelir)}</div><div class="d">${kirada} aktif kiralama</div></div>
+      </div>
+      <div class="dstat dstat-strong" data-admin-only style="--accent-c:${netKar>=0?'#16A34A':'#DC2626'};background:linear-gradient(135deg,rgba(${netKar>=0?'22,163,74':'220,38,38'},.14),rgba(${netKar>=0?'22,163,74':'220,38,38'},.03));cursor:default;">
+        <div class="dstat-ic" style="background:rgba(${netKar>=0?'22,163,74':'220,38,38'},.12);color:${netKar>=0?'#16A34A':'#DC2626'}">${DASH_ICONS.money}</div>
+        <div class="dstat-txt"><div class="l">Net Kâr (Bu Ay)</div><div class="n" style="color:${netKar>=0?'#16A34A':'#DC2626'}">${isAdmin()?fmtTL2(netKar):'—'}</div><div class="d">Tahmini</div></div>
+      </div>
+      <div class="dstat dstat-strong" style="--accent-c:#DC2626;background:linear-gradient(135deg,rgba(220,38,38,.14),rgba(220,38,38,.03));cursor:default;">
+        <div class="dstat-ic" style="background:rgba(220,38,38,.12);color:#DC2626">${DASH_ICONS.clock}</div>
+        <div class="dstat-txt"><div class="l">Bu Ay Masraf</div><div class="n" style="color:#DC2626">${fmtTL2(masrafBuAy)}</div><div class="d">${_aylikMasrafHedefi.etiket||'hesaplanan'}</div></div>
+      </div>
+      <div class="dstat dstat-strong" style="--accent-c:#2E7CF6;background:linear-gradient(135deg,rgba(46,124,246,.14),rgba(46,124,246,.03));cursor:default;">
+        <div class="dstat-ic" style="background:rgba(46,124,246,.12);color:#2E7CF6">${DASH_ICONS.users}</div>
+        <div class="dstat-txt"><div class="l">Aktif Müşteri</div><div class="n" style="color:#2E7CF6">${aktifMusteri}</div><div class="d">Kiracı sayısı</div></div>
+      </div>
+    </div>
+    </div>
+    <div class="dash-widget" data-widget-key="dagilim-masraf-periyot" ${DASH_WIDGET_ATTRS}>${DASH_WIDGET_HANDLE}
+    <div class="dash-grid dg-3">
+      <div class="dcard">
+        <h3>Filo Araç Dağılımı <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;background:rgba(46,124,246,.12);color:#2E7CF6;">Doluluk %${pct(kirada)}</span></h3>
+        ${(()=>{
+          const parts=[
+            {n:kirada, c:'#22C55E', l:'Kirada'},
+            {n:musait, c:'#F59E0B', l:'Müsait'},
+            {n:serviste, c:'#EF4444', l:'Serviste'},
+            {n:vehicles.filter(v=>v.durum==='Pert').length, c:'#6B7280', l:'Pert'},
+            {n:vehicles.filter(v=>v.durum==='Satıldı').length, c:'#0891B2', l:'Satıldı'},
+          ].filter(p=>p.n>0);
+          const sayilan = parts.reduce((s,p)=>s+p.n,0);
+          const diger = Math.max(0, total - sayilan);
+          if(diger>0) parts.push({n:diger, c:'#94A3B8', l:'Diğer'});
+          const T = total||1, R=52, C=2*Math.PI*R; let off=0;
+          const segs = parts.map(p=>{
+            const len = p.n/T*C;
+            const s = `<circle cx="70" cy="70" r="${R}" fill="none" stroke="${p.c}" stroke-width="19" stroke-dasharray="${len.toFixed(2)} ${(C-len).toFixed(2)}" stroke-dashoffset="${(-off).toFixed(2)}" transform="rotate(-90 70 70)" stroke-linecap="butt"/>`;
+            off += len; return s;
+          }).join('');
+          const legend = parts.map(p=>`<div class="fd-row"><span class="fd-dot" style="background:${p.c}"></span><span class="fd-l">${p.l}</span><span class="fd-v" style="color:${p.c}">${p.n}</span><span style="font-size:11px;color:var(--steel-300);width:38px;text-align:right;">%${Math.round(p.n/T*100)}</span></div>`).join('');
+          return `<div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+            <div style="position:relative;width:140px;height:140px;flex-shrink:0;margin:0 auto;">
+              <svg width="140" height="140" viewBox="0 0 140 140">${segs}</svg>
+              <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+                <div style="font-size:26px;font-weight:700;color:var(--paper);">${total}</div>
+                <div style="font-size:10px;font-weight:600;letter-spacing:.6px;color:var(--steel-300);">ARAÇ</div>
+              </div>
+            </div>
+            <div style="flex:1;min-width:140px;">${legend}</div>
+          </div>`;
+        })()}
+        <div class="fd-row"><span class="fd-dot" style="background:#8B5CF6"></span><span class="fd-l">Yakında Belgesi Bitecek</span><span class="fd-v">${yakindaBitecekPlakalar.size}</span></div>
+        <div class="fd-row"><span class="fd-dot" style="background:#2E7CF6"></span><span class="fd-l">Aktif Müşteri</span><span class="fd-v">${aktifMusteri}</span></div>
+      </div>
+      <div class="dcard" data-admin-only>
+        <h3>Aylık Masraf (Son 6 Ay) ${(()=>{ const gec = series.values.length>=2 ? series.values[series.values.length-2] : 0; const tr = gec>0 && masrafBuAy>0 ? Math.round((masrafBuAy-gec)/gec*100) : 0; return tr ? `<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;background:${tr>0?'rgba(220,38,38,.12)':'rgba(22,163,74,.12)'};color:${tr>0?'#DC2626':'#16A34A'}">${tr>0?'▲':'▼'} %${Math.abs(tr)}</span>` : ''; })()}</h3>
+        ${svgBarChart(series.values, series.labels, 320, 180, '#4E92FF')}
+      </div>
+      <div class="dcard">
+        <h3>Yaklaşan Periyot (30 Gün)</h3>
+        ${(()=>{
+          const tipler=[['Sigorta','sigortaTarihi'],['Muayene','muayeneTarihi'],['Kasko','kaskoBitis'],['Sözleşme','sozlesmeBitis'],['Kira','kiraBitis']];
+          const say={'Sigorta':0,'Muayene':0,'Kasko':0,'Sözleşme':0,'Kira':0};
+          const yak=[];
+          vehicles.forEach(v=>{ tipler.forEach(([ad,alan])=>{ const t=v[alan]; if(!t) return; const dl=daysLeft(t); if(dl!==null && dl<=30){ say[ad]++; yak.push({p:v.plaka, ad, dl}); } }); });
+          yak.sort((a,b)=>a.dl-b.dl);
+          const box=(ad,n,renk)=>`<div class="yp-box"><div class="yp-n" style="color:${n>0?renk:'var(--steel-300)'}">${n}</div><div class="yp-l">${ad}</div></div>`;
+          const liste=yak.slice(0,5).map(r=>`<div class="yp-row"><span class="mini-plaka" style="font-size:11.5px;">${esc(r.p)}</span><span class="yp-tip">${r.ad}</span><span class="yp-gun" style="color:${r.dl<0?'#DC2626':'#EA580C'}">${r.dl<0?Math.abs(r.dl)+' gün geçti':r.dl+' gün'}</span></div>`).join('');
+          return `<div class="yp-grid">${box('Sigorta',say['Sigorta'],'#2E7CF6')}${box('Muayene',say['Muayene'],'#6366F1')}${box('Kasko',say['Kasko'],'#8B5CF6')}${box('Kira/Söz.',say['Kira']+say['Sözleşme'],'#EA580C')}</div>
+          <div style="margin-top:10px;">${yak.length?liste:'<div class="log-empty">30 gün içinde belge bitişi yok.</div>'}</div>`;
+        })()}
+      </div>
+    </div>
+    </div>
+    <div class="dash-widget" data-widget-key="kirali-musteri" data-admin-only ${DASH_WIDGET_ATTRS}>${DASH_WIDGET_HANDLE}
+    <div class="dash-grid dg-3" style="grid-template-columns:1fr 1fr;">
+      <div class="dcard">
+        <h3>En Yüksek Kiralı Araçlar <a data-goto="arac-yonetimi" style="font-size:11px;font-weight:400;color:var(--accent-blue);text-decoration:none;">Tümü →</a></h3>
+        ${topKiraChartHTML()}
+      </div>
+      <div class="dcard">
+        <h3>Müşteri Bazlı Aylık Gelir <a data-goto="musteriler" style="font-size:11px;font-weight:400;color:var(--accent-blue);text-decoration:none;">Tümü →</a></h3>
+        ${topMusteriChartHTML()}
+      </div>
+    </div>
+    </div>
+    <div class="dash-widget" data-widget-key="masraf-gelir" data-admin-only ${DASH_WIDGET_ATTRS}>${DASH_WIDGET_HANDLE}
+    <div class="dash-grid dg-3" style="grid-template-columns:1fr 1fr;">
+      <div class="dcard">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <h3 style="margin:0;">Masraf Dağılımı</h3>
+          <select id="masrafDonemSec" onchange="renderMasrafDonut(this.value)" style="background:var(--surface-2);border:1px solid var(--line);color:var(--paper);padding:4px 8px;border-radius:7px;font-size:12px;font-family:inherit;cursor:pointer;">
+            <option value="bu-ay">Bu Ay</option>
+            <option value="3-ay">Son 3 Ay</option>
+            <option value="6-ay">Son 6 Ay</option>
+            <option value="tum">Tüm Zamanlar</option>
+          </select>
+        </div>
+        <div id="masrafDonutContainer">
+          ${renderMasrafDonutHTML('bu-ay')}
+        </div>
+      </div>
+      <div class="dcard">
+        <h3>Gelir vs Masraf (Son 6 Ay) <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;background:${netKar>=0?'rgba(22,163,74,.12)':'rgba(220,38,38,.12)'};color:${netKar>=0?'#16A34A':'#DC2626'}">Net ${isAdmin()?fmtTL2(netKar):'—'}${_aylikMasrafHedefi.etiket && _aylikMasrafHedefi.etiket!=='bu ay' ? ' ('+_aylikMasrafHedefi.etiket+')' : ''}</span></h3>
+        ${(()=>{ const inc=computeMonthlyIncomeSeries(); const lbl = inc.gercekAySayisi===0?'Aylık Kira Geliri (tahmini)':inc.gercekAySayisi>=inc.toplamAySayisi?'Aylık Kira Geliri (gerçek)':'Aylık Kira Geliri (gerçek + tahmini)'; return svgDualLineChart(inc.values, series.values, series.labels, 320, 180, lbl); })()}
+      </div>
+    </div>
+    </div>
+  `;
+  page.querySelectorAll('[data-goto]').forEach(el=>{ el.onclick = ()=>switchPage(el.dataset.goto); });
   dashApplyWidgetOrder(page);
   applyRoleVisibility();
 }
@@ -8789,8 +8903,6 @@ function bakimTahminiHesapla(v){
 function renderBakimPage(){
   const page = document.getElementById('page-bakim');
   const serviste = vehicles.filter(v=>v.durum==='Serviste');
-  const bakimMasraf = [...expenses].filter(e=>['Tamir','Bakım','Lastik'].includes(e.tip)).sort((a,b)=>(b.tarih||'').localeCompare(a.tarih||'')).slice(0,20);
-  const tumBakimMasraf = [...expenses].filter(e=>['Tamir','Bakım','Lastik'].includes(e.tip)).sort((a,b)=>(b.tarih||'').localeCompare(a.tarih||''));
   const planliServis = vehicles.filter(v=>v.sonrakiServisTarihi || v.sonrakiServisKm).sort((a,b)=>{
     const da = daysLeft(a.sonrakiServisTarihi)||9999;
     const db = daysLeft(b.sonrakiServisTarihi)||9999;
@@ -8806,9 +8918,13 @@ function renderBakimPage(){
     });
 
   page.innerHTML = `
-    <div class="dcard" style="margin-bottom:16px;">
-      <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/></svg>Tamir Fişi Yükle — AI ile Otomatik Oku</h3>
-      <p style="font-size:13px;color:var(--steel-300);margin-bottom:14px;">Tamirhaneden gelen fişin fotoğrafını veya PDF'ini yükle. AI plaka, tutar, tarih ve yapılan işlemi okuyup masraf olarak kaydet.</p>
+    <details class="dcard" style="margin-bottom:16px;">
+      <summary style="cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;margin:0;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/></svg>
+        Tamir Fişi Yükle — AI ile Otomatik Oku
+        <span style="margin-left:auto;font-size:12px;font-weight:500;color:var(--steel-300);">aç / kapat</span>
+      </summary>
+      <p style="font-size:13px;color:var(--steel-300);margin:14px 0;">Tamirhaneden gelen fişin fotoğrafını veya PDF'ini yükle. AI plaka, tutar, tarih ve yapılan işlemi okuyup masraf olarak kaydet.</p>
       <div id="fisYuklemeArea" style="border:2px dashed var(--line);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:border-color .2s;"
         ondragover="event.preventDefault();this.style.borderColor='var(--accent-blue)'"
         ondragleave="this.style.borderColor='var(--line)'"
@@ -8820,7 +8936,7 @@ function renderBakimPage(){
         <input type="file" id="fisInput" accept="image/*,.pdf" style="display:none" onchange="fisOku(this.files[0])">
       </div>
       <div id="fisLog" style="margin-top:14px;"></div>
-    </div>
+    </details>
 
     <div class="dash-stats" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:20px;">
       <div class="dstat" style="cursor:default;">
@@ -8833,7 +8949,7 @@ function renderBakimPage(){
       </div>
       <div class="dstat" style="cursor:default;">
         <div class="dstat-ic" style="background:#64748B">${DASH_ICONS.trend}</div>
-        <div class="dstat-txt"><div class="n">${fmtTL(bakimMasraf.reduce((s,e)=>s+(e.tutar||0),0))}</div><div class="l">Son Bakım Masrafı</div></div>
+        <div class="dstat-txt"><div class="n">${bakimTahminleri.length}</div><div class="l">Bakım Tahmini Olan Araç</div></div>
       </div>
     </div>
 
@@ -8929,72 +9045,17 @@ function renderBakimPage(){
     </div>
 
     <div class="dcard">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
-        <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76Z"/></svg>Servis Kayıtları <span style="font-weight:400;font-size:13px;color:var(--steel-100)">${tumBakimMasraf.length} kayıt</span></h3>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <input id="servisKayitAra" placeholder="Plaka ara..." oninput="servisKayitFiltrele()"
-            style="background:var(--surface-2);border:1px solid var(--line);color:var(--paper);padding:6px 10px;border-radius:8px;font-size:12.5px;font-family:inherit;width:130px;">
-          <select id="servisKayitTip" onchange="servisKayitFiltrele()"
-            style="background:var(--surface-2);border:1px solid var(--line);color:var(--paper);padding:6px 8px;border-radius:8px;font-size:12.5px;font-family:inherit;cursor:pointer;">
-            <option value="">Tüm Tipler</option>
-            <option value="Tamir">Tamir</option>
-            <option value="Bakım">Bakım</option>
-            <option value="Lastik">Lastik</option>
-            <option value="Diğer">Diğer</option>
-          </select>
-          <select id="servisKayitDonem" onchange="servisKayitFiltrele()"
-            style="background:var(--surface-2);border:1px solid var(--line);color:var(--paper);padding:6px 8px;border-radius:8px;font-size:12.5px;font-family:inherit;cursor:pointer;">
-            <option value="tum">Tüm Zamanlar</option>
-            <option value="12">Son 12 Ay</option>
-            <option value="6">Son 6 Ay</option>
-          </select>
-        </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+        <h3 style="margin:0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76Z"/></svg>Servis Kayıtları (Bakım Masrafları)</h3>
+        <button class="settings-btn" onclick="switchPage('masraf')">Masraf Yönetimi'nde Gör →</button>
       </div>
-      <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:12px;font-size:12.5px;">
-        <span style="color:var(--steel-300);">Toplam: <b style="color:var(--paper)">${fmtTL(tumBakimMasraf.reduce((s,e)=>s+(e.tutar||0),0))}</b></span>
-        ${['Tamir','Bakım','Lastik'].map(t=>{ const tp=tumBakimMasraf.filter(e=>e.tip===t); return tp.length?`<span style="color:var(--steel-300);">${t}: <b style="color:var(--paper)">${tp.length} kayıt · ${fmtTL(tp.reduce((s,e)=>s+(e.tutar||0),0))}</b></span>`:''; }).join('')}
-      </div>
-      <div id="servisKayitTablo">
-        ${renderServisKayitTablosu(tumBakimMasraf)}
-      </div>
+      <p style="font-size:12.5px;color:var(--steel-300);margin:10px 0 0;">Tamir, bakım ve lastik kayıtları tutarlarıyla birlikte Masraf Yönetimi'nde tutulur; burada iki kez listelenmez.</p>
     </div>
   `;
 }
 
-function renderServisKayitTablosu(liste){
-  if(!liste.length) return '<div class="log-empty">Kayıt bulunamadı. Tamir fişi yükleyerek veya Masraf Yönetimi\'nden ekleyerek kayıt oluşturabilirsiniz.</div>';
-  return `<div class="table-scroll"><table class="mini-table">
-    <thead><tr><th>Plaka</th><th>Tip</th><th>Tarih</th><th>Not</th><th style="text-align:right">Tutar</th><th></th></tr></thead>
-    <tbody>${liste.map(e=>{
-      const v = vehicles.find(x=>x.plaka===e.plaka);
-      return `<tr>
-        <td><span class="mini-plaka">${esc(e.plaka||'—')}</span></td>
-        <td><span style="font-weight:600;color:${e.tip==='Tamir'?'var(--safety)':e.tip==='Lastik'?'#C98A3E':'#38A169'}">${esc(e.tip||'—')}</span></td>
-        <td>${esc(fmtTarih(e.tarih))}</td>
-        <td style="color:var(--steel-100);font-size:12px">${esc(e.not||'—')}</td>
-        <td style="text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${fmtTL2(e.tutar)}</td>
-        <td>${v?`<button onclick="openVehicleDetail('${v.id}')" style="background:none;border:1px solid var(--line);color:var(--paper);font-size:11px;padding:3px 9px;border-radius:6px;cursor:pointer;white-space:nowrap;">Araç</button>`:''}</td>
-      </tr>`;
-    }).join('')}</tbody>
-  </table></div>`;
-}
-
-function servisKayitFiltrele(){
-  const q = (document.getElementById('servisKayitAra')?.value||'').trim().toLocaleUpperCase('tr-TR');
-  const tip = document.getElementById('servisKayitTip')?.value||'';
-  const donem = document.getElementById('servisKayitDonem')?.value||'tum';
-  let liste = [...expenses].filter(e=>['Tamir','Bakım','Lastik'].includes(e.tip));
-  if(q) liste = liste.filter(e=>(e.plaka||'').toLocaleUpperCase('tr-TR').includes(q));
-  if(tip) liste = liste.filter(e=>e.tip===tip);
-  if(donem!=='tum'){
-    const sinir = new Date(); sinir.setMonth(sinir.getMonth()-Number(donem));
-    const sstr = sinir.toISOString().slice(0,10);
-    liste = liste.filter(e=>(e.tarih||'')>=sstr);
-  }
-  liste.sort((a,b)=>(b.tarih||'').localeCompare(a.tarih||''));
-  const el = document.getElementById('servisKayitTablo');
-  if(el) el.innerHTML = renderServisKayitTablosu(liste);
-}
+// (v.87) renderServisKayitTablosu / servisKayitFiltrele kaldırıldı — Bakım & Servis
+// sayfasındaki yinelenen bakım-masraf tablosu Masraf Yönetimi'ne yönlendirmeyle değiştirildi.
 
 
 async function fisOku(file){
@@ -10421,42 +10482,34 @@ function renderKiralamaPage(){
 
     <div class="dcard" style="margin-bottom:16px;">
       <h3>Kira Geçmişi <span style="font-weight:400;font-size:13px;color:var(--steel-100)">${toplamKiraSayisi} kayıt — ${withHistory.length} araç</span></h3>
-      ${withHistory.length ? withHistory.map(v=>{
-        const gecmis = [...(v.kiraGecmisi||[])].reverse();
-        return `
-          <div style="margin-bottom:18px;">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--line);">
-              <span class="mini-plaka">${esc(v.plaka)}</span>
-              <span style="font-size:13px;font-weight:600;">${esc([v.marka,v.model].filter(Boolean).join(' ')||'—')}</span>
-              <span style="font-size:13px;color:var(--steel-100);">${gecmis.length} kira dönemi</span>
-            </div>
-            <div class="table-scroll"><table class="mini-table">
-              <thead><tr><th>Dönem</th><th>Süre</th><th>Kiracı/Yer</th><th>Teslim km</th><th>İade km</th><th>Kullanım</th><th>Yakıt</th><th>Hasar</th></tr></thead>
-              <tbody>${gecmis.map((k,i)=>{
-                const gun = (k.bas&&k.bitis) ? Math.round((new Date(k.bitis)-new Date(k.bas))/(86400000)) : null;
-                const donem = k.bas&&k.bitis ? `${fmtTarih(k.bas)} → ${fmtTarih(k.bitis)}` : (k.bas ? fmtTarih(k.bas) : '—');
-                return `<tr style="${i===0?'':''}">
-                  <td style="font-size:13px;">${donem}</td>
-                  <td>${gun!==null?gun+' gün':'—'}</td>
-                  <td>${esc(k.kiraci||'—')}</td>
-                  <td style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${k.kmBas?k.kmBas.toLocaleString('tr-TR')+' km':'—'}</td>
-                  <td style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${k.kmBit?k.kmBit.toLocaleString('tr-TR')+' km':'—'}</td>
-                  <td style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace;color:${k.kullanim>0?'#C9A961':'var(--steel-300)'}">
-                    ${k.kullanim>0?k.kullanim.toLocaleString('tr-TR')+' km':'—'}
-                  </td>
-                  <td>${esc(k.yakit||'—')}</td>
-                  <td style="color:${k.hasar&&k.hasar!=='Hasarsız'?'var(--safety)':'#38A169'}">
-                    ${esc(k.hasar||'—')}
-                  </td>
-                </tr>`;
-              }).join('')}</tbody>
-            </table></div>
-            ${gecmis.some(k=>k.not) ? `<div style="font-size:13px;color:var(--steel-100);margin-top:6px;padding:8px 12px;background:var(--surface-2);border-radius:6px;">
-              ${gecmis.filter(k=>k.not).map(k=>`<div><b>${k.bas?fmtTarih(k.bas):''}:</b> ${esc(k.not)}</div>`).join('')}
-            </div>` : ''}
-          </div>
-        `;
-      }).join('') : '<div class="log-empty">Henüz iade kaydı yok. "İade Al" butonuyla kira dönemlerini kayıt altına alabilirsin.</div>'}
+      ${(()=>{
+        const kayitlar = [];
+        withHistory.forEach(v=>{
+          (v.kiraGecmisi||[]).forEach(k=>kayitlar.push({v, k}));
+        });
+        kayitlar.sort((a,b)=>((b.k.bitis||b.k.bas||'').localeCompare(a.k.bitis||a.k.bas||'')));
+        if(!kayitlar.length) return '<div class="log-empty">Henüz iade kaydı yok. "İade Al" butonuyla kira dönemlerini kayıt altına alabilirsin.</div>';
+        return `<div class="table-scroll"><table class="mini-table">
+          <thead><tr><th>Plaka</th><th>Dönem</th><th>Kiracı/Yer</th><th>Süre</th><th>Kullanım</th><th>Yakıt</th><th>Hasar</th></tr></thead>
+          <tbody>${kayitlar.map(({v,k})=>{
+            const gun = (k.bas&&k.bitis) ? Math.round((new Date(k.bitis)-new Date(k.bas))/(86400000)) : null;
+            const donem = k.bas&&k.bitis ? `${fmtTarih(k.bas)} → ${fmtTarih(k.bitis)}` : (k.bas ? fmtTarih(k.bas) : '—');
+            return `<tr style="cursor:pointer;" onclick="openVehicleDetail('${v.id}')">
+              <td><span class="mini-plaka">${esc(v.plaka)}</span></td>
+              <td style="font-size:13px;">${donem}</td>
+              <td>${esc(k.kiraci||k.yer||'—')}</td>
+              <td>${gun!==null?gun+' gün':'—'}</td>
+              <td style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace;color:${k.kullanim>0?'#C9A961':'var(--steel-300)'}">
+                ${k.kullanim>0?k.kullanim.toLocaleString('tr-TR')+' km':'—'}
+              </td>
+              <td>${esc(k.yakit||'—')}</td>
+              <td style="color:${k.hasar&&k.hasar!=='Hasarsız'?'var(--safety)':'#38A169'}">
+                ${esc(k.hasar||'—')}
+              </td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table></div>`;
+      })()}
     </div>
   `;
   wireQuickActions(page);
@@ -10954,16 +11007,25 @@ function renderBelgelerPage(){
   // Kalabalık olmasın diye kartlar varsayılan olarak kapalı gelir; yalnızca kritik/süresi
   // geçmiş belgesi olan araçlar ilk açılışta otomatik genişletilmiş görünür. Kullanıcının
   // elle açıp kapattığı kartlar bu oturum boyunca hatırlanır (window.__belgeAcikSet).
-  if(!window.__belgeAcikSet){
-    window.__belgeAcikSet = new Set(belgeler.filter(b=>b.minDl!==null&&b.minDl<=30).map(b=>b.v.id));
-  }
-  const acikSet = window.__belgeAcikSet;
+  if(!window.__belgeOtoAcik) window.__belgeOtoAcik = new Set();
+  const otoAcikSet = window.__belgeOtoAcik;
+
+  const docHucre = (d, vid)=>{
+    const dur = belgeDurum(d.tarih);
+    return `<td>
+      <div style="display:flex;align-items:center;gap:8px;white-space:nowrap;">
+        <span style="font-size:12px;font-weight:700;color:${dur?dur.renk:'var(--text-3)'};">${dur?dur.etiket:'—'}</span>
+        ${d.belgeAdi ? `<button onclick="viewDoc('${d.prefix}','${vid}','${esc(d.label)}')" style="background:rgba(46,124,246,.1);border:1px solid rgba(46,124,246,.2);color:var(--accent-blue);padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Gör</button>` : ''}
+      </div>
+      ${d.tarih ? `<div style="font-size:11px;color:var(--text-3);margin-top:2px;">${fmtTarih(d.tarih)}</div>` : ''}
+    </td>`;
+  };
 
   page.innerHTML = `
     <div class="topbar">
       <div class="topbar-left">
         <h1>Belgeler</h1>
-        <span style="font-size:13px;color:var(--text-3);">${vehicles.length} araç · ${kritikSayi>0?`<span style="color:#D97706">${kritikSayi} kritik</span>`:' Tümü geçerli'}</span>
+        <span style="font-size:13px;color:var(--text-3);">${vehicles.length} araç · ${kritikSayi>0?`<span style="color:#D97706">${kritikSayi} kritik</span>`:'Tümü geçerli'}</span>
       </div>
     </div>
     <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">
@@ -10985,65 +11047,44 @@ function renderBelgelerPage(){
         {k:'gecerli', l:'✅ Geçerli', c:'#16A34A'},
       ].map(f=>`<button onclick="window.__belgeFilter='${f.k}';renderBelgelerPage()"
         style="padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid ${filter===f.k?f.c:'var(--border)'};background:${filter===f.k?f.c+'1a':'var(--surface)'};color:${filter===f.k?f.c:'var(--text-2)'};">${f.l}</button>`).join('')}
-      <span style="flex:1"></span>
-      <button onclick="window.__belgeAcikSet=new Set(${JSON.stringify(filtered.map(b=>b.v.id))});renderBelgelerPage()" style="padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text-2);">Tümünü Genişlet</button>
-      <button onclick="window.__belgeAcikSet=new Set();renderBelgelerPage()" style="padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text-2);">Tümünü Daralt</button>
     </div>
 
-    <div style="display:flex;flex-direction:column;gap:8px;">
-      ${filtered.length===0 ? `<div class="log-empty">Bu filtrede belge bulunamadı.</div>` :
-        filtered.map(({v, docs, minDl})=>{
+    ${filtered.length===0 ? `<div class="log-empty">Bu filtrede belge bulunamadı.</div>` : `
+    <div class="table-scroll"><table class="mini-table">
+      <thead><tr><th>Araç</th><th>Sigorta</th><th>Kasko</th><th>Muayene</th><th>Ruhsat</th><th>Sözleşme</th><th>Diğer</th></tr></thead>
+      <tbody>
+        ${filtered.map(({v, docs})=>{
           const otoDocs = Array.isArray(v.otoBelgeler) ? v.otoBelgeler : [];
-          const toplamBelge = docs.filter(d=>d.belgeAdi).length + otoDocs.length;
-          const acik = acikSet.has(v.id);
-          const kritikBu = docs.filter(d=>{ const dl=daysLeft(d.tarih); return dl!==null && dl<=30; }).length;
-          const gecmisBu = docs.filter(d=>{ const dl=daysLeft(d.tarih); return dl!==null && dl<0; }).length;
-          const ozetRenk = gecmisBu>0?'#DC2626':kritikBu>0?'#D97706':'#16A34A';
-          const ozetMetin = gecmisBu>0?`${gecmisBu} süresi geçmiş`:kritikBu>0?`${kritikBu} kritik`:'Tümü geçerli';
-          return `
-          <div class="dcard" style="padding:14px 16px;">
-            <div onclick="window.__belgeAcikSet.${acik?'delete':'add'}('${v.id}');renderBelgelerPage()" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;${acik?'margin-bottom:10px;':''}">
-              <div style="display:flex;align-items:center;gap:8px;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-3);transform:rotate(${acik?90:0}deg);transition:transform .15s ease;flex-shrink:0;"><path d="m9 18 6-6-6-6"/></svg>
-                <span style="font-size:14px;font-weight:700;color:var(--paper);">${esc(v.plaka)}</span>
-                <span style="font-size:12px;color:var(--text-3);">${esc([v.marka,v.model].filter(Boolean).join(' ')||'')}</span>
+          const otoAcik = otoAcikSet.has(v.id);
+          return `<tr>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px;white-space:nowrap;">
+                <span class="mini-plaka">${esc(v.plaka)}</span>
+                <span style="font-size:12px;color:var(--text-3);overflow:hidden;text-overflow:ellipsis;max-width:140px;">${esc([v.marka,v.model].filter(Boolean).join(' ')||'')}</span>
               </div>
-              <div style="display:flex;align-items:center;gap:10px;">
-                <span style="font-size:12px;color:var(--text-3);">${esc(v.yer||v.kiraciAdi||'')}</span>
-                ${!acik ? `<span style="font-size:11px;font-weight:700;color:${ozetRenk};">${ozetMetin}</span>` : ''}
-              </div>
-            </div>
-            ${!acik ? '' : toplamBelge===0 ? `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:8px;background:var(--surface-2);border:1px dashed var(--border);">
-              <span style="font-size:13px;color:var(--text-3);">Bu araçta henüz belge yüklenmemiş.</span>
-              <button onclick="event.stopPropagation();belgeYukleSecilenId('${v.id}')" style="background:rgba(46,124,246,.1);border:1px solid rgba(46,124,246,.2);color:var(--accent-blue);padding:4px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Belge Yükle</button>
-            </div>` : `
-            <div style="display:flex;flex-direction:column;gap:6px;">
-              ${docs.map(d=>{
-                const dur = belgeDurum(d.tarih);
-                return `<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-radius:8px;background:${dur?dur.bg:'var(--surface-2)'};border:1px solid ${dur?dur.renk+'30':'var(--border)'};">
-                  <div style="display:flex;align-items:center;gap:8px;">
-                    <span style="font-size:13px;font-weight:600;color:${dur?dur.renk:'var(--text)'};">${esc(d.label)}</span>
-                    ${d.tarih ? `<span style="font-size:11px;color:var(--text-3);">${fmtTarih(d.tarih)}</span>` : ''}
-                  </div>
-                  <div style="display:flex;align-items:center;gap:8px;">
-                    ${dur ? `<span style="font-size:12px;font-weight:700;color:${dur.renk};">${dur.etiket}</span>` : ''}
-                    ${d.belgeAdi ? `<button onclick="viewDoc('${d.prefix}','${v.id}','${esc(d.label)}')" style="background:rgba(46,124,246,.1);border:1px solid rgba(46,124,246,.2);color:var(--accent-blue);padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Gör</button>` : '<span style="font-size:11px;color:var(--text-3);">Belge yok</span>'}
-                  </div>
-                </div>`;
-              }).join('')}
+              <div style="font-size:11px;color:var(--text-3);margin-top:2px;">${esc(v.yer||v.kiraciAdi||'')}</div>
+            </td>
+            ${docs.map(d=>docHucre(d, v.id)).join('')}
+            <td>
+              ${otoDocs.length ? `<button onclick="window.__belgeOtoAcik.${otoAcik?'delete':'add'}('${v.id}');renderBelgelerPage()" style="background:rgba(46,124,246,.1);border:1px solid rgba(46,124,246,.2);color:var(--accent-blue);padding:2px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;">${otoDocs.length} belge ${otoAcik?'▲':'▼'}</button>` : '<span style="font-size:11px;color:var(--text-3);">—</span>'}
+            </td>
+          </tr>
+          ${otoAcik ? `<tr><td colspan="7" style="background:var(--surface-2);">
+            <div style="display:flex;flex-direction:column;gap:6px;padding:4px 0;">
               ${otoDocs.map((o,i)=>`
-                <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-radius:8px;background:var(--surface-2);border:1px solid var(--border);">
-                  <div style="display:flex;align-items:center;gap:8px;">
-                    <span style="font-size:13px;font-weight:600;color:var(--text);">${esc(o.tur==='diger'?'Belge':(o.tur.charAt(0).toLocaleUpperCase('tr-TR')+o.tur.slice(1)))}</span>
-                    <span style="font-size:11px;color:var(--text-3);">${esc(o.adi)}</span>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+                  <div style="display:flex;align-items:center;gap:8px;min-width:0;">
+                    <span style="font-size:12.5px;font-weight:600;color:var(--text);white-space:nowrap;">${esc(o.tur==='diger'?'Belge':(o.tur.charAt(0).toLocaleUpperCase('tr-TR')+o.tur.slice(1)))}</span>
+                    <span style="font-size:11px;color:var(--text-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(o.adi)}</span>
                   </div>
-                  <button onclick="viewOtoDoc('${v.id}',${i})" style="background:rgba(46,124,246,.1);border:1px solid rgba(46,124,246,.2);color:var(--accent-blue);padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Gör</button>
+                  <button onclick="viewOtoDoc('${v.id}',${i})" style="background:rgba(46,124,246,.1);border:1px solid rgba(46,124,246,.2);color:var(--accent-blue);padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;flex-shrink:0;">Gör</button>
                 </div>`).join('')}
-            </div>`}
-          </div>`;
-        }).join('')
-      }
-    </div>
+            </div>
+          </td></tr>` : ''}`;
+        }).join('')}
+      </tbody>
+    </table></div>
+    `}
   `;
 }
 
@@ -11234,28 +11275,12 @@ function renderMusterilerPage(){
         <div class="dstat-txt"><div class="l">Aktif Müşteri</div><div class="n" style="color:#16A34A;">${aktif}</div><div class="d" style="color:#16A34A;">kirada aracı var</div></div>
       </div>
       <div class="dstat" style="cursor:default;">
-        <div class="dstat-ic" style="background:rgba(${musNotr},.15);color:${musNotrHex};">${DASH_ICONS.trend}</div>
-        <div class="dstat-txt"><div class="l">Aylık Kira Toplamı</div><div class="n">${fmtCompactTL(toplamKira)}</div><div class="d">aktif kiralamalar</div></div>
-      </div>
-      <div class="dstat" style="cursor:default;">
         <div class="dstat-ic" style="background:rgba(${musNotr},.15);color:${musNotrHex};">${DASH_ICONS.clock}</div>
         <div class="dstat-txt"><div class="l">Çok Araçlı Müşteri</div><div class="n">${cokAracli}</div><div class="d">2+ araç</div></div>
       </div>
       <div class="dstat" style="cursor:default;">
         <div class="dstat-ic" style="background:rgba(${problemliRgb},.15);color:${problemliHex};">${DASH_ICONS.warn}</div>
         <div class="dstat-txt"><div class="l">Problemli Müşteri</div><div class="n" style="color:${problemliHex};">${problemliSayi}</div><div class="d">süresi geçmiş kayıt</div></div>
-      </div>
-    </div>
-
-    <div class="dcard" style="margin-bottom:16px;border:1px solid rgba(46,124,246,.25);">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:12px;">
-        <h3 style="margin:0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/></svg>Hızlı İşlemler</h3>
-        <span style="font-size:12px;color:var(--text-3);">Yeni bir müşteri, araç kiralayarak veya sözleşme oluşturarak eklenir</span>
-      </div>
-      <div class="quick-grid">
-        <button class="qbtn" data-act="arac-kirala" title="Müsait bir aracı yeni bir kiracıya teslim et — durumu Kirada yapar, teslim/km bilgisiyle kapsamlı sözleşme oluşturur"><div class="qic" style="background:#16A34A;color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8v8h6l4 4V4L9 8H3Z"/></svg></div><span>Araç Kirala</span></button>
-        <button class="qbtn" data-act="yeni-sozlesme" title="Zaten kirada olan (veya bilgileri bilinen) bir araç için ayrı bir sözleşme belgesi/PDF hazırla"><div class="qic" style="background:#C98A3E;color:#fff">${DASH_ICONS.doc}</div><span>Yeni Sözleşme</span></button>
-        <button class="qbtn" data-act="rapor-olustur"><div class="qic" style="background:var(--accent-blue);color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg></div><span>Rapor Oluştur</span></button>
       </div>
     </div>
 
@@ -11295,7 +11320,6 @@ function renderMusterilerPage(){
             </div>
           </div>
           <div style="text-align:right;flex-shrink:0;">
-            <div style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace;font-weight:700;font-size:13px;color:var(--text);">${m.toplamKira?fmtCompactTL(m.toplamKira)+' ₺/ay':'—'}</div>
             <div style="font-size:11px;color:var(--text-3);">${acikMi?'kapat':'detay'}</div>
           </div>
         </div>
@@ -11342,7 +11366,6 @@ function musteriDetayHtml(m){
         <span style="font-family:monospace;font-weight:700;font-size:12.5px;color:var(--text);min-width:82px;">${esc(v.plaka)}</span>
         <span style="font-size:12px;color:var(--text-3);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc([v.marka,v.model,v.modelYili].filter(Boolean).join(' ')||'—')}</span>
         <span style="font-size:11px;font-weight:700;color:${musteriDurumRenk(v.durum)};white-space:nowrap;">${esc(v.durum)}</span>
-        <span style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace;font-size:12px;color:var(--text-2);white-space:nowrap;">${v.kira?fmtTL2_role(v.kira):'—'}</span>
         <span style="font-size:11.5px;color:var(--text-3);white-space:nowrap;">${bitis}</span>
       </div>`;
   }).join('');
@@ -11358,7 +11381,6 @@ function musteriDetayHtml(m){
       ${sozSatirlar || '<div style="padding:6px 14px 10px;font-size:12px;color:var(--text-3);">Bu müşteriye ait kayıtlı sözleşme yok. "Araç Kirala" ile kiralama yapıldığında sözleşme otomatik burada listelenir.</div>'}
       <div style="display:flex;gap:16px;padding:10px 14px;font-size:12px;color:var(--text-3);border-top:1px solid var(--border);">
         <span>Geçmiş kira kaydı: <b style="color:var(--text-2);">${m.gecmisSayi}</b></span>
-        ${m.toplamKira?`<span>Aktif aylık kira: <b style="color:var(--text-2);">${fmtTL2_role(m.toplamKira)}</b></span>`:''}
       </div>
     </div>`;
 }
