@@ -8252,21 +8252,14 @@ function renderDashboard(){
   const kirada = vehicles.filter(v=>v.durum==='Kirada').length;
   const musait = vehicles.filter(v=>v.durum==='Müsait').length;
   const serviste = vehicles.filter(v=>v.durum==='Serviste').length;
-  const gelir = vehicles.filter(v=>v.durum==='Kirada').reduce((s,v)=>s+(Number(v.kira)||0),0);
-  const _aylikMasrafHedefi = aylikMasrafHedefiHesapla();
-  const masrafBuAy = _aylikMasrafHedefi.tutar;
-  const netKar = gelir - masrafBuAy;
+  const pert = vehicles.filter(v=>v.durum==='Pert').length;
+  const satildi = vehicles.filter(v=>v.durum==='Satıldı').length;
   const urgent = urgentList();
   const pct = (n)=> total? Math.round(n/total*100) : 0;
-  const series = computeMonthlyExpenseSeries();
-  const expirySeries = computeUpcomingExpirySeries();
-  const masrafKategori = computeMasrafKategoriData();
-  const yakindaBitecekPlakalar = new Set(urgent.filter(u=>u.dl<=30).map(u=>u.plaka));
-  const toplamKm = 0; // gerçek veri kaynağımız yok; bu alanı henüz takip etmiyoruz
   const aktifMusteri = new Set(vehicles.filter(v=>v.kiraciAdi).map(v=>v.kiraciAdi)).size;
-  const musteriSayisi = new Set(vehicles.filter(v=>(v.kiraciAdi||v.yer)).map(v=>(v.kiraciAdi||v.yer).trim().toLocaleLowerCase('tr-TR'))).size;
   const hasarSayisi = vehicles.reduce((s,v)=>s+((v.hasarlar&&v.hasarlar.length)||0),0);
-  const toplamKiraKaydi = vehicles.reduce((s,v)=>s+((v.kiraGecmisi&&v.kiraGecmisi.length)||0),0);
+  const yakindaBitecekPlakalar = new Set(urgent.filter(u=>u.dl<=30).map(u=>u.plaka));
+  const bugunTarihi = new Date().toLocaleDateString('tr-TR',{weekday:'long', day:'numeric', month:'long', year:'numeric'});
 
   // ===== Bugün Yapılacaklar =====
   const bugunYapilacaklar = (()=>{
@@ -8279,11 +8272,8 @@ function renderDashboard(){
       if(u.dl<0) items.push({kritik:true, renk:'#DC2626', bg:'rgba(220,38,38,.1)', etiket:'Belge', plaka:u.plaka, aci:u.tip+' — '+Math.abs(u.dl)+' gün geçti', act:"switchPage('bildirimler')", btn:''});
       else items.push({kritik:false, renk:'#EA580C', bg:'rgba(234,88,12,.1)', etiket:'Belge', plaka:u.plaka, aci:u.tip+' — '+u.dl+' gün kaldı', act:"switchPage('bildirimler')", btn:''});
     });
-    // Km aşımı uyarısı — aktif kirada (veya kiracısı olup geçici olarak serviste olan) araçlarda,
-    // teslim tarihinden bugüne kadar aylık km limitine göre hak edilen km ile gerçek kullanım
-    // (sonKm/kmGecmisi/teslimKm üzerinden bilinen en güncel km) karşılaştırılır. Bu, İade Al
-    // sırasında yapılan kesin aşım hesabından (saveIade/updateIadeKmHakki) bağımsız, sözleşme
-    // devam ederken erken uyarı vermek için her gün otomatik yeniden hesaplanan canlı bir kontrol.
+    // Km aşımı uyarısı — aktif kirada (veya kiracısı olup geçici olarak serviste olan) araçlarda
+    // erken uyarı: hak edilen km ile gerçek kullanım karşılaştırılır.
     vehicles.forEach(v=>{
       if(!(v.durum==='Kirada' || v.durum==='Serviste')) return;
       const kmLimiti = Number(v.kmLimiti)||0;
@@ -8298,7 +8288,7 @@ function renderDashboard(){
       const asim = kullanilan - hak;
       if(asim>0){
         items.push({kritik:true, renk:'#DC2626', bg:'rgba(220,38,38,.1)', etiket:'Km Aşımı', plaka:v.plaka,
-          aci: asim.toLocaleString('tr-TR')+' km aşım — '+kullanilan.toLocaleString('tr-TR')+' km yapılmış, '+hak.toLocaleString('tr-TR')+' km hakkı vardı ('+ay.toLocaleString('tr-TR',{maximumFractionDigits:1})+' ay × '+kmLimiti.toLocaleString('tr-TR')+' km)',
+          aci: asim.toLocaleString('tr-TR')+' km aşım — '+kullanilan.toLocaleString('tr-TR')+' km yapılmış, '+hak.toLocaleString('tr-TR')+' km hakkı vardı',
           act:"switchPage('arac-yonetimi')", btn:''});
       }
     });
@@ -8319,16 +8309,16 @@ function renderDashboard(){
   const bugunKritik = bugunYapilacaklar.filter(i=>i.kritik).length;
   const bugunUyari = bugunYapilacaklar.length - bugunKritik;
 
-  // ===== Son İşlemler (işlemsel akış) =====
+  // ===== Son İşlemler (tutarsız — parasal veriler Finans sayfasında) =====
   const sonIslemler = (()=>{
     const rows=[];
     vehicles.forEach(v=>{
       (v.kiraGecmisi||[]).forEach(k=>{
-        if(k.bas) rows.push({t:k.bas, tip:'kiralama', plaka:v.plaka, txt:(k.kiraci||k.yer||'—')+' kiraya verildi', tutar:Number(v.kira)||0});
-        if(k.iadeKm>0 && k.bitis) rows.push({t:k.bitis, tip:'iade', plaka:v.plaka, txt:(k.kiraci||'—')+' iade edildi', tutar:0});
+        if(k.bas) rows.push({t:k.bas, tip:'kiralama', plaka:v.plaka, txt:(k.kiraci||k.yer||'—')+' kiraya verildi'});
+        if(k.iadeKm>0 && k.bitis) rows.push({t:k.bitis, tip:'iade', plaka:v.plaka, txt:(k.kiraci||'—')+' iade edildi'});
       });
     });
-    expenses.forEach(e=>{ if(e.tarih) rows.push({t:e.tarih, tip:'masraf', plaka:e.plaka||'', txt:e.tip||'Masraf', tutar:-(Number(e.tutar)||0)}); });
+    expenses.forEach(e=>{ if(e.tarih) rows.push({t:e.tarih, tip:'masraf', plaka:e.plaka||'', txt:e.tip||'Masraf'}); });
     rows.sort((a,b)=>(b.t>a.t?1:b.t<a.t?-1:0));
     return rows.slice(0,7);
   })();
@@ -8338,177 +8328,97 @@ function renderDashboard(){
     masraf:{c:'#DC2626', bg:'rgba(220,38,38,.1)', et:'Masraf'},
   };
 
-  // KPI kart renk sistemi: sadece durum bildiren kartlar renklenir (dolu=yeşil, dikkat=kırmızı),
-  // bilgi amaçlı kartlar nötr tonda kalır — böylece göz doğrudan dikkat gereken karta gider.
-  const kpiNotr = '100,116,139'; // #64748B
-  const kpiNotrHex = '#64748B';
-  const servisteHex = serviste>0 ? '#DC2626' : kpiNotrHex;
-  const servisteRgb = serviste>0 ? '220,38,38' : kpiNotr;
-  const hasarHex = hasarSayisi>0 ? '#DC2626' : kpiNotrHex;
-  const hasarRgb = hasarSayisi>0 ? '220,38,38' : kpiNotr;
+  // Araç durumu çipleri — tüm filo tek bakışta, duruma göre renkli
+  const durumSirasi = {'Kirada':0, 'Serviste':1, 'Müsait':2, 'Pert':3, 'Satıldı':4};
+  const durumRenk = {'Kirada':'#2E7CF6', 'Serviste':'#FF9500', 'Müsait':'#34C759', 'Pert':'#6B7280', 'Satıldı':'#0891B2'};
+  const aracCipleri = [...vehicles]
+    .sort((a,b)=>((durumSirasi[a.durum]??9)-(durumSirasi[b.durum]??9)) || (a.plaka||'').localeCompare(b.plaka||'','tr'))
+    .map(v=>{
+      const renk = durumRenk[v.durum]||'#94A3B8';
+      return `<span onclick="openVehicleDetail('${v.id}')" title="${esc(v.durum||'')} — ${esc([v.marka,v.model].filter(Boolean).join(' '))}" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:8px;background:${renk}1c;border:1px solid ${renk}45;font-family:'SF Mono',SFMono-Regular,Consolas,monospace;font-size:12px;font-weight:700;color:var(--paper);white-space:nowrap;">${esc(v.plaka)}<span style="width:7px;height:7px;border-radius:50%;background:${renk};flex-shrink:0;"></span></span>`;
+    }).join('');
+
+  const miniKutu = (n, l, renk)=>`<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;">
+    <div style="font-size:20px;font-weight:800;color:${renk||'var(--paper)'};line-height:1.2;">${n}</div>
+    <div style="font-size:11px;color:var(--steel-300);margin-top:2px;">${l}</div>
+  </div>`;
 
   const page = document.getElementById('page-genel-bakis');
   page.innerHTML = `
     <div id="dashYedekUyari"></div>
-    ${filoSaglikSkoruHTML()}
-    <!-- v.86: Mobil Genel Bakış sadeleştirme — masaüstündeki dash-stats yerine mobilde tek
-         "Filo Durumu" şeridi + sadece 2 öncelikli KPI gösterilir (bkz. CSS: .mobil-ozet / .dash-stats) -->
-    <div class="mobil-ozet">
-      <div class="mo-fleet" onclick="switchPage('arac-yonetimi')">
-        <div class="mo-fleet-top"><span class="n">${total} <span style="font-size:13px;font-weight:500;color:var(--steel-300);">araç</span></span><span class="l">Toplam filo</span></div>
-        <div class="mo-stackbar">
-          <span style="width:${pct(kirada)}%;background:#2E7CF6"></span>
-          <span style="width:${pct(musait)}%;background:#34C759"></span>
-          <span style="width:${pct(serviste)}%;background:#FF9500"></span>
-        </div>
-        <div class="mo-legend">
-          <div class="it"><span class="dot" style="background:#2E7CF6"></span>Kirada <b>${kirada}</b></div>
-          <div class="it"><span class="dot" style="background:#34C759"></span>Müsait <b>${musait}</b></div>
-          <div class="it"><span class="dot" style="background:#FF9500"></span>Serviste <b>${serviste}</b></div>
-        </div>
+
+    <!-- v.87: Genel Bakış tamamen yenilendi — tek sütun widget yığını yerine:
+         1) Filo Durumu hero şeridi  2) Bugün Yapılacaklar + Hızlı İşlemler
+         3) Yaklaşan 30 Gün + Araç Durumu çipleri  4) Son İşlemler + Son Etkinlikler.
+         Parasal veriler ve Filo Sağlık Skoru bu sayfadan kaldırıldı (Finans / Raporlar). -->
+    <div class="dcard" style="margin-bottom:16px;box-shadow:var(--shadow-md);">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
+        <h3 style="margin:0;">Filo Durumu</h3>
+        <span style="font-size:12.5px;color:var(--text-3);">${bugunTarihi}</span>
       </div>
-    </div>
-    <div class="dash-widget" data-widget-key="kpi" ${DASH_WIDGET_ATTRS}>${DASH_WIDGET_HANDLE}
-    <div class="dash-stats">
-      <div class="dstat dstat-strong" style="--accent-c:${kpiNotrHex};background:linear-gradient(135deg,rgba(${kpiNotr},.14),rgba(${kpiNotr},.03))" onclick="showVehicleQuickList('Toplam','Tüm Araçlar')">
-        <div class="dstat-ic" style="background:rgba(${kpiNotr},.14);color:${kpiNotrHex}">${DASH_ICONS.car}</div>
-        <div class="dstat-txt">
-          <div class="l">Toplam Araç</div>
-          <div class="n">${total}</div>
-          <div class="d" style="color:var(--steel-300);font-weight:400;">${aktifMusteri} aktif müşteri</div>
+      <div style="display:flex;gap:24px;flex-wrap:wrap;">
+        <div style="flex:2;min-width:280px;">
+          <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px;">
+            <span style="font-size:40px;font-weight:800;letter-spacing:-1px;color:var(--paper);line-height:1;">${total}</span>
+            <span style="font-size:13px;color:var(--steel-300);">araç · <b style="color:#2E7CF6;">%${pct(kirada)}</b> doluluk</span>
+          </div>
+          <div style="height:10px;border-radius:5px;overflow:hidden;display:flex;background:var(--surface-2);margin-bottom:12px;">
+            ${total?`<span style="width:${pct(kirada)}%;background:#2E7CF6"></span><span style="width:${pct(musait)}%;background:#34C759"></span><span style="width:${pct(serviste)}%;background:#FF9500"></span><span style="width:${pct(pert)}%;background:#6B7280"></span><span style="width:${pct(satildi)}%;background:#0891B2"></span>`:''}
+          </div>
+          <div style="display:flex;gap:14px;flex-wrap:wrap;">
+            <span style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--steel-300);"><span style="width:9px;height:9px;border-radius:50%;background:#2E7CF6;"></span>Kirada <b style="color:var(--paper);">${kirada}</b></span>
+            <span style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--steel-300);"><span style="width:9px;height:9px;border-radius:50%;background:#34C759;"></span>Müsait <b style="color:var(--paper);">${musait}</b></span>
+            <span style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--steel-300);"><span style="width:9px;height:9px;border-radius:50%;background:#FF9500;"></span>Serviste <b style="color:var(--paper);">${serviste}</b></span>
+            <span style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--steel-300);"><span style="width:9px;height:9px;border-radius:50%;background:#6B7280;"></span>Pert <b style="color:var(--paper);">${pert}</b></span>
+            <span style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--steel-300);"><span style="width:9px;height:9px;border-radius:50%;background:#0891B2;"></span>Satıldı <b style="color:var(--paper);">${satildi}</b></span>
+          </div>
         </div>
-      </div>
-      <div class="dstat dstat-strong" style="--accent-c:#16A34A;background:linear-gradient(135deg,rgba(22,163,74,.14),rgba(22,163,74,.03))" onclick="showVehicleQuickList('Kirada','Kiradaki Araçlar')">
-        <div class="dstat-ic" style="background:rgba(22,163,74,.12);color:#16A34A">${DASH_ICONS.check}</div>
-        <div class="dstat-txt">
-          <div class="l">Kiradaki Araç</div>
-          <div class="n" style="color:#16A34A">${kirada} <span style="font-size:14px;font-weight:500;color:var(--steel-300)">/ ${total}</span></div>
-          <div class="d" style="color:#16A34A">%${pct(kirada)} doluluk</div>
-        </div>
-      </div>
-      <div class="dstat dstat-strong" style="--accent-c:${kpiNotrHex};background:linear-gradient(135deg,rgba(${kpiNotr},.14),rgba(${kpiNotr},.03))" onclick="showVehicleQuickList('Müsait','Müsait Araçlar')">
-        <div class="dstat-ic" style="background:rgba(${kpiNotr},.14);color:${kpiNotrHex}">${DASH_ICONS.clock}</div>
-        <div class="dstat-txt">
-          <div class="l">Müsait Araç</div>
-          <div class="n">${musait}</div>
-          <div class="d" style="color:var(--steel-300);font-weight:400;">%${pct(musait)} boşta</div>
-        </div>
-      </div>
-      <div class="dstat dstat-strong" style="--accent-c:${servisteHex};background:linear-gradient(135deg,rgba(${servisteRgb},.14),rgba(${servisteRgb},.03))" onclick="showVehicleQuickList('Serviste','Servisteki Araçlar')">
-        <div class="dstat-ic" style="background:rgba(${servisteRgb},.14);color:${servisteHex}">${DASH_ICONS.wrench}</div>
-        <div class="dstat-txt">
-          <div class="l">Serviste</div>
-          <div class="n" style="color:${servisteHex}">${serviste}</div>
-          <div class="d" style="color:var(--steel-300);font-weight:400;">${serviste>0?'Bakımda':'Tüm araçlar aktif'}</div>
-        </div>
-      </div>
-      <div class="dstat dstat-strong" style="--accent-c:${kpiNotrHex};background:linear-gradient(135deg,rgba(${kpiNotr},.14),rgba(${kpiNotr},.03))" onclick="switchPage('musteriler')">
-        <div class="dstat-ic" style="background:rgba(${kpiNotr},.14);color:${kpiNotrHex}">${DASH_ICONS.users}</div>
-        <div class="dstat-txt">
-          <div class="l">Müşteri</div>
-          <div class="n">${musteriSayisi}</div>
-          <div class="d" style="color:var(--steel-300);font-weight:400;">${aktifMusteri} kiracı aktif</div>
-        </div>
-      </div>
-      <div class="dstat dstat-strong" style="--accent-c:${hasarHex};background:linear-gradient(135deg,rgba(${hasarRgb},.14),rgba(${hasarRgb},.03));cursor:default;">
-        <div class="dstat-ic" style="background:rgba(${hasarRgb},.14);color:${hasarHex}">${DASH_ICONS.warn}</div>
-        <div class="dstat-txt">
-          <div class="l">Hasar Kaydı</div>
-          <div class="n" style="color:${hasarHex}">${hasarSayisi}</div>
-          <div class="d" style="color:var(--steel-300);font-weight:400;">tüm zamanlar</div>
+        <div style="flex:1;min-width:230px;display:grid;grid-template-columns:1fr 1fr;gap:10px;align-content:center;">
+          ${miniKutu(aktifMusteri, 'Aktif Müşteri', null)}
+          ${miniKutu(yakindaBitecekPlakalar.size, 'Belgesi Bitecek (30 gün)', yakindaBitecekPlakalar.size>0?'#D97706':null)}
+          ${miniKutu(bugunYapilacaklar.length, "Bugün İş", bugunKritik>0?'#DC2626':(bugunUyari>0?'#EA580C':'#16A34A'))}
+          ${miniKutu(hasarSayisi, 'Hasar Kaydı', hasarSayisi>0?'#DC2626':null)}
         </div>
       </div>
     </div>
-    </div>
-    <div class="dash-widget" data-widget-key="bugun" ${DASH_WIDGET_ATTRS}>${DASH_WIDGET_HANDLE}
-    <div class="dcard" id="bugunCard" style="border-left:4px solid ${bugunKritik>0?'#DC2626':(bugunUyari>0?'#EA580C':'#16A34A')};box-shadow:var(--shadow-md);">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
-        <h3 style="margin:0;display:flex;align-items:center;gap:10px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Bugün Yapılacaklar
-          ${bugunYapilacaklar.length ? `<span style="font-size:11px;font-weight:700;padding:2px 9px;border-radius:12px;background:${bugunKritik>0?'rgba(220,38,38,.15)':'rgba(234,88,12,.15)'};color:${bugunKritik>0?'#DC2626':'#EA580C'};">${bugunKritik>0?bugunKritik+' kritik · ':''}${bugunUyari} uyarı</span>` : `<span style="font-size:11px;font-weight:700;padding:2px 9px;border-radius:12px;background:rgba(22,163,74,.15);color:#16A34A;">Temiz</span>`}
-        </h3>
-        <a data-goto="bildirimler" style="font-size:12px;font-weight:400;color:var(--accent-blue);text-decoration:none;">Tümü →</a>
-      </div>
-      ${bugunYapilacaklar.length===0 ? '<div class="log-empty" style="color:#16A34A;">✓ Bugün için yapılacak işlem yok — filo sorunsuz çalışıyor.</div>' : (()=>{
-        const gosterilen = bugunYapilacaklar.slice(0,6);
-        const rows = gosterilen.map(i=>`
-          <div class="bugun-item" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;background:${i.bg};margin-bottom:6px;border:1px solid ${i.renk}33;">
-            <span style="font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:${i.renk};width:64px;flex-shrink:0;">${i.etiket}</span>
-            ${i.plaka ? `<span class="mini-plaka" style="font-size:11.5px;flex-shrink:0;">${esc(i.plaka)}</span>` : ''}
-            <span style="flex:1;font-size:12.5px;color:var(--steel-100);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(i.aci)}</span>
-            ${i.btn ? `<button onclick="event.stopPropagation();${i.act}" style="background:${i.renk};border:none;color:#fff;padding:4px 12px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;">${i.btn}</button>` : ''}
-          </div>`).join('');
-        const kalan = bugunYapilacaklar.length - gosterilen.length;
-        // v.86: mobilde varsayılan olarak sadece ilk 2 madde görünür (bkz. CSS #bugunCard .bugun-item:nth-of-type(n+4))
-        // — geri kalanı (6'ya kadar gösterilenler dahil) için ayrı, mobile özel bir "daha fazla" bağlantısı gösterilir.
-        const mobilKalan = bugunYapilacaklar.length - 2;
-        return rows
-          + (kalan>0 ? `<div class="bugun-desktop-more" style="font-size:12px;color:var(--steel-300);text-align:center;padding:4px 0;">+${kalan} işlem daha — <a data-goto="bildirimler" style="color:var(--accent-blue);text-decoration:none;cursor:pointer;">Aksiyon Merkezi'nde gör</a></div>` : '')
-          + (mobilKalan>0 ? `<a class="bugun-mobil-more" data-goto="bildirimler">+ ${mobilKalan} tane daha gör</a>` : '');
-      })()}
-    </div>
-    </div>
-    <div class="dash-widget" data-widget-key="hizli" ${DASH_WIDGET_ATTRS}>${DASH_WIDGET_HANDLE}
-    <div class="dcard" style="border:1px solid rgba(46,124,246,.25);box-shadow:var(--shadow-md);">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:12px;">
-        <h3 style="margin:0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/></svg>Hızlı İşlemler</h3>
-        <span style="font-size:12px;color:var(--text-3);">Tek tıkla en sık yapılan işlemler</span>
-      </div>
-      <div class="quick-grid">
-        <button class="qbtn" data-act="arac-kirala" title="Müsait bir aracı yeni bir kiracıya teslim et — durumu Kirada yapar, teslim/km bilgisiyle kapsamlı sözleşme oluşturur"><div class="qic" style="background:#16A34A;color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8v8h6l4 4V4L9 8H3Z"/></svg></div><span>Araç Kirala</span></button>
-        <button class="qbtn" data-act="iade-al"><div class="qic" style="background:#DC2626;color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></div><span>İade Al</span></button>
-        <button class="qbtn" data-act="yeni-arac"><div class="qic" style="background:var(--accent-blue);color:#fff">${DASH_ICONS.car}</div><span>Yeni Araç Ekle</span></button>
-        <button class="qbtn" data-act="arac-ara"><div class="qic" style="background:#2E8C63;color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></div><span>Araç Ara</span></button>
-        <button class="qbtn" data-act="masraf-ekle"><div class="qic" style="background:var(--coral);color:#fff">${DASH_ICONS.clock}</div><span>Masraf Ekle</span></button>
-        <button class="qbtn" data-act="yeni-sozlesme" title="Zaten kirada olan (veya bilgileri bilinen) bir araç için ayrı bir sözleşme belgesi/PDF hazırla"><div class="qic" style="background:#C98A3E;color:#fff">${DASH_ICONS.doc}</div><span>Yeni Sözleşme</span></button>
-        <button class="qbtn" data-act="rapor-olustur"><div class="qic" style="background:var(--accent-blue);color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg></div><span>Rapor Oluştur</span></button>
-        <button class="qbtn" data-act="excele-aktar"><div class="qic" style="background:#2E8C63;color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 19h16"/></svg></div><span>Excel'e Aktar</span></button>
-        <button class="qbtn" data-act="yedekle"><div class="qic" style="background:#7C3AED;color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg></div><span>Yedekle (JSON)</span></button>
-        <button class="qbtn" data-act="yedekten-yukle"><div class="qic" style="background:#0891B2;color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg></div><span>Yedekten Geri Yükle</span></button>
-      </div>
-    </div>
-    </div>
-    <div class="mobil-detay-toggle" onclick="document.getElementById('page-genel-bakis').classList.toggle('mobil-detay-acik')">
-      <span class="t">Detaylı Analiz ve Grafikler</span>
-      <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-    </div>
-    <div class="dash-widget mobil-detay-body" data-widget-key="dagilim-masraf-periyot" ${DASH_WIDGET_ATTRS}>${DASH_WIDGET_HANDLE}
-    <div class="dash-grid dg-3">
-      <div class="dcard">
-        <h3>Filo Araç Dağılımı <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;background:rgba(46,124,246,.12);color:#2E7CF6;">Doluluk %${pct(kirada)}</span></h3>
-        ${(()=>{
-          const parts=[
-            {n:kirada, c:'#22C55E', l:'Kirada'},
-            {n:musait, c:'#F59E0B', l:'Müsait'},
-            {n:serviste, c:'#EF4444', l:'Serviste'},
-            {n:vehicles.filter(v=>v.durum==='Pert').length, c:'#6B7280', l:'Pert'},
-            {n:vehicles.filter(v=>v.durum==='Satıldı').length, c:'#0891B2', l:'Satıldı'},
-          ].filter(p=>p.n>0);
-          const sayilan = parts.reduce((s,p)=>s+p.n,0);
-          const diger = Math.max(0, total - sayilan);
-          if(diger>0) parts.push({n:diger, c:'#94A3B8', l:'Diğer'});
-          const T = total||1, R=52, C=2*Math.PI*R; let off=0;
-          const segs = parts.map(p=>{
-            const len = p.n/T*C;
-            const s = `<circle cx="70" cy="70" r="${R}" fill="none" stroke="${p.c}" stroke-width="19" stroke-dasharray="${len.toFixed(2)} ${(C-len).toFixed(2)}" stroke-dashoffset="${(-off).toFixed(2)}" transform="rotate(-90 70 70)" stroke-linecap="butt"/>`;
-            off += len; return s;
-          }).join('');
-          const legend = parts.map(p=>`<div class="fd-row"><span class="fd-dot" style="background:${p.c}"></span><span class="fd-l">${p.l}</span><span class="fd-v" style="color:${p.c}">${p.n}</span><span style="font-size:11px;color:var(--steel-300);width:38px;text-align:right;">%${Math.round(p.n/T*100)}</span></div>`).join('');
-          return `<div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
-            <div style="position:relative;width:140px;height:140px;flex-shrink:0;margin:0 auto;">
-              <svg width="140" height="140" viewBox="0 0 140 140">${segs}</svg>
-              <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-                <div style="font-size:26px;font-weight:700;color:var(--paper);">${total}</div>
-                <div style="font-size:10px;font-weight:600;letter-spacing:.6px;color:var(--steel-300);">ARAÇ</div>
-              </div>
-            </div>
-            <div style="flex:1;min-width:140px;">${legend}</div>
-          </div>`;
+
+    <div class="dash-grid dg-141" style="grid-template-columns:1.5fr 1fr;margin-bottom:16px;">
+      <div class="dcard" id="bugunCard" style="border-left:4px solid ${bugunKritik>0?'#DC2626':(bugunUyari>0?'#EA580C':'#16A34A')};box-shadow:var(--shadow-md);">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+          <h3 style="margin:0;display:flex;align-items:center;gap:10px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Bugün Yapılacaklar
+            ${bugunYapilacaklar.length ? `<span style="font-size:11px;font-weight:700;padding:2px 9px;border-radius:12px;background:${bugunKritik>0?'rgba(220,38,38,.15)':'rgba(234,88,12,.15)'};color:${bugunKritik>0?'#DC2626':'#EA580C'};">${bugunKritik>0?bugunKritik+' kritik · ':''}${bugunUyari} uyarı</span>` : `<span style="font-size:11px;font-weight:700;padding:2px 9px;border-radius:12px;background:rgba(22,163,74,.15);color:#16A34A;">Temiz</span>`}
+          </h3>
+          <a data-goto="bildirimler" style="font-size:12px;font-weight:400;color:var(--accent-blue);text-decoration:none;">Tümü →</a>
+        </div>
+        ${bugunYapilacaklar.length===0 ? '<div class="log-empty" style="color:#16A34A;">✓ Bugün için yapılacak işlem yok — filo sorunsuz çalışıyor.</div>' : (()=>{
+          const gosterilen = bugunYapilacaklar.slice(0,6);
+          const rows = gosterilen.map(i=>`
+            <div class="bugun-item" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;background:${i.bg};margin-bottom:6px;border:1px solid ${i.renk}33;">
+              <span style="font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:${i.renk};width:64px;flex-shrink:0;">${i.etiket}</span>
+              ${i.plaka ? `<span class="mini-plaka" style="font-size:11.5px;flex-shrink:0;">${esc(i.plaka)}</span>` : ''}
+              <span style="flex:1;font-size:12.5px;color:var(--steel-100);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(i.aci)}</span>
+              ${i.btn ? `<button onclick="event.stopPropagation();${i.act}" style="background:${i.renk};border:none;color:#fff;padding:4px 12px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;">${i.btn}</button>` : ''}
+            </div>`).join('');
+          const kalan = bugunYapilacaklar.length - gosterilen.length;
+          return rows + (kalan>0 ? `<div style="font-size:12px;color:var(--steel-300);text-align:center;padding:4px 0;">+${kalan} işlem daha — <a data-goto="bildirimler" style="color:var(--accent-blue);text-decoration:none;cursor:pointer;">Aksiyon Merkezi'nde gör</a></div>` : '');
         })()}
-        <div class="fd-row"><span class="fd-dot" style="background:#8B5CF6"></span><span class="fd-l">Yakında Belgesi Bitecek</span><span class="fd-v">${yakindaBitecekPlakalar.size}</span></div>
-        <div class="fd-row"><span class="fd-dot" style="background:#2E7CF6"></span><span class="fd-l">Aktif Müşteri</span><span class="fd-v">${aktifMusteri}</span></div>
       </div>
       <div class="dcard">
-        <h3>Yaklaşan Periyot (30 Gün)</h3>
+        <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/></svg>Hızlı İşlemler</h3>
+        <div class="quick-grid">
+          <button class="qbtn" data-act="arac-kirala" title="Müsait bir aracı yeni bir kiracıya teslim et"><div class="qic" style="background:#16A34A;color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8v8h6l4 4V4L9 8H3Z"/></svg></div><span>Araç Kirala</span></button>
+          <button class="qbtn" data-act="iade-al"><div class="qic" style="background:#DC2626;color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></div><span>İade Al</span></button>
+          <button class="qbtn" data-act="yeni-arac"><div class="qic" style="background:var(--accent-blue);color:#fff">${DASH_ICONS.car}</div><span>Yeni Araç Ekle</span></button>
+          <button class="qbtn" data-act="arac-ara"><div class="qic" style="background:#2E8C63;color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></div><span>Araç Ara</span></button>
+          <button class="qbtn" data-act="masraf-ekle"><div class="qic" style="background:var(--coral);color:#fff">${DASH_ICONS.clock}</div><span>Masraf Ekle</span></button>
+          <button class="qbtn" data-act="rapor-olustur"><div class="qic" style="background:var(--accent-blue);color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg></div><span>Rapor Oluştur</span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="dash-grid dg-141" style="grid-template-columns:1fr 1.5fr;margin-bottom:16px;">
+      <div class="dcard">
+        <h3>Yaklaşan Periyot (30 Gün) <a data-goto="bildirimler" style="font-size:12px;font-weight:400;color:var(--accent-blue);text-decoration:none;">Tümü →</a></h3>
         ${(()=>{
           const tipler=[['Sigorta','sigortaTarihi'],['Muayene','muayeneTarihi'],['Kasko','kaskoBitis'],['Sözleşme','sozlesmeBitis'],['Kira','kiraBitis']];
           const say={'Sigorta':0,'Muayene':0,'Kasko':0,'Sözleşme':0,'Kira':0};
@@ -8521,21 +8431,12 @@ function renderDashboard(){
           <div style="margin-top:10px;">${yak.length?liste:'<div class="log-empty">30 gün içinde belge bitişi yok.</div>'}</div>`;
         })()}
       </div>
-    </div>
-    </div>
-    <div class="dash-widget mobil-detay-body" data-widget-key="aksiyon-araclar" ${DASH_WIDGET_ATTRS}>${DASH_WIDGET_HANDLE}
-    <div class="dash-grid dg-141">
       <div class="dcard">
-        <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/></svg>Aksiyon Merkezi <a data-goto="bildirimler" style="font-size:12px;font-weight:400;color:var(--accent-blue);text-decoration:none;">Tümünü Gör →</a></h3>
-        <div>${renderKritikUyarilarList(urgent)}</div>
-      </div>
-      <div class="dcard">
-        <h3>Araçlar <a data-goto="arac-yonetimi">Tümünü Gör</a></h3>
-        ${renderMiniVehicleTable()}
+        <h3>Araç Durumu <span style="font-weight:400;font-size:12px;color:var(--steel-300);">çipe tıklayın → araç detayı</span></h3>
+        ${total ? `<div style="display:flex;flex-wrap:wrap;gap:6px;max-height:230px;overflow-y:auto;">${aracCipleri}</div>` : '<div class="log-empty">Henüz araç eklenmedi.</div>'}
       </div>
     </div>
-    </div>
-    <div class="dash-widget mobil-detay-body" data-widget-key="islemler-etkinlik" ${DASH_WIDGET_ATTRS}>${DASH_WIDGET_HANDLE}
+
     <div class="dash-grid dg-141" style="grid-template-columns:1.6fr 1fr;">
       <div class="dcard">
         <h3>Son İşlemler <span style="font-size:11px;font-weight:500;color:var(--steel-300);">kiralamalar · iadeler · masraflar</span></h3>
@@ -8556,12 +8457,10 @@ function renderDashboard(){
         <div>${renderActivityListForDash()}</div>
       </div>
     </div>
-    </div>
   `;
   page.querySelectorAll('[data-goto]').forEach(el=>{ el.onclick = ()=>switchPage(el.dataset.goto); });
   wireQuickActions(page);
-  dashYedekUyarisiGoster();
-  dashApplyWidgetOrder(page);
+  dashYedekUyariGoster();
   applyRoleVisibility();
 }
 
@@ -11118,6 +11017,7 @@ function renderRaporlarPage(){
   const toplamKar = toplamGelir - toplamMasraf;
 
   page.innerHTML = `
+    ${filoSaglikSkoruHTML()}
     <div class="dcard" style="margin-bottom:16px;">
       <h3>Araç Bazlı Karlılık Analizi</h3>
       <div class="dash-stats" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px;">
