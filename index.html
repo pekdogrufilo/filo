@@ -1408,7 +1408,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-15.102</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-15.103</div>
     </div>
   </div>
 </div>
@@ -1529,7 +1529,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-15.102</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-15.103</div>
     </div>
   </aside>
 
@@ -4133,7 +4133,9 @@ const DOC_TYPES = [
     apply(extracted){
       const filled = [];
       if(extracted.sonrakiMuayeneTarihi){ const nd = normalizeExtractedDate(extracted.sonrakiMuayeneTarihi); if(nd){ setFieldValueFlash('fMuayene', nd); filled.push('muayene tarihi'); } }
-      const muaySeri = seriNoGecerli(extracted.belgeSeriNo); if(muaySeri){ setFieldValueFlash('fMuayeneSeri', muaySeri); filled.push('belge seri no'); }
+      const muaySeri = seriNoGecerli(extracted.belgeSeriNo);
+      if(muaySeri){ setFieldValueFlash('fMuayeneSeri', muaySeri); filled.push('belge seri no ('+muaySeri+')'); }
+      else if(extracted.belgeSeriNo){ console.warn('Muayene seri no dogrulanamadi, alan korunuyor:', extracted.belgeSeriNo); filled.push('⚠ seri no tam okunamadı — elle kontrol edin'); }
       if(extracted.plaka && !document.getElementById('fPlaka').value.trim()){ setFieldValueFlash('fPlaka', extracted.plaka); filled.push('plaka'); }
       return filled;
     }
@@ -4176,7 +4178,9 @@ const DOC_TYPES = [
       if(extracted.versiyon){ setFieldValueFlash('fVersiyon', extracted.versiyon); filled.push('motor/versiyon'); }
       if(extracted.donanim){ setFieldValueFlash('fDonanim', extracted.donanim); filled.push('donanım paketi'); }
       if(extracted.modelYili && !isNaN(Number(extracted.modelYili))){ setFieldValueFlash('fYil', Number(extracted.modelYili)); filled.push('model yılı'); }
-      const ruhSeri = seriNoGecerli(extracted.ruhsatSeriNo); if(ruhSeri){ setFieldValueFlash('fRuhsatSeri', ruhSeri); filled.push('ruhsat seri no'); }
+      const ruhSeri = seriNoGecerli(extracted.ruhsatSeriNo);
+      if(ruhSeri){ setFieldValueFlash('fRuhsatSeri', ruhSeri); filled.push('ruhsat seri no ('+ruhSeri+')'); }
+      else if(extracted.ruhsatSeriNo){ console.warn('Ruhsat seri no dogrulanamadi, alan korunuyor:', extracted.ruhsatSeriNo); filled.push('⚠ seri no tam okunamadı — elle kontrol edin'); }
       if(extracted.aracCinsi && !document.getElementById('fCins').value.trim()){ setFieldValueFlash('fCins', extracted.aracCinsi); filled.push('araç cinsi'); }
       if(extracted.muayeneTarihi){ const nd = normalizeExtractedDate(extracted.muayeneTarihi); if(nd && !document.getElementById('fMuayene').value.trim()){ setFieldValueFlash('fMuayene', nd); filled.push('muayene tarihi'); } }
       return filled;
