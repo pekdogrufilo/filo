@@ -10601,7 +10601,7 @@ const OTO_BELGE_TURLERI = {
   ruhsat:   {label:'Ruhsat',           prefix:'ruhsat_',        adiF:'ruhsatBelgeAdi',  tipF:'ruhsatBelgeTip',  tarihF:null},
   sozlesme: {label:'Kira sözleşmesi',  prefix:'contract_',      adiF:'sozlesmeAdi',     tipF:'sozlesmeTip',     tarihF:'sozlesmeBitis'},
 };
-const OTO_BELGE_SYSTEM = 'Sen bir araç belgesi (poliçe, ruhsat, muayene raporu, kira sözleşmesi, masraf fişi, servis kaydı vb.) okuyan asistansın. SADECE şu JSON nesnesini döndür, başka hiçbir metin veya kod bloğu ekleme:\n{"plaka": string|null, "belgeTuru": "sigorta"|"kasko"|"muayene"|"ruhsat"|"sozlesme"|"masraf"|"servis"|"vize"|"diger", "tarih": "YYYY-MM-DD"|null, "belgeNo": string|null, "kiraTutari": sayı|null, "kmLimiti": sayı|null, "kmAsimUcreti": sayı|null, "teslimTarihi": "YYYY-MM-DD"|null, "teslimKm": sayı|null}\nKurallar: "plaka" belgedeki araç plakası (Türk formatı: 2 rakam + 2-3 harf + 2-4 rakam, ör. 42 ABC 123). "belgeTuru" belgenin türü — sigorta poliçesi ise "sigorta", kasko ise "kasko", muayene raporu ise "muayene", tescil/ruhsat ise "ruhsat", MUTLAKA kira/kiracı bilgisi içeren kira sözleşmesi ise "sozlesme", masraf/yakıt fişi ise "masraf", servis/bakım kaydı ise "servis", vize/uluslararası belge ise "vize", hiçbiri değilse "diger". Yalnızca plaka ve araç bilgisi içeren, kira/kiracı verisi olmayan belgeleri asla "sozlesme" olarak sınıflandırma; bunlar "ruhsat" veya "diger" olmalı. "tarih" belgenin geçerlilik bitiş tarihi (poliçe/muayene/sözleşme) ya da fiş/rapor tarihi — YYYY-MM-DD formatında; bulamazsan null. "belgeTuru" "sozlesme" ise EK OLARAK şunları da oku, başka hiçbir belge türünde bu beş alanı doldurma (null bırak): "kiraTutari" aylık kira bedeli (KDV hariç, sadece sayı, TL), "kmLimiti" aylık kilometre kullanım limiti (sadece sayı, km), "kmAsimUcreti" bu limiti aşan her kilometre için uygulanan birim ücret (KDV hariç, sadece sayı, TL/km — sözleşmede "aşım ücreti", "fazla km bedeli" gibi ifadelerle geçebilir), "teslimTarihi" aracın kiracıya TESLİM EDİLDİĞİ tarih (sözleşme başlangıç/teslim tarihi — sözleşmenin genel geçerlilik/imza tarihiyle karıştırma, aracın fiilen teslim edildiği tarihi ara — YYYY-MM-DD), "teslimKm" aracın teslim anındaki kilometresi (sözleşmede "teslim km", "başlangıç km", "kilometre" gibi ifadelerle geçebilir, sadece sayı). Emin değilsen null yaz, tahmin yürütme.';
+const OTO_BELGE_SYSTEM = 'Sen bir araç belgesi (poliçe, ruhsat, muayene raporu, kira sözleşmesi, masraf fişi, servis kaydı vb.) okuyan asistansın. SADECE şu JSON nesnesini döndür, başka hiçbir metin veya kod bloğu ekleme:\n{"plaka": string|null, "belgeTuru": "sigorta"|"kasko"|"muayene"|"ruhsat"|"sozlesme"|"masraf"|"servis"|"vize"|"diger", "tarih": "YYYY-MM-DD"|null, "belgeNo": string|null, "kiraTutari": sayı|null, "kmLimiti": sayı|null, "kmAsimUcreti": sayı|null, "teslimTarihi": "YYYY-MM-DD"|null, "teslimKm": sayı|null}\nKurallar: "plaka" belgedeki araç plakası (Türk formatı: 2 rakam + 2-3 harf + 2-4 rakam, ör. 42 ABC 123). "belgeTuru" belgenin türü — sigorta poliçesi ise "sigorta", kasko ise "kasko", muayene raporu ise "muayene", tescil/ruhsat ise "ruhsat", MUTLAKA kira/kiracı bilgisi içeren kira sözleşmesi ise "sozlesme", masraf/yakıt fişi ise "masraf", servis/bakım kaydı ise "servis", vize/uluslararası belge ise "vize", hiçbiri değilse "diger". Yalnızca plaka ve araç bilgisi içeren, kira/kiracı verisi olmayan belgeleri asla "sozlesme" olarak sınıflandırma; bunlar "ruhsat" veya "diger" olmalı. "tarih" belgenin geçerlilik bitiş tarihi (poliçe/muayene/sözleşme) ya da fiş/rapor tarihi — YYYY-MM-DD formatında; bulamazsan null. "ruhsat" türü belgede muayene geçerlilik tarihi görünüyorsa onu "tarih" olarak döndür. "belgeTuru" "sozlesme" ise EK OLARAK şunları da oku, başka hiçbir belge türünde bu beş alanı doldurma (null bırak): "kiraTutari" aylık kira bedeli (KDV hariç, sadece sayı, TL), "kmLimiti" aylık kilometre kullanım limiti (sadece sayı, km), "kmAsimUcreti" bu limiti aşan her kilometre için uygulanan birim ücret (KDV hariç, sadece sayı, TL/km — sözleşmede "aşım ücreti", "fazla km bedeli" gibi ifadelerle geçebilir), "teslimTarihi" aracın kiracıya TESLİM EDİLDİĞİ tarih (sözleşme başlangıç/teslim tarihi — sözleşmenin genel geçerlilik/imza tarihiyle karıştırma, aracın fiilen teslim edildiği tarihi ara — YYYY-MM-DD), "teslimKm" aracın teslim anındaki kilometresi (sözleşmede "teslim km", "başlangıç km", "kilometre" gibi ifadelerle geçebilir, sadece sayı). Emin değilsen null yaz, tahmin yürütme.';
 
 // v.81: "km limiti vs yazmadı, aşım ücreti okumuyor" geri bildirimi üzerine eklendi — sözleşme
 // türü belgelerde artık plaka+tarihin yanında kira tutarı, aylık km limiti ve km aşım ücreti de
@@ -10620,6 +10620,16 @@ function dogrulaBelgeTuru(tur, bilgi){
   if(tur !== 'sozlesme' || !bilgi) return tur;
   const hasSozlesmeIzi = bilgi.kiraTutari || bilgi.kmLimiti || bilgi.kmAsimUcreti || bilgi.teslimTarihi || bilgi.teslimKm;
   return hasSozlesmeIzi ? tur : 'diger';
+}
+
+// v.87: Ruhsat/tescil belgesinde görünen muayene geçerlilik tarihi okunmuyordu — OTO_BELGE_TURLERI'de
+// ruhsat için tarihF:null tanımlı olduğu için okunan tarih hiçbir alana yazılmıyordu. Belgede tarih
+// varsa ve aracın muayeneTarihi alanı BOŞSA doldurur; dolu bir değerin üzerine asla yazmaz.
+// Dönen değer true ise mesaj metinlerinde "muayene tarihi işlendi" bilgisi gösterilir.
+function ruhsatMuayeneUygula(v, tur, tarih){
+  if(tur!=='ruhsat' || !tarih || v.muayeneTarihi) return false;
+  v.muayeneTarihi = tarih;
+  return true;
 }
 function sozlesmeAlanlariUygula(v, bilgi){
   const sonuc = {degisti:false, doldurulan:[], celiski:[]};
@@ -10713,10 +10723,11 @@ async function otoBelgeSec(file, statusEl){
     }else{
       await belgeAracaEkle(v, tur, file.name, onceden.mime, onceden.dataUrl, okunanTarih);
     }
+    const ruhsatM = ruhsatMuayeneUygula(v, tur, okunanTarih);
     const sozSonuc = tur==='sozlesme' ? sozlesmeAlanlariUygula(v, bilgi) : null;
     await persist();
     logActivity('Belge yüklendi', `${v.plaka} — ${std?std.label:(tur==='diger'?'Belge':tur)} (${file.name})`).catch(()=>{});
-    const tarihMsg = okunanTarih && std && std.tarihF ? `, tarih ${fmtTarih(okunanTarih)} olarak güncellendi` : '';
+    const tarihMsg = okunanTarih && std && std.tarihF ? `, tarih ${fmtTarih(okunanTarih)} olarak güncellendi` : (ruhsatM ? `, muayene tarihi ${fmtTarih(okunanTarih)} olarak işlendi` : '');
     const sozMsg = sozlesmeMesajOlustur(sozSonuc);
     showToast(`Kaydedildi: ${esc(v.plaka)} — ${std?std.label:esc(tur)} "${esc(file.name)}"${tarihMsg}.${sozMsg}`);
     renderBelgelerPage();
@@ -12086,11 +12097,12 @@ async function aiBelgeYukle(file){
     }else{
       await belgeAracaEkle(v, tur, file.name, onceden.mime, onceden.dataUrl, okunanTarih);
     }
+    const ruhsatM = ruhsatMuayeneUygula(v, tur, okunanTarih);
     const sozSonuc = tur==='sozlesme' ? sozlesmeAlanlariUygula(v, bilgi) : null;
     await persist();
     logActivity('Belge yüklendi', `${v.plaka} — ${std?std.label:tur} (${file.name}) [AI Asistanı]`).catch(()=>{});
     const etiket = std ? std.label : (tur==='diger'?'Genel belge':tur);
-    const tarihMsg = okunanTarih && std && std.tarihF ? ` Bitiş tarihi <b>${fmtTarih(okunanTarih)}</b> olarak güncellendi.` : '';
+    const tarihMsg = okunanTarih && std && std.tarihF ? ` Bitiş tarihi <b>${fmtTarih(okunanTarih)}</b> olarak güncellendi.` : (ruhsatM ? ` Belgedeki muayene tarihi <b>${fmtTarih(okunanTarih)}</b> olarak işlendi.` : '');
     const sozMsg = esc(sozlesmeMesajOlustur(sozSonuc));
     aiMessages.push({role:'assistant', content: `✅ Bu bir <b>${esc(etiket)}</b> — <b>${esc(v.plaka)}</b> aracının kaydına ekledim.${tarihMsg}${sozMsg} <button onclick="switchPage('arac-yonetimi');setTimeout(()=>openVehicleDetail('${v.id}'),100)" style="margin-left:6px;background:rgba(184,122,76,.1);border:1px solid rgba(184,122,76,.2);color:var(--accent-blue);padding:3px 10px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;">Araca Git</button>`});
     renderAiPage();
@@ -12132,11 +12144,12 @@ async function aiPendingBelgeCozumle(txt){
     }else{
       await belgeAracaEkle(v, tur, pending.file.name, onceden.mime, onceden.dataUrl, okunanTarih);
     }
+    const ruhsatM = ruhsatMuayeneUygula(v, tur, okunanTarih);
     const sozSonuc = tur==='sozlesme' ? sozlesmeAlanlariUygula(v, bilgi) : null;
     await persist();
     logActivity('Belge yüklendi', `${v.plaka} — ${std?std.label:tur} (${pending.file.name}) [AI Asistanı]`).catch(()=>{});
     const etiket = std ? std.label : (tur==='diger'?'Genel belge':tur);
-    const tarihMsg = okunanTarih && std && std.tarihF ? ` Bitiş tarihi <b>${fmtTarih(okunanTarih)}</b> olarak güncellendi.` : '';
+    const tarihMsg = okunanTarih && std && std.tarihF ? ` Bitiş tarihi <b>${fmtTarih(okunanTarih)}</b> olarak güncellendi.` : (ruhsatM ? ` Belgedeki muayene tarihi <b>${fmtTarih(okunanTarih)}</b> olarak işlendi.` : '');
     const sozMsg = esc(sozlesmeMesajOlustur(sozSonuc));
     aiMessages.push({role:'assistant', content: `✅ <b>${esc(etiket)}</b> olarak <b>${esc(v.plaka)}</b> aracının kaydına ekledim.${tarihMsg}${sozMsg}`});
     renderAiPage();
