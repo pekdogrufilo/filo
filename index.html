@@ -17,7 +17,7 @@
   #filoKaydetBtn:active{transform:translateY(0);}
   @media (max-width:900px){#filoKaydetBtn{right:14px;bottom:76px;padding:11px 18px;}}
   /* v.93: Otomatik kaydet rozeti */
-  #filoOtkRozet{position:fixed;left:22px;bottom:22px;z-index:899;background:rgba(38,161,105,.95);color:#fff;font-family:var(--font-ui);font-size:12.5px;font-weight:600;padding:8px 16px;border-radius:999px;box-shadow:0 6px 18px rgba(38,161,105,.35);opacity:0;transform:translateY(8px);transition:opacity .25s ease, transform .25s ease;pointer-events:none;}
+  #filoOtkRozet{position:fixed;left:22px;bottom:22px;z-index:899;background:rgba(54,161,104,.95);color:#fff;font-family:var(--font-ui);font-size:12.5px;font-weight:600;padding:8px 16px;border-radius:999px;box-shadow:0 6px 18px rgba(54,161,104,.35);opacity:0;transform:translateY(8px);transition:opacity .25s ease, transform .25s ease;pointer-events:none;}
   #filoOtkRozet.show{opacity:1;transform:translateY(0);}
   /* v.93: Koyu temada teslim/poliçe fotoğrafları koyu görünmesin — beyaz karneye al */
   html[data-theme="dark"] img[src^="data:"]{background:#fff;border-radius:8px;padding:4px;box-shadow:0 2px 8px rgba(0,0,0,.4);}
@@ -99,12 +99,12 @@
     --sidebar-bg:#101215;
     --surface-glass:rgba(16,18,21,.80);
     --edge-hl:transparent;
-    --fixed-light:#F5F3EF;
+    --fixed-light:#F4F2ED;
     --fixed-dark:#1A1C1F;
   }
     html[data-theme="light"]{
     /* Onyx Light — warm paper, copper accent */
-    --bg:#F5F3EF;
+    --bg:#F4F2ED;
     --surface:#FFFFFF;
     --surface-2:#FAF8F5;
     --surface-3:#F0EDE7;
@@ -113,19 +113,19 @@
     --text:#1C1A16;
     --text-2:#5E5A52;
     --text-3:#8E897F;
-    --blue:#A8642F;
-    --blue-dim:rgba(168,100,47,.10);
+    --blue:#C24334;
+    --blue-dim:rgba(194,67,52,.10);
     --green:#36A168;
-    --green-dim:rgba(46,139,85,.10);
+    --green-dim:rgba(54,161,104,.10);
     --amber:#E8A132;
-    --amber-dim:rgba(214,138,30,.10);
+    --amber-dim:rgba(232,161,50,.10);
     --red:#E1554E;
-    --red-dim:rgba(214,69,64,.10);
+    --red-dim:rgba(225,85,78,.10);
     --sidebar-bg:#EDE9E1;
     --radius:20px;
     --radius-sm:12px;
     --radius-lg:26px;
-    --asphalt-900:#F5F3EF;
+    --asphalt-900:#F4F2ED;
     --asphalt-800:#FFFFFF;
     --asphalt-700:#FAF8F5;
     --steel-600:#F0EDE7;
@@ -137,13 +137,13 @@
     --shadow-sm:0 1px 2px rgba(0,0,0,.04),0 0 0 1px rgba(0,0,0,.03);
     --shadow-md:0 8px 24px rgba(0,0,0,.08);
     --shadow-lg:0 18px 54px rgba(0,0,0,.13);
-    --safety-dim:rgba(214,69,64,.10);
-    --teal-dim:rgba(46,139,85,.10);
-    --coral-dim:rgba(214,69,64,.10);
+    --safety-dim:rgba(225,85,78,.10);
+    --teal-dim:rgba(54,161,104,.10);
+    --coral-dim:rgba(225,85,78,.10);
     --gold:#E8A132;
     --gold-dim:rgba(232,161,50,.10);
-    --accent-blue:#A8642F;
-    --glow:rgba(168,100,47,.06);
+    --accent-blue:#C24334;
+    --glow:rgba(194,67,52,.06);
     --surface-glass:rgba(255,255,255,.82);
     --edge-hl:transparent;
     --fixed-light:#F5F5F7;
@@ -199,7 +199,7 @@
   .search-wrap svg{position:absolute;left:14px;color:var(--steel-300);pointer-events:none;}
   .search-wrap input[type=text]{width:100%;}
   .filters input[type=text]{background:var(--surface);border:1px solid var(--line);color:var(--paper);padding:11px 14px 11px 40px;border-radius:9px;font-family:var(--font-ui);font-size:14px;transition:border-color .15s ease, box-shadow .15s ease;}
-  .filters input[type=text]:focus{outline:none;border-color:var(--safety);box-shadow:0 0 0 3px rgba(184,74,66,.15);}
+  .filters input[type=text]:focus{outline:none;border-color:var(--safety);box-shadow:0 0 0 3px rgba(169,58,43,.15);}
   .filters input::placeholder{color:var(--steel-300);}
   .filters select{background:var(--surface);border:1px solid var(--line);color:var(--paper);padding:11px 34px 11px 12px;border-radius:9px;font-family:var(--font-ui);font-size:13.5px;cursor:pointer;transition:border-color .15s ease;appearance:none;-webkit-appearance:none;-moz-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238B95A7' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center;background-size:14px;}
   .filters select:hover{border-color:var(--steel-300);}
@@ -234,9 +234,9 @@
   .badge{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;flex-shrink:0;}
   .badge.kirada{background:rgba(54,161,104,.2);color:#4CC480;border:1px solid rgba(54,161,104,.3);}
   .badge.musait{background:rgba(74,85,104,.3);color:#A0AEC0;border:1px solid rgba(74,85,104,.4);}
-  .badge.serviste{background:rgba(140,74,60,.2);color:#E8B4A8;border:1px solid rgba(140,74,60,.3);}
+  .badge.serviste{background:rgba(169,58,43,.2);color:#E8B4A8;border:1px solid rgba(169,58,43,.3);}
   .badge.pert{background:rgba(123,120,115,.22);color:#B8BCC4;border:1px solid rgba(123,120,115,.35);}
-  .badge.satis{background:rgba(46,139,147,.2);color:#5BD0EC;border:1px solid rgba(46,139,147,.3);}
+  .badge.satis{background:rgba(155,126,216,.2);color:#5BD0EC;border:1px solid rgba(155,126,216,.3);}
 
   /* Kart bilgi grid */
   .card-info{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;margin-bottom:12px;}
@@ -341,7 +341,7 @@
   .doc-autofill-result .dr-close{position:absolute;top:6px;right:6px;background:none;border:none;color:inherit;opacity:.7;cursor:pointer;padding:3px;}
   .doc-autofill-result .dr-close:hover{opacity:1;}
   .field input:focus,.field select:focus{outline:none;border-color:var(--accent-blue);box-shadow:0 0 0 3px rgba(194,67,52,.15);}
-  .field input.invalid{border-color:var(--coral);box-shadow:0 0 0 3px rgba(140,74,60,.2);}
+  .field input.invalid{border-color:var(--coral);box-shadow:0 0 0 3px rgba(169,58,43,.2);}
   /* Boş tarih/ay alanlarında tarayıcının ham "gg/aa/yyyy" yer tutucusu, panelin diğer placeholder metinleriyle
      aynı soluk tonda görünsün — dolduğunda normal metin rengine döner. */
   input[type="date"]:placeholder-shown,input[type="month"]:placeholder-shown{color:var(--steel-300);}
@@ -354,8 +354,8 @@
   .modal-actions button:active{transform:scale(.98);}
   .modal-actions .cancel{background:transparent;border:1px solid var(--line);color:var(--steel-100);}
   .modal-actions .cancel:hover{border-color:var(--steel-300);color:var(--paper);}
-  @media(max-width:560px){.modal{max-width:100%;border-radius:12px 12px 0 0;max-height:95vh;}.modal-tabs{overflow-x:auto;}.modal-tab{white-space:nowrap;}}.modal-actions .save{background:linear-gradient(155deg,#E1554E,var(--safety));color:#fff;box-shadow:0 4px 14px rgba(184,74,66,.28);}
-  .modal-actions .save:hover{box-shadow:0 8px 22px rgba(184,74,66,.4);}
+  @media(max-width:560px){.modal{max-width:100%;border-radius:12px 12px 0 0;max-height:95vh;}.modal-tabs{overflow-x:auto;}.modal-tab{white-space:nowrap;}}.modal-actions .save{background:linear-gradient(155deg,#E1554E,var(--safety));color:#fff;box-shadow:0 4px 14px rgba(169,58,43,.28);}
+  .modal-actions .save:hover{box-shadow:0 8px 22px rgba(169,58,43,.4);}
 
   @media (max-width:900px){.stats{grid-template-columns:repeat(2,1fr);}}
 
@@ -403,7 +403,7 @@
   .lock-screen{position:fixed;inset:0;z-index:500;display:none;align-items:center;justify-content:center;background:var(--bg);overflow:hidden;}
   .lock-screen.show{display:flex;}
   .lock-screen::before{content:"";position:absolute;width:900px;height:900px;border-radius:50%;background:radial-gradient(circle,rgba(194,67,52,.10) 0%,transparent 70%);top:-300px;left:-300px;pointer-events:none;}
-  .lock-screen::after{content:"";position:absolute;width:700px;height:700px;border-radius:50%;background:radial-gradient(circle,rgba(46,139,85,.06) 0%,transparent 70%);bottom:-200px;right:-150px;pointer-events:none;}
+  .lock-screen::after{content:"";position:absolute;width:700px;height:700px;border-radius:50%;background:radial-gradient(circle,rgba(54,161,104,.06) 0%,transparent 70%);bottom:-200px;right:-150px;pointer-events:none;}
   .lock-grid-bg{position:absolute;inset:0;background-image:linear-gradient(rgba(194,67,52,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(194,67,52,.03) 1px,transparent 1px);background-size:64px 64px;pointer-events:none;}
 
   .lock-split{display:contents;}
@@ -626,7 +626,7 @@
   .th-user-role{font-size:12px;color:var(--steel-300);}
   .th-role-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;letter-spacing:.5px;text-transform:uppercase;}
   .th-role-badge.admin{background:rgba(194,67,52,.15);color:var(--accent-blue);}
-  .th-role-badge.staff{background:rgba(46,139,85,.12);color:#4CC480;}
+  .th-role-badge.staff{background:rgba(54,161,104,.12);color:#4CC480;}
 
   .page{display:none;padding:32px 36px 70px;}
   .page.active{display:block;}
@@ -1122,7 +1122,7 @@
   /* Butonlar: Pekdoğru kurumsal kırmızısı */
   html[data-theme="light"] .add-btn{background:var(--accent-blue);box-shadow:0 4px 14px rgba(194,67,52,.25);}
   /* Splash: açık zeminde koyu metin */
-  html[data-theme="light"] .splash{background:#F5F3EF;}
+  html[data-theme="light"] .splash{background:#F4F2ED;}
   html[data-theme="light"] .splash h2{color:#1C1A16;}
   html[data-theme="light"] .splash .sd{color:rgba(60,60,67,.55);}
   html[data-theme="light"] .splash-stat{background:rgba(0,0,0,.035);border-color:rgba(0,0,0,.07);}
@@ -1161,7 +1161,7 @@
   .badge::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;}
   html[data-theme="light"] .badge.kirada{background:rgba(54,161,104,.12);color:#1D7A3D;border-color:rgba(54,161,104,.28);}
   html[data-theme="light"] .badge.musait{background:rgba(142,142,147,.14);color:#6E6E73;border-color:rgba(142,142,147,.32);}
-  html[data-theme="light"] .badge.serviste{background:rgba(214,69,64,.10);color:#C0271D;border-color:rgba(214,69,64,.26);}
+  html[data-theme="light"] .badge.serviste{background:rgba(225,85,78,.10);color:#C0271D;border-color:rgba(225,85,78,.26);}
   /* Kart içi mini istatistik şeridi */
   .card-stats{display:flex;align-items:stretch;background:var(--surface-2);border-radius:12px;padding:9px 2px;margin:12px 0 10px;}
   .cs{flex:1;min-width:0;padding:0 10px;display:flex;flex-direction:column;gap:2px;}
@@ -1177,7 +1177,7 @@
   .ch-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
   .ch.iyi .ch-dot{background:#36A168;box-shadow:0 0 0 3px rgba(54,161,104,.16);}
   .ch.uyari .ch-dot{background:#E8A132;box-shadow:0 0 0 3px rgba(232,161,50,.18);}
-  .ch.kotu .ch-dot{background:#FF3B30;box-shadow:0 0 0 3px rgba(214,69,64,.18);}
+  .ch.kotu .ch-dot{background:#FF3B30;box-shadow:0 0 0 3px rgba(225,85,78,.18);}
   .ch.yok .ch-dot{background:rgba(142,142,147,.35);box-shadow:none;}
   .ch-l{font-size:9.5px;color:var(--text-3);font-weight:600;letter-spacing:.3px;white-space:nowrap;}
   .ch-price{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:1px;padding-left:8px;border-left:1px solid var(--line);flex-shrink:0;}
@@ -1232,7 +1232,7 @@
   .vk-logo .marka-logo.ml-err .ml-fb{display:flex;}
   .vk-seg .gun{font-size:9.5px;text-align:center;margin-top:2px;color:rgba(255,255,255,.45);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .vk-seg.ok .gun{color:#4CC480;font-weight:700;}
-  .vk-seg.kotu .gun{color:#f87171;font-weight:700;}
+  .vk-seg.kotu .gun{color:#EC8E85;font-weight:700;}
   .vk-seg.uyari .gun{color:#E8A132;font-weight:700;}
   /* Seçenek 3 — Tam Wallet: gövde ve alt bar lacivert */
   .vk-seg-row{display:flex;gap:10px;padding:13px 16px 14px;background:#1A1C22;}
@@ -1382,7 +1382,7 @@
   .stat.ok{border-color:rgba(54,161,104,.25);}
   .stat.warn{border-color:rgba(225,85,78,.25);}
   .alert-panel{background:linear-gradient(180deg,var(--surface) 0%,var(--surface-2) 100%);border:1px solid var(--border);}
-  .storage-warn{background:rgba(214,138,30,.10);border-color:rgba(214,138,30,.25);color:#E8A132;}
+  .storage-warn{background:rgba(232,161,50,.10);border-color:rgba(232,161,50,.25);color:#E8A132;}
   .toast{border-left-color:var(--accent-blue);}
   .toast.err{border-left-color:var(--coral);}
   .mobil-fab{background:linear-gradient(135deg,#E8A132,#C24334);box-shadow:0 6px 22px rgba(194,67,52,.35);}
@@ -1394,7 +1394,7 @@
   .sb-nav .sb-item{gap:10px;padding:9px 12px;border-radius:10px;font-weight:600;}
   .sidebar .sb-item.active{background:linear-gradient(135deg,rgba(194,67,52,.22),rgba(194,67,52,.10));color:var(--accent-blue);box-shadow:none;border-radius:10px;}
   .sidebar .sb-item.active svg{color:var(--accent-blue);opacity:1;}
-  html[data-theme="light"] .sidebar .sb-item.active{background:linear-gradient(135deg,rgba(168,100,47,.16),rgba(168,100,47,.07));color:var(--accent-blue);box-shadow:none;}
+  html[data-theme="light"] .sidebar .sb-item.active{background:linear-gradient(135deg,rgba(194,67,52,.16),rgba(194,67,52,.07));color:var(--accent-blue);box-shadow:none;}
   .sb-group{margin-top:4px;}
   .sb-group-head{display:flex;align-items:center;gap:8px;width:100%;background:none;border:none;cursor:pointer;color:var(--text-3);font-family:var(--font-ui);font-size:10px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;padding:12px 12px 6px;text-align:left;transition:color .15s ease;}
   .sb-group-head:hover{color:var(--text-2);}
@@ -1410,7 +1410,7 @@
   :root{--gold:#E8A132;--gold-dim:rgba(232,161,50,.12);}
   html[data-theme="light"]{--gold:#B87A28;--gold-dim:rgba(232,161,50,.10);}
   /* Birincil eylem = marka rengi (bakir); kirmizi yalniz tehlike */
-  .modal-actions .save{background:linear-gradient(135deg,#C9954C,#C24334);box-shadow:0 4px 16px rgba(194,67,52,.30);}
+  .modal-actions .save{background:linear-gradient(135deg,#CE4A38,#A93A2B);box-shadow:0 4px 16px rgba(194,67,52,.30);}
   .modal-actions .save:hover{box-shadow:0 6px 22px rgba(194,67,52,.42);}
   /* Kilit/kurulum ekrami kontrasti */
   .lock-card .lsub{color:var(--text) !important;opacity:.75;}
@@ -1505,7 +1505,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-15.108</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-15.109</div>
     </div>
   </div>
 </div>
@@ -1635,7 +1635,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-15.108</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-15.109</div>
     </div>
   </aside>
 <script>
@@ -2579,7 +2579,7 @@ function setTheme(theme){
   document.documentElement.setAttribute('data-theme', theme === 'light' ? 'light' : 'dark');
   try{ localStorage.setItem('filoPaneli_theme', theme); }catch(e){}
   const metaEl = document.getElementById('themeColorMeta');
-  if(metaEl) metaEl.setAttribute('content', theme === 'light' ? '#F5F3EF' : '#0B0C0E');
+  if(metaEl) metaEl.setAttribute('content', theme === 'light' ? '#F4F2ED' : '#0B0C0E');
   updateThemeToggleUI();
 }
 function toggleTheme(){
@@ -3287,7 +3287,7 @@ function render(){
       let subTxt='—', subCls='';
       if(dl!==null){
         tip=`${fmtTarih(t)} · ${dl<0?Math.abs(dl)+' gün geçti':dl+' gün kaldı'}`;
-        if(dl<0){ renk='#f87171'; w=14; subTxt=Math.abs(dl)+' gün geçti'; subCls='kotu'; }
+        if(dl<0){ renk='#EC8E85'; w=14; subTxt=Math.abs(dl)+' gün geçti'; subCls='kotu'; }
         else if(dl<=30){ renk='#E8A132'; w=22; subTxt=dl+' gün'; subCls='uyari'; }
         else { renk='#4CC480'; w=Math.min(100, Math.max(26, Math.round(dl/365*100))); subTxt=dl+' gün'; subCls='ok'; }
       }
@@ -5965,7 +5965,7 @@ function openVehicleDetail(id){
 
   // Durum rengi
   const durumRenk = v.durum==='Kirada'?'#36A168':v.durum==='Serviste'?'#E1554E':v.durum==='Pert'?'#7B7873':v.durum==='Satıldı'?'#9B7ED8':'#E8A132';
-  const durumBg = v.durum==='Kirada'?'rgba(54,161,104,.1)':v.durum==='Serviste'?'rgba(225,85,78,.1)':v.durum==='Pert'?'rgba(123,120,115,.12)':v.durum==='Satıldı'?'rgba(46,139,147,.12)':'rgba(214,138,30,.1)';
+  const durumBg = v.durum==='Kirada'?'rgba(54,161,104,.1)':v.durum==='Serviste'?'rgba(225,85,78,.1)':v.durum==='Pert'?'rgba(123,120,115,.12)':v.durum==='Satıldı'?'rgba(155,126,216,.12)':'rgba(232,161,50,.1)';
 
   // Bu araca ait kayıtlı sözleşmeler (plaka araclar[] içinde veya tek araç plakası olarak geçen)
   const plakaNorm = normPlaka(v.plaka);
@@ -6017,7 +6017,7 @@ function openVehicleDetail(id){
           <div style="font-size:16px;font-weight:700;color:var(--paper);">${esc(v.plaka)} <span style="font-size:13px;font-weight:400;color:var(--steel-300);">${esc([v.marka,v.model,v.versiyon].filter(Boolean).join(' '))}</span></div>
           <div style="margin-top:3px;"><span style="background:${durumBg};color:${durumRenk};font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;">${esc(v.durum||'—')}</span></div>
         </div>
-        <button onclick="servisGirisFormuAc('${id}')" style="background:rgba(214,138,30,.12);border:1px solid rgba(214,138,30,.3);color:#E8A132;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Servis Kaydı</button>
+        <button onclick="servisGirisFormuAc('${id}')" style="background:rgba(232,161,50,.12);border:1px solid rgba(232,161,50,.3);color:#E8A132;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Servis Kaydı</button>
         <button onclick="document.getElementById('vehicleDetailOverlay').remove();openEdit('${id}')" style="background:var(--accent-blue);color:#fff;border:none;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Düzenle</button>
       </div>
 
@@ -6252,7 +6252,7 @@ function openVehicleDetail(id){
         <div style="background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:14px;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
             <div style="font-size:12px;font-weight:700;color:var(--paper);">${ICO('wrench',13)} Servis Kayıtları <span style="font-weight:400;color:var(--steel-300);">${(v.servisGirisleri||[]).length} kayıt</span></div>
-            <button onclick="servisGirisFormuAc('${id}')" style="background:rgba(214,138,30,.12);border:1px solid rgba(214,138,30,.3);color:#E8A132;padding:4px 12px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;">+ Ekle</button>
+            <button onclick="servisGirisFormuAc('${id}')" style="background:rgba(232,161,50,.12);border:1px solid rgba(232,161,50,.3);color:#E8A132;padding:4px 12px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;">+ Ekle</button>
           </div>
           ${(v.servisGirisleri||[]).length ? [...v.servisGirisleri].sort((a,b)=>(b.giris||'').localeCompare(a.giris||'')).map(k=>{
             let sure = '';
@@ -6961,7 +6961,7 @@ function getMarkaLogo(marka, ipucuMetni){
     'renault':'#FFCC00','fiat':'#8B0000','ford':'#003478','volkswagen':'#001E50','vw':'#001E50',
     'mercedes':'#1C1A16','mercedes-benz':'#1C1A16','mercedes benz':'#1C1A16',
     'bmw':'#1C69D4','toyota':'#EB0A1E','hyundai':'#002C5F','kia':'#05141F',
-    'peugeot':'#0033A0','citroen':'#C00000','citroën':'#C00000','opel':'#F5A623',
+    'peugeot':'#0033A0','citroen':'#A93A2B','citroën':'#A93A2B','opel':'#F5A623',
     'nissan':'#E1554E','dacia':'#1A2B6B','isuzu':'#E1554E','man':'#E2001A',
     'iveco':'#003087','volvo':'#003057','skoda':'#4BA82E','škoda':'#4BA82E',
     'audi':'#BB0A30','seat':'#E1554E','mitsubishi':'#E60012','honda':'#E1554E',
@@ -8080,9 +8080,9 @@ function renderKritikUyarilarList(urgent){
 
   const meta = {
     'Muayene':       {emoji:'🔴', color:'#E1554E', bg:'rgba(225,85,78,.08)',  border:'rgba(225,85,78,.2)',  label:'Muayenesi yaklaşan araçlar'},
-    'Sigorta':       {emoji:'🟠', color:'#C24334', bg:'rgba(199,106,46,.08)',  border:'rgba(199,106,46,.2)',  label:'Sigortası yaklaşan araçlar'},
-    'Kasko Bitişi':  {emoji:'🟠', color:'#E8A132', bg:'rgba(214,138,30,.08)', border:'rgba(214,138,30,.2)',  label:'Kaskosu yaklaşan araçlar'},
-    'Sözleşme Bitişi':{emoji:'🟡', color:'#CA8A04', bg:'rgba(232,161,50,.08)', border:'rgba(232,161,50,.2)',  label:'Sözleşmesi yaklaşan araçlar'},
+    'Sigorta':       {emoji:'🟠', color:'#C24334', bg:'rgba(194,67,52,.08)',  border:'rgba(194,67,52,.2)',  label:'Sigortası yaklaşan araçlar'},
+    'Kasko Bitişi':  {emoji:'🟠', color:'#E8A132', bg:'rgba(232,161,50,.08)', border:'rgba(232,161,50,.2)',  label:'Kaskosu yaklaşan araçlar'},
+    'Sözleşme Bitişi':{emoji:'🟡', color:'#D98E1B', bg:'rgba(232,161,50,.08)', border:'rgba(232,161,50,.2)',  label:'Sözleşmesi yaklaşan araçlar'},
     'Kira Bitişi':   {emoji:'🔵', color:'#C24334', bg:'rgba(194,67,52,.08)', border:'rgba(194,67,52,.2)',  label:'Kirası bitecek araçlar'},
   };
   const order = ['Muayene','Sigorta','Kasko Bitişi','Sözleşme Bitişi','Kira Bitişi'];
@@ -8125,11 +8125,11 @@ function renderActivityListForDash(){
   if(list.length===0) return '<div class="log-empty">Henüz etkinlik yok.</div>';
   const icons = {
     'add':    {ic:ICO('car',14), renk:'#C24334', bg:'rgba(194,67,52,.1)'},
-    'edit':   {ic:ICO('pencil',14), renk:'#E8A132', bg:'rgba(214,138,30,.1)'},
+    'edit':   {ic:ICO('pencil',14), renk:'#E8A132', bg:'rgba(232,161,50,.1)'},
     'del':    {ic:ICO('trash',14), renk:'#E1554E', bg:'rgba(225,85,78,.1)'},
     'doc':    {ic:ICO('filetext',14), renk:'#9B7ED8', bg:'rgba(124,58,237,.1)'},
     'import': {ic:ICO('download',14), renk:'#36A168', bg:'rgba(54,161,104,.1)'},
-    'warn':   {ic:ICO('clock',14), renk:'#E8A132', bg:'rgba(214,138,30,.1)'},
+    'warn':   {ic:ICO('clock',14), renk:'#E8A132', bg:'rgba(232,161,50,.1)'},
   };
   return `<div style="display:flex;flex-direction:column;gap:0;">` + list.map((l,i)=>{
     const m = icons[l.action] || {ic:ICO('pencil',14), renk:'var(--text-3)', bg:'var(--surface-2)'};
@@ -8484,7 +8484,7 @@ function renderDashboard(){
     });
     urgent.forEach(u=>{
       if(u.dl<0) items.push({kritik:true, renk:'#E1554E', bg:'rgba(225,85,78,.1)', etiket:'Belge', plaka:u.plaka, aci:u.tip+' — '+Math.abs(u.dl)+' gün geçti', act:"switchPage('bildirimler')", btn:''});
-      else items.push({kritik:false, renk:'#C24334', bg:'rgba(199,106,46,.1)', etiket:'Belge', plaka:u.plaka, aci:u.tip+' — '+u.dl+' gün kaldı', act:"switchPage('bildirimler')", btn:''});
+      else items.push({kritik:false, renk:'#C24334', bg:'rgba(194,67,52,.1)', etiket:'Belge', plaka:u.plaka, aci:u.tip+' — '+u.dl+' gün kaldı', act:"switchPage('bildirimler')", btn:''});
     });
     // Km aşımı uyarısı — aktif kirada (veya kiracısı olup geçici olarak serviste olan) araçlarda
     // erken uyarı: hak edilen km ile gerçek kullanım karşılaştırılır.
@@ -8513,7 +8513,7 @@ function renderDashboard(){
         const guncelAy = `${simdi.getFullYear()}-${String(simdi.getMonth()+1).padStart(2,'0')}`;
         const eksik = vehicles.filter(v=>v.durum==='Kirada' && !(v.hakedisGecmisi||[]).some(h=>h.donemKey===guncelAy));
         if(eksik.length>0){
-          items.push({kritik:false, renk:'#E8A132', bg:'rgba(214,138,30,.1)', etiket:'Hakediş', plaka:'', aci:'Bu ayın hakedişi henüz yüklenmedi ('+eksik.length+' araç)', act:"switchPage('excel')", btn:'Yükle'});
+          items.push({kritik:false, renk:'#E8A132', bg:'rgba(232,161,50,.1)', etiket:'Hakediş', plaka:'', aci:'Bu ayın hakedişi henüz yüklenmedi ('+eksik.length+' araç)', act:"switchPage('excel')", btn:'Yükle'});
         }
       }
     }
@@ -8595,7 +8595,7 @@ function renderDashboard(){
       <div class="dcard" id="bugunCard" style="border-left:4px solid ${bugunKritik>0?'#E1554E':(bugunUyari>0?'#C24334':'#36A168')};box-shadow:var(--shadow-md);">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
           <h3 style="margin:0;display:flex;align-items:center;gap:10px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Bugün Yapılacaklar
-            ${bugunYapilacaklar.length ? `<span style="font-size:11px;font-weight:700;padding:2px 9px;border-radius:12px;background:${bugunKritik>0?'rgba(225,85,78,.15)':'rgba(199,106,46,.15)'};color:${bugunKritik>0?'#E1554E':'#C24334'};">${bugunKritik>0?bugunKritik+' kritik · ':''}${bugunUyari} uyarı</span>` : `<span style="font-size:11px;font-weight:700;padding:2px 9px;border-radius:12px;background:rgba(54,161,104,.15);color:#36A168;">Temiz</span>`}
+            ${bugunYapilacaklar.length ? `<span style="font-size:11px;font-weight:700;padding:2px 9px;border-radius:12px;background:${bugunKritik>0?'rgba(225,85,78,.15)':'rgba(194,67,52,.15)'};color:${bugunKritik>0?'#E1554E':'#C24334'};">${bugunKritik>0?bugunKritik+' kritik · ':''}${bugunUyari} uyarı</span>` : `<span style="font-size:11px;font-weight:700;padding:2px 9px;border-radius:12px;background:rgba(54,161,104,.15);color:#36A168;">Temiz</span>`}
           </h3>
           <a data-goto="bildirimler" style="font-size:12px;font-weight:400;color:var(--accent-blue);text-decoration:none;">Tümü →</a>
         </div>
@@ -9238,7 +9238,7 @@ Filodaki plakalar: ${plakaList.slice(0,500)}`;
               ${eslestirilmis.map((k,i)=>`
                 <tr style="border-bottom:1px solid var(--line);${k._dupVar?'opacity:.6;':''};" id="fisRow_${i}">
                   <td style="padding:5px 8px;">
-                    ${k._dupVar ? '<span style="font-size:10px;background:rgba(214,138,30,.15);color:#E8A132;padding:1px 5px;border-radius:4px;margin-right:4px;">TEKRAR</span>' : ''}
+                    ${k._dupVar ? '<span style="font-size:10px;background:rgba(232,161,50,.15);color:#E8A132;padding:1px 5px;border-radius:4px;margin-right:4px;">TEKRAR</span>' : ''}
                     <input value="${esc(k.plaka||'')}" onchange="fisRowDüzenle(${i},'plaka',this.value)"
                       style="background:${k.vehicleId?'transparent':'rgba(225,85,78,.08)'};border:1px solid ${k.vehicleId?'transparent':'rgba(225,85,78,.3)'};color:${k.vehicleId?'var(--paper)':'var(--safety)'};padding:3px 6px;border-radius:5px;font-size:12px;width:90px;font-family:monospace;">
                   </td>
@@ -10294,7 +10294,7 @@ function renderKiralamaPage(){
         <div class="dstat-txt"><div class="l">Şu An Kirada</div><div class="n" style="color:#36A168;">${kirada.length}</div></div>
       </div>
       <div class="dstat" style="cursor:default;">
-        <div class="dstat-ic" style="background:rgba(214,138,30,.15);color:#E8A132;">${DASH_ICONS.clock}</div>
+        <div class="dstat-ic" style="background:rgba(232,161,50,.15);color:#E8A132;">${DASH_ICONS.clock}</div>
         <div class="dstat-txt"><div class="l">Yaklaşan Bitiş</div><div class="n" style="color:#E8A132;">${yaklasanBitis.length}</div><div class="d" style="color:#E8A132;">30 gün içinde</div></div>
       </div>
       <div class="dstat" style="cursor:default;">
@@ -10318,7 +10318,7 @@ function renderKiralamaPage(){
             <div style="display:flex;align-items:center;gap:8px;">
               <span style="font-size:12px;font-weight:700;color:#E1554E;">${Math.abs(dl||0)} gün geçti</span>
               <button onclick="openVehicleDetail('${v.id}')" style="background:rgba(194,67,52,.1);border:1px solid rgba(194,67,52,.2);color:var(--accent-blue);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Detay</button>
-              <button onclick="openUzatForm('${v.id}')" style="background:rgba(214,138,30,.15);border:1px solid rgba(214,138,30,.3);color:#E8A132;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Uzat</button>
+              <button onclick="openUzatForm('${v.id}')" style="background:rgba(232,161,50,.15);border:1px solid rgba(232,161,50,.3);color:#E8A132;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Uzat</button>
               <button onclick="switchPage('arac-yonetimi');setTimeout(()=>{const v=vehicles.find(x=>x.id==='${v.id}');if(v)openIadeForm(v.id);},100);" style="background:rgba(225,85,78,.15);border:1px solid rgba(225,85,78,.3);color:#E1554E;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">İade Al</button>
             </div>
           </div>`;
@@ -10333,7 +10333,7 @@ function renderKiralamaPage(){
         ${yaklasanBitis.map(v=>{
           const dl = daysLeft(v.kiraBitis||v.sozlesmeBitis);
           const renk = dl<=7 ? '#E1554E' : '#E8A132';
-          return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:rgba(214,138,30,.06);border-radius:8px;border:1px solid rgba(214,138,30,.15);">
+          return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:rgba(232,161,50,.06);border-radius:8px;border:1px solid rgba(232,161,50,.15);">
             <div style="display:flex;align-items:center;gap:10px;">
               <span style="font-family:monospace;font-weight:700;font-size:13px;color:var(--text);">${esc(v.plaka)}</span>
               <span style="font-size:12px;color:var(--text-3);">${esc([v.marka,v.model].filter(Boolean).join(' '))}</span>
@@ -10343,7 +10343,7 @@ function renderKiralamaPage(){
               <span style="font-size:12px;font-weight:700;color:${renk};">${dl} gün kaldı</span>
               <span style="font-size:11px;color:var(--text-3);">${fmtTarih(v.kiraBitis||v.sozlesmeBitis)}</span>
               <button onclick="openVehicleDetail('${v.id}')" style="background:rgba(194,67,52,.1);border:1px solid rgba(194,67,52,.2);color:var(--accent-blue);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Detay</button>
-              <button onclick="openUzatForm('${v.id}')" style="background:rgba(214,138,30,.15);border:1px solid rgba(214,138,30,.3);color:#E8A132;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Uzat</button>
+              <button onclick="openUzatForm('${v.id}')" style="background:rgba(232,161,50,.15);border:1px solid rgba(232,161,50,.3);color:#E8A132;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Uzat</button>
             </div>
           </div>`;
         }).join('')}
@@ -10361,7 +10361,7 @@ function renderKiralamaPage(){
           const sozBitis = v.sozlesmeBitis ? fmtTarih(v.sozlesmeBitis) : (v.kiraBitis ? fmtTarih(v.kiraBitis) : '—');
           const gun = v.teslimTarih ? Math.round((Date.now()-new Date(v.teslimTarih))/(86400000)) : null;
           const turLabel = v.kiralamaTuru==='şoförlü'
-            ? `<span style="background:rgba(46,139,85,.15);color:#4CC480;font-size:11px;font-weight:600;padding:2px 8px;border-radius:5px;">Şoförlü</span>`
+            ? `<span style="background:rgba(54,161,104,.15);color:#4CC480;font-size:11px;font-weight:600;padding:2px 8px;border-radius:5px;">Şoförlü</span>`
             : `<span style="background:rgba(194,67,52,.12);color:var(--accent-blue);font-size:11px;font-weight:600;padding:2px 8px;border-radius:5px;">Şoförsüz</span>`;
           return `<tr>
             <td><span class="mini-plaka">${esc(v.plaka)}</span></td>
@@ -11091,8 +11091,8 @@ function renderBelgelerPage(){
     if(dl === null) return null;
     if(dl < 0) return {renk:'#E1554E', bg:'rgba(225,85,78,.1)', etiket:'Süresi Geçti', dl};
     if(dl <= 7) return {renk:'#E1554E', bg:'rgba(225,85,78,.08)', etiket:`${dl} gün kaldı`, dl};
-    if(dl <= 30) return {renk:'#E8A132', bg:'rgba(214,138,30,.08)', etiket:`${dl} gün kaldı`, dl};
-    if(dl <= 90) return {renk:'#CA8A04', bg:'rgba(232,161,50,.06)', etiket:`${dl} gün kaldı`, dl};
+    if(dl <= 30) return {renk:'#E8A132', bg:'rgba(232,161,50,.08)', etiket:`${dl} gün kaldı`, dl};
+    if(dl <= 90) return {renk:'#D98E1B', bg:'rgba(232,161,50,.06)', etiket:`${dl} gün kaldı`, dl};
     return {renk:'#36A168', bg:'rgba(54,161,104,.06)', etiket:'Geçerli', dl};
   }
 
