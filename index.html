@@ -1529,7 +1529,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-15.98</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-15.99</div>
     </div>
   </aside>
 
@@ -4065,7 +4065,7 @@ function normalizeExtractedDate(raw){
   const s = raw.trim();
   let m = s.match(/^(\d{4})-(\d{2})-(\d{2})/); // YYYY-MM-DD ya da başında bu olan (saat eki vs.)
   if(m) return `${m[1]}-${m[2]}-${m[3]}`;
-  m = s.match(/^(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})$/); // GG.AA.YYYY ya da GG/AA/YYYY
+  m = s.match(/^(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4})$/); // GG.AA.YYYY, GG/AA/YYYY ya da GG-AA-YYYY
   if(m) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
   return null;
 }
@@ -4154,8 +4154,8 @@ const DOC_TYPES = [
     fileId: 'fRuhsatBelge', mevcutId: 'ruhsatBelgeMevcut', adiId: 'ruhsatBelgeAdi', kaldirId: 'ruhsatBelgeKaldir',
     autoBtnId: 'ruhsatBelgeAutoFillBtn', autoTextId: 'ruhsatBelgeAutoFillText', resultId: 'ruhsatBelgeAutoFillResult',
     vehicleAdiField: 'ruhsatBelgeAdi', vehicleTipField: 'ruhsatBelgeTip', storagePrefix: 'ruhsat_',
-    system: 'Sen bir araç ruhsat/tescil belgesinden bilgi çıkaran bir asistansın. Belge klasik pembe/mavi ruhsat kartı, geçici tescil belgesi ya da noter satışı sonrası düzenlenen tescil/fatura eki belgesi olabilir — hepsi geçerlidir, formatına takılma. Sana verilen belgeyi dikkatle oku. SADECE aşağıdaki alanları içeren geçerli bir JSON nesnesiyle yanıt ver — başka hiçbir metin, açıklama veya markdown kod bloğu ekleme:\n{"plaka": string|null, "marka": string|null, "model": string|null, "versiyon": string|null, "donanim": string|null, "modelYili": number|null, "ruhsatSeriNo": string|null, "aracCinsi": string|null}\n"marka" (D.1/MARKASI) ile "model" (D.3/TİCARİ ADI ya da D.2/TİPİ) alanlarını karıştırma: "TİCARİ ADI" hem markayı hem modeli içeriyorsa (ör. "FIAT DUCATO"), "model" alanına SADECE marka adından sonraki kısmı yaz (ör. "DUCATO"), markayı tekrar etme. "versiyon" alanına doğrudan yazılı bir motor/versiyon adı (ör. "1.5 dCi") varsa onu yaz; yoksa silindir hacmi (cm³) ve yakıt cinsinden kısa bir özet oluştur (ör. "2.2 Dizel"); hiçbiri yoksa null. "donanim" alanına donanım paket adını yaz (ör. "Touch", "Safeline", "Joy") — bulamazsan null. "modelYili" sadece 4 haneli yıl sayısı olsun. "ruhsatSeriNo" için önce "RUHSAT SERİ NO" alanına bak; yoksa belgedeki "BELGE Seri" / "Seri No" numarasını kullan (harf+rakam kombinasyonu, ör. "IG 056880"). "aracCinsi" alanına belgedeki CİNSİ bilgisini olduğu gibi yaz (ör. "Kamyonet-Açık Kasa", "Otomobil"). Bir alanı hiçbir şekilde bulamıyorsan null yaz, tahmin yürütme.',
-    userText: 'Bu ruhsat/tescil belgesinden plaka, marka, model, versiyon, donanım, model yılı, ruhsat seri numarası ve araç cinsini çıkar.',
+    system: 'Sen bir araç ruhsat/tescil belgesinden bilgi çıkaran bir asistansın. Belge klasik pembe/mavi ruhsat kartı, geçici tescil belgesi ya da noter satışı sonrası düzenlenen tescil/fatura eki belgesi olabilir — hepsi geçerlidir, formatına takılma. Sana verilen belgeyi dikkatle oku. SADECE aşağıdaki alanları içeren geçerli bir JSON nesnesiyle yanıt ver — başka hiçbir metin, açıklama veya markdown kod bloğu ekleme:\n{"plaka": string|null, "marka": string|null, "model": string|null, "versiyon": string|null, "donanim": string|null, "modelYili": number|null, "ruhsatSeriNo": string|null, "aracCinsi": string|null, "muayeneTarihi": "YYYY-MM-DD"|null}\n"marka" (D.1/MARKASI) ile "model" (D.3/TİCARİ ADI ya da D.2/TİPİ) alanlarını karıştırma: "TİCARİ ADI" hem markayı hem modeli içeriyorsa (ör. "FIAT DUCATO"), "model" alanına SADECE marka adından sonraki kısmı yaz (ör. "DUCATO"), markayı tekrar etme. "versiyon" alanına doğrudan yazılı bir motor/versiyon adı (ör. "1.5 dCi") varsa onu yaz; yoksa silindir hacmi (cm³) ve yakıt cinsinden kısa bir özet oluştur (ör. "2.2 Dizel"); hiçbiri yoksa null. "donanim" alanına donanım paket adını yaz (ör. "Touch", "Safeline", "Joy") — bulamazsan null. "modelYili" sadece 4 haneli yıl sayısı olsun. "ruhsatSeriNo" için önce "RUHSAT SERİ NO" alanına bak; yoksa belgedeki "BELGE Seri" / "Seri No" numarasını kullan (harf+rakam kombinasyonu, ör. "IG 056880"). "aracCinsi" alanına belgedeki CİNSİ bilgisini olduğu gibi yaz (ör. "Kamyonet-Açık Kasa", "Otomobil"). "muayeneTarihi" alanına ruhsat üzerindeki "MUA.GEC.TRH" / "muayene geçerlilik tarihi" bilgisini yaz — bu bir bitiş tarihidir, YYYY-MM-DD formatına çevir; belgede bu alan yoksa null. Bir alanı hiçbir şekilde bulamıyorsan null yaz, tahmin yürütme.',
+    userText: 'Bu ruhsat/tescil belgesinden plaka, marka, model, versiyon, donanım, model yılı, ruhsat seri numarası, araç cinsi ve muayene geçerlilik tarihini (MUA.GEC.TRH) çıkar.',
     apply(extracted){
       const filled = [];
       if(extracted.plaka && !document.getElementById('fPlaka').value.trim()){ setFieldValueFlash('fPlaka', extracted.plaka); filled.push('plaka'); }
@@ -4166,6 +4166,7 @@ const DOC_TYPES = [
       if(extracted.modelYili && !isNaN(Number(extracted.modelYili))){ setFieldValueFlash('fYil', Number(extracted.modelYili)); filled.push('model yılı'); }
       if(extracted.ruhsatSeriNo){ setFieldValueFlash('fRuhsatSeri', extracted.ruhsatSeriNo); filled.push('ruhsat seri no'); }
       if(extracted.aracCinsi && !document.getElementById('fCins').value.trim()){ setFieldValueFlash('fCins', extracted.aracCinsi); filled.push('araç cinsi'); }
+      if(extracted.muayeneTarihi){ const nd = normalizeExtractedDate(extracted.muayeneTarihi); if(nd && !document.getElementById('fMuayene').value.trim()){ setFieldValueFlash('fMuayene', nd); filled.push('muayene tarihi'); } }
       return filled;
     }
   },
