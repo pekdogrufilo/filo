@@ -1529,7 +1529,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-15.99</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-15.100</div>
     </div>
   </aside>
 
@@ -4070,6 +4070,18 @@ function normalizeExtractedDate(raw){
   return null;
 }
 
+// v.99: "belge numarası 'İK SİSTEM İK' yazıyor" geri bildirimi — AI bazen belge başlığı/logo/yazılım
+// adını seri no sanıp alıyordu. Geçerli seri no kısa, en az bir rakam içerir ve birkaç kelimeden
+// oluşur; başlık/metin blokları bu filtreye takılır. Geçersizse null döner, alan boş bırakılır.
+function seriNoGecerli(raw){
+  if(!raw || typeof raw !== 'string') return null;
+  const s = raw.trim().replace(/\s+/g,' ');
+  if(!s || s.length > 24) return null;
+  if(!/\d/.test(s)) return null;
+  if(s.split(' ').length > 3) return null;
+  return s;
+}
+
 const DOC_TYPES = [
   {
     key: 'sozlesme', label: 'Kira sözleşmesi', fromLabel: 'Kira sözleşmesinden',
@@ -4116,12 +4128,12 @@ const DOC_TYPES = [
     fileId: 'fMuayeneBelge', mevcutId: 'muayeneBelgeMevcut', adiId: 'muayeneBelgeAdi', kaldirId: 'muayeneBelgeKaldir',
     autoBtnId: 'muayeneBelgeAutoFillBtn', autoTextId: 'muayeneBelgeAutoFillText', resultId: 'muayeneBelgeAutoFillResult',
     vehicleAdiField: 'muayeneBelgeAdi', vehicleTipField: 'muayeneBelgeTip', storagePrefix: 'muayenebelge_',
-    system: 'Sen bir araç muayene raporu/belgesinden bilgi çıkaran bir asistansın. Sana verilen belgeyi dikkatle oku. SADECE aşağıdaki alanları içeren geçerli bir JSON nesnesiyle yanıt ver — başka hiçbir metin, açıklama veya markdown kod bloğu ekleme:\n{"sonrakiMuayeneTarihi": "YYYY-MM-DD"|null, "belgeSeriNo": string|null, "plaka": string|null}\n"sonrakiMuayeneTarihi" bir sonraki muayenenin yapılması gereken tarihtir (genelde belgede "geçerlilik tarihi" veya "sonraki muayene tarihi" olarak yazar). Bir alanı bulamıyorsan null yaz, tahmin yürütme. Tarihi mutlaka YYYY-MM-DD formatına çevir.',
+    system: 'Sen bir araç muayene raporu/belgesinden bilgi çıkaran bir asistansın. Sana verilen belgeyi dikkatle oku. SADECE aşağıdaki alanları içeren geçerli bir JSON nesnesiyle yanıt ver — başka hiçbir metin, açıklama veya markdown kod bloğu ekleme:\n{"sonrakiMuayeneTarihi": "YYYY-MM-DD"|null, "belgeSeriNo": string|null, "plaka": string|null}\n"sonrakiMuayeneTarihi" bir sonraki muayenenin yapılması gereken tarihtir (genelde belgede "geçerlilik tarihi" veya "sonraki muayene tarihi" olarak yazar). "belgeSeriNo" için SADECE belgedeki "Belge Seri No"/"Seri No" alanındaki harf+rakam kombinasyonunu yaz (ör. "B1234567") — sayfa başlığı, logo, yazılım/sistem adı (ör. "İK SİSTEM"), istasyon/firma adı gibi metinleri asla seri no yazma. Bir alanı bulamıyorsan null yaz, tahmin yürütme. Tarihi mutlaka YYYY-MM-DD formatına çevir.',
     userText: 'Bu muayene raporundan bir sonraki muayene tarihini, belge seri numarasını ve varsa araç plakasını çıkar.',
     apply(extracted){
       const filled = [];
       if(extracted.sonrakiMuayeneTarihi){ const nd = normalizeExtractedDate(extracted.sonrakiMuayeneTarihi); if(nd){ setFieldValueFlash('fMuayene', nd); filled.push('muayene tarihi'); } }
-      if(extracted.belgeSeriNo){ setFieldValueFlash('fMuayeneSeri', extracted.belgeSeriNo); filled.push('belge seri no'); }
+      const muaySeri = seriNoGecerli(extracted.belgeSeriNo); if(muaySeri){ setFieldValueFlash('fMuayeneSeri', muaySeri); filled.push('belge seri no'); }
       if(extracted.plaka && !document.getElementById('fPlaka').value.trim()){ setFieldValueFlash('fPlaka', extracted.plaka); filled.push('plaka'); }
       return filled;
     }
@@ -4154,7 +4166,7 @@ const DOC_TYPES = [
     fileId: 'fRuhsatBelge', mevcutId: 'ruhsatBelgeMevcut', adiId: 'ruhsatBelgeAdi', kaldirId: 'ruhsatBelgeKaldir',
     autoBtnId: 'ruhsatBelgeAutoFillBtn', autoTextId: 'ruhsatBelgeAutoFillText', resultId: 'ruhsatBelgeAutoFillResult',
     vehicleAdiField: 'ruhsatBelgeAdi', vehicleTipField: 'ruhsatBelgeTip', storagePrefix: 'ruhsat_',
-    system: 'Sen bir araç ruhsat/tescil belgesinden bilgi çıkaran bir asistansın. Belge klasik pembe/mavi ruhsat kartı, geçici tescil belgesi ya da noter satışı sonrası düzenlenen tescil/fatura eki belgesi olabilir — hepsi geçerlidir, formatına takılma. Sana verilen belgeyi dikkatle oku. SADECE aşağıdaki alanları içeren geçerli bir JSON nesnesiyle yanıt ver — başka hiçbir metin, açıklama veya markdown kod bloğu ekleme:\n{"plaka": string|null, "marka": string|null, "model": string|null, "versiyon": string|null, "donanim": string|null, "modelYili": number|null, "ruhsatSeriNo": string|null, "aracCinsi": string|null, "muayeneTarihi": "YYYY-MM-DD"|null}\n"marka" (D.1/MARKASI) ile "model" (D.3/TİCARİ ADI ya da D.2/TİPİ) alanlarını karıştırma: "TİCARİ ADI" hem markayı hem modeli içeriyorsa (ör. "FIAT DUCATO"), "model" alanına SADECE marka adından sonraki kısmı yaz (ör. "DUCATO"), markayı tekrar etme. "versiyon" alanına doğrudan yazılı bir motor/versiyon adı (ör. "1.5 dCi") varsa onu yaz; yoksa silindir hacmi (cm³) ve yakıt cinsinden kısa bir özet oluştur (ör. "2.2 Dizel"); hiçbiri yoksa null. "donanim" alanına donanım paket adını yaz (ör. "Touch", "Safeline", "Joy") — bulamazsan null. "modelYili" sadece 4 haneli yıl sayısı olsun. "ruhsatSeriNo" için önce "RUHSAT SERİ NO" alanına bak; yoksa belgedeki "BELGE Seri" / "Seri No" numarasını kullan (harf+rakam kombinasyonu, ör. "IG 056880"). "aracCinsi" alanına belgedeki CİNSİ bilgisini olduğu gibi yaz (ör. "Kamyonet-Açık Kasa", "Otomobil"). "muayeneTarihi" alanına ruhsat üzerindeki "MUA.GEC.TRH" / "muayene geçerlilik tarihi" bilgisini yaz — bu bir bitiş tarihidir, YYYY-MM-DD formatına çevir; belgede bu alan yoksa null. Bir alanı hiçbir şekilde bulamıyorsan null yaz, tahmin yürütme.',
+    system: 'Sen bir araç ruhsat/tescil belgesinden bilgi çıkaran bir asistansın. Belge klasik pembe/mavi ruhsat kartı, geçici tescil belgesi ya da noter satışı sonrası düzenlenen tescil/fatura eki belgesi olabilir — hepsi geçerlidir, formatına takılma. Sana verilen belgeyi dikkatle oku. SADECE aşağıdaki alanları içeren geçerli bir JSON nesnesiyle yanıt ver — başka hiçbir metin, açıklama veya markdown kod bloğu ekleme:\n{"plaka": string|null, "marka": string|null, "model": string|null, "versiyon": string|null, "donanim": string|null, "modelYili": number|null, "ruhsatSeriNo": string|null, "aracCinsi": string|null, "muayeneTarihi": "YYYY-MM-DD"|null}\n"marka" (D.1/MARKASI) ile "model" (D.3/TİCARİ ADI ya da D.2/TİPİ) alanlarını karıştırma: "TİCARİ ADI" hem markayı hem modeli içeriyorsa (ör. "FIAT DUCATO"), "model" alanına SADECE marka adından sonraki kısmı yaz (ör. "DUCATO"), markayı tekrar etme. "versiyon" alanına doğrudan yazılı bir motor/versiyon adı (ör. "1.5 dCi") varsa onu yaz; yoksa silindir hacmi (cm³) ve yakıt cinsinden kısa bir özet oluştur (ör. "2.2 Dizel"); hiçbiri yoksa null. "donanim" alanına donanım paket adını yaz (ör. "Touch", "Safeline", "Joy") — bulamazsan null. "modelYili" sadece 4 haneli yıl sayısı olsun. "ruhsatSeriNo" için önce "RUHSAT SERİ NO" alanına bak; yoksa belgedeki "BELGE Seri" / "Seri No" numarasını kullan (harf+rakam kombinasyonu, ör. "IG 056880") — sayfa başlığı, logo, yazılım/sistem adı gibi metinleri asla seri no sanma. "aracCinsi" alanına belgedeki CİNSİ bilgisini olduğu gibi yaz (ör. "Kamyonet-Açık Kasa", "Otomobil"). "muayeneTarihi" alanına ruhsat üzerindeki "MUA.GEC.TRH" / "muayene geçerlilik tarihi" bilgisini yaz — bu bir bitiş tarihidir, YYYY-MM-DD formatına çevir; belgede bu alan yoksa null. Bir alanı hiçbir şekilde bulamıyorsan null yaz, tahmin yürütme.',
     userText: 'Bu ruhsat/tescil belgesinden plaka, marka, model, versiyon, donanım, model yılı, ruhsat seri numarası, araç cinsi ve muayene geçerlilik tarihini (MUA.GEC.TRH) çıkar.',
     apply(extracted){
       const filled = [];
@@ -4164,7 +4176,7 @@ const DOC_TYPES = [
       if(extracted.versiyon){ setFieldValueFlash('fVersiyon', extracted.versiyon); filled.push('motor/versiyon'); }
       if(extracted.donanim){ setFieldValueFlash('fDonanim', extracted.donanim); filled.push('donanım paketi'); }
       if(extracted.modelYili && !isNaN(Number(extracted.modelYili))){ setFieldValueFlash('fYil', Number(extracted.modelYili)); filled.push('model yılı'); }
-      if(extracted.ruhsatSeriNo){ setFieldValueFlash('fRuhsatSeri', extracted.ruhsatSeriNo); filled.push('ruhsat seri no'); }
+      const ruhSeri = seriNoGecerli(extracted.ruhsatSeriNo); if(ruhSeri){ setFieldValueFlash('fRuhsatSeri', ruhSeri); filled.push('ruhsat seri no'); }
       if(extracted.aracCinsi && !document.getElementById('fCins').value.trim()){ setFieldValueFlash('fCins', extracted.aracCinsi); filled.push('araç cinsi'); }
       if(extracted.muayeneTarihi){ const nd = normalizeExtractedDate(extracted.muayeneTarihi); if(nd && !document.getElementById('fMuayene').value.trim()){ setFieldValueFlash('fMuayene', nd); filled.push('muayene tarihi'); } }
       return filled;
