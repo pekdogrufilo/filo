@@ -1408,7 +1408,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-15.101</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.25);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-15.102</div>
     </div>
   </div>
 </div>
@@ -1529,7 +1529,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-15.101</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-15.102</div>
     </div>
   </aside>
 
@@ -4520,7 +4520,7 @@ async function callGeminiDirect(system, userText, contentBlock, modelIdx=0, retr
     generationConfig: { temperature: 0, maxOutputTokens: 4096 }
   };
   const controller = new AbortController();
-  const timeout = setTimeout(()=>controller.abort(), 45000);
+  const timeout = setTimeout(()=>controller.abort(), 90000);
   try{
     const res = await fetch(GEMINI_PROXY_URL, {
       method: 'POST',
@@ -4553,7 +4553,15 @@ async function callGeminiDirect(system, userText, contentBlock, modelIdx=0, retr
     return { content: [{ type: 'text', text }] };
   }catch(e){
     clearTimeout(timeout);
-    if(e.name==='AbortError') throw new Error('Zaman aşımı — belge çok büyük olabilir, daha küçük bir dosya deneyin.');
+    if(e.name==='AbortError'){
+      // v.102: Zaman asiminda direkt hata yerine siradaki modeli dene (sohbet akisindaki yedekleme mantigi)
+      const nextModel = modelIdx + 1;
+      if(nextModel < GEMINI_MODELS.length){
+        await new Promise(r=>setTimeout(r, 1000));
+        return callGeminiDirect(system, userText, contentBlock, nextModel, 0);
+      }
+      throw new Error('Zaman aşımı — istek 90 saniyede yanıtlanmadı. Belge çok büyük olabilir, daha küçük bir dosya deneyin ya da butona tekrar basın.');
+    }
     throw e;
   }
 }
