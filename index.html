@@ -24,7 +24,7 @@
   html[data-theme="dark"] img[src^="blob:"]{background:#fff;border-radius:8px;padding:4px;box-shadow:0 2px 8px rgba(0,0,0,.4);}
 </style>
 <link rel="manifest" href="./manifest.json">
-<meta name="theme-color" content="#F4F2ED" id="themeColorMeta">
+<meta name="theme-color" content="#F6F5F2" id="themeColorMeta">
 <script>
   // Sayfa çizilmeden önce (flaş olmadan) kayıtlı tema tercihini uygula — varsayılan: Sonoma açık
   try{
@@ -1445,58 +1445,158 @@
   html[data-theme="light"] .splash-logo{background:#FFFFFF !important;box-shadow:0 4px 18px rgba(20,20,25,.14) !important;}
 </style>
 <style id="meridian-redesign">
-  /* ============================================================
-     v.107 MERIDIAN — Köklü tasarım değişimi
-     Kimlik: fildişi kağıt zemin · mürekkep sidebar · marka kırmızısı
-     ============================================================ */
-  html[data-theme="light"]{
-    --bg:#F4F2ED;--surface:#FFFFFF;--surface-2:#FAF9F6;--surface-3:#EFECE5;
-    --border:rgba(24,26,30,.09);--border-2:rgba(24,26,30,.17);
-    --text:#17181B;--text-2:#585D66;--text-3:#8B9098;
-    --blue:#C24334;--blue-dim:rgba(194,67,52,.10);
-    --accent-blue:#C24334;--glow:rgba(194,67,52,.07);
-    --sidebar-bg:#1A1D22;
+/* ================================================================
+   v.112 ATLAS — Tek yetkili tasarim sistemi
+   Modern · yuksek kontrast · tek kaynak (tum eski katmanlari ezer)
+   ================================================================ */
+  :root, html[data-theme="dark"]{
+    --bg:#0E1013;
+    --surface:#16181C;
+    --surface-2:#1C1F24;
+    --surface-3:#23262C;
+    --border:rgba(255,255,255,.10);
+    --border-2:rgba(255,255,255,.18);
+    --text:#F2F3F4;
+    --text-2:#AEB3BA;
+    --text-3:#7C828B;
+    --sidebar-bg:#0A0B0D;
+    --surface-glass:rgba(14,16,19,.88);
+    --blue:#E05244;
+    --blue-dim:rgba(224,82,68,.12);
+    --accent-blue:#E05244;
+    --glow:rgba(224,82,68,.08);
+    --green:#3FBF77;
+    --green-dim:rgba(63,191,119,.13);
+    --amber:#E9A23B;
+    --amber-dim:rgba(233,162,59,.13);
+    --red:#E05244;
+    --red-dim:rgba(224,82,68,.13);
+    --gold:#E9A23B;--gold-dim:rgba(233,162,59,.13);
     --radius:14px;--radius-sm:10px;--radius-lg:18px;
-    --fixed-light:#F4F2ED;
-    --gold:#B87415;--gold-dim:rgba(217,142,27,.10);
+    --shadow-sm:0 1px 3px rgba(0,0,0,.4);
+    --shadow-md:0 8px 28px rgba(0,0,0,.5);
+    --shadow-lg:0 20px 60px rgba(0,0,0,.6);
   }
-  /* --- Yüzeyler: beyaz kart, ince çizgi, minimal gölge --- */
-  .card{background:var(--surface) !important;border:1px solid var(--border) !important;box-shadow:var(--shadow-sm) !important;}
+  html[data-theme="light"]{
+    --bg:#F6F5F2;
+    --surface:#FFFFFF;
+    --surface-2:#FAFAF8;
+    --surface-3:#F0EFEB;
+    --border:rgba(18,20,24,.10);
+    --border-2:rgba(18,20,24,.18);
+    --text:#1B1D21;
+    --text-2:#555A62;
+    --text-3:#83888F;
+    --sidebar-bg:#15171B;
+    --surface-glass:rgba(255,255,255,.92);
+    --blue:#C24334;
+    --blue-dim:rgba(194,67,52,.10);
+    --accent-blue:#C24334;
+    --glow:rgba(194,67,52,.07);
+    --green:#1F9D5B;
+    --green-dim:rgba(31,157,91,.10);
+    --amber:#C07E14;
+    --amber-dim:rgba(192,126,20,.11);
+    --red:#C24334;
+    --red-dim:rgba(194,67,52,.10);
+    --gold:#B87415;--gold-dim:rgba(192,126,20,.11);
+    --shadow-sm:0 1px 3px rgba(16,18,22,.06);
+    --shadow-md:0 8px 26px rgba(16,18,22,.10);
+    --shadow-lg:0 18px 50px rgba(16,18,22,.15);
+  }
+  /* ---- Zeminler ---- */
+  body{background:var(--bg) !important;color:var(--text) !important;}
+  .card,.alert-panel,.modal-card,.modal-inner,.stat{
+    background:var(--surface) !important;
+    border:1px solid var(--border) !important;
+    box-shadow:var(--shadow-sm) !important;
+  }
   .card:hover{box-shadow:var(--shadow-md) !important;}
-  .stat{background:var(--surface) !important;border:1px solid var(--border) !important;box-shadow:var(--shadow-sm) !important;}
-  html[data-theme="light"] .stat.ok{border-color:rgba(54,161,104,.35) !important;}
-  html[data-theme="light"] .stat.warn{border-color:rgba(194,67,52,.35) !important;}
-  .alert-panel{background:var(--surface) !important;border:1px solid var(--border) !important;}
-  html[data-theme="light"] .card{background:var(--surface) !important;}
-  html[data-theme="light"] .splash-stat{background:#FFFFFF !important;border-color:var(--border) !important;}
-  html[data-theme="light"] .stat{background:var(--surface) !important;}
-  /* --- Sidebar: mürekkep koyu, beyaz pill aktif --- */
-  .sidebar{background:var(--sidebar-bg) !important;border-right:none !important;}
-  .sidebar .sb-item{color:rgba(246,245,243,.72) !important;font-weight:600;}
-  .sidebar .sb-item svg{color:rgba(246,245,243,.72);}
-  .sidebar .sb-item:hover:not(.active){background:rgba(255,255,255,.06) !important;color:#F6F5F3 !important;}
-  .sidebar .sb-item.active{background:#F6F5F3 !important;color:#C24334 !important;box-shadow:0 2px 10px rgba(0,0,0,.35) !important;border-radius:10px;}
-  .sidebar .sb-item.active svg{color:#C24334 !important;opacity:1;}
-  .sidebar .sb-brand-text{color:#F6F5F3 !important;}
-  .sidebar .sb-group-head{color:rgba(246,245,243,.65) !important;}
-  .sidebar .sb-group-head:hover{color:rgba(246,245,243,.7) !important;}
-  .sidebar .sb-version{color:rgba(246,245,243,.62) !important;}
-  .sb-search-trigger{border:1px solid rgba(255,255,255,.12) !important;background:rgba(255,255,255,.06) !important;color:rgba(246,245,243,.7) !important;}
-  .sb-search-trigger:hover{background:rgba(255,255,255,.1) !important;color:#F6F5F3 !important;}
-  /* --- Üst bar: beyaz, ince çizgi --- */
+  html[data-theme="light"] .card,html[data-theme="light"] .stat{background:var(--surface) !important;}
+  /* ---- Tipografi tabani ---- */
+  h1,h2,h3,h4,h5,h6,.th-title,.bn-name{color:var(--text) !important;font-weight:700;}
+  .th-sub,.bn-sub{color:var(--text-2) !important;}
+  .stat .n{color:var(--text) !important;}
+  .stat .l{color:var(--text-2) !important;font-weight:600;}
+  /* ---- Sidebar v.113: temaya uyumlu, gösterge çubuklu modern menü ---- */
+  .sidebar{background:var(--surface-2) !important;border-right:1px solid var(--border) !important;}
+  .sidebar .sb-item{position:relative;color:var(--text-2) !important;border-radius:10px;}
+  .sidebar .sb-item svg{color:var(--text-3);}
+  .sidebar .sb-item:hover:not(.active){background:var(--surface-3) !important;color:var(--text) !important;}
+  .sidebar .sb-item.active{background:var(--brand-dim) !important;color:var(--brand) !important;box-shadow:none !important;}
+  .sidebar .sb-item.active svg{color:var(--brand) !important;}
+  .sidebar .sb-item.active::before{content:'';position:absolute;left:-14px;top:8px;bottom:8px;width:3px;border-radius:3px;background:var(--brand);}
+  .sidebar .sb-brand-text{color:var(--text) !important;}
+  .sidebar .sb-group-head{color:var(--text-3) !important;}
+  .sidebar .sb-group-head:hover{color:var(--text-2) !important;}
+  .sidebar .sb-version{color:var(--text-3) !important;}
+  .sb-search-trigger{background:var(--surface-3) !important;border:1px solid var(--border) !important;color:var(--text-2) !important;}
+  .sb-search-trigger:hover{border-color:var(--border-2) !important;color:var(--text) !important;}
+  .sb-kbd{background:var(--surface);border:1px solid var(--border);color:var(--text-3);}
+  /* v113 eski koyu sidebar kurallarini ez */
+  html[data-theme="dark"] .sidebar .sb-item{color:var(--text-2) !important;}
+  html[data-theme="dark"] .sidebar .sb-item.active{background:rgba(224,82,68,.15) !important;color:#E05244 !important;}
+  /* ---- Ust bar ---- */
   .top-header{background:var(--surface) !important;border-bottom:1px solid var(--border) !important;}
-  /* --- Butonlar: marka kırmızısı tek dil --- */
-  .add-btn{background:linear-gradient(135deg,#CE4A38,#A93A2B) !important;box-shadow:0 4px 14px rgba(194,67,52,.30) !important;}
-  .add-btn:hover{box-shadow:0 6px 20px rgba(194,67,52,.42) !important;}
-  .modal-actions .save{background:linear-gradient(135deg,#CE4A38,#A93A2B) !important;box-shadow:0 4px 14px rgba(194,67,52,.28) !important;}
-  .mobil-fab{background:linear-gradient(135deg,#CE4A38,#A93A2B) !important;box-shadow:0 6px 20px rgba(194,67,52,.35) !important;}
-  .lock-btn-main{background:linear-gradient(135deg,#CE4A38,#A93A2B) !important;box-shadow:0 6px 24px rgba(194,67,52,.35) !important;}
-  .chip.active{background:#C24334 !important;}
-  .export-btn:hover,.print-btn:hover{color:#C24334 !important;border-color:#C24334 !important;}
-  .field input:focus,.field select:focus,.field textarea:focus{border-color:#C24334 !important;box-shadow:0 0 0 3px rgba(194,67,52,.12) !important;}
-  .toast{border-left-color:#C24334 !important;}
-  /* --- Araç kartı bandı: marka dili --- */
-  .card-band.kirada{background:linear-gradient(90deg,#C24334,#A93A2B) !important;}
+  /* ---- Form ---- */
+  .field label{color:var(--text-2) !important;font-weight:600;}
+  .field input,.field select,.field textarea{
+    background:var(--surface-2) !important;
+    border:1px solid var(--border-2) !important;
+    color:var(--text) !important;
+  }
+  .field input::placeholder,.field textarea::placeholder{color:var(--text-3) !important;}
+  .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--blue) !important;box-shadow:0 0 0 3px var(--blue-dim) !important;}
+  /* ---- Butonlar ---- */
+  .add-btn,.modal-actions .save,.mobil-fab,.lock-btn-main{
+    background:linear-gradient(135deg,#E05244,#B93B2E) !important;
+    color:#fff !important;
+    box-shadow:0 4px 14px rgba(224,82,68,.30) !important;
+    border:none !important;
+  }
+  .export-btn,.print-btn{background:var(--surface-2) !important;border:1px solid var(--border-2) !important;color:var(--text) !important;}
+  .export-btn:hover,.print-btn:hover{border-color:var(--blue) !important;color:var(--blue) !important;background:var(--surface) !important;}
+  .chip{background:var(--surface-2) !important;border:1px solid var(--border) !important;color:var(--text-2) !important;}
+  .chip.active{background:var(--blue) !important;color:#fff !important;border-color:transparent !important;}
+  .chip:hover:not(.active){color:var(--text) !important;border-color:var(--border-2) !important;}
+  /* ---- Tablo ---- */
+  .table th,.list-th{color:var(--text-2) !important;font-weight:700;}
+  .table td{color:var(--text) !important;}
+  .table tr{border-color:var(--border) !important;}
+  /* ---- Bildirim / durum ---- */
+  .toast{background:var(--surface) !important;color:var(--text) !important;border-left:3px solid var(--blue) !important;}
+  .toast.err{border-left-color:var(--red) !important;}
+  .badge{background:var(--blue-dim) !important;color:var(--blue) !important;}
+  /* ---- Kilit ekrani: sabit koyu bileşen ---- */
+  .lock-screen,.lock-backdrop{background:#0A0B0D !important;}
+  .lock-card-inner{background:#15171B !important;border:1px solid rgba(255,255,255,.10) !important;}
+  .lock-firm,.lock-card h2{color:#F2F3F4 !important;}
+  .lock-card .lsub{color:#AEB3BA !important;opacity:1 !important;}
+  .lock-field label{color:#AEB3BA !important;opacity:1 !important;}
+  .lock-field input{background:rgba(255,255,255,.08) !important;border-color:rgba(255,255,255,.15) !important;color:#F2F3F4 !important;}
+  .lock-field input::placeholder{color:#6E747D !important;}
+  .lock-field .eye{color:#8A9099 !important;}
+  .lock-note{background:rgba(255,255,255,.06) !important;border-color:rgba(255,255,255,.11) !important;color:#AEB3BA !important;}
+  .lock-forgot{color:#7C828B !important;}
+  .lock-forgot:hover{color:#F2F3F4 !important;}
+  .lock-logo-wrap,.splash-logo{background:#FFFFFF !important;}
+  /* Splash temaya uyar */
+  html[data-theme="light"] .splash{background:#F6F5F2 !important;}
+  html[data-theme="light"] .splash h2{color:#1B1D21 !important;}
+  html[data-theme="light"] .splash .sd{color:#555A62 !important;}
+  html[data-theme="light"] .splash-stat{background:#FFFFFF !important;border-color:var(--border) !important;}
+  html[data-theme="light"] .splash-stat .n{color:#1B1D21 !important;}
+  html[data-theme="light"] .splash-stat .l{color:#83888F !important;}
+  html:not([data-theme="light"]) .splash{background:#0E1013 !important;}
+  html:not([data-theme="light"]) .splash h2{color:#F2F3F4 !important;}
+  html:not([data-theme="light"]) .splash .sd{color:#AEB3BA !important;}
+  html:not([data-theme="light"]) .splash-stat .n{color:#F2F3F4 !important;}
+  html:not([data-theme="light"]) .splash-stat .l{color:#7C828B !important;}
+  html:not([data-theme="light"]) .splash-stat{background:rgba(255,255,255,.05) !important;border-color:rgba(255,255,255,.09) !important;}
+  /* Araç karti bandlari — marka dili */
+  .card-band.kirada{background:linear-gradient(90deg,#E05244,#B93B2E) !important;}
+  .card-band.musait{background:linear-gradient(90deg,#565C66,#83888F) !important;}
+  .card-band.serviste{background:linear-gradient(90deg,#B93B2E,#E58B80) !important;}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -1517,7 +1617,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-15.111</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-15.113</div>
     </div>
   </div>
 </div>
@@ -1647,7 +1747,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-15.111</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-15.113</div>
     </div>
   </aside>
 <script>
