@@ -1438,30 +1438,6 @@
      v.107 MERIDIAN — Köklü tasarım değişimi
      Kimlik: fildişi kağıt zemin · mürekkep sidebar · marka kırmızısı
      ============================================================ */
-  :root{
-    --bg:#F4F2ED;
-    --surface:#FFFFFF;
-    --surface-2:#FAF9F6;
-    --surface-3:#EFECE5;
-    --border:rgba(24,26,30,.09);
-    --border-2:rgba(24,26,30,.17);
-    --text:#17181B;
-    --text-2:#585D66;
-    --text-3:#8B9098;
-    --blue:#C24334;
-    --blue-dim:rgba(194,67,52,.10);
-    --accent-blue:#C24334;
-    --glow:rgba(194,67,52,.07);
-    --sidebar-bg:#1A1D22;
-    --radius:14px;
-    --radius-sm:10px;
-    --radius-lg:18px;
-    --shadow-sm:0 1px 2px rgba(20,20,25,.05);
-    --shadow-md:0 6px 22px rgba(20,20,25,.09);
-    --shadow-lg:0 16px 48px rgba(20,20,25,.14);
-    --surface-glass:rgba(255,255,255,.86);
-    --gold:#D98E1B;--gold-dim:rgba(217,142,27,.12);
-  }
   html[data-theme="light"]{
     --bg:#F4F2ED;--surface:#FFFFFF;--surface-2:#FAF9F6;--surface-3:#EFECE5;
     --border:rgba(24,26,30,.09);--border-2:rgba(24,26,30,.17);
@@ -1477,8 +1453,8 @@
   .card{background:var(--surface) !important;border:1px solid var(--border) !important;box-shadow:var(--shadow-sm) !important;}
   .card:hover{box-shadow:var(--shadow-md) !important;}
   .stat{background:var(--surface) !important;border:1px solid var(--border) !important;box-shadow:var(--shadow-sm) !important;}
-  .stat.ok{border-color:rgba(54,161,104,.35) !important;}
-  .stat.warn{border-color:rgba(194,67,52,.35) !important;}
+  html[data-theme="light"] .stat.ok{border-color:rgba(54,161,104,.35) !important;}
+  html[data-theme="light"] .stat.warn{border-color:rgba(194,67,52,.35) !important;}
   .alert-panel{background:var(--surface) !important;border:1px solid var(--border) !important;}
   html[data-theme="light"] .card{background:var(--surface) !important;}
   html[data-theme="light"] .stat{background:var(--surface) !important;}
@@ -1529,7 +1505,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-15.107</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-15.108</div>
     </div>
   </div>
 </div>
@@ -1659,7 +1635,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-15.107</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-15.108</div>
     </div>
   </aside>
 <script>
