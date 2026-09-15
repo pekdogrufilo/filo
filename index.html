@@ -10601,7 +10601,7 @@ const OTO_BELGE_TURLERI = {
   ruhsat:   {label:'Ruhsat',           prefix:'ruhsat_',        adiF:'ruhsatBelgeAdi',  tipF:'ruhsatBelgeTip',  tarihF:null},
   sozlesme: {label:'Kira sözleşmesi',  prefix:'contract_',      adiF:'sozlesmeAdi',     tipF:'sozlesmeTip',     tarihF:'sozlesmeBitis'},
 };
-const OTO_BELGE_SYSTEM = 'Sen bir araç belgesi (poliçe, ruhsat, muayene raporu, kira sözleşmesi, masraf fişi, servis kaydı vb.) okuyan asistansın. SADECE şu JSON nesnesini döndür, başka hiçbir metin veya kod bloğu ekleme:\n{"plaka": string|null, "belgeTuru": "sigorta"|"kasko"|"muayene"|"ruhsat"|"sozlesme"|"masraf"|"servis"|"vize"|"diger", "tarih": "YYYY-MM-DD"|null, "belgeNo": string|null, "kiraTutari": sayı|null, "kmLimiti": sayı|null, "kmAsimUcreti": sayı|null, "teslimTarihi": "YYYY-MM-DD"|null, "teslimKm": sayı|null}\nKurallar: "plaka" belgedeki araç plakası (Türk formatı: 2 rakam + 2-3 harf + 2-4 rakam, ör. 42 ABC 123). "belgeTuru" belgenin türü — sigorta poliçesi ise "sigorta", kasko ise "kasko", muayene raporu ise "muayene", tescil/ruhsat ise "ruhsat", kira sözleşmesi ise "sozlesme", masraf/yakıt fişi ise "masraf", servis/bakım kaydı ise "servis", vize/uluslararası belge ise "vize", hiçbiri değilse "diger". "tarih" belgenin geçerlilik bitiş tarihi (poliçe/muayene/sözleşme) ya da fiş/rapor tarihi — YYYY-MM-DD formatında; bulamazsan null. "belgeTuru" "sozlesme" ise EK OLARAK şunları da oku, başka hiçbir belge türünde bu beş alanı doldurma (null bırak): "kiraTutari" aylık kira bedeli (KDV hariç, sadece sayı, TL), "kmLimiti" aylık kilometre kullanım limiti (sadece sayı, km), "kmAsimUcreti" bu limiti aşan her kilometre için uygulanan birim ücret (KDV hariç, sadece sayı, TL/km — sözleşmede "aşım ücreti", "fazla km bedeli" gibi ifadelerle geçebilir), "teslimTarihi" aracın kiracıya TESLİM EDİLDİĞİ tarih (sözleşme başlangıç/teslim tarihi — sözleşmenin genel geçerlilik/imza tarihiyle karıştırma, aracın fiilen teslim edildiği tarihi ara — YYYY-MM-DD), "teslimKm" aracın teslim anındaki kilometresi (sözleşmede "teslim km", "başlangıç km", "kilometre" gibi ifadelerle geçebilir, sadece sayı). Emin değilsen null yaz, tahmin yürütme.';
+const OTO_BELGE_SYSTEM = 'Sen bir araç belgesi (poliçe, ruhsat, muayene raporu, kira sözleşmesi, masraf fişi, servis kaydı vb.) okuyan asistansın. SADECE şu JSON nesnesini döndür, başka hiçbir metin veya kod bloğu ekleme:\n{"plaka": string|null, "belgeTuru": "sigorta"|"kasko"|"muayene"|"ruhsat"|"sozlesme"|"masraf"|"servis"|"vize"|"diger", "tarih": "YYYY-MM-DD"|null, "belgeNo": string|null, "kiraTutari": sayı|null, "kmLimiti": sayı|null, "kmAsimUcreti": sayı|null, "teslimTarihi": "YYYY-MM-DD"|null, "teslimKm": sayı|null}\nKurallar: "plaka" belgedeki araç plakası (Türk formatı: 2 rakam + 2-3 harf + 2-4 rakam, ör. 42 ABC 123). "belgeTuru" belgenin türü — sigorta poliçesi ise "sigorta", kasko ise "kasko", muayene raporu ise "muayene", tescil/ruhsat ise "ruhsat", MUTLAKA kira/kiracı bilgisi içeren kira sözleşmesi ise "sozlesme", masraf/yakıt fişi ise "masraf", servis/bakım kaydı ise "servis", vize/uluslararası belge ise "vize", hiçbiri değilse "diger". Yalnızca plaka ve araç bilgisi içeren, kira/kiracı verisi olmayan belgeleri asla "sozlesme" olarak sınıflandırma; bunlar "ruhsat" veya "diger" olmalı. "tarih" belgenin geçerlilik bitiş tarihi (poliçe/muayene/sözleşme) ya da fiş/rapor tarihi — YYYY-MM-DD formatında; bulamazsan null. "belgeTuru" "sozlesme" ise EK OLARAK şunları da oku, başka hiçbir belge türünde bu beş alanı doldurma (null bırak): "kiraTutari" aylık kira bedeli (KDV hariç, sadece sayı, TL), "kmLimiti" aylık kilometre kullanım limiti (sadece sayı, km), "kmAsimUcreti" bu limiti aşan her kilometre için uygulanan birim ücret (KDV hariç, sadece sayı, TL/km — sözleşmede "aşım ücreti", "fazla km bedeli" gibi ifadelerle geçebilir), "teslimTarihi" aracın kiracıya TESLİM EDİLDİĞİ tarih (sözleşme başlangıç/teslim tarihi — sözleşmenin genel geçerlilik/imza tarihiyle karıştırma, aracın fiilen teslim edildiği tarihi ara — YYYY-MM-DD), "teslimKm" aracın teslim anındaki kilometresi (sözleşmede "teslim km", "başlangıç km", "kilometre" gibi ifadelerle geçebilir, sadece sayı). Emin değilsen null yaz, tahmin yürütme.';
 
 // v.81: "km limiti vs yazmadı, aşım ücreti okumuyor" geri bildirimi üzerine eklendi — sözleşme
 // türü belgelerde artık plaka+tarihin yanında kira tutarı, aylık km limiti ve km aşım ücreti de
@@ -10614,6 +10614,13 @@ const OTO_BELGE_SYSTEM = 'Sen bir araç belgesi (poliçe, ruhsat, muayene raporu
 // kira/kmLimiti/kmAsimFiyat'ın aksine bu ikisi MEVCUT bir değerin ÜZERİNE YAZILMAZ — sadece alan
 // boşsa doldurulur; doluysa ve sözleşmedeki farklıysa kullanıcıya çelişki olarak bildirilir, sessizce
 // değiştirilmez. Dönen nesne {degisti, doldurulan[], celiski[]} — mesaj metni sozlesmeMesajOlustur ile üretilir.
+// v.86: AI bazen plaka/ruhsat niteliğindeki belgeleri 'sozlesme' olarak yanlis siniflandiriyordu.
+// Sözleşme kararını doğrula: belgede kira/kiracı verisi yoksa 'diger' yap.
+function dogrulaBelgeTuru(tur, bilgi){
+  if(tur !== 'sozlesme' || !bilgi) return tur;
+  const hasSozlesmeIzi = bilgi.kiraTutari || bilgi.kmLimiti || bilgi.kmAsimUcreti || bilgi.teslimTarihi || bilgi.teslimKm;
+  return hasSozlesmeIzi ? tur : 'diger';
+}
 function sozlesmeAlanlariUygula(v, bilgi){
   const sonuc = {degisti:false, doldurulan:[], celiski:[]};
   if(!bilgi) return sonuc;
@@ -10677,7 +10684,8 @@ async function otoBelgeSec(file, statusEl){
     // 1) Gemini'den plaka + tür + tarih oku (başarısızsa seçili araca genel belge olarak kaydet)
     const onceden = await belgeVeriOku(file);
     const bilgi = getGeminiKey() ? await belgeAnalizEt(onceden) : null;
-    const tur = ((bilgi&&bilgi.belgeTuru)||'diger').toLowerCase();
+    let tur = ((bilgi&&bilgi.belgeTuru)||'diger').toLowerCase();
+    tur = dogrulaBelgeTuru(tur, bilgi);
     const okunanPlaka = bilgi ? plakaNormalize(bilgi.plaka) : null;
     const okunanTarih = bilgi ? normalizeExtractedDate(bilgi.tarih||'') : '';
 
@@ -12046,7 +12054,8 @@ async function aiBelgeYukle(file){
   try{
     const onceden = await belgeVeriOku(file);
     const bilgi = await belgeAnalizEt(onceden);
-    const tur = ((bilgi&&bilgi.belgeTuru)||'diger').toLowerCase();
+    let tur = ((bilgi&&bilgi.belgeTuru)||'diger').toLowerCase();
+    tur = dogrulaBelgeTuru(tur, bilgi);
     const okunanPlaka = bilgi ? plakaNormalize(bilgi.plaka) : null;
     let v = null;
     if(okunanPlaka){
@@ -12108,7 +12117,8 @@ async function aiPendingBelgeCozumle(txt){
     return;
   }
   renderAiPage();
-  const {onceden, bilgi, tur} = pending;
+  const {onceden, bilgi} = pending;
+  const tur = dogrulaBelgeTuru(pending.tur, bilgi);
   if(tur === 'masraf'){ await aiMasrafOner(onceden, v); return; }
   const std = OTO_BELGE_TURLERI[tur];
   const okunanTarih = bilgi ? normalizeExtractedDate(bilgi.tarih||'') : '';
