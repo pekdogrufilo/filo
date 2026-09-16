@@ -1491,7 +1491,7 @@
     --text:#F5F3F1;
     --text-2:#A19D97;
     --text-3:#6E6A64;
-    --sidebar-bg:#0A0705;
+    --sidebar-bg:#060402;
     --surface-glass:rgba(12,9,6,.88);
     --blue:#E0AC48;
     --blue-dim:rgba(224,172,72,.16);
@@ -1521,7 +1521,7 @@
     --text:#171512;
     --text-2:#5A564F;
     --text-3:#8B877E;
-    --sidebar-bg:#FFFFFF;
+    --sidebar-bg:#F1ECE1;
     --surface-glass:rgba(255,255,255,.92);
     --blue:#A6791C;
     --blue-dim:rgba(166,121,28,.10);
@@ -1554,15 +1554,27 @@
   .th-sub,.bn-sub{color:var(--text-2) !important;}
   .stat .n{color:var(--text) !important;}
   .stat .l{color:var(--text-2) !important;font-weight:600;}
-  /* ---- Sidebar v.113: temaya uyumlu, gösterge çubuklu modern menü ---- */
-  .sidebar{background:var(--surface-2) !important;border-right:1px solid var(--border) !important;}
+  /* ---- Sidebar v.113: temaya uyumlu, gösterge çubuklu modern menü ----
+     v.129 düzeltmesi: bu satır --sidebar-bg yerine --surface-2 kullanıyordu, bu yüzden
+     kenar menüsü içerik alanıyla neredeyse aynı renkte görünüp ayrı bir panel gibi
+     durmuyordu ("arka plan değişmeli" geri bildirimi buradan kaynaklanıyor).
+     v.129 "Cam Panel": kullanıcının 3 varyant arasından seçtiği stil — yarı saydam/
+     bulanık (glass) zemin + aktif öğede dolgu yerine yumuşak altın parlamalı hap. */
+  .sidebar{
+    background:color-mix(in srgb, var(--sidebar-bg) 88%, transparent) !important;
+    backdrop-filter:blur(18px) saturate(140%);
+    -webkit-backdrop-filter:blur(18px) saturate(140%);
+    border-right:1px solid var(--border-2) !important;
+    box-shadow:8px 0 32px rgba(0,0,0,.25);
+  }
   .sidebar .sb-item{position:relative;color:var(--text-2) !important;border-radius:10px;}
   .sidebar .sb-item svg{color:var(--text-3);}
   .sidebar .sb-item:hover:not(.active){background:var(--surface-3) !important;color:var(--text) !important;}
-  .sidebar .sb-item.active{background:var(--blue-dim) !important;color:var(--accent-blue) !important;box-shadow:none !important;}
+  .sidebar .sb-item.active{background:var(--blue-dim) !important;color:var(--accent-blue) !important;box-shadow:0 0 0 1px var(--blue-dim), 0 6px 18px var(--glow) !important;}
   .sidebar .sb-item.active svg{color:var(--accent-blue) !important;}
-  .sidebar .sb-item.active::before{content:'';position:absolute;left:-14px;top:8px;bottom:8px;width:3px;border-radius:3px;background:var(--accent-blue);}
+  .sidebar .sb-item.active::before{content:none;}
   .sidebar .sb-brand-text{color:var(--text) !important;}
+  .sidebar .sb-brand-mark{box-shadow:0 0 0 1px var(--blue-dim), 0 4px 14px var(--glow);}
   .sidebar .sb-group-head{color:var(--text-3) !important;}
   .sidebar .sb-group-head:hover{color:var(--text-2) !important;}
   .sidebar .sb-version{color:var(--text-3) !important;}
@@ -1978,7 +1990,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-16.128</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-16.129</div>
     </div>
   </div>
 </div>
@@ -2108,7 +2120,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-16.128</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-16.129</div>
     </div>
   </aside>
 <script>
