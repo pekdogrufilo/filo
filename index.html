@@ -1990,7 +1990,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-16.129</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-16.130</div>
     </div>
   </div>
 </div>
@@ -2120,7 +2120,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-16.129</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-16.130</div>
     </div>
   </aside>
 <script>
@@ -9872,6 +9872,7 @@ function fisRowDüzenle(i, alan, deger){
 }
 
 async function fisTopluKaydet(){
+ try{
   const kayitlar = (window.__fisKayitlari||[]).filter(k=>k.vehicleId && !k._silindi);
   if(!kayitlar.length){ showToast('Kaydedilecek eşleşen kayıt yok.', true); return; }
 
@@ -9929,7 +9930,12 @@ async function fisTopluKaydet(){
   window.__fisKayitlari = null;
   window.__fisBase64 = null;
   window.__fisMime = null;
-  document.getElementById('fisInput').value = '';
+  // v.130 düzeltmesi: bu satır #fisInput DOM'da yoksa (sayfa bu sırada yeniden çizildiyse,
+  // ör. arka planda bir bildirim/otomatik yenileme tetiklendiyse) hata fırlatıp fonksiyonu
+  // burada sessizce durduruyordu — masraflar yukarıda ZATEN kaydedilmiş oluyordu ama kullanıcıya
+  // "kaydedildi" mesajı hiç gösterilmiyordu ("Kaydet'e basıyorum, hiçbir sonuç yok" şikayeti).
+  const fisInputEl = document.getElementById('fisInput');
+  if(fisInputEl) fisInputEl.value = '';
 
   let msg = `<div style="padding:12px;border-radius:8px;font-size:13px;">`;
   if(eklenen>0) msg += `<div style="color:#36A168;font-weight:700;margin-bottom:4px;">✅ ${eklenen} masraf kaydedildi${fisBase64?' (fiş görüntüsü eklendi)':''}.</div>`;
@@ -9938,8 +9944,19 @@ async function fisTopluKaydet(){
     msg += uyarilar.map(u=>`<div style="color:var(--steel-300);font-size:12px;margin-left:8px;">• ${esc(u)}</div>`).join('');
   }
   msg += `</div>`;
-  document.getElementById('fisLog').innerHTML = msg;
+  const fisLogEl = document.getElementById('fisLog');
+  if(fisLogEl) fisLogEl.innerHTML = msg;
   if(eklenen>0) showToast(eklenen + ' masraf kaydedildi.');
+  else if(atlanan>0 && eklenen===0) showToast(atlanan + ' kayıt atlandı — hiçbiri kaydedilmedi (yukarıdaki listeye bak).', true);
+ }catch(e){
+  // v.130: daha önce burada hiçbir catch yoktu — bir hata (ör. beklenmedik veri, depolama
+  // sorunu) Kaydet'e basınca hiçbir şey olmamış gibi görünmesine yol açıyordu. Artık her
+  // durumda kullanıcıya görünür bir uyarı çıkıyor; kısmen kaydedilmiş kayıtlar varsa kaybolmaz.
+  console.error('fisTopluKaydet hata:', e);
+  showToast('Kaydetme sırasında bir hata oluştu: ' + (e?.message||'bilinmeyen hata') + ' — lütfen tekrar deneyin.', true);
+  const fisLogEl = document.getElementById('fisLog');
+  if(fisLogEl) fisLogEl.innerHTML = `<div style="padding:12px;border-radius:8px;font-size:13px;color:var(--safety);">⚠️ Kaydetme sırasında hata oluştu: ${esc(e?.message||'bilinmeyen hata')}. Lütfen sayfayı yenileyip tekrar deneyin; sorun devam ederse ekran görüntüsüyle bildirin.</div>`;
+ }
 }
 
 function openStaffPwModal(){
