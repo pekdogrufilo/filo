@@ -1851,6 +1851,37 @@
   body:has(.lock-screen.show) #filoOtkRozet{
     display:none !important;
   }
+
+  /* v.125: "Aynı kaliteyi tüm panele yay" — dashboard'daki (.add-btn/#filoKaydetBtn) glow+hover
+     efektini, modallerde/detay panellerinde/AI sohbetinde onlarca yerde inline stille yazılmış
+     "background:var(--accent-blue)" birincil aksiyon butonlarına da tek noktadan yayıyoruz.
+     Tek tek her butonu düzenlemeden (JS/markup'a dokunmadan) tüm panelde tutarlı bir görünüm sağlar. */
+  button[style*="background:var(--accent-blue)"],
+  a[style*="background:var(--accent-blue)"]{
+    box-shadow:0 3px 12px var(--glow);
+    transition:box-shadow .2s ease, transform .15s ease, filter .15s ease;
+  }
+  button[style*="background:var(--accent-blue)"]:hover,
+  a[style*="background:var(--accent-blue)"]:hover{
+    box-shadow:0 6px 18px var(--glow);
+    filter:brightness(1.07);
+    transform:translateY(-1px);
+  }
+  button[style*="background:var(--accent-blue)"]:active,
+  a[style*="background:var(--accent-blue)"]:active{
+    transform:translateY(0);
+    filter:brightness(.97);
+  }
+  @media (prefers-reduced-motion:reduce){
+    button[style*="background:var(--accent-blue)"],
+    a[style*="background:var(--accent-blue)"]{ transition:none; }
+  }
+
+  /* v.125: modal sekmeleri (Temel/Belgeler gibi) aktif durumdayken de hafif bir kırmızı
+     glow alsın — dashboard'daki aktif sekme/menü öğeleriyle aynı dil */
+  .modal-tab.active{
+    text-shadow:0 0 14px var(--glow);
+  }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -1905,7 +1936,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-16.124</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-16.125</div>
     </div>
   </div>
 </div>
@@ -2035,7 +2066,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-16.124</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-16.125</div>
     </div>
   </aside>
 <script>
