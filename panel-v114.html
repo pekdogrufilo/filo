@@ -155,7 +155,6 @@
     background:var(--bg);
     min-height:100vh;
     letter-spacing:-.01em;
-    display:flex;
   }
   ::selection{background:var(--accent-blue);color:#fff;}
   ::-webkit-scrollbar{width:6px;height:6px;}
@@ -836,18 +835,6 @@
     .asub{font-size:12px;}
     .iade-card{padding:18px 15px;}
     .iade-row{grid-template-columns:1fr;}
-
-  /* v.115: Dar ekran ek ayarları */
-  .top-header{margin:-32px -8px 16px;padding:24px 8px 10px;}
-  .th-title{font-size:15px;}
-  .page{padding:14px 8px 90px;}
-  .dstat-txt .n{font-size:17px;}
-  .dstat-txt .l{font-size:11px;}
-  .card-body{padding:12px;}
-  .modal-body{padding:14px;}
-  .btn-row,.filters{gap:7px;}
-  .export-btn,.print-btn,.lock-btn,.add-btn{padding:9px 14px;font-size:13px;}
-
     .dcard h3{font-size:13px;}
   }
   @media (max-width:640px){
@@ -901,15 +888,6 @@
     .filter-chips .chip{flex-shrink:0;}
     #page-arac-yonetimi .stats{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:132px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;scrollbar-width:none;}
     #page-arac-yonetimi .stats::-webkit-scrollbar{display:none;}
-
-  /* v.115: Mobil genel iyileştirmeler */
-  input, select, textarea{font-size:16px;} /* iOS otomatik zoom'u engeller */
-  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
-  .top-header{margin:-32px -12px 20px;padding:30px 12px 12px;}
-  .th-title{font-size:16px;}
-  .th-sub{font-size:12px;}
-  .page{padding:20px 12px 86px;}
-
   }
   .mobil-fab{display:none;}
   @media (max-width:900px){
@@ -3869,12 +3847,6 @@ function printSummary(){
     tr.acil .durum-cell{color:#E8A132;}
     tr.yaklasan .durum-cell{color:#777;}
     .foot{margin-top:26px;font-size:12px;color:#888;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
-    .signatures{display:flex;justify-content:space-between;gap:30px;margin-top:42px;page-break-inside:avoid;}
-    .sign-box{text-align:center;width:42%;}
-    .sign-line{border-bottom:1px solid #333;height:44px;}
-    .sign-title{font-size:12.5px;font-weight:bold;margin-top:8px;}
-    .sign-desc{font-size:11px;color:#666;margin-top:2px;}
-
     @media print{ body{padding:12mm;} .head{margin-bottom:10px;} .foot{position:fixed;bottom:0;left:0;right:0;margin:0;font-size:10.5px;border-top:1px solid #ddd;padding-top:5px;background:#fff;} }
   </style></head>
   <body>
@@ -3894,11 +3866,7 @@ function printSummary(){
       <thead><tr><th>Plaka</th><th>Şirket</th><th>Çalıştığı Yer</th><th>Tip</th><th>Tarih</th><th>Kalan Süre</th><th>Durum</th></tr></thead>
       <tbody>${rowsHtml || '<tr><td colspan="7" style="text-align:center;padding:20px;color:#999">Kayıt bulunamadı</td></tr>'}</tbody>
     </table>
-        <div class="signatures">
-      <div class="sign-box"><div class="sign-line"></div><div class="sign-title">Hazırlayan</div><div class="sign-desc">PEKDOĞRU GRUP / Yetkili</div></div>
-      <div class="sign-box"><div class="sign-line"></div><div class="sign-title">Onaylayan</div><div class="sign-desc">İmza / Tarih / Kaşe</div></div>
-    </div>
-<div class="foot"><span>PEKDOĞRU GRUP · Filo Kontrol Paneli</span><span>Oluşturulma: ${bugun}</span></div>
+    <div class="foot"><span>PEKDOĞRU GRUP · Filo Kontrol Paneli</span><span>Oluşturulma: ${bugun}</span></div>
   </body></html>`;
 
   const w = window.open('', '_blank');
@@ -3951,12 +3919,6 @@ function printInventory(){
     .d-pert{color:#7B7873;}
     .d-satis{color:#9B7ED8;}
     .foot{margin-top:26px;font-size:12px;color:#888;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
-    .signatures{display:flex;justify-content:space-between;gap:30px;margin-top:42px;page-break-inside:avoid;}
-    .sign-box{text-align:center;width:42%;}
-    .sign-line{border-bottom:1px solid #333;height:44px;}
-    .sign-title{font-size:12.5px;font-weight:bold;margin-top:8px;}
-    .sign-desc{font-size:11px;color:#666;margin-top:2px;}
-
     @media print{ body{padding:12mm;} .head{margin-bottom:10px;} tr{page-break-inside:avoid;} .foot{position:fixed;bottom:0;left:0;right:0;margin:0;font-size:10.5px;border-top:1px solid #ddd;padding-top:5px;background:#fff;} }
   </style></head>
   <body>
@@ -3976,11 +3938,7 @@ function printInventory(){
       <thead><tr><th>Plaka</th><th>Araç</th><th>Cins / Model Yılı</th><th>Şirket</th><th>Şoför</th><th>Çalıştığı Yer</th><th>Durum</th><th>Aylık Kira</th></tr></thead>
       <tbody>${rowsHtml || '<tr><td colspan="8" style="text-align:center;padding:20px;color:#999">Kayıt bulunamadı</td></tr>'}</tbody>
     </table>
-        <div class="signatures">
-      <div class="sign-box"><div class="sign-line"></div><div class="sign-title">Hazırlayan</div><div class="sign-desc">PEKDOĞRU GRUP / Yetkili</div></div>
-      <div class="sign-box"><div class="sign-line"></div><div class="sign-title">Onaylayan</div><div class="sign-desc">İmza / Tarih / Kaşe</div></div>
-    </div>
-<div class="foot"><span>PEKDOĞRU GRUP · Filo Kontrol Paneli</span><span>Oluşturulma: ${bugun}</span></div>
+    <div class="foot"><span>PEKDOĞRU GRUP · Filo Kontrol Paneli</span><span>Oluşturulma: ${bugun}</span></div>
   </body></html>`;
 
   const w = window.open('', '_blank');
@@ -4061,12 +4019,6 @@ function printBilling(donem, kdvOran){
     .num{text-align:right;font-variant-numeric:tabular-nums;}
     tfoot td{font-weight:bold;background:#F8F7F6;border-top:2px solid #ccc;}
     .foot{margin-top:14px;font-size:12px;color:#888;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
-    .signatures{display:flex;justify-content:space-between;gap:30px;margin-top:42px;page-break-inside:avoid;}
-    .sign-box{text-align:center;width:42%;}
-    .sign-line{border-bottom:1px solid #333;height:44px;}
-    .sign-title{font-size:12.5px;font-weight:bold;margin-top:8px;}
-    .sign-desc{font-size:11px;color:#666;margin-top:2px;}
-
     @media print{ body{padding:12mm;} .sirket-block{page-break-inside:avoid;} .foot{position:fixed;bottom:0;left:0;right:0;margin:0;font-size:10.5px;border-top:1px solid #ddd;padding-top:5px;background:#fff;} }
   </style></head>
   <body>
@@ -4084,11 +4036,7 @@ function printBilling(donem, kdvOran){
       <div><div class="l">Faturalanacak araç</div><div class="v">${billable.length}</div></div>
     </div>
     ${groupsHtml || '<div style="text-align:center;color:#999;padding:30px">Aylık kirası tanımlı araç bulunamadı.</div>'}
-        <div class="signatures">
-      <div class="sign-box"><div class="sign-line"></div><div class="sign-title">Hazırlayan</div><div class="sign-desc">PEKDOĞRU GRUP / Yetkili</div></div>
-      <div class="sign-box"><div class="sign-line"></div><div class="sign-title">Onaylayan</div><div class="sign-desc">İmza / Tarih / Kaşe</div></div>
-    </div>
-<div class="foot"><span>PEKDOĞRU GRUP · Filo Kontrol Paneli · Bu rapor kayıtlı aylık kira tutarlarına göre otomatik oluşturulmuştur, resmi fatura yerine geçmez.</span><span>Oluşturulma: ${bugun}</span></div>
+    <div class="foot"><span>PEKDOĞRU GRUP · Filo Kontrol Paneli · Bu rapor kayıtlı aylık kira tutarlarına göre otomatik oluşturulmuştur, resmi fatura yerine geçmez.</span><span>Oluşturulma: ${bugun}</span></div>
   </body></html>`;
 
   const w = window.open('', '_blank');
@@ -4152,12 +4100,6 @@ function printMasrafRaporu(){
     .num{text-align:right;font-variant-numeric:tabular-nums;}
     tfoot td{font-weight:bold;background:#F8F7F6;border-top:2px solid #ccc;}
     .foot{margin-top:14px;font-size:12px;color:#888;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
-    .signatures{display:flex;justify-content:space-between;gap:30px;margin-top:42px;page-break-inside:avoid;}
-    .sign-box{text-align:center;width:42%;}
-    .sign-line{border-bottom:1px solid #333;height:44px;}
-    .sign-title{font-size:12.5px;font-weight:bold;margin-top:8px;}
-    .sign-desc{font-size:11px;color:#666;margin-top:2px;}
-
     @media print{ body{padding:12mm;} .sirket-block{page-break-inside:avoid;} .foot{position:fixed;bottom:0;left:0;right:0;margin:0;font-size:10.5px;border-top:1px solid #ddd;padding-top:5px;background:#fff;} }
   </style></head>
   <body>
@@ -4170,11 +4112,7 @@ function printMasrafRaporu(){
     </div>
     <div class="grand"><div class="l">Genel toplam masraf</div><div class="v">${grandTotal.toLocaleString('tr-TR')} ₺</div></div>
     ${blocksHtml}
-        <div class="signatures">
-      <div class="sign-box"><div class="sign-line"></div><div class="sign-title">Hazırlayan</div><div class="sign-desc">PEKDOĞRU GRUP / Yetkili</div></div>
-      <div class="sign-box"><div class="sign-line"></div><div class="sign-title">Onaylayan</div><div class="sign-desc">İmza / Tarih / Kaşe</div></div>
-    </div>
-<div class="foot"><span>PEKDOĞRU GRUP · Filo Kontrol Paneli</span><span>Oluşturulma: ${bugun}</span></div>
+    <div class="foot"><span>PEKDOĞRU GRUP · Filo Kontrol Paneli</span><span>Oluşturulma: ${bugun}</span></div>
   </body></html>`;
 
   const w = window.open('', '_blank');
@@ -13562,12 +13500,6 @@ window.filoTabloGoster = function(){
   else butonEkle();
 })();
 </script>
-<script>
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('./sw.js')
-    .then(r => console.log('SW registered:', r.scope))
-    .catch(e => console.warn('SW registration failed:', e));
-}
-</script>
 </body>
+
 </html>
