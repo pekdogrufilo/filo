@@ -2006,7 +2006,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-16.132</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-16.133</div>
     </div>
   </div>
 </div>
@@ -2136,7 +2136,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-16.132</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-16.133</div>
     </div>
   </aside>
 <script>
@@ -5477,8 +5477,14 @@ async function viewOtoDoc(vehicleId, index){
   const v = vehicles.find(x=>x.id===vehicleId);
   const o = v && Array.isArray(v.otoBelgeler) ? v.otoBelgeler[index] : null;
   if(!o){ showToast('Belge bulunamadı.', true); return; }
-  const r = await storageAPI.get(o.key).catch(()=>null);
-  if(!r || !r.value){ showToast(`"${o.adi}" dosyası bulunamadı.`, true); return; }
+  return viewBelgeByKey(o.key, o.adi);
+}
+// v.133: doğrudan storage anahtarıyla belge görüntüleme — "Son yüklenenler" listesinde
+// hem v.otoBelgeler öğeleri hem de standart yuvalı (sigorta/kasko/muayene/ruhsat/sözleşme)
+// belgeler aynı şekilde görüntülenebilsin diye viewOtoDoc'un dizin bağımlılığından ayrıştırıldı.
+async function viewBelgeByKey(key, adi){
+  const r = await storageAPI.get(key).catch(()=>null);
+  if(!r || !r.value){ showToast(`"${adi||'Belge'}" dosyası bulunamadı.`, true); return; }
   try{
     const res = await fetch(r.value);
     const blob = await res.blob();
@@ -11552,6 +11558,12 @@ async function otoBelgeSec(file, statusEl){
       v[std.adiF] = file.name;
       v[std.tipF] = onceden.mime;
       if(std.tarihF && okunanTarih) v[std.tarihF] = okunanTarih;
+      // v.133: "yüklüyorum ama göremiyorum" — standart yuvalı belgeler (sigorta/kasko/
+      // muayene/ruhsat/sözleşme) "Belge Yükleme" sayfasının "Son yüklenenler" listesine hiç
+      // girmiyordu çünkü o liste sadece v.otoBelgeler dizisini okuyor, standart alanları değil.
+      // Bu belgeler ne zaman yüklendi bilinsin diye burada zaman damgası tutuluyor.
+      if(!v.belgeYuklemeZamanlari) v.belgeYuklemeZamanlari = {};
+      v.belgeYuklemeZamanlari[tur] = new Date().toISOString();
     }else{
       await belgeAracaEkle(v, tur, file.name, onceden.mime, onceden.dataUrl, okunanTarih);
     }
@@ -11584,8 +11596,27 @@ function renderDocUploadPage(){
   const page = document.getElementById('page-docupload');
   if(!page) return;
   // Tüm araçlardaki otomatik yüklenen belgeler, en yeni önce
+  // v.133: "yüklüyorum ama göremiyorum" şikayeti üzerine — standart yuvalı belgeler
+  // (sigorta/kasko/muayene/ruhsat/sözleşme) sadece v[adiF] araç alanına yazılıyordu,
+  // v.otoBelgeler dizisine hiç girmiyordu; bu liste de sadece o diziyi okuduğu için bu
+  // belgeler yüklendikten sonra hiçbir yerde görünmüyordu. Artık ikisi birden taranıyor.
   const tumu = [];
-  vehicles.forEach(v=>(v.otoBelgeler||[]).forEach(o=>tumu.push({v, o})));
+  vehicles.forEach(v=>{
+    (v.otoBelgeler||[]).forEach(o=>tumu.push({v, o}));
+    Object.keys(OTO_BELGE_TURLERI).forEach(turKey=>{
+      const std = OTO_BELGE_TURLERI[turKey];
+      const adi = v[std.adiF];
+      if(!adi) return;
+      tumu.push({v, o:{
+        tur: turKey,
+        adi,
+        tarih: (std.tarihF ? v[std.tarihF] : '') || '',
+        yukleme: (v.belgeYuklemeZamanlari && v.belgeYuklemeZamanlari[turKey]) || '',
+        key: std.prefix+v.id,
+        standart: true,
+      }});
+    });
+  });
   tumu.sort((a,b)=>(b.o.yukleme||'').localeCompare(a.o.yukleme||''));
   const sonN = tumu.slice(0, 40);
 
@@ -11630,9 +11661,9 @@ function renderDocUploadPage(){
               </div>
               <div style="font-size:11.5px;color:var(--text-3);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(o.adi)}${o.tarih?' · '+esc(fmtTarih(o.tarih)):''}${dTxt?' · '+dTxt:''}</div>
             </div>
-            <button onclick="viewOtoDoc('${v.id}',${(v.otoBelgeler||[]).indexOf(o)})" style="background:var(--blue-dim);border:none;color:var(--accent-blue);padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0;">Gör</button>
+            <button onclick="viewBelgeByKey('${o.key}','${esc(o.adi).replace(/'/g,'')}')" style="background:var(--blue-dim);border:none;color:var(--accent-blue);padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0;">Gör</button>
             <button onclick="belgeIndir('${o.key}','${esc(o.adi).replace(/'/g,'')}')" style="background:var(--blue-dim);border:none;color:var(--accent-blue);padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0;display:flex;align-items:center;" title="İndir">${ICO('download',13)}</button>
-            <button onclick="otoBelgeSil('${v.id}','${o.key}')" style="background:none;border:none;color:var(--text-3);cursor:pointer;padding:6px;display:flex;flex-shrink:0;" title="Sil">
+            <button onclick="${o.standart ? `standartBelgeSil('${v.id}','${o.tur}')` : `otoBelgeSil('${v.id}','${o.key}')`}" style="background:none;border:none;color:var(--text-3);cursor:pointer;padding:6px;display:flex;flex-shrink:0;" title="Sil">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
             </button>
           </div>`;
@@ -11670,6 +11701,25 @@ async function otoBelgeSil(vehicleId, key){
   await storageAPI.set(key, '').catch(()=>{});
   await persist();
   logActivity('del', `Belge silindi: <b>${esc(v.plaka)}</b> · ${esc((silinen&&silinen.adi)||'')}`).catch(()=>{});
+  showToast('Belge silindi.');
+  renderDocUploadPage();
+}
+// v.133: "Son yüklenenler" listesine eklenen standart yuvalı (sigorta/kasko/muayene/
+// ruhsat/sözleşme) belgeler için ayrı silme — otoBelgeSil sadece v.otoBelgeler dizisini
+// işlediğinden bunlara uygulanamıyordu. Sadece dosyayı ve dosya adını temizler; belgenin
+// takip edilen geçerlilik tarihini (ör. sigortaTarihi) SİLMEZ, o ayrı bir iş alanı.
+async function standartBelgeSil(vehicleId, tur){
+  if(!requireAdmin()) return;
+  const v = vehicles.find(x=>x.id===vehicleId);
+  const std = OTO_BELGE_TURLERI[tur];
+  if(!v || !std) return;
+  if(!confirm('Bu belgeyi kalıcı olarak silmek istediğinize emin misiniz?')) return;
+  await storageAPI.set(std.prefix+v.id, '').catch(()=>{});
+  v[std.adiF] = '';
+  v[std.tipF] = '';
+  if(v.belgeYuklemeZamanlari) delete v.belgeYuklemeZamanlari[tur];
+  await persist();
+  logActivity('del', `Belge silindi: <b>${esc(v.plaka)}</b> · ${esc(std.label)}`).catch(()=>{});
   showToast('Belge silindi.');
   renderDocUploadPage();
 }
@@ -11735,6 +11785,8 @@ async function belgeTopluTek(file, fallbackId){
       v[std.adiF] = file.name;
       v[std.tipF] = onceden.mime;
       if(std.tarihF && okunanTarih) v[std.tarihF] = okunanTarih;
+      if(!v.belgeYuklemeZamanlari) v.belgeYuklemeZamanlari = {};
+      v.belgeYuklemeZamanlari[tur] = new Date().toISOString();
     }else{
       await belgeAracaEkle(v, tur, file.name, onceden.mime, onceden.dataUrl, okunanTarih);
     }
@@ -13719,6 +13771,8 @@ Tip tespiti: trafik/kasko/ferdi kaza poliçesi→sigorta veya kasko, muayene rap
       if(tip==='kasko' && kaskoBitis) update.kaskoBitis = normalizeExtractedDate(kaskoBitis)||v.kaskoBitis;
       if(tip==='kasko' && policeNo) update.kaskoNo = policeNo;
       if(tip==='muayene' && muayeneBitis) update.muayeneTarihi = normalizeExtractedDate(muayeneBitis)||v.muayeneTarihi;
+      // v.133: bu belgenin "Son yüklenenler" listesinde görünmesi için zaman damgası
+      update.belgeYuklemeZamanlari = {...(v.belgeYuklemeZamanlari||{}), [tip]: new Date().toISOString()};
       vehicles[idx] = {...v,...update};
       await persist();
       render();
