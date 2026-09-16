@@ -2006,7 +2006,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-16.133</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-16.134</div>
     </div>
   </div>
 </div>
@@ -2136,7 +2136,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-16.133</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-16.134</div>
     </div>
   </aside>
 <script>
@@ -2788,6 +2788,18 @@ let storageAPI = (window.storage && typeof window.storage.get === 'function')
   ? window.storage
   : (('indexedDB' in window) ? makeIdbAdapter() : makeLocalAdapter());
 
+// v.134: "Kaydet'e basıyorum, hiçbir sonuç yok" şikayetinin asıl kaynağı — bir depolama
+// isteği (özellikle bulut/Firestore modunda, zayıf bağlantıda) hata FIRLATMADAN sonsuza kadar
+// yanıtsız (pending) kalabiliyordu; bu da onu await eden persist()/persistExpenses() ve
+// dolayısıyla TÜM "Kaydet" akışlarını sessizce dondurabiliyordu. Genel amaçlı, tek yerden
+// kullanılan bir üst sınır: en geç `ms` içinde ya gerçek sonuç ya da anlaşılır bir hata döner.
+function withStorageTimeout(promise, ms=20000){
+  return Promise.race([
+    promise,
+    new Promise((_, rej)=>setTimeout(()=>rej(new Error('Sunucuya bağlanılamadı (zaman aşımı) — internet bağlantınızı kontrol edip tekrar deneyin.')), ms))
+  ]);
+}
+
 // ===== Bulut senkronizasyonu (Firebase Firestore) =====
 // Cihaz-bazlı localStorage yerine paylaşımlı bir buluta yazıp okumak için.
 // Kurulmamışsa uygulama her zamanki gibi (tek cihaz, yerel) çalışmaya devam eder.
@@ -2880,7 +2892,7 @@ async function makeFirestoreAdapter(config){
     }
   }
 
-  return {
+  const rawAdapter = {
     async get(key){
       const snap = await col.doc(key).get();
       if(!snap.exists) throw new Error('bulunamadı');
@@ -2911,6 +2923,21 @@ async function makeFirestoreAdapter(config){
       });
       return {keys};
     }
+  };
+
+  // v.134: "Kaydet'e basıyorum, hiçbir sonuç yok" şikayeti — önceki (v.130) düzeltme sadece
+  // FIRLATILAN hataları yakalıyordu, ama zayıf/kararsız bir bağlantıda Firestore isteği hiç
+  // hata FIRLATMADAN, sonsuza kadar yanıtsız (pending) kalabiliyor. persist()/persistExpenses()
+  // ve dolayısıyla panelin hemen hemen tüm "Kaydet" akışları bu adaptör üzerinden gittiği için,
+  // tek bir isteğin askıda kalması tüm işlemi -hiçbir hata ya da başarı mesajı göstermeden-
+  // sessizce dondurabiliyordu. Burada TEK bir yerde (adaptörün kendisinde) her çağrıya üst sınır
+  // koyarak, uygulamadaki HER kaydetme/okuma işlemini bu sessiz donma riskinden koruyoruz —
+  // artık en geç 20 saniyede ya sonuç ya da açık, anlaşılır bir hata dönüyor.
+  return {
+    get: (key)=>withStorageTimeout(rawAdapter.get(key)),
+    set: (key, value)=>withStorageTimeout(rawAdapter.set(key, value)),
+    delete: (key)=>withStorageTimeout(rawAdapter.delete(key)),
+    list: (prefix)=>withStorageTimeout(rawAdapter.list(prefix)),
   };
 }
 
@@ -3453,14 +3480,17 @@ function fireUrgentNotification(){
 let __persistWarnTs = 0;
 async function persist(){
   try{
-    await storageAPI.set('vehicles', JSON.stringify(vehicles));
+    // v.134: withStorageTimeout — bkz. tanımındaki not — bir depolama isteği hata vermeden
+    // sonsuza dek askıda kalırsa artık en geç 20 saniyede zaman aşımı hatasına dönüşüyor.
+    await withStorageTimeout(storageAPI.set('vehicles', JSON.stringify(vehicles)));
   }catch(e){
     console.error('Veri kaydetme hatası:', e);
     // Uyarıyı en fazla 30 saniyede bir göster — toplu işlemlerde spam olmasın
     const now = Date.now();
     if(now - __persistWarnTs > 30000){
       __persistWarnTs = now;
-      showToast('UYARI: Değişiklikler kaydedilemedi (depolama alanı dolu olabilir). Lütfen Excel yedeği alıp gereksiz belge/fotoğrafları silin.', true);
+      const zamanAsimiMi = e && /zaman aşımı/i.test(e.message||'');
+      showToast(zamanAsimiMi ? e.message : 'UYARI: Değişiklikler kaydedilemedi (depolama alanı dolu olabilir). Lütfen Excel yedeği alıp gereksiz belge/fotoğrafları silin.', true);
     }
   }
   otomatikKayitRozeti();
@@ -7395,8 +7425,18 @@ document.getElementById('logCloseBtn').onclick = closeLogDrawer;
 document.getElementById('logOverlay').onclick = closeLogDrawer;
 
 // ===== Bakım / masraf takibi =====
+// v.134: artık başarı/başarısızlığı bildiriyor (true/false) — önceden hatayı yutup her zaman
+// "başarılıymış gibi" dönüyordu, bu yüzden fisTopluKaydet gibi çağıranlar kayıt aslında
+// başarısız olsa bile "kaydedildi" mesajı gösterebiliyordu. Geriye dönük uyumlu: dönüş
+// değerini kullanmayan mevcut çağrı yerleri (çoğu) eskisi gibi çalışmaya devam eder.
 async function persistExpenses(){
-  await storageAPI.set('expenses', JSON.stringify(expenses)).catch(()=>showToast('Masraf kaydedilemedi.', true));
+  try{
+    await withStorageTimeout(storageAPI.set('expenses', JSON.stringify(expenses)));
+    return true;
+  }catch(e){
+    showToast((e && /zaman aşımı/i.test(e.message||'')) ? e.message : 'Masraf kaydedilemedi.', true);
+    return false;
+  }
 }
 function fmtTL2(n){ return Number(n||0).toLocaleString('tr-TR', {maximumFractionDigits:2}) + ' ₺'; }
 // v.85: araç başına masraf toplamı üç farklı yerde üç farklı formülle hesaplanıyordu
@@ -10007,7 +10047,7 @@ async function fisTopluKaydet(){
 
     // Fiş görüntüsünü storage'a kaydet
     if(fisBase64){
-      await storageAPI.set('fis_'+masrafId, `data:${fisMime};base64,${fisBase64}`).catch(()=>{});
+      await withStorageTimeout(storageAPI.set('fis_'+masrafId, `data:${fisMime};base64,${fisBase64}`)).catch(()=>{});
     }
 
     expenses.push({
@@ -10023,7 +10063,11 @@ async function fisTopluKaydet(){
     eklenen++;
   }
 
-  await persistExpenses();
+  // v.134: dönüş değeri artık kontrol ediliyor — persistExpenses() depolamaya gerçekten
+  // yazamadıysa (ör. 20 saniyelik zaman aşımı), aşağıda "X masraf kaydedildi" diye YANILTICI
+  // bir başarı mesajı göstermek yerine gerçek durumu bildiriyoruz. Kayıtlar bu noktada hâlâ
+  // ekranda/hafızada duruyor (expenses dizisinde), sadece sunucuya senkronize olmadı.
+  const kaydedildiMi = await persistExpenses();
   renderStatMasraf();
   window.__fisKayitlari = null;
   window.__fisBase64 = null;
@@ -10034,6 +10078,13 @@ async function fisTopluKaydet(){
   // "kaydedildi" mesajı hiç gösterilmiyordu ("Kaydet'e basıyorum, hiçbir sonuç yok" şikayeti).
   const fisInputEl = document.getElementById('fisInput');
   if(fisInputEl) fisInputEl.value = '';
+
+  if(!kaydedildiMi){
+    const uyariMsg = `<div style="padding:12px;border-radius:8px;font-size:13px;color:var(--safety);">⚠️ ${eklenen} masraf hazırlandı ama sunucuya kaydedilemedi (bağlantı sorunu olabilir — yukarıda ayrı bir uyarı gördünüz). Sayfayı YENİLEMEYİN, internet bağlantınızı kontrol edip "Kaydet" butonuna tekrar basmayı deneyin.</div>`;
+    const fisLogEl2 = document.getElementById('fisLog');
+    if(fisLogEl2) fisLogEl2.innerHTML = uyariMsg;
+    return;
+  }
 
   let msg = `<div style="padding:12px;border-radius:8px;font-size:13px;">`;
   if(eklenen>0) msg += `<div style="color:#36A168;font-weight:700;margin-bottom:4px;">✅ ${eklenen} masraf kaydedildi${fisBase64?' (fiş görüntüsü eklendi)':''}.</div>`;
@@ -13101,7 +13152,7 @@ async function aiMasrafKaydet(batchId, btnEl){
     const dupVar = expenses.some(e=>(e.vehicleId===v.id||normPlaka(e.plaka)===normPlaka(v.plaka)) && e.tarih===tarih && Math.abs(Number(e.tutar)-tutar)<1);
     if(dupVar){ atlanan++; continue; }
     const masrafId = cryptoId();
-    if(batch.dataUrl){ await storageAPI.set('fis_'+masrafId, batch.dataUrl).catch(()=>{}); }
+    if(batch.dataUrl){ await withStorageTimeout(storageAPI.set('fis_'+masrafId, batch.dataUrl)).catch(()=>{}); }
     expenses.push({id:masrafId, vehicleId:v.id, plaka:v.plaka, tip:k.tip||'Diğer', tarih, tutar, not:k.not||'', hasFis: !!batch.dataUrl});
     eklenen++;
   }
