@@ -2170,7 +2170,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-16.139</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-16.140</div>
     </div>
   </div>
 </div>
@@ -2300,7 +2300,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-16.139</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-16.140</div>
     </div>
   </aside>
 <script>
@@ -5066,6 +5066,7 @@ function initTeslimFotoUI(){
       const file = e.target.files[0];
       if(!file) return;
       if(file.size > 10*1024*1024){ showToast('Dosya 10MB\'ı geçemez.', true); input.value=''; return; }
+      if(file.type === 'image/svg+xml'){ showToast('SVG dosyaları desteklenmiyor.', true); input.value=''; return; }
       const data = await new Promise(r=>{ const fr=new FileReader(); fr.onload=()=>r(fr.result); fr.readAsDataURL(file); });
       teslimFotoState[k] = {data, name:file.name, remove:false};
       const mevcut = document.getElementById(k+'Mevcut');
@@ -5153,7 +5154,7 @@ function viewTeslimFoto(key, id, label){
   const stored = storageAPI.get(key+'_'+id).then(r=>{
     if(!r || !r.value){ showToast('Fotoğraf bulunamadı.', true); return; }
     const w = window.open('','_blank');
-    w.document.write('<html><body style="margin:0;background:#000;display:flex;justify-content:center;align-items:center;min-height:100vh"><img src="'+r.value+'" style="max-width:100%;max-height:100vh;object-fit:contain" alt="'+label+'"></body></html>');
+    w.document.write('<html><body style="margin:0;background:#000;display:flex;justify-content:center;align-items:center;min-height:100vh"><img src="'+r.value+'" style="max-width:100%;max-height:100vh;object-fit:contain" alt="'+esc(label)+'"></body></html>');
     w.document.close();
   }).catch(()=>showToast('Fotoğraf yüklenemedi.', true));
 }
@@ -5182,6 +5183,7 @@ function initIadeFotoUI(v){
       const file = e.target.files[0];
       if(!file) return;
       if(file.size > 10*1024*1024){ showToast('Dosya 10MB\'ı geçemez.', true); input.value=''; return; }
+      if(file.type === 'image/svg+xml'){ showToast('SVG dosyaları desteklenmiyor.', true); input.value=''; return; }
       const data = await new Promise(r=>{ const fr=new FileReader(); fr.onload=()=>r(fr.result); fr.readAsDataURL(file); });
       iadeFotoState[k] = {data, name:file.name, remove:false};
       if(mevcut && adi){ adi.textContent=file.name+' (yeni)'; mevcut.style.display='flex'; }
@@ -5308,6 +5310,11 @@ function wireDocType(d){
     const MAX = 10*1024*1024;
     if(file.size > MAX){
       showToast('Dosya çok büyük. En fazla 10MB yükleyebilirsin.', true);
+      e.target.value = '';
+      return;
+    }
+    if(file.type === 'image/svg+xml'){
+      showToast('SVG dosyaları desteklenmiyor.', true);
       e.target.value = '';
       return;
     }
@@ -5569,6 +5576,7 @@ document.getElementById('fRuhsatHizli').addEventListener('change', async (e)=>{
     status.textContent = msg;
   };
   if(file.size > 10*1024*1024){ show("Dosya 10MB'ı geçemez.", true); e.target.value=''; return; }
+  if(file.type === 'image/svg+xml'){ show('SVG dosyaları desteklenmiyor.', true); e.target.value=''; return; }
   const d = DOC_TYPES.find(x=>x.key==='ruhsat');
   const st = docState[d.key];
   // Belgeler sekmesindeki ruhsat girişini görsel olarak senkron tutmayı deniyoruz,
@@ -5929,16 +5937,16 @@ function iadeTutanakHtml(v, b){
   const logoSrc = (document.querySelector('.lock-logo-wrap img')||{}).src||'';
   const logoTag = logoSrc ? `<img src="${logoSrc}" alt="" style="display:block;margin:0 auto 10px;max-height:64px;">` : '';
   const firmaAdi = 'PEKDOĞRU OTOMOTİV TURİZM TAŞIMACILIK NAKLİYE HAYVANCILIK TİCARET LİMİTED ŞİRKETİ';
-  const firmaAdres = localStorage.getItem('filoPaneli_firmaAdres')||'Ferhuniye Mah. Sultanşah Cad. No:24B Selçuklu / KONYA';
-  const firmaTel = localStorage.getItem('filoPaneli_firmaTelefon')||'';
-  const firmaVkn = localStorage.getItem('filoPaneli_firmaVergiNo')||'';
+  const firmaAdres = esc(localStorage.getItem('filoPaneli_firmaAdres')||'Ferhuniye Mah. Sultanşah Cad. No:24B Selçuklu / KONYA');
+  const firmaTel = esc(localStorage.getItem('filoPaneli_firmaTelefon')||'');
+  const firmaVkn = esc(localStorage.getItem('filoPaneli_firmaVergiNo')||'');
   const kmKullanim = (b.kmBas>0&&b.kmBit>b.kmBas) ? (b.kmBit-b.kmBas).toLocaleString('tr-TR')+' km' : '—';
   const kmHakkiSatiri = (b.kmLimiti && b.kmHakki!==undefined) ? `
   <tr><th>Aylık KM Limiti</th><td>${b.kmLimiti.toLocaleString('tr-TR')} km/ay</td></tr>
   <tr><th>Toplam KM Kullanım Hakkı</th><td>${b.kmHakki.toLocaleString('tr-TR')} km</td></tr>
   <tr><th>KM Aşımı</th><td>${b.kmAsim>0?'<strong style="color:#B91C1C;">'+b.kmAsim.toLocaleString('tr-TR')+' km aşım</strong>':'Aşım yok ('+Math.abs(b.kmAsim||0).toLocaleString('tr-TR')+' km hak kaldı)'}</td></tr>` : '';
   return `<!DOCTYPE html>
-<html lang="tr"><head><meta charset="UTF-8"><title>Arac İade Tutanağı — ${v.plaka}</title>
+<html lang="tr"><head><meta charset="UTF-8"><title>Arac İade Tutanağı — ${esc(v.plaka)}</title>
 <style>
   body{font-family:Arial,sans-serif;font-size:12px;line-height:1.6;color:#000;max-width:800px;margin:0 auto;padding:20px;}
   h1{text-align:center;font-size:15px;text-transform:uppercase;border-bottom:2px solid #000;padding-bottom:8px;}
@@ -5958,12 +5966,12 @@ ${logoTag}
 <h2 style="font-size:13px;text-transform:uppercase;border-bottom:1px solid #333;">1. Taraflar</h2>
 <table>
   <tr><th>Kiraya Veren (Tutanak Sahibi)</th><td><strong>${firmaAdi}</strong><br>${firmaAdres}${firmaTel?'<br>Tel: '+firmaTel:''}${firmaVkn?'<br>Vergi No: '+firmaVkn:''}</td></tr>
-  <tr><th>Kiracı</th><td>${b.kiraci||'—'}${b.kiraciVKN?'<br>Vergi/TC No: '+b.kiraciVKN:''}</td></tr>
+  <tr><th>Kiracı</th><td>${esc(b.kiraci||'—')}${b.kiraciVKN?'<br>Vergi/TC No: '+esc(b.kiraciVKN):''}</td></tr>
 </table>
 
 <h2 style="font-size:13px;text-transform:uppercase;border-bottom:1px solid #333;">2. Aracın Durumu</h2>
 <table>
-  <tr><th>Plaka</th><td><strong>${v.plaka}</strong></td></tr>
+  <tr><th>Plaka</th><td><strong>${esc(v.plaka)}</strong></td></tr>
   <tr><th>Marka / Model</th><td>${esc([v.marka,v.model].filter(Boolean).join(' ')||'—')}${v.yil?' / '+v.yil:''}</td></tr>
   <tr><th>Kira Başlangıç Tarihi</th><td>${b.kiraBas?fmtTarih(b.kiraBas):'—'}</td></tr>
   <tr><th>İade Tarihi</th><td>${fmtTarih(b.iadeTarih)}</td></tr>
@@ -6348,9 +6356,9 @@ function teslimTutanakHtml(d){
   const logoSrc = (document.querySelector('.lock-logo-wrap img')||{}).src||'';
   const logoTag = logoSrc ? `<img src="${logoSrc}" alt="" style="display:block;margin:0 auto 10px;max-height:64px;">` : '';
   const aracSatirlar = d.araclar.map(a=>`
-    <tr><td style="text-align:center;"><strong>${a.plaka}</strong></td><td>${[a.marka,a.model].filter(Boolean).join(' ')||'—'}</td><td style="text-align:center;">${a.modelYili||'—'}</td><td style="text-align:center;">${a.renk||'—'}</td><td style="text-align:center;">${a.teslimKm||'—'}</td><td style="text-align:center;">${d.yakit||'Dolu'}</td></tr>`).join('');
+    <tr><td style="text-align:center;"><strong>${esc(a.plaka)}</strong></td><td>${esc([a.marka,a.model].filter(Boolean).join(' ')||'—')}</td><td style="text-align:center;">${esc(a.modelYili||'—')}</td><td style="text-align:center;">${esc(a.renk||'—')}</td><td style="text-align:center;">${esc(a.teslimKm||'—')}</td><td style="text-align:center;">${esc(d.yakit||'Dolu')}</td></tr>`).join('');
   return `<!DOCTYPE html>
-<html lang="tr"><head><meta charset="UTF-8"><title>Araç Teslim Tutanağı — ${d.plaka}</title>
+<html lang="tr"><head><meta charset="UTF-8"><title>Araç Teslim Tutanağı — ${esc(d.plaka)}</title>
 <style>
   body{font-family:Arial,sans-serif;font-size:12px;line-height:1.6;color:#000;max-width:800px;margin:0 auto;padding:20px;}
   h1{text-align:center;font-size:15px;text-transform:uppercase;border-bottom:2px solid #000;padding-bottom:8px;}
@@ -6367,12 +6375,12 @@ function teslimTutanakHtml(d){
 <body>
 ${logoTag}
 <h1>Araç Teslim Tutanağı</h1>
-<p style="text-align:center;font-size:11px;">Tutanak Tarihi: ${d.tarih} &nbsp;|&nbsp; ${d.sozNo ? 'İlgili Sözleşme No: '+d.sozNo : ''}</p>
+<p style="text-align:center;font-size:11px;">Tutanak Tarihi: ${esc(d.tarih)} &nbsp;|&nbsp; ${d.sozNo ? 'İlgili Sözleşme No: '+esc(d.sozNo) : ''}</p>
 
 <h2>1. Taraflar</h2>
 <table>
-  <tr><th>Kiraya Veren</th><td><strong>${d.firmaAdi}</strong><br>${d.firmaAdres}${d.firmaTelefon?'<br>Tel: '+d.firmaTelefon:''}${d.firmaVergiNo?'<br>Vergi No: '+d.firmaVergiNo:''}</td></tr>
-  <tr><th>Kiracı</th><td><strong>${d.kiraci}</strong>${d.kiraciVKN?'<br>Vergi/TC No: '+d.kiraciVKN:''}${d.kiraciTel?'<br>Tel: '+d.kiraciTel:''}${d.kefil?'<br><strong>KEFİL:</strong> '+d.kefil+(d.kefilTC?' (TCKN: '+d.kefilTC+')':''):''}</td></tr>
+  <tr><th>Kiraya Veren</th><td><strong>${esc(d.firmaAdi)}</strong><br>${esc(d.firmaAdres)}${d.firmaTelefon?'<br>Tel: '+esc(d.firmaTelefon):''}${d.firmaVergiNo?'<br>Vergi No: '+esc(d.firmaVergiNo):''}</td></tr>
+  <tr><th>Kiracı</th><td><strong>${esc(d.kiraci)}</strong>${d.kiraciVKN?'<br>Vergi/TC No: '+esc(d.kiraciVKN):''}${d.kiraciTel?'<br>Tel: '+esc(d.kiraciTel):''}${d.kefil?'<br><strong>KEFİL:</strong> '+esc(d.kefil)+(d.kefilTC?' (TCKN: '+esc(d.kefilTC)+')':''):''}</td></tr>
 </table>
 
 <h2>2. Teslim Edilen Araçlar</h2>
@@ -6383,20 +6391,20 @@ ${logoTag}
 
 <h2>3. Teslim Bilgileri</h2>
 <table>
-  <tr><th>Kira Dönemi</th><td>${d.bas} → ${d.bitis} (${d.sure})</td></tr>
-  <tr><th>Teslim Yeri</th><td>${d.teslimYer||'Belirtilmedi'}</td></tr>
+  <tr><th>Kira Dönemi</th><td>${esc(d.bas)} → ${esc(d.bitis)} (${esc(d.sure)})</td></tr>
+  <tr><th>Teslim Yeri</th><td>${esc(d.teslimYer||'Belirtilmedi')}</td></tr>
   <tr><th>Aylık KM Limiti</th><td>${d.kmLimit} km (aşımında ${d.kmAsimFiyat} TL/km)</td></tr>
   <tr><th>Depozito</th><td>${d.depozito} TL</td></tr>
   ${d.notlar?`<tr><th>Özel Şartlar</th><td>${esc(d.notlar)}</td></tr>`:''}
 </table>
 
 <h2>4. Beyan</h2>
-<p style="text-align:justify;">KİRAYA VEREN, yukarıda özellikleri yazılı araç(ları) ${d.bas} tarihinde KİRACI'ya belirtilen yakıt seviyesi ve kilometre durumunda sağlam ve temiz olarak teslim ettiğini beyan eder. KİRACI, araç(ları) bu durumda teslim aldığını, araçların mevcut hasar/kusurlarını şimdiden gördüğünü ve kabul ettiğini, aracı kira süresi sonunda ödeşmeden aynı durumda iade etmekle yükümlü olduğunu kabul ve taahhüt eder. Bu tutanak, taraflar arasındaki ${d.sozNo} numaralı kira sözleşmesinin ayrılmaz eki (Ek-1) niteliğindedir.</p>
+<p style="text-align:justify;">KİRAYA VEREN, yukarıda özellikleri yazılı araç(ları) ${esc(d.bas)} tarihinde KİRACI'ya belirtilen yakıt seviyesi ve kilometre durumunda sağlam ve temiz olarak teslim ettiğini beyan eder. KİRACI, araç(ları) bu durumda teslim aldığını, araçların mevcut hasar/kusurlarını şimdiden gördüğünü ve kabul ettiğini, aracı kira süresi sonunda ödeşmeden aynı durumda iade etmekle yükümlü olduğunu kabul ve taahhüt eder. Bu tutanak, taraflar arasındaki ${esc(d.sozNo)} numaralı kira sözleşmesinin ayrılmaz eki (Ek-1) niteliğindedir.</p>
 
 <div class="imza">
   <div class="imza-box"><div class="imza-line">KİRAYA VEREN / Yetkili</div></div>
   <div class="imza-box"><div class="imza-line">KİRACI / Yetkili</div></div>
-  ${d.kefil?'<div class="imza-box"><div class="imza-line">KEFİL / '+d.kefil+'</div></div>':''}
+  ${d.kefil?'<div class="imza-box"><div class="imza-line">KEFİL / '+esc(d.kefil)+'</div></div>':''}
 </div>
 </body></html>`;
 }
@@ -7265,6 +7273,7 @@ async function hasarKaydet(id){
   if(!aciklama){ showToast('Açıklama girin.', true); return; }
   const dosyalar = [...(fotoInp.files||[])];
   if(dosyalar.some(f=>f.size > 10*1024*1024)){ showToast('Bazı fotoğraflar çok büyük (en fazla 10 MB).', true); return; }
+  if(dosyalar.some(f=>f.type === 'image/svg+xml')){ showToast('SVG dosyaları desteklenmiyor.', true); return; }
   const h = {id:'h'+Date.now(), tarih, aciklama, tutar: tutar===''?null:Number(tutar), fotoKey:null, fotolar:[]};
   try{
     for(let i=0;i<dosyalar.length;i++){
@@ -10523,7 +10532,7 @@ function sozMaddeListesi(d){
   const A = coklu ? 'Araçlar' : 'Araç';
   return [
   {no:1, b:'SÖZLEŞMENİN KONUSU VE KAPSAMI', t:`İşbu sözleşmenin konusu, yukarıda nitelikleri belirtilen ${aracKelime} mülkiyeti KİRAYA VEREN'de kalmak kaydıyla, işbu sözleşmede belirlenen süre, bedel ve şartlarla KİRACI'ya operasyonel kiralama esasına göre kullanım hakkının devredilmesidir. Sözleşme, Araç Teslim Tutanağı (Ek-1) ve varsa diğer ekleriyle birlikte bir bütündür; ekler ile sözleşme metni arasında çelişki halinde sözleşme metni esas alınır. Kiracı, işbu sözleşmede belirttiği temsil yetkisinin geçerli ve tam olduğunu, temsilcisinin şirketi bağlayıcı şekilde imza atmaya yetkili olduğunu beyan ve taahhüt eder; yetkisiz temsilden doğan tüm zararlardan Kiracı ve temsilcisi müştereken ve müteselsilen sorumludur.`},
-  {no:2, b:'TESLİM VE İADE', t:`${A}, ${d.bas} tarihinde, Madde 3'te belirtilen aylık kilometre ve <strong>${d.yakit||'Dolu'}</strong> yakıt seviyesiyle, ${d.teslimYer||'KİRAYA VEREN merkezi'} yerinde, taraflarca birlikte düzenlenip imzalanacak Araç Teslim Tutanağı (Ek-1) ile KİRACI'ya teslim edilmiştir; tutanakta aracın o anki hasar durumu, lastik/aksesuar bilgileri ve varsa fotoğrafları yer alır. ${A} dolu yakıtla teslim edilip dolu yakıtla iade edilecek, eksik yakıt bedeli KİRACI'dan piyasa fiyatı üzerinden tahsil edilecektir. Kira süresi sonunda ${A}, KİRAYA VEREN'in belirteceği yer ve tarihte, teslim alındığı hal ve donanımla, normal yıpranma payı dışında hasarsız olarak iade edilir; iade sırasında ${A.toLowerCase()} birlikte kontrol edilip Araç İade Tutanağı (Ek-2) düzenlenir. KİRACI'nın iade sırasında hazır bulunmaması veya tutanağı imzalamaktan kaçınması halinde KİRAYA VEREN'in tek taraflı düzenleyeceği tutanak taraflar arasında bağlayıcıdır.`},
+  {no:2, b:'TESLİM VE İADE', t:`${A}, ${d.bas} tarihinde, Madde 3'te belirtilen aylık kilometre ve <strong>${d.yakit||'Dolu'}</strong> yakıt seviyesiyle, ${esc(d.teslimYer||'KİRAYA VEREN merkezi')} yerinde, taraflarca birlikte düzenlenip imzalanacak Araç Teslim Tutanağı (Ek-1) ile KİRACI'ya teslim edilmiştir; tutanakta aracın o anki hasar durumu, lastik/aksesuar bilgileri ve varsa fotoğrafları yer alır. ${A} dolu yakıtla teslim edilip dolu yakıtla iade edilecek, eksik yakıt bedeli KİRACI'dan piyasa fiyatı üzerinden tahsil edilecektir. Kira süresi sonunda ${A}, KİRAYA VEREN'in belirteceği yer ve tarihte, teslim alındığı hal ve donanımla, normal yıpranma payı dışında hasarsız olarak iade edilir; iade sırasında ${A.toLowerCase()} birlikte kontrol edilip Araç İade Tutanağı (Ek-2) düzenlenir. KİRACI'nın iade sırasında hazır bulunmaması veya tutanağı imzalamaktan kaçınması halinde KİRAYA VEREN'in tek taraflı düzenleyeceği tutanak taraflar arasında bağlayıcıdır.`},
   {no:3, b:'KULLANIM KOŞULLARI VE YASAKLAR', t:`${A} yalnızca işbu sözleşmede belirtilen amaçla ve KİRACI tarafından kullanılır; KİRAYA VEREN'in önceden yazılı onayı olmaksızın üçüncü kişilere kiralanamaz, alt kiraya konu edilemez, ödünç verilemez, devredilemez veya rehin/teminat olarak gösterilemez. ${A}nın yurt dışına çıkarılması KİRAYA VEREN'in önceden yazılı onayına tabidir. ${A} üzerinde LPG dönüşümü, renk değişikliği, marka/logo yapıştırması, mekanik/elektronik modifikasyon dahil hiçbir yetkisiz değişiklik yapılamaz. ${A}nın yarışta, sürüş eğitiminde, test amaçlı, başka bir aracı çekmede/kurtarmada, ruhsatında belirtilenden fazla yükleme ile veya trafik güvenliğini tehlikeye atacak şekilde kullanılması yasaktır. Bu maddeye aykırılıktan doğan her türlü zarar, ceza ve üçüncü kişi talepleri KİRACI'ya aittir ve KİRAYA VEREN bu hallerde sözleşmeyi derhal feshederek ${A.toLowerCase()} geri alma hakkına sahiptir. Aylık ${d.kmLimit} km kullanım limitini aşan her kilometre için ${d.kmAsimFiyat} ₺ + KDV ek ücret tahakkuk eder; kullanılmayan km sonraki döneme devredilmez.`},
   {no:4, b:'SÜRÜCÜ VE EHLİYET ŞARTI', t:`${A}yı yalnızca KİRACI ile önceden KİRAYA VEREN'e bildirilmiş, aracın sınıfına uygun geçerli sürücü belgesine sahip kişiler kullanabilir. KİRACI, ek sürücü bilgilerini (varsa) yazılı olarak bildirmekle yükümlüdür; bildirilmemiş bir sürücünün kullanımından doğan hasar, ceza ve sigorta reddi dahil tüm sonuçlar KİRACI'ya aittir. Ehliyetsiz, ehliyeti geçici/sürekli iptal edilmiş veya aracın sınıfına uygun olmayan ehliyetle yapılan kullanımdan doğan tüm hukuki ve cezai sonuçlar ile hasarlar münhasıran KİRACI'ya aittir; bu hallerde sigorta şirketinin ödeme yapmaması durumunda dahi KİRAYA VEREN'in zararı KİRACI'dan tazmin edilir.`},
   {no:5, b:'BAKIM, ONARIM VE PERİYODİK SERVİS', t:`${A}nın üretici tarafından öngörülen periyodik bakımları KİRAYA VEREN tarafından, KİRAYA VEREN'in yönlendireceği yetkili servislerde yaptırılır; KİRACI, ${A.toLowerCase()} bakım zamanı geldiğinde gecikmeksizin belirtilen servise götürmek ve arıza/uyarı ışıklarını derhal KİRAYA VEREN'e bildirmekle yükümlüdür. KİRACI'nın bu yükümlülüğü ihmal etmesi sonucu oluşan arıza büyümesi, motor/şanzıman hasarı gibi zararlar KİRACI'ya aittir. KİRAYA VEREN'in yazılı onayı olmaksızın yetkisiz servislerde bakım/onarım yaptırılamaz; aksi halde doğacak garanti kaybı ve hasarlardan KİRACI sorumludur. Bakım/onarım süresince ikame araç sağlanmaz.`},
@@ -10539,7 +10548,7 @@ function sozMaddeListesi(d){
   {no:15, b:'MÜCBİR SEBEP', t:`Deprem, sel, yangın, savaş, terör, genel grev, salgın hastalık, resmi makam kararları gibi tarafların makul kontrolü dışındaki ve öngörülemeyen hallerin (mücbir sebep) sözleşmenin ifasını imkânsız veya aşırı derecede güçleştirmesi halinde, etkilenen Taraf durumu derhal diğer Tarafa yazılı olarak bildirir ve mücbir sebep süresince yükümlülükler askıya alınır. Mücbir sebep 30 (otuz) günden uzun sürerse taraflardan her biri sözleşmeyi tazminatsız feshedebilir; bu durumda o ana kadar tahakkuk etmiş kira bedeli ve varsa hasar/ceza alacakları KİRAYA VEREN'e ödenir.`},
   {no:16, b:'TEBLİGAT', t:`Taraflar, işbu sözleşmede belirtilen adreslerini tebligat adresi olarak kabul eder; adres değişiklikleri diğer Tarafa yazılı olarak (noter/iadeli taahhütlü/e-posta) bildirilmedikçe, son bildirilen adrese yapılan tebligat geçerli sayılır. Taraflar, işbu sözleşmede belirtilen e-posta adreslerine yapılacak bildirimleri de yazılı bildirim olarak kabul eder.`},
   {no:17, b:'ALACAĞIN DEVRİ', t:`KİRAYA VEREN, işbu sözleşmeden doğan alacaklarını (kira bedeli, cezai şart, tazminat alacakları dahil) önceden KİRACI'nın onayını almaksızın üçüncü kişilere (finans kuruluşları dahil) devir ve temlik edebilir; bu durumda KİRACI, temlik bildirimini takiben ödemelerini bildirilen alacaklıya yapmakla yükümlüdür.`},
-  {no:18, b:'KEFİL VE MÜTESELSİL SORUMLULUK', t:d.kefil ? `İşbu sözleşmeden doğan tüm borçlardan (kira bedeli, cezai şart, tazminat, hasar bedeli, trafik cezaları ve diğer her türlü alacak dahil) ${d.kefil}${d.kefilTC?' (T.C. Kimlik No: '+d.kefilTC+')':''} ("KEFİL"), KİRACI ile birlikte ve aynı derecede sorumlu olmayı (müteselsil sorumluluk), bu sorumluluğun borcu sonradan doğanlar için de devam edeceğini bilerek ve isteyerek kabul ve taahhüt eder. Kefil, KİRAYA VEREN'in önce Kiracıya başvurmasını veya Kiracı hakkında takip yapmasını beklemek zorunda olmaksızın doğrudan dava ve icra takibine muhatap olarak ödeme yapmayı kabul eder. Kefilin bu beyanı sözleşmenin yenilenmesi veya süre uzatımı hallerinde aynen geçerlidir.` : `KİRACI tüzel kişi ise, işbu sözleşmeyi imzalayan temsilci, şirketi bağlayıcı imza yetkisine sahip olduğunu beyan eder; yetki eksikliği halinde sözleşmeden doğan tüm borç ve zararlardan imzalayan kişi KİRACI ile birlikte müştereken ve müteselsilen sorumludur. KİRAYA VEREN, kira süresince dilediği anda KİRACI'dan gösterilecek kefilin müteselsil sorumluluk beyanını imzalamasını talep etme hakkına sahiptir; bu talebin 15 gün içinde karşılanmaması halinde KİRAYA VEREN sözleşmeyi derhal feshedip ${A.toLowerCase()} geri alma hakkını saklı tutar.`},
+  {no:18, b:'KEFİL VE MÜTESELSİL SORUMLULUK', t:d.kefil ? `İşbu sözleşmeden doğan tüm borçlardan (kira bedeli, cezai şart, tazminat, hasar bedeli, trafik cezaları ve diğer her türlü alacak dahil) ${esc(d.kefil)}${d.kefilTC?' (T.C. Kimlik No: '+esc(d.kefilTC)+')':''} ("KEFİL"), KİRACI ile birlikte ve aynı derecede sorumlu olmayı (müteselsil sorumluluk), bu sorumluluğun borcu sonradan doğanlar için de devam edeceğini bilerek ve isteyerek kabul ve taahhüt eder. Kefil, KİRAYA VEREN'in önce Kiracıya başvurmasını veya Kiracı hakkında takip yapmasını beklemek zorunda olmaksızın doğrudan dava ve icra takibine muhatap olarak ödeme yapmayı kabul eder. Kefilin bu beyanı sözleşmenin yenilenmesi veya süre uzatımı hallerinde aynen geçerlidir.` : `KİRACI tüzel kişi ise, işbu sözleşmeyi imzalayan temsilci, şirketi bağlayıcı imza yetkisine sahip olduğunu beyan eder; yetki eksikliği halinde sözleşmeden doğan tüm borç ve zararlardan imzalayan kişi KİRACI ile birlikte müştereken ve müteselsilen sorumludur. KİRAYA VEREN, kira süresince dilediği anda KİRACI'dan gösterilecek kefilin müteselsil sorumluluk beyanını imzalamasını talep etme hakkına sahiptir; bu talebin 15 gün içinde karşılanmaması halinde KİRAYA VEREN sözleşmeyi derhal feshedip ${A.toLowerCase()} geri alma hakkını saklı tutar.`},
   {no:19, b:'KASKO PRİM ARTIŞI VE HASARSIZLIK KAYBI', t:`KİRACI'nın veya bildirilen sürücülerin kusuruyla meydana gelen her hasar sonucunda sigorta şirketlerince uygulanan hasarsızlık indirimlerinin kaybedilmesi ve kasko ile zorunlu mali mesuliyet sigortası primlerinde oluşan artış, kaybedilen indirim tutarı ve yeni prim ile önceki prim arasındaki fark esas alınarak hesaplanır ve KİRACI'ya yansıtılır. KİRACI, kira süresinin bitimini takip eden ilk prim yenileme dönemini kapsayan prim artışlarını, belgelendirilmiş olarak ilk yazılı bildirimde ödemeyi kabul ve taahhüt eder; bu tutarlar depozitodan mahsup edilebilir.`},
   {no:20, b:'KİRA BEDELİNİN YENİLENMESİ', t:`12 (on iki) ay ve üzeri süreli kiralamalarda kira bedeli, her kira dönem başında, önceki 12 aylık döneme ilişkin TÜFE (Yiyecek ve Alkolsüz İçecekler hariç Esas Yıllık Ortalama Tüketici Fiyatları Endeksi) artış oranı kadar zamlanarak yenilenir; güncelleme oranı %25'in üzerinde ise %25 esas alınır. KİRAYA VEREN, yeni dönem kira bedelini dönem başlangıcından en az 30 (otuz) gün önce yazılı olarak KİRACI'ya bildirir; KİRACI'nın yeni bedeli kabul etmemesi halinde sözleşme, devam eden kira döneminin sonunda tazminatsız olarak sona erer ve KİRACI ${A.toLowerCase()} Madde 2 hükümlerine göre iade eder.`},
   {no:21, b:'AVUKATLIK ÜCRETİ VE YARGI MASRAFLARI', t:`İşbu sözleşmeden doğan alacak ve uyuşmazlıkların tahsili/çözümü amacıyla KİRAYA VEREN tarafından başlatılan her türlü hukuk ve icra takibinde; avukatlık ücretleri aksi kararlaştırılmış olsa dahi, harç, masraf, bilirkişi ve keşif giderleri dahil tüm yargı ve icra masrafları KİRACI'ya ait olup talep halinde peşin ödenir. KİRAYA VEREN'in birden fazla avukat veya avukatlık bürosu ile temsil edilmesi halinde hepsi için avukatlık ücreti hükmedilmesini KİRACI şimdiden kabul ve taahhüt eder.`},
@@ -10582,7 +10591,7 @@ function sozlesmeHtml(d){
   const logoSrc = (document.querySelector('.lock-logo-wrap img')||{}).src||'';
   const logoTag = logoSrc ? `<img src="${logoSrc}" alt="" style="display:block;margin:0 auto 10px;max-height:72px;">` : '';
   return `<!DOCTYPE html>
-<html lang="tr"><head><meta charset="UTF-8"><title>Kira Sözleşmesi — ${d.plaka}</title>
+<html lang="tr"><head><meta charset="UTF-8"><title>Kira Sözleşmesi — ${esc(d.plaka)}</title>
 <style>
   body{font-family:Arial,sans-serif;font-size:12px;line-height:1.6;color:#000;max-width:800px;margin:0 auto;padding:20px;}
   h1{text-align:center;font-size:16px;text-transform:uppercase;border-bottom:2px solid #000;padding-bottom:8px;}
@@ -10606,8 +10615,8 @@ ${logoTag}
 <table>
   <tr><th>KİRAYA VEREN</th><th>KİRACI</th></tr>
   <tr>
-    <td><strong>${d.firmaAdi}</strong><br>${d.firmaAdres}${d.firmaTelefon?'<br>Tel: '+d.firmaTelefon:''}${d.firmaVergiNo?'<br>Vergi No: '+d.firmaVergiNo:''}${d.firmaEposta?'<br>E-posta: '+d.firmaEposta:''}</td>
-    <td><strong>${d.kiraci}</strong>${d.kiraciVergi?`<br>TC/Vergi No: ${d.kiraciVergi}`:''}${d.kiraciAdres?`<br>${d.kiraciAdres}`:''}${d.kiraciTel?'<br>Tel: '+d.kiraciTel:''}${d.kiraciEposta?'<br>E-posta: '+d.kiraciEposta:''}${d.kiraciEhliyet?`<br>Ehliyet No: ${d.kiraciEhliyet}`:''}${d.kefil?`<br><br><strong>KEFİL:</strong> ${d.kefil}${d.kefilTC?'<br>T.C. Kimlik No: '+d.kefilTC:''}<br><span style="font-size:10px;">Kefil, sözleşme borçlarından müteselsilen sorumludur (Madde 18).</span>`:''}</td>
+    <td><strong>${d.firmaAdi}</strong><br>${esc(d.firmaAdres)}${d.firmaTelefon?'<br>Tel: '+esc(d.firmaTelefon):''}${d.firmaVergiNo?'<br>Vergi No: '+esc(d.firmaVergiNo):''}${d.firmaEposta?'<br>E-posta: '+esc(d.firmaEposta):''}</td>
+    <td><strong>${esc(d.kiraci)}</strong>${d.kiraciVergi?`<br>TC/Vergi No: ${esc(d.kiraciVergi)}`:''}${d.kiraciAdres?`<br>${esc(d.kiraciAdres)}`:''}${d.kiraciTel?'<br>Tel: '+esc(d.kiraciTel):''}${d.kiraciEposta?'<br>E-posta: '+esc(d.kiraciEposta):''}${d.kiraciEhliyet?`<br>Ehliyet No: ${esc(d.kiraciEhliyet)}`:''}${d.kefil?`<br><br><strong>KEFİL:</strong> ${esc(d.kefil)}${d.kefilTC?'<br>T.C. Kimlik No: '+esc(d.kefilTC):''}<br><span style="font-size:10px;">Kefil, sözleşme borçlarından müteselsilen sorumludur (Madde 18).</span>`:''}</td>
   </tr>
 </table>
 
@@ -10615,17 +10624,17 @@ ${logoTag}
 ${(d.araclar && d.araclar.length>1) ? `
 <table>
   <tr><th>#</th><th>Plaka</th><th>Marka / Model</th><th>Cinsi</th><th>Yıl</th><th>Renk</th><th>Ruhsat Seri No</th><th>Teslim KM</th><th>Aylık Kira (₺)</th></tr>
-  ${d.araclar.map((a,i)=>`<tr><td>${i+1}</td><td><strong>${a.plaka}</strong></td><td>${a.marka} ${a.model} ${a.versiyon}</td><td>${a.aracCinsi||'—'}</td><td>${a.modelYili||'—'}</td><td>${a.renk||'—'}</td><td>${a.ruhsatNo||'—'}</td><td>${a.teslimKm}</td><td>${a.aylikKira}</td></tr>`).join('')}
+  ${d.araclar.map((a,i)=>`<tr><td>${i+1}</td><td><strong>${esc(a.plaka)}</strong></td><td>${esc(a.marka)} ${esc(a.model)} ${esc(a.versiyon)}</td><td>${esc(a.aracCinsi||'—')}</td><td>${esc(a.modelYili||'—')}</td><td>${esc(a.renk||'—')}</td><td>${esc(a.ruhsatNo||'—')}</td><td>${a.teslimKm}</td><td>${a.aylikKira}</td></tr>`).join('')}
   <tr><th colspan="8" style="text-align:right;">TOPLAM AYLIK KİRA (KDV Hariç)</th><th>${d.toplamAylikKira} ₺</th></tr>
 </table>
 <p style="font-size:11px;">Toplam <strong>${d.aracSayisi}</strong> adet araç yukarıda listelenmiş olup tamamı birlikte kiralanmıştır.</p>
 ` : `
 <table>
-  <tr><th>Plaka</th><td>${d.plaka}</td><th>Marka / Model</th><td>${d.marka} ${d.model} ${d.versiyon}</td></tr>
-  <tr><th>Araç Cinsi</th><td>${d.aracCinsi||'—'}</td><th>Model Yılı</th><td>${d.modelYili||'—'}</td></tr>
-  <tr><th>Ruhsat Seri No</th><td>${d.ruhsatNo||'—'}</td><th>Şasi No</th><td>${d.sasiNo||'—'}</td></tr>
-  <tr><th>Renk</th><td>${d.renk||'—'}</td><th>Teslim KM</th><td>${d.teslimKm}</td></tr>
-  ${d.motorNo?`<tr><th>Motor No</th><td colspan="3">${d.motorNo}</td></tr>`:''}
+  <tr><th>Plaka</th><td>${esc(d.plaka)}</td><th>Marka / Model</th><td>${esc(d.marka)} ${esc(d.model)} ${esc(d.versiyon)}</td></tr>
+  <tr><th>Araç Cinsi</th><td>${esc(d.aracCinsi||'—')}</td><th>Model Yılı</th><td>${esc(d.modelYili||'—')}</td></tr>
+  <tr><th>Ruhsat Seri No</th><td>${esc(d.ruhsatNo||'—')}</td><th>Şasi No</th><td>${esc(d.sasiNo||'—')}</td></tr>
+  <tr><th>Renk</th><td>${esc(d.renk||'—')}</td><th>Teslim KM</th><td>${d.teslimKm}</td></tr>
+  ${d.motorNo?`<tr><th>Motor No</th><td colspan="3">${esc(d.motorNo)}</td></tr>`:''}
 </table>
 `}
 
@@ -10635,44 +10644,44 @@ ${(d.araclar && d.araclar.length>1) ? `
   <tr><th>Süre</th><td>${d.sure}</td><th>Teslim KM</th><td>${(d.araclar && d.araclar.length>1) ? 'Araç bazında (bkz. Madde 2 tablosu)' : d.teslimKm+' km'}</td></tr>
   <tr><th>Aylık Kira Bedeli</th><td><strong>${(d.araclar && d.araclar.length>1) ? d.toplamAylikKira+' ₺ ('+d.aracSayisi+' araç toplamı, KDV Hariç)' : d.aylikKira+' ₺ (KDV Hariç)'}</strong></td><th>Aylık KM Limiti</th><td>${d.kmLimit} km/araç</td></tr>
   <tr><th>KM Aşım Ücreti</th><td>${d.kmAsimFiyat} ₺/km</td><th>Depozito</th><td>${d.depozito} ₺</td></tr>
-  <tr><th>Teslim Yakıt Seviyesi</th><td>${d.yakit||'Dolu'}</td><th>Teslim Yeri</th><td>${d.teslimYer||'KİRAYA VEREN merkezi'}</td></tr>
+  <tr><th>Teslim Yakıt Seviyesi</th><td>${d.yakit||'Dolu'}</td><th>Teslim Yeri</th><td>${esc(d.teslimYer||'KİRAYA VEREN merkezi')}</td></tr>
   <tr><th>Ödeme Günü</th><td colspan="3">Her ayın 1. günü, peşin (havalı/EFT)</td></tr>
 </table>
 
 <h2>4. Sözleşme Maddeleri</h2>
 ${sozMaddeListesi(d).map(m=>`<div class="madde"><span class="madde-no">MADDE ${m.no} — ${m.b}:</span> ${m.t}</div>`).join('')}
-${d.notlar?`<div class="madde"><span class="madde-no">ÖZEL ŞARTLAR:</span> ${d.notlar}</div>`:''}
+${d.notlar?`<div class="madde"><span class="madde-no">ÖZEL ŞARTLAR:</span> ${esc(d.notlar)}</div>`:''}
 
 <h2 style="page-break-before:always;">EK-1 — ARAÇ TESLİM TUTANAĞI</h2>
 <table>
   <tr><th style="width:28%;">Sözleşme No</th><td>${d.sozNo}</td><th style="width:28%;">Tarih</th><td>${d.tarih}</td></tr>
-  <tr><th>Kiracı</th><td colspan="3">${d.kiraci}</td></tr>
+  <tr><th>Kiracı</th><td colspan="3">${esc(d.kiraci)}</td></tr>
 </table>
 <table>
   <tr><th>Plaka</th><th>Teslim KM</th><th>Yakıt Seviyesi</th><th>Hasar / Aksesuar Notu</th></tr>
-  ${(d.araclar&&d.araclar.length>1?d.araclar:[{plaka:d.plaka,teslimKm:d.teslimKm}]).map(a=>`<tr><td><strong>${a.plaka}</strong></td><td>${a.teslimKm}</td><td>${d.yakit||'Dolu'}</td><td style="height:34px;"></td></tr>`).join('')}
+  ${(d.araclar&&d.araclar.length>1?d.araclar:[{plaka:d.plaka,teslimKm:d.teslimKm}]).map(a=>`<tr><td><strong>${esc(a.plaka)}</strong></td><td>${a.teslimKm}</td><td>${d.yakit||'Dolu'}</td><td style="height:34px;"></td></tr>`).join('')}
 </table>
 <p style="font-size:11px;">Yukarıda nitelikleri belirtilen araç(lar), sözleşme şartlarına uygun olarak eksiksiz ve hasar durumu işaretlenerek teslim edilmiştir.</p>
 <div class="imza">
   <div class="imza-box"><div class="imza-line">KİRAYA VEREN / Yetkili</div></div>
   <div class="imza-box"><div class="imza-line">KİRACI / Yetkili</div></div>
-  ${d.kefil?'<div class="imza-box"><div class="imza-line">KEFİL (Müteselsil Sorumlu) / '+d.kefil+'</div></div>':''}
+  ${d.kefil?'<div class="imza-box"><div class="imza-line">KEFİL (Müteselsil Sorumlu) / '+esc(d.kefil)+'</div></div>':''}
 </div>
 
 <h2>EK-2 — ARAÇ İADE TUTANAĞI</h2>
 <table>
   <tr><th style="width:28%;">Sözleşme No</th><td>${d.sozNo}</td><th style="width:28%;">İade Tarihi</th><td>....../....../......</td></tr>
-  <tr><th>Kiracı</th><td colspan="3">${d.kiraci}</td></tr>
+  <tr><th>Kiracı</th><td colspan="3">${esc(d.kiraci)}</td></tr>
 </table>
 <table>
   <tr><th>Plaka</th><th>İade KM</th><th>Yakıt Seviyesi</th><th>Tespit Edilen Hasar / Eksik</th></tr>
-  ${(d.araclar&&d.araclar.length>1?d.araclar:[{plaka:d.plaka}]).map(a=>`<tr><td><strong>${a.plaka}</strong></td><td></td><td></td><td style="height:34px;"></td></tr>`).join('')}
+  ${(d.araclar&&d.araclar.length>1?d.araclar:[{plaka:d.plaka}]).map(a=>`<tr><td><strong>${esc(a.plaka)}</strong></td><td></td><td></td><td style="height:34px;"></td></tr>`).join('')}
 </table>
 <p style="font-size:11px;">Yukarıda nitelikleri belirtilen araç(lar), iade sırasında taraflarca birlikte kontrol edilmiş olup tespit edilen durum kaydedilmiştir. Kiracının imzası, hasar/eksik bildirimlerini kabul ettiğini gösterir.</p>
 <div class="imza">
   <div class="imza-box"><div class="imza-line">KİRAYA VEREN / Yetkili</div></div>
   <div class="imza-box"><div class="imza-line">KİRACI / Yetkili</div></div>
-  ${d.kefil?'<div class="imza-box"><div class="imza-line">KEFİL (Müteselsil Sorumlu) / '+d.kefil+'</div></div>':''}
+  ${d.kefil?'<div class="imza-box"><div class="imza-line">KEFİL (Müteselsil Sorumlu) / '+esc(d.kefil)+'</div></div>':''}
 </div>
 
 <h2>EK-3 — KVKK AYDINLATMA METNİ</h2>
@@ -10686,7 +10695,7 @@ ${d.notlar?`<div class="madde"><span class="madde-no">ÖZEL ŞARTLAR:</span> ${d
   </div>
   <div class="imza-box">
     <div class="imza-line">KİRACI</div>
-    <div style="font-size:11px;margin-top:4px;"><strong>${d.kiraci}</strong></div>
+    <div style="font-size:11px;margin-top:4px;"><strong>${esc(d.kiraci)}</strong></div>
     <div style="font-size:10.5px;color:#333;margin-top:8px;">Ad Soyad / Unvan: ..............................<br>Tarih: ....../....../..........<br>Kaşe:</div>
   </div>
 </div>
