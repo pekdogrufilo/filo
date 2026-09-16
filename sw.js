@@ -1,5 +1,5 @@
-/* PEKDOĞRU Filo Paneli — Service Worker v.115 */
-const CACHE_NAME = 'filo-panel-v115';
+/* PEKDOĞRU Filo Paneli — Service Worker v.118 */
+const CACHE_NAME = 'filo-panel-v118';
 const SHELL_ASSETS = [
   './',
   './index.html',
@@ -42,19 +42,16 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Uygulama kabuğu için cache-first, güncellemeler için arka planda yenile
+  // index.html için network-first: yeni sürüm hemen görünür, çevrimdışıysa önbellek
   event.respondWith(
-    caches.match(request).then((cached) => {
-      const network = fetch(request)
-        .then((res) => {
-          if (res && res.status === 200) {
-            const copy = res.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
-          }
-          return res;
-        })
-        .catch(() => cached);
-      return cached || network;
-    })
+    fetch(request)
+      .then((res) => {
+        if (res && res.status === 200) {
+          const copy = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+        }
+        return res;
+      })
+      .catch(() => caches.match(request))
   );
 });
