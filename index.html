@@ -1362,7 +1362,12 @@
     #page-genel-bakis:not(.mobil-detay-acik) .mobil-detay-body{display:none;}
   }
 
-  #page-arac-yonetimi .vk-seg-row{display:none;}
+  /* v.128: "sigorta vize vs tarihlerini görelim, kartın içine girmek zor oluyor" —
+     bu satır her araç kartında zaten hazır duran Sigorta/Kasko/Muayene/Sözleşme
+     gün-sayacı şeridini (vk-seg-row, JS'te her zaman üretiliyor) sadece Araç Yönetimi
+     sayfasında CSS ile gizliyordu. Kartı açmadan tarihleri görebilmek için burada
+     gösteriyoruz; JS/veri tarafına dokunulmadı. */
+  #page-arac-yonetimi .vk-seg-row{padding:10px 14px 11px;gap:8px;}
   #page-arac-yonetimi .vk-head{padding:14px 16px 12px;}
   #page-arac-yonetimi .vk-body-pad{padding:10px 16px 12px;}
   #page-arac-yonetimi .vk-foot{padding:9px 16px 11px;}
@@ -1973,7 +1978,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-16.127</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-16.128</div>
     </div>
   </div>
 </div>
@@ -2103,7 +2108,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-16.127</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-16.128</div>
     </div>
   </aside>
 <script>
