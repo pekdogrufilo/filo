@@ -1111,23 +1111,24 @@
   html[data-theme="light"] .sb-user-role{color:rgba(60,60,67,.65);}
   html[data-theme="light"] .sb-user-sub{color:rgba(60,60,67,.7);}
   html[data-theme="light"] .sb-overlay{background:rgba(0,0,0,.25);}
-  /* Kartlar: saf beyaz, yumuşak katmanlı gölge, 18px köşe */
+  /* Kartlar: ATLAS değişkenlerine bağlı (v.121 — eskiden #FFFFFF/18px sabit
+     kodlanmıştı, tema değişkenlerini yok sayıyordu) */
   html[data-theme="light"] .dcard,
   html[data-theme="light"] .card{
-    background:#FFFFFF;
-    border-radius:18px;
-    border-color:rgba(0,0,0,.05);
-    box-shadow:0 1px 2px rgba(0,0,0,.04),0 4px 14px rgba(0,0,0,.04);
+    background:var(--surface);
+    border-radius:var(--radius);
+    border-color:var(--border);
+    box-shadow:var(--shadow-sm);
   }
-  html[data-theme="light"] .card:hover{box-shadow:0 10px 28px rgba(0,0,0,.10);border-color:rgba(0,0,0,.09);}
+  html[data-theme="light"] .card:hover{box-shadow:var(--shadow-md);border-color:var(--border-2);}
   html[data-theme="light"] .dstat,
   html[data-theme="light"] .stat{
-    background:#FFFFFF;
-    border-radius:18px;
-    border-color:rgba(0,0,0,.05);
-    box-shadow:0 1px 2px rgba(0,0,0,.04),0 4px 14px rgba(0,0,0,.04);
+    background:var(--surface);
+    border-radius:var(--radius);
+    border-color:var(--border);
+    box-shadow:var(--shadow-sm);
   }
-  html[data-theme="light"] .dstat:hover{transform:none;box-shadow:0 6px 20px rgba(0,0,0,.08);}
+  html[data-theme="light"] .dstat:hover{transform:none;box-shadow:var(--shadow-md);}
   /* Üst bar ve alt navigasyon: beyaz buz */
   html[data-theme="light"] .topbar,
   html[data-theme="light"] .bottom-nav{background:rgba(255,255,255,.82);}
@@ -1470,61 +1471,69 @@
 /* ================================================================
    v.112 ATLAS — Tek yetkili tasarim sistemi
    Modern · yuksek kontrast · tek kaynak (tum eski katmanlari ezer)
+   v.121: Kullanıcının gönderdiği referans dashboard'lara (koyu zemin,
+   canlı/doygun tek vurgu rengi, kalın tipografi, belirgin derinlik)
+   göre yeniden kalibre edildi — marka kırmızısı korunuyor ama çok daha
+   canlı/doygun ve kontrastlı uygulanıyor. Tek yetkili renk kaynağı burası.
    ================================================================ */
   :root, html[data-theme="dark"]{
-    --bg:#0E1013;
-    --surface:#16181C;
-    --surface-2:#1C1F24;
-    --surface-3:#23262C;
-    --border:rgba(255,255,255,.10);
-    --border-2:rgba(255,255,255,.18);
-    --text:#F2F3F4;
-    --text-2:#AEB3BA;
-    --text-3:#7C828B;
-    --sidebar-bg:#0A0B0D;
-    --surface-glass:rgba(14,16,19,.88);
-    --blue:#E05244;
-    --blue-dim:rgba(224,82,68,.12);
-    --accent-blue:#E05244;
-    --glow:rgba(224,82,68,.08);
+    --bg:#0A0A0C;
+    --surface:#131316;
+    --surface-2:#18181C;
+    --surface-3:#202024;
+    --border:rgba(255,255,255,.08);
+    --border-2:rgba(255,255,255,.17);
+    --text:#F5F3F1;
+    --text-2:#A19D97;
+    --text-3:#6E6A64;
+    --sidebar-bg:#08080A;
+    --surface-glass:rgba(10,10,12,.88);
+    --blue:#E8453A;
+    --blue-dim:rgba(232,69,58,.16);
+    --accent-blue:#E8453A;
+    --glow:rgba(232,69,58,.14);
     --green:#3FBF77;
-    --green-dim:rgba(63,191,119,.13);
+    --green-dim:rgba(63,191,119,.14);
     --amber:#E9A23B;
-    --amber-dim:rgba(233,162,59,.13);
-    --red:#E05244;
-    --red-dim:rgba(224,82,68,.13);
-    --gold:#E9A23B;--gold-dim:rgba(233,162,59,.13);
+    --amber-dim:rgba(233,162,59,.14);
+    --red:#E8453A;
+    --red-dim:rgba(232,69,58,.16);
+    --gold:#E9A23B;--gold-dim:rgba(233,162,59,.14);
+    --paper:#F5F3F1;--steel-100:#F5F3F1;--steel-300:#A19D97;--steel-500:#6E6A64;--steel-600:#202024;
+    --line:rgba(255,255,255,.08);
     --radius:14px;--radius-sm:10px;--radius-lg:18px;
-    --shadow-sm:0 1px 3px rgba(0,0,0,.4);
-    --shadow-md:0 8px 28px rgba(0,0,0,.5);
-    --shadow-lg:0 20px 60px rgba(0,0,0,.6);
+    --shadow-sm:0 1px 2px rgba(0,0,0,.45);
+    --shadow-md:0 12px 32px rgba(0,0,0,.5);
+    --shadow-lg:0 28px 70px rgba(0,0,0,.6);
   }
   html[data-theme="light"]{
-    --bg:#F6F5F2;
+    --bg:#F7F6F4;
     --surface:#FFFFFF;
-    --surface-2:#FAFAF8;
-    --surface-3:#F0EFEB;
-    --border:rgba(18,20,24,.10);
-    --border-2:rgba(18,20,24,.18);
-    --text:#1B1D21;
-    --text-2:#555A62;
-    --text-3:#83888F;
-    --sidebar-bg:#15171B;
+    --surface-2:#FAF9F7;
+    --surface-3:#F0EEEA;
+    --border:rgba(20,18,15,.09);
+    --border-2:rgba(20,18,15,.17);
+    --text:#171512;
+    --text-2:#5A564F;
+    --text-3:#8B877E;
+    --sidebar-bg:#FFFFFF;
     --surface-glass:rgba(255,255,255,.92);
-    --blue:#C24334;
-    --blue-dim:rgba(194,67,52,.10);
-    --accent-blue:#C24334;
-    --glow:rgba(194,67,52,.07);
+    --blue:#C4342A;
+    --blue-dim:rgba(196,52,42,.09);
+    --accent-blue:#C4342A;
+    --glow:rgba(196,52,42,.08);
     --green:#1F9D5B;
     --green-dim:rgba(31,157,91,.10);
-    --amber:#C07E14;
-    --amber-dim:rgba(192,126,20,.11);
-    --red:#C24334;
-    --red-dim:rgba(194,67,52,.10);
-    --gold:#B87415;--gold-dim:rgba(192,126,20,.11);
-    --shadow-sm:0 1px 3px rgba(16,18,22,.06);
-    --shadow-md:0 8px 26px rgba(16,18,22,.10);
-    --shadow-lg:0 18px 50px rgba(16,18,22,.15);
+    --amber:#B87415;
+    --amber-dim:rgba(184,116,21,.11);
+    --red:#C4342A;
+    --red-dim:rgba(196,52,42,.09);
+    --gold:#B87415;--gold-dim:rgba(184,116,21,.11);
+    --paper:#171512;--steel-100:#171512;--steel-300:#5A564F;--steel-500:#8B877E;--steel-600:#F0EEEA;
+    --line:rgba(20,18,15,.09);
+    --shadow-sm:0 1px 3px rgba(20,18,15,.06);
+    --shadow-md:0 8px 26px rgba(20,18,15,.10);
+    --shadow-lg:0 18px 50px rgba(20,18,15,.15);
   }
   /* ---- Zeminler ---- */
   body{background:var(--bg) !important;color:var(--text) !important;}
@@ -1664,6 +1673,184 @@
   @media (max-width:900px){
     .toast{ bottom:calc(70px + env(safe-area-inset-bottom,0px)) !important; }
   }
+
+  /* ================================================================
+     v.121 — Kullanıcının gönderdiği referans dashboard'lara göre görsel
+     yükseltme: kalın/güvenli tipografi, gerçek derinlik (gölge/parlama),
+     doygun tek vurgu rengi, rozet tarzı trend etiketleri, ince dekoratif
+     parlama. Sadece görsel katman — JS/veri davranışı değişmedi.
+     ================================================================ */
+
+  /* --- Tipografi: başlıklar ve KPI sayıları daha kalın/güvenli --- */
+  .th-title{font-family:var(--font-display);font-weight:700;letter-spacing:-.3px;}
+  .dcard h3{font-family:var(--font-display);font-weight:600;letter-spacing:-.1px;}
+  .sb-brand-text{font-family:var(--font-display);font-weight:700;}
+  .dstat-txt .n{font-family:var(--font-display);font-weight:700;letter-spacing:-.5px;}
+  .dstat-strong .dstat-txt .n{font-weight:800;}
+
+  /* --- KPI trend etiketi: düz metin yerine dolgulu rozet --- */
+  .dstat-txt .d{
+    display:inline-flex;align-items:center;gap:3px;
+    padding:2px 8px;border-radius:999px;
+    background:color-mix(in srgb, currentColor 14%, transparent);
+    font-weight:700;font-size:11.5px;
+  }
+
+  /* --- Kartlar: daha belirgin derinlik + hover'da ince parlama --- */
+  .dcard,.card{box-shadow:var(--shadow-sm);transition:box-shadow .2s ease, border-color .2s ease;}
+  .dcard:hover,.card:hover{box-shadow:var(--shadow-md);border-color:var(--border-2);}
+  .dstat{transition:box-shadow .2s ease, border-color .2s ease, transform .2s ease;}
+  .dstat:hover{box-shadow:var(--shadow-md);transform:translateY(-2px);}
+  .dstat-ic{box-shadow:0 2px 6px rgba(0,0,0,.18);}
+
+  /* --- Sidebar: daha güvenli aktif durum, ince parlama --- */
+  .sidebar .sb-item.active{box-shadow:0 0 0 1px var(--blue-dim) inset, 0 4px 14px var(--glow) !important;}
+
+  /* --- Ana eylem butonları: dolgun, hafif parlamalı --- */
+  .add-btn,#filoKaydetBtn,.mobil-fab,.lock-btn-main{
+    box-shadow:0 6px 18px var(--glow) !important;
+    font-weight:700 !important;
+  }
+  .add-btn:hover,#filoKaydetBtn:hover{box-shadow:0 8px 24px var(--glow) !important;transform:translateY(-1px);}
+
+  /* --- Üst bar: referanstaki hafif dekoratif parlama (görsel yok, salt
+     CSS gradyan) --- */
+  .top-header{
+    position:relative;
+    background:
+      radial-gradient(480px 160px at 88% -40%, var(--glow), transparent 70%),
+      var(--surface-glass) !important;
+  }
+
+  /* --- Sol alt "PEKDOĞRU GROUP" kutusu: hafif ayrışan bir kutu içine
+     alındı --- */
+  .sb-foot{
+    background:var(--surface-2);
+    border:1px solid var(--border);
+    border-radius:var(--radius-sm);
+    padding:12px 10px;
+    margin:8px 6px 4px;
+  }
+
+  /* --- Genel Bakış: dashboard üst alanına çok hafif bir arka plan
+     parlaması (salt CSS, ek görsel yüklenmiyor) --- */
+  #page-genel-bakis{
+    background:radial-gradient(900px 360px at 100% -8%, var(--glow), transparent 60%);
+    background-repeat:no-repeat;
+  }
+
+  /* ================================================================
+     v.123 — Giriş ekranı, kullanıcının gönderdiği "Login form V7" referans
+     görseline BİREBİR yakın: koyu zemin üzerinde GERÇEK, NET bir altın/
+     bronz kurdele grafiği (SVG, bulanık gölge değil — bkz. .lock-ribbon-bg
+     markup'ı), buzlu cam kart, ikonlu alanlar, parlamalı ALTIN buton.
+     Bu ekranın altın vurgusu uygulamanın geri kalanındaki kırmızı marka
+     renginden bilerek bağımsız (--lock-accent) — referansta da öyleydi.
+     Sadece bu ekranın CSS'i — giriş mantığı hiç değişmedi. ============ */
+  .lock-screen{
+    --lock-accent:#E0AC48;
+    --lock-accent-bright:#F6DFA0;
+    --lock-accent-dim:rgba(224,172,72,.16);
+    background:#0B0906 !important;
+    overflow:hidden;
+  }
+  .lock-ribbon-bg{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    z-index:0;
+  }
+  .lock-screen .lock-grid-bg{display:none;}
+  .lock-screen::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:radial-gradient(1100px 700px at 50% 55%, transparent 30%, rgba(11,9,6,.55) 75%, rgba(11,9,6,.85) 100%);
+    pointer-events:none;
+    z-index:1;
+  }
+  .lock-card{z-index:2;}
+  .lock-card-inner{
+    background:rgba(15,13,10,.68) !important;
+    backdrop-filter:blur(22px) saturate(140%);
+    -webkit-backdrop-filter:blur(22px) saturate(140%);
+    border:1px solid rgba(224,172,72,.28) !important;
+    box-shadow:0 30px 80px rgba(0,0,0,.55), 0 0 0 1px rgba(224,172,72,.10) !important;
+  }
+  .lock-card h2 i{color:var(--lock-accent);font-style:normal;}
+  .lock-firm,.lock-tagline{color:#F6F0E4 !important;}
+  .lock-divider{background:var(--lock-accent) !important;}
+  .lock-field label{color:#C9C2B4 !important;}
+  .lock-field.has-icon input{padding-left:40px;}
+  .lock-field .lf-ic{position:absolute;left:13px;top:37px;color:var(--lock-accent);display:flex;pointer-events:none;opacity:.8;}
+  .lock-field input{background:rgba(255,255,255,.06) !important;border-color:rgba(224,172,72,.22) !important;color:#F6F0E4 !important;}
+  .lock-field input::placeholder{color:rgba(246,240,228,.35) !important;}
+  .lock-field .eye{color:rgba(224,172,72,.65) !important;}
+  .lock-field input:focus{border-color:var(--lock-accent) !important;box-shadow:0 0 0 3px var(--lock-accent-dim) !important;}
+  .lock-btn-main{
+    background:linear-gradient(135deg, var(--lock-accent-bright), var(--lock-accent) 55%, #B8862E) !important;
+    color:#1C1206 !important;
+    box-shadow:0 10px 30px rgba(224,172,72,.35) !important;
+    font-weight:700 !important;
+    border:none !important;
+  }
+  .lock-btn-main:hover{transform:translateY(-1px);box-shadow:0 12px 36px rgba(224,172,72,.45) !important;}
+  .lock-note{background:rgba(224,172,72,.07) !important;border-color:rgba(224,172,72,.16) !important;color:#C9C2B4 !important;}
+  @media (max-width:640px){
+    .lock-ribbon-bg{opacity:.75;}
+  }
+
+  /* ================================================================
+     v.124 — Giriş ekranı ince ayarları: kurdeleye hafif "nefes alan"
+     hareket, logoya altın parlama halkası, kart üstüne ince altın çizgi,
+     butona geçiş ışığı, arkadaki kırmızı "Kaydet" düğmesi/rozeti giriş
+     ekranı açıkken gizleniyor (tema çakışmasın diye). Sadece görsel —
+     JS/giriş mantığı değişmedi. ================================== */
+  .lock-ribbon-bg{
+    animation:lockRibbonBreathe 16s ease-in-out infinite;
+    transform-origin:50% 50%;
+  }
+  @keyframes lockRibbonBreathe{
+    0%{transform:scale(1) rotate(0deg);}
+    50%{transform:scale(1.045) rotate(.6deg);}
+    100%{transform:scale(1) rotate(0deg);}
+  }
+  @media (prefers-reduced-motion:reduce){ .lock-ribbon-bg{animation:none;} }
+
+  .lock-logo-wrap{
+    position:relative;
+    box-shadow:0 0 0 1px rgba(224,172,72,.35), 0 10px 30px rgba(224,172,72,.25), 0 4px 16px rgba(0,0,0,.4) !important;
+    animation:lockLogoGlow 5s ease-in-out infinite;
+  }
+  @keyframes lockLogoGlow{
+    0%,100%{box-shadow:0 0 0 1px rgba(224,172,72,.35), 0 10px 30px rgba(224,172,72,.22), 0 4px 16px rgba(0,0,0,.4);}
+    50%{box-shadow:0 0 0 1px rgba(224,172,72,.55), 0 10px 38px rgba(224,172,72,.4), 0 4px 16px rgba(0,0,0,.4);}
+  }
+  @media (prefers-reduced-motion:reduce){ .lock-logo-wrap{animation:none;} }
+
+  .lock-card-inner{position:relative;overflow:hidden;}
+  .lock-card-inner::before{
+    content:"";
+    position:absolute;top:0;left:8%;right:8%;height:2px;
+    background:linear-gradient(90deg, transparent, var(--lock-accent-bright), var(--lock-accent), transparent);
+    opacity:.85;
+  }
+
+  .lock-btn-main{position:relative;overflow:hidden;}
+  .lock-btn-main::after{
+    content:"";
+    position:absolute;top:0;left:-60%;width:40%;height:100%;
+    background:linear-gradient(120deg, transparent, rgba(255,255,255,.55), transparent);
+    transform:skewX(-20deg);
+    transition:left .55s ease;
+  }
+  .lock-btn-main:hover::after{left:130%;}
+
+  body:has(.lock-screen.show) #filoKaydetBtn,
+  body:has(.lock-screen.show) #filoOtkRozet{
+    display:none !important;
+  }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -1674,6 +1861,38 @@
 <script>(function(){try{var b=document.body,i=0;while(b.firstChild&&i++<6){var n=b.firstChild;if(n.nodeType!==3)break;var t=n.textContent.trim();if(!t||/^(r?ipt>|script>|<\/scr)/.test(t)){b.removeChild(n);}else break;}}catch(e){}})();</script>
 
 <div class="lock-screen" id="lockScreen">
+  <svg class="lock-ribbon-bg" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <defs>
+      <linearGradient id="lrDark" x1="0%" y1="0%" x2="100%" y2="60%">
+        <stop offset="0%" stop-color="#1c1206"/>
+        <stop offset="45%" stop-color="#6b4a1a"/>
+        <stop offset="55%" stop-color="#8a6320"/>
+        <stop offset="100%" stop-color="#1c1206"/>
+      </linearGradient>
+      <linearGradient id="lrMid" x1="0%" y1="0%" x2="100%" y2="60%">
+        <stop offset="0%" stop-color="#4a3212"/>
+        <stop offset="45%" stop-color="#c9962e"/>
+        <stop offset="55%" stop-color="#e0ac48"/>
+        <stop offset="100%" stop-color="#4a3212"/>
+      </linearGradient>
+      <linearGradient id="lrBright" x1="0%" y1="0%" x2="100%" y2="60%">
+        <stop offset="0%" stop-color="#8a6320"/>
+        <stop offset="45%" stop-color="#f6dfa0"/>
+        <stop offset="55%" stop-color="#fff3d1"/>
+        <stop offset="100%" stop-color="#8a6320"/>
+      </linearGradient>
+    </defs>
+    <g opacity=".9">
+      <path d="M -100 650 C 200 780, 380 260, 680 340 C 950 410, 1020 80, 1400 160" fill="none" stroke="url(#lrDark)" stroke-width="130" stroke-linecap="round"/>
+      <path d="M -100 650 C 200 780, 380 260, 680 340 C 950 410, 1020 80, 1400 160" fill="none" stroke="url(#lrMid)" stroke-width="78" stroke-linecap="round"/>
+      <path d="M -100 630 C 200 760, 380 240, 680 320 C 950 390, 1020 60, 1400 140" fill="none" stroke="url(#lrBright)" stroke-width="20" stroke-linecap="round" opacity=".85"/>
+    </g>
+    <g opacity=".55">
+      <path d="M -100 120 C 250 40, 480 420, 850 380 C 1080 355, 1150 560, 1400 500" fill="none" stroke="url(#lrDark)" stroke-width="90" stroke-linecap="round"/>
+      <path d="M -100 120 C 250 40, 480 420, 850 380 C 1080 355, 1150 560, 1400 500" fill="none" stroke="url(#lrMid)" stroke-width="46" stroke-linecap="round"/>
+      <path d="M -100 105 C 250 25, 480 405, 850 365 C 1080 340, 1150 545, 1400 485" fill="none" stroke="url(#lrBright)" stroke-width="12" stroke-linecap="round" opacity=".8"/>
+    </g>
+  </svg>
   <div class="lock-grid-bg"></div>
   <div class="lock-card" id="lockCard">
     <div class="lock-card-inner">
@@ -1686,7 +1905,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-16.120</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-16.124</div>
     </div>
   </div>
 </div>
@@ -1816,7 +2035,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-16.120</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-16.124</div>
     </div>
   </aside>
 <script>
@@ -7538,13 +7757,15 @@ function renderLock(mode){
     document.getElementById('lpNew').focus();
   }else if(mode==='login'){
     body.innerHTML = `
-      <h2 style="margin-bottom:18px;">Giriş Yap</h2>
-      <div class="lock-field">
+      <h2 style="margin-bottom:18px;">Giriş <i>Yap</i></h2>
+      <div class="lock-field has-icon">
         <label>Kullanıcı Adı</label>
+        <span class="lf-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
         <input type="text" id="lpUsername" autocomplete="username" placeholder="yönetim veya personel" autocapitalize="none" spellcheck="false">
       </div>
-      <div class="lock-field">
+      <div class="lock-field has-icon">
         <label>Şifre</label>
+        <span class="lf-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
         <input type="password" id="lpLogin" autocomplete="current-password" placeholder="••••••">
         <button type="button" class="eye" data-target="lpLogin">${eyeSvg}</button>
       </div>
