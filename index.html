@@ -2006,7 +2006,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-16.131</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-16.132</div>
     </div>
   </div>
 </div>
@@ -2136,7 +2136,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-16.131</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-16.132</div>
     </div>
   </aside>
 <script>
@@ -5229,6 +5229,19 @@ async function callGeminiDirect(system, userText, contentBlock, modelIdx=0, retr
       }
       throw new Error('Zaman aşımı — istek 90 saniyede yanıtlanmadı. Belge çok büyük olabilir, daha küçük bir dosya deneyin ya da butona tekrar basın.');
     }
+    // v.132: "Hata: Failed to fetch" şikayeti üzerine eklendi — bu, istek sunucuya hiç
+    // ulaşamadığında (geçici bağlantı kopması, kısa süreli ağ dalgalanması) tarayıcının
+    // fetch()'in ham TypeError'ı; önceden hiç tekrar denenmeden doğrudan kullanıcıya
+    // ham İngilizce metin olarak gösteriliyordu. Diğer hata dallarıyla (503/zaman aşımı)
+    // tutarlı olacak şekilde 1 kez kısa bekleyip tekrar dene, olmazsa anlaşılır mesaj ver.
+    const agHatasi = (e instanceof TypeError) || /failed to fetch/i.test(e?.message||'');
+    if(agHatasi && retryCount < 1){
+      await new Promise(r=>setTimeout(r, 1500));
+      return callGeminiDirect(system, userText, contentBlock, modelIdx, retryCount + 1);
+    }
+    if(agHatasi){
+      throw new Error('Sunucuya bağlanılamadı — internet bağlantınızı kontrol edip tekrar deneyin. Bağlantınız iyiyse birkaç dakika sonra tekrar deneyin.');
+    }
     throw e;
   }
 }
@@ -5270,6 +5283,15 @@ async function geminiChatFetch(system, contents, generationConfig){
     }catch(e){
       clearTimeout(timeout);
       if(e.name==='AbortError'){ lastErr = 'Zaman aşımı — istek 60 saniyede yanıtlanmadı.'; continue; }
+      // v.132: ham "Failed to fetch" (bağlantı sunucuya hiç ulaşamadı) burada da doğrudan
+      // kullanıcıya İngilizce teknik metin olarak sızıyordu — diğer modeli/denemeyi hiç
+      // beklemeden. Kısa bir bekleme sonrası bir sonraki modeli dene (geçici ağ dalgalanması
+      // ihtimaline karşı), tüm modeller tükenirse anlaşılır Türkçe mesajla pes et.
+      if((e instanceof TypeError) || /failed to fetch/i.test(e?.message||'')){
+        lastErr = 'Sunucuya bağlanılamadı — internet bağlantınızı kontrol edip tekrar deneyin.';
+        await new Promise(r=>setTimeout(r, 1200));
+        continue;
+      }
       throw e;
     }
   }
@@ -13634,6 +13656,16 @@ Tip tespiti: trafik/kasko/ferdi kaza poliçesi→sigorta veya kasko, muayene rap
   for(let i=0;i<sonuclar.length;i++){
     const {file, logSpan} = sonuclar[i];
     try{
+      // v.132: büyük dosyalar (özellikle taranmış çok sayfalı PDF'ler) sunucuya giden
+      // isteği bazen bağlantı koparmadan önce hiç tamamlatmıyor — bu da tarayıcıda düz
+      // "Failed to fetch" olarak görünüyordu. Diğer belge yükleme akışlarıyla aynı 10 MB
+      // sınırını burada da baştan uygula, en azından bu durumda anlaşılır bir mesaj çıksın.
+      if(file.size > 10*1024*1024){
+        logSpan.style.color='var(--safety)';
+        logSpan.textContent = 'Dosya çok büyük (en fazla 10 MB) — yüklenmedi';
+        basarisiz++;
+        continue;
+      }
       const data = await new Promise(r=>{ const fr=new FileReader(); fr.onload=()=>r(fr.result); fr.readAsDataURL(file); });
       const base64 = data.split(',')[1];
       const isImage = file.type.startsWith('image/');
@@ -13695,7 +13727,14 @@ Tip tespiti: trafik/kasko/ferdi kaza poliçesi→sigorta veya kasko, muayene rap
       logSpan.style.color='#36A168'; logSpan.textContent=`✓ ${tipLabel} — ${esc(v.plaka)}`;
       basarili++;
     }catch(e){
-      logSpan.style.color='var(--safety)'; logSpan.textContent='Hata: '+(e.message||'bilinmeyen');
+      // v.132: callGeminiDirect artık ağ hatalarında 1 kez kendi içinde tekrar deneyip
+      // Türkçe mesajla hata veriyor — ama yine de ham "Failed to fetch" gelirse (ör. storage
+      // API veya başka bir adımdan) burada da anlaşılır hale getir.
+      const hamMesaj = e?.message || '';
+      const gosterilecek = /failed to fetch/i.test(hamMesaj)
+        ? 'Sunucuya bağlanılamadı — internet bağlantınızı kontrol edip tekrar deneyin.'
+        : (hamMesaj || 'bilinmeyen hata');
+      logSpan.style.color='var(--safety)'; logSpan.textContent='Hata: '+gosterilecek;
       basarisiz++;
     }
   }
