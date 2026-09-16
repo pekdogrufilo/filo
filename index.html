@@ -1767,6 +1767,22 @@
     .add-btn::after,#filoKaydetBtn::after,.mobil-fab::after,.modal-actions .save::after{transition:none;}
   }
 
+  /* v.131: Araç Geçmişi sekmesi — tip filtre çipleri + satır hover */
+  .gh-chip{
+    background:transparent;cursor:pointer;white-space:nowrap;
+    padding:5px 12px;border-radius:20px;font-size:11.5px;font-weight:600;
+    border:1px solid var(--line);color:var(--steel-300);
+    transition:background .15s,color .15s,border-color .15s;
+  }
+  .gh-chip:hover:not(.active){background:var(--surface-2);}
+  .gh-chip.active{background:var(--accent-blue) !important;color:#fff !important;border-color:var(--accent-blue) !important;}
+  /* display:flex lives here (not only inline) so that vdGecmisFiltre()'s
+     node.style.display='' (to un-hide a row) falls back to flex instead of
+     the default block — otherwise clearing the inline "display" wipes the
+     whole layout, not just the "none". */
+  .gh-row{display:flex;gap:11px;padding:8px;border-radius:9px;align-items:flex-start;transition:background .15s;}
+  .gh-row:hover{background:var(--surface-2);}
+
   /* --- Üst bar: referanstaki hafif dekoratif parlama (görsel yok, salt
      CSS gradyan) --- */
   .top-header{
@@ -1990,7 +2006,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-16.130</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-16.131</div>
     </div>
   </div>
 </div>
@@ -2120,7 +2136,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-16.130</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-16.131</div>
     </div>
   </aside>
 <script>
@@ -6800,37 +6816,69 @@ function openVehicleDetail(id){
         </div><!-- /vd-tab-panel bakim -->
 
         <div class="vd-tab-panel" data-tab="gecmis">
-        <!-- Araç Geçmişi — kronolojik zaman tüneli -->
+        <!-- Araç Geçmişi — kronolojik zaman tüneli (v.131: tip filtresi + ay gruplama ile netlik) -->
         ${gecmis.length ? `
-        <div style="background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:14px;">
+        <div class="gh-panel" style="background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:14px;">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
             <div style="font-size:12px;font-weight:700;color:var(--paper);">${ICO('clock',13)} Araç Geçmişi <span style="font-weight:400;color:var(--steel-300);">(${gecmis.length} olay)</span></div>
             <button onclick="aracServisGecmisiPdf('${id}')" style="background:rgba(232,69,58,.1);border:1px solid rgba(232,69,58,.2);color:var(--accent-blue);padding:5px 12px;border-radius:8px;font-size:11.5px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;">${ICO('download',12)} Tam Geçmiş PDF</button>
           </div>
-          <div style="display:flex;flex-direction:column;">
-            ${gecmis.map(g=>{
-              const stil = {
-                masraf:{ico:ICO('money',14), renk:'#E1554E'},
-                hasar: {ico:ICO('crash',14), renk:'#E1554E'},
-                servis:{ico:ICO('wrench',14), renk:'#E8A132'},
-                belge: {ico:ICO('filetext',14), renk:'var(--accent-blue)'},
-                km:    {ico:ICO('car',14), renk:'var(--accent-blue)'},
-                hakedis:{ico:ICO('money',14), renk:'#36A168'},
-                teslim:{ico:ICO('key',14), renk:'#36A168'},
-                pert:  {ico:ICO('crash',14), renk:'#7B7873'},
-                satis: {ico:ICO('money',14), renk:'#9B7ED8'},
-              }[g.tip]||{ico:'•',renk:'var(--steel-300)'};
-              return `<div style="display:flex;gap:12px;padding:7px 0;border-bottom:1px solid var(--line);align-items:flex-start;">
-                <span style="line-height:1.3;flex-shrink:0;color:${stil.renk};display:flex;">${stil.ico}</span>
+          ${(()=>{
+            const tipBilgi = {
+              masraf: {ico:ICO('money',14),    renk:'#E1554E', etiket:'Masraf'},
+              hasar:  {ico:ICO('crash',14),    renk:'#E1554E', etiket:'Hasar'},
+              servis: {ico:ICO('wrench',14),   renk:'#E8A132', etiket:'Servis'},
+              belge:  {ico:ICO('filetext',14), renk:'var(--accent-blue)', etiket:'Belge'},
+              km:     {ico:ICO('car',14),      renk:'var(--accent-blue)', etiket:'Km'},
+              hakedis:{ico:ICO('money',14),    renk:'#36A168', etiket:'Hakediş'},
+              teslim: {ico:ICO('key',14),      renk:'#36A168', etiket:'Teslim'},
+              pert:   {ico:ICO('crash',14),    renk:'#7B7873', etiket:'Pert'},
+              satis:  {ico:ICO('money',14),    renk:'#9B7ED8', etiket:'Satış'},
+            };
+            const sayilar = {};
+            gecmis.forEach(g=>{ sayilar[g.tip] = (sayilar[g.tip]||0)+1; });
+            const aylar = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+
+            const chips = [`<button class="gh-chip active" data-gtip="tum" onclick="vdGecmisFiltre(this)" style="color:var(--steel-300);">Tümü <span style="opacity:.75;">${gecmis.length}</span></button>`];
+            Object.keys(tipBilgi).forEach(t=>{
+              if(!sayilar[t]) return;
+              const bi = tipBilgi[t];
+              chips.push(`<button class="gh-chip" data-gtip="${t}" onclick="vdGecmisFiltre(this)" style="color:${bi.renk};">${bi.etiket} <span style="opacity:.75;">${sayilar[t]}</span></button>`);
+            });
+
+            let sonAy = '';
+            let ilk = true;
+            const rows = gecmis.map(g=>{
+              const stil = tipBilgi[g.tip] || {ico:'•', renk:'var(--steel-300)', etiket:'Diğer'};
+              const ayKey = (g.d||'').slice(0,7);
+              let ayBaslik = '';
+              if(ayKey && ayKey!==sonAy){
+                sonAy = ayKey;
+                const parcalar = ayKey.split('-');
+                const ayAdi = aylar[Number(parcalar[1])-1] || '';
+                ayBaslik = `<div class="gh-ay-baslik" style="font-size:10.5px;font-weight:700;color:var(--steel-500);text-transform:uppercase;letter-spacing:.6px;margin:${ilk?'0':'16px'} 0 6px;padding:0 2px;">${ayAdi} ${parcalar[0]||''}</div>`;
+                ilk = false;
+              }
+              return `${ayBaslik}<div class="gh-row" data-gtip="${g.tip}" style="display:flex;gap:11px;padding:8px;border-radius:9px;align-items:flex-start;">
+                <div style="flex-shrink:0;width:28px;height:28px;border-radius:9px;background:color-mix(in srgb, ${stil.renk} 16%, transparent);color:${stil.renk};display:flex;align-items:center;justify-content:center;">${stil.ico}</div>
                 <div style="flex:1;min-width:0;">
-                  <div style="font-size:12.5px;color:var(--paper);"><b style="color:${stil.renk};">${esc(g.baslik)}</b>${g.detay?` <span style="color:var(--steel-300);font-size:11.5px;">${esc(g.detay)}</span>`:''}</div>
-                  <div style="font-size:11px;color:var(--steel-500);margin-top:1px;">${esc(g.tarihTxt)}</div>
+                  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                    <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:${stil.renk};background:color-mix(in srgb, ${stil.renk} 14%, transparent);padding:2px 6px;border-radius:5px;">${stil.etiket}</span>
+                    <b style="font-size:12.5px;color:var(--paper);">${esc(g.baslik)}</b>
+                  </div>
+                  ${g.detay?`<div style="font-size:11.5px;color:var(--steel-300);margin-top:2px;">${esc(g.detay)}</div>`:''}
+                  <div style="font-size:11px;color:var(--steel-500);margin-top:2px;">${esc(g.tarihTxt)}</div>
                 </div>
-                ${g.tutar!=null&&g.tutar!==''&&g.tutar!==0?`<div style="font-size:12.5px;font-weight:700;color:${g.tip==='hakedis'?'#36A168':'#E1554E'};flex-shrink:0;">${g.tip==='hakedis'?fmtTL2_role(g.tutar):fmtTL2(g.tutar)}</div>`:''}
-                ${g.onclick?`<button onclick="${g.onclick}" style="background:rgba(232,69,58,.1);border:1px solid rgba(232,69,58,.2);color:var(--accent-blue);cursor:pointer;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;flex-shrink:0;">Gör</button>`:''}
+                <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:5px;">
+                  ${g.tutar!=null&&g.tutar!==''&&g.tutar!==0?`<div style="font-size:12.5px;font-weight:700;color:${g.tip==='hakedis'?'#36A168':'#E1554E'};">${g.tip==='hakedis'?fmtTL2_role(g.tutar):fmtTL2(g.tutar)}</div>`:''}
+                  ${g.onclick?`<button onclick="${g.onclick}" style="background:color-mix(in srgb, ${stil.renk} 14%, transparent);border:1px solid color-mix(in srgb, ${stil.renk} 40%, transparent);color:${stil.renk};cursor:pointer;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:600;">Gör</button>`:''}
+                </div>
               </div>`;
-            }).join('')}
-          </div>
+            }).join('');
+
+            return `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;">${chips.join('')}</div>
+            <div id="gh-list" style="display:flex;flex-direction:column;">${rows}</div>`;
+          })()}
         </div>` : ''}
         </div><!-- /vd-tab-panel gecmis -->
 
@@ -6847,6 +6895,28 @@ function vdShowTab(tab){
   document.querySelectorAll('.vd-tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
   const ov = document.getElementById('vehicleDetailOverlay');
   if(ov) ov.firstElementChild.scrollTop = 0;
+}
+// v.131: Araç Geçmişi sekmesindeki tip filtre çipleri — tıklanan tipe göre satırları
+// gösterir/gizler, hiç görünen satırı kalmayan ay başlıklarını da otomatik gizler.
+function vdGecmisFiltre(btn){
+  const panel = btn.closest('.gh-panel');
+  if(!panel) return;
+  panel.querySelectorAll('.gh-chip').forEach(c=>c.classList.toggle('active', c===btn));
+  const tip = btn.dataset.gtip;
+  const list = panel.querySelector('#gh-list');
+  if(!list) return;
+  let lastHeader = null, headerHasVisible = false;
+  Array.from(list.children).forEach(node=>{
+    if(node.classList.contains('gh-ay-baslik')){
+      if(lastHeader) lastHeader.style.display = headerHasVisible ? '' : 'none';
+      lastHeader = node; headerHasVisible = false;
+    }else if(node.classList.contains('gh-row')){
+      const goster = (tip==='tum' || node.dataset.gtip===tip);
+      node.style.display = goster ? '' : 'none';
+      if(goster) headerHasVisible = true;
+    }
+  });
+  if(lastHeader) lastHeader.style.display = headerHasVisible ? '' : 'none';
 }
 
 // ===== Araç bazlı tam dijital servis geçmişi — tek tıkla PDF/paylaşılabilir rapor =====
