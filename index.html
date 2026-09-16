@@ -2035,26 +2035,42 @@
   .dcard h3{font-family:var(--font-luxe) !important;font-weight:600 !important;}
   .dstat-txt .n{font-family:var(--font-luxe) !important;font-weight:600 !important;}
 
-  /* --- KPI kartları: dolgulu renkli ikon kutucuğu klişesi kaldırılıyor.
-     Yerine: ince altın sol şerit + büyük serif rakam + izli büyük harf
-     etiket — özel/finansal bir rapor hissi. --- */
-  .dstat, .dstat-strong{
+  /* --- v.139: KARIŞIKLIK GİDERME — "her sayfada N ayrı kutu yan yana"
+     hissi kafa karıştırıyordu (kullanıcı geri bildirimi: "çok karışık,
+     o orda o orda"). Çözüm: aynı satırdaki KPI'lar artık AYRI kutular
+     değil, TEK sakin bir şeridin içindeki bölmeler. Kutu sayısı azalınca
+     göz gezdirmesi gereken "kart" sayısı da azalıyor. --- */
+  .dash-stats{
+    display:flex !important;
+    flex-wrap:wrap;
     background:var(--surface) !important;
     border:1px solid var(--border) !important;
-    border-left:3px solid var(--lux-accent) !important;
-    border-radius:10px !important;
+    border-top:2px solid var(--lux-accent) !important;
+    border-radius:12px !important;
     box-shadow:0 10px 26px -18px rgba(20,14,6,.4) !important;
+    gap:0 !important;
+    overflow:hidden;
   }
+  .dash-stats > .dstat, .dash-stats > .dstat-strong{
+    flex:1 1 170px;
+    background:transparent !important;
+    border:none !important;
+    border-right:1px solid var(--border) !important;
+    border-radius:0 !important;
+    box-shadow:none !important;
+    margin:0 !important;
+  }
+  .dash-stats > .dstat:last-child, .dash-stats > .dstat-strong:last-child{border-right:none !important;}
   .dstat-ic{
     background:transparent !important;
     color:var(--lux-accent) !important;
-    width:26px !important;height:26px !important;
+    width:22px !important;height:22px !important;
   }
   .dstat-ic svg{width:16px;height:16px;}
-  .dstat-strong .dstat-ic{width:26px !important;height:26px !important;box-shadow:none !important;background:transparent !important;color:var(--lux-accent) !important;}
+  .dstat-strong .dstat-ic{width:22px !important;height:22px !important;box-shadow:none !important;background:transparent !important;color:var(--lux-accent) !important;}
   .dstat-txt .l{text-transform:uppercase;letter-spacing:.6px;font-size:11px !important;font-weight:700;color:var(--steel-300);}
   .dstat-strong .dstat-txt .n{color:var(--paper) !important;}
-  .dstat:hover{transform:none !important;border-left-color:var(--lux-bright) !important;}
+  .dstat:hover{transform:none !important;}
 
   /* --- Hızlı İşlemler: kare/dolgu ikon yerine dairesel altın madalyon --- */
   .qic{
@@ -2075,8 +2091,31 @@
   }
   .add-btn:hover, #filoKaydetBtn:hover{transform:translateY(-1px);box-shadow:0 12px 30px -8px rgba(224,172,72,.55) !important;}
 
-  /* --- Genel kartlar: nötr gri yerine hafif altın tonlu, sıcak gölge --- */
-  .dcard{border-color:var(--border) !important;box-shadow:0 10px 28px -20px rgba(20,14,6,.45) !important;}
+  /* --- Genel kartlar: nötr gri yerine hafif altın tonlu, sıcak gölge —
+     ve daha az "kutu" hissi için biraz daha yumuşak/ince çerçeve --- */
+  .dcard{border-color:var(--border) !important;box-shadow:0 8px 22px -20px rgba(20,14,6,.35) !important;}
+
+  /* "Yaklaşan Periyot" 4'lü kutu grubu da aynı karmaşa giderme mantığına
+     uyuyor: 4 ayrı kutu yerine tek sakin şerit + ince bölmeler. */
+  .yp-grid{
+    display:flex !important;
+    background:var(--surface-2);
+    border:1px solid var(--border);
+    border-radius:10px;
+    overflow:hidden;
+  }
+  .yp-box{
+    flex:1;
+    background:transparent !important;
+    border:none !important;
+    border-right:1px solid var(--border) !important;
+    border-radius:0 !important;
+  }
+  .yp-box:last-child{border-right:none !important;}
+
+  /* Sayfa gövdesindeki ardışık .dcard modülleri arasına biraz daha nefes
+     alanı — art arda sıkışık kutular yerine daha net ayrım. */
+  .page.active > .dcard, .page.active > .dash-widget{margin-bottom:20px;}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -2131,7 +2170,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-16.138</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-16.139</div>
     </div>
   </div>
 </div>
@@ -2261,7 +2300,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-16.138</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-16.139</div>
     </div>
   </aside>
 <script>
@@ -9318,7 +9357,8 @@ function renderDashboard(){
 
   // Araç durumu çipleri kaldırıldı (v.90) — araç listesi Araç Yönetimi'nde
 
-  const miniKutu = (n, l, renk)=>`<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;">
+  // v.139: ayrı kutu değil — tek şerit içinde sade bölme (karmaşa azaltma)
+  const miniKutu = (n, l, renk)=>`<div style="padding:2px 0 2px 14px;border-left:2px solid var(--border);">
     <div style="font-size:20px;font-weight:800;color:${renk||'var(--paper)'};line-height:1.2;">${n}</div>
     <div style="font-size:11px;color:var(--steel-300);margin-top:2px;">${l}</div>
   </div>`;
