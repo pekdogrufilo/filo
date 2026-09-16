@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nocturne Tasarım Demosu — PEKDOĞRU Filo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root, html[data-theme="dark"]{
+  --bg:#0E1013; --surface:#16181C; --surface-2:#1C1F24; --surface-3:#23262C;
+  --border:rgba(255,255,255,.10); --border-2:rgba(255,255,255,.18);
+  --text:#F2F3F4; --text-2:#AEB3BA; --text-3:#7C828B;
+  --sidebar:#0A0B0D;
+  --brand:#E05244; --brand-dim:rgba(224,82,68,.13);
+  --green:#3FBF77; --green-dim:rgba(63,191,119,.13);
+  --amber:#E9A23B; --amber-dim:rgba(233,162,59,.13);
+  --red:#E05244; --red-dim:rgba(224,82,68,.13);
+  --shadow:0 1px 3px rgba(0,0,0,.4); --shadow2:0 8px 28px rgba(0,0,0,.5);
+}
+html[data-theme="light"]{
+  --bg:#F6F5F2; --surface:#FFFFFF; --surface-2:#FAFAF8; --surface-3:#F0EFEB;
+  --border:rgba(18,20,24,.10); --border-2:rgba(18,20,24,.18);
+  --text:#1B1D21; --text-2:#555A62; --text-3:#83888F;
+  --sidebar:#15171B;
+  --brand:#C24334; --brand-dim:rgba(194,67,52,.10);
+  --green:#1F9D5B; --green-dim:rgba(31,157,91,.10);
+  --amber:#C07E14; --amber-dim:rgba(192,126,20,.11);
+  --red:#C24334; --red-dim:rgba(194,67,52,.10);
+  --shadow:0 1px 3px rgba(16,18,22,.06); --shadow2:0 8px 26px rgba(16,18,22,.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Manrope',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;transition:background .3s,color .3s}
+/* SIDEBAR */
+.sidebar{width:232px;background:var(--sidebar);padding:20px 14px;display:flex;flex-direction:column;gap:2px;flex-shrink:0}
+.brand{display:flex;align-items:center;gap:10px;padding:0 8px 18px}
+.brand-logo{width:36px;height:36px;border-radius:10px;background:#fff;display:grid;place-items:center;font-family:'Space Grotesk';font-weight:700;color:#C24334;font-size:15px}
+.brand-name{color:#F2F3F4;font-weight:800;font-size:14px;letter-spacing:.5px}
+.brand-sub{color:#6E747D;font-size:9px;letter-spacing:1.2px;margin-top:2px}
+.sb-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;border:none;background:none;color:#B9BEC5;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;text-align:left;transition:all .15s}
+.sb-item svg{width:16px;height:16px;flex-shrink:0}
+.sb-item:hover:not(.active){background:rgba(255,255,255,.07);color:#F2F3F4}
+.sb-item.active{background:#F2F3F4;color:var(--brand);box-shadow:0 2px 12px rgba(0,0,0,.4)}
+.sb-head{color:#6E747D;font-size:10px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;padding:14px 12px 6px}
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 28px;display:flex;align-items:center;justify-content:space-between}
+.th-title{font-family:'Space Grotesk';font-size:20px;font-weight:700}
+.th-sub{font-size:12.5px;color:var(--text-2);margin-top:2px}
+.theme-btn{border:1px solid var(--border-2);background:var(--surface-2);color:var(--text);border-radius:9px;padding:7px 14px;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer}
+.content{padding:26px 28px;display:flex;flex-direction:column;gap:20px;overflow:auto}
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px;box-shadow:var(--shadow);transition:box-shadow .2s}
+.stat:hover{box-shadow:var(--shadow2)}
+.stat .n{font-family:'Space Grotesk';font-size:26px;font-weight:700}
+.stat .l{font-size:12px;color:var(--text-2);font-weight:600;margin-top:3px}
+.stat .d{font-size:11.5px;margin-top:8px;font-weight:700}
+.d.up{color:var(--green)} .d.warn{color:var(--amber)} .d.bad{color:var(--brand)}
+/* CARDS */
+.grid2{display:grid;grid-template-columns:1.2fr .8fr;gap:14px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.card-h{display:flex;align-items:center;justify-content:space-between;padding:15px 18px;border-bottom:1px solid var(--border)}
+.card-h b{font-size:14px}
+.card-h span{font-size:11.5px;color:var(--brand);font-weight:700;cursor:pointer}
+.row{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid var(--border)}
+.row:last-child{border-bottom:none}
+.plate{font-family:'Space Grotesk';font-weight:700;font-size:12.5px;background:var(--surface-3);border:1px solid var(--border);border-radius:6px;padding:4px 9px;letter-spacing:1px}
+.vname{font-weight:700;font-size:13.5px}
+.vsub{font-size:11.5px;color:var(--text-2);margin-top:1px}
+.badge{margin-left:auto;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px}
+.bg-green{background:var(--green-dim);color:var(--green)}
+.bg-red{background:var(--red-dim);color:var(--brand)}
+.bg-amber{background:var(--amber-dim);color:var(--amber)}
+.add-btn{background:linear-gradient(135deg,#E05244,#B93B2E);color:#fff;border:none;border-radius:10px;padding:9px 18px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(224,82,68,.3)}
+/* CHART placeholder */
+.chart{padding:18px;display:flex;align-items:flex-end;gap:8px;height:170px}
+.bar{flex:1;background:linear-gradient(180deg,var(--brand),rgba(224,82,68,.35));border-radius:6px 6px 0 0;opacity:.85}
+.bar:hover{opacity:1}
+.demo-note{padding:10px 18px;font-size:11px;color:var(--text-3);border-top:1px solid var(--border)}
+/* ---- MENÜ VARYANTLARI ---- */
+.variant-bar{display:flex;gap:8px;padding:10px 28px;background:var(--surface);border-bottom:1px solid var(--border);align-items:center;flex-wrap:wrap}
+.vbtn{border:1px solid var(--border-2);background:var(--surface-2);color:var(--text);border-radius:8px;padding:6px 14px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.vbtn.on{background:var(--brand);color:#fff;border-color:transparent}
+.vnote{font-size:11.5px;color:var(--text-3);margin-left:auto}
+/* v.113 — Gerçek panel stili: temaya uyumlu açık menü + gösterge çubuğu */
+.sidebar{background:var(--surface-2);border-right:1px solid var(--border)}
+.brand-logo{background:var(--brand);color:#fff}
+.brand-name{color:var(--text)}
+.brand-sub{color:var(--text-3)}
+.sb-item{color:var(--text-2);position:relative}
+.sb-item svg{color:var(--text-3)}
+.sb-item:hover:not(.active){background:var(--surface-3);color:var(--text)}
+.sb-item.active{background:var(--brand-dim);color:var(--brand);box-shadow:none}
+.sb-item.active::before{content:'';position:absolute;left:-14px;top:8px;bottom:8px;width:3px;border-radius:3px;background:var(--brand)}
+.sb-head{color:var(--text-3)}
+/* V3 — Mini ikon rayı karşılaştırma için kaldı */
+body.v3 .sidebar{width:74px;align-items:center;padding:16px 10px}
+body.v3 .brand div:nth-child(2),body.v3 .sb-head,body.v3 .sb-item span{display:none}
+body.v3 .sb-item{width:48px;height:48px;justify-content:center;padding:0;border-radius:14px}
+body.v3 .sb-item svg{width:20px;height:20px}
+body.v3 .sb-item.active{border-radius:14px}
+body.v3 .sb-item.active::before{display:none}
+body.v3 .brand{flex-direction:column;gap:6px;padding-bottom:16px}
+</style>
+<style id="nocturne-demo">
+:root{
+  --bg:#080A0D;--surface:#101419;--surface-2:#151A20;--surface-3:#1C232B;
+  --border:rgba(255,255,255,.085);--border-2:rgba(255,255,255,.16);
+  --text:#F6F7F8;--text-2:#A7AFB8;--text-3:#6F7883;--sidebar:#090B0E;
+  --brand:#FF3F47;--brand-dim:rgba(255,63,71,.13);--green:#4CD19A;--green-dim:rgba(76,209,154,.13);
+  --amber:#F0B34F;--amber-dim:rgba(240,179,79,.13);--red:#FF4D55;--red-dim:rgba(255,77,85,.13);
+  --shadow:0 1px 3px rgba(0,0,0,.4);--shadow2:0 12px 32px rgba(0,0,0,.48);
+}
+html[data-theme="light"]{
+  --bg:#F3F5F7;--surface:#FFFFFF;--surface-2:#F8FAFB;--surface-3:#EEF1F4;
+  --border:rgba(20,29,38,.10);--border-2:rgba(20,29,38,.18);--text:#17202A;--text-2:#53606C;--text-3:#85919C;
+  --sidebar:#FFFFFF;--brand:#D9473E;--brand-dim:rgba(217,71,62,.10);--green:#1F9D67;--green-dim:rgba(31,157,103,.11);
+  --amber:#B47719;--amber-dim:rgba(180,119,25,.11);--red:#D9473E;--red-dim:rgba(217,71,62,.10);
+}
+body{
+  background:radial-gradient(680px 360px at 86% -8%,rgba(255,63,71,.10),transparent 70%),var(--bg);
+  color:var(--text);
+}
+html[data-theme="light"] body{background:radial-gradient(680px 360px at 86% -8%,rgba(217,71,62,.07),transparent 70%),var(--bg);}
+.sidebar{width:232px;background:linear-gradient(180deg,var(--sidebar),#0C0F13);border-right:1px solid var(--border);padding:18px 12px 12px;position:relative;}
+html[data-theme="light"] .sidebar{background:#fff;}
+.sidebar::after{content:"";position:absolute;inset:0 auto 0 0;width:2px;background:linear-gradient(180deg,transparent 8%,var(--brand) 32%,transparent 72%);opacity:.8;}
+.brand{padding:4px 10px 24px;gap:11px;}
+.brand-logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(145deg,#FF4D55,#B82936);color:#fff;box-shadow:0 7px 20px rgba(255,63,71,.22);}
+.brand-name{color:var(--text);}
+.brand-sub{color:var(--text-3);}
+.sb-head{color:var(--text-3);letter-spacing:1.5px;}
+.sb-item{padding:10px 11px;border-radius:9px;color:var(--text-2);font-size:12.5px;margin-bottom:3px;}
+.sb-item svg{color:var(--text-3);}
+.sb-item:hover:not(.active){background:rgba(255,255,255,.06);color:var(--text);}
+html[data-theme="light"] .sb-item:hover:not(.active){background:var(--surface-3);}
+.sb-item.active{background:linear-gradient(105deg,#FF3F47,#D72F3B);color:#fff;box-shadow:0 8px 22px rgba(255,63,71,.20);}
+.sb-item.active svg{color:#fff;}
+.main{position:relative;isolation:isolate;}
+.main::before{content:"";position:absolute;z-index:-1;pointer-events:none;width:620px;height:260px;right:-120px;top:-90px;background:radial-gradient(ellipse,rgba(255,63,71,.10),transparent 70%);filter:blur(10px);}
+.variant-bar,.topbar{background:rgba(8,10,13,.82);border-color:var(--border);backdrop-filter:blur(16px);}
+html[data-theme="light"] .variant-bar,html[data-theme="light"] .topbar{background:rgba(255,255,255,.88);}
+.variant-bar{padding:10px 28px;}
+.vbtn{border-color:var(--border-2);background:var(--surface-2);color:var(--text);}
+.vbtn.on{background:var(--brand);color:#fff;box-shadow:0 5px 16px rgba(255,63,71,.22);}
+.vnote{color:var(--text-3);}
+.topbar{padding:16px 28px;}
+.th-title{font-family:'Space Grotesk';font-size:20px;letter-spacing:-.35px;}
+.th-sub{color:var(--text-2);}
+.theme-btn{border-color:var(--border-2);background:var(--surface-2);color:var(--text);}
+.content{padding:26px 28px 52px;gap:16px;}
+.stats{gap:12px;}
+.stat{position:relative;overflow:hidden;background:linear-gradient(145deg,var(--surface),var(--surface-2));border-color:var(--border);border-radius:14px;padding:17px 18px;box-shadow:var(--shadow);}
+.stat::after{content:"";position:absolute;right:-30px;bottom:-38px;width:150px;height:90px;background:radial-gradient(ellipse,rgba(255,63,71,.16),transparent 70%);}
+.stat:hover{border-color:rgba(255,63,71,.48);box-shadow:var(--shadow2);transform:translateY(-2px);}
+.stat .n{font-family:'Space Grotesk';font-size:27px;color:var(--text);}
+.stat .l{color:var(--text-2);}
+.card{background:linear-gradient(145deg,var(--surface),var(--surface-2));border-color:var(--border);border-radius:14px;box-shadow:var(--shadow);}
+.card-h{border-color:var(--border);}
+.card-h b{font-family:'Space Grotesk';}
+.card-h span{color:var(--brand);}
+.row{border-color:var(--border);}
+.plate{background:var(--surface-3);border-color:var(--border);color:var(--text);}
+.vname{color:var(--text);}
+.vsub{color:var(--text-2);}
+.demo-note{border-color:var(--border);color:var(--text-3);}
+.bar{background:linear-gradient(180deg,var(--brand),rgba(255,63,71,.25));}
+@media(max-width:900px){.sidebar{width:222px}.content{padding:22px 18px 48px}.variant-bar,.topbar{padding-left:18px;padding-right:18px}}
+@media(max-width:640px){body{min-width:760px}.sidebar{width:222px}.content{padding:18px 12px}.stats{grid-template-columns:repeat(2,minmax(170px,1fr));}.grid2{grid-template-columns:1.2fr .8fr;}}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="brand"><div class="brand-logo">P</div><div><div class="brand-name">PEKDOĞRU</div><div class="brand-sub">FİLO KİRALAMA</div></div></div>
+  <button class="sb-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M9 22V12h6v10"/></svg>Genel Bakış</button>
+  <button class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 17h2v-6l-3-5H4l-3 5v6h2"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="16.5" cy="17.5" r="2.5"/></svg>Araç Yönetimi</button>
+  <button class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/></svg>Kiralama</button>
+  <button class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Müşteriler</button>
+  <div class="sb-head">Yönetim</div>
+  <button class="sb-item">Bakım &amp; Servis</button>
+  <button class="sb-item">Finans</button>
+  <button class="sb-item">Masraf</button>
+  <button class="sb-item">Raporlar</button>
+  <div class="sb-head">Sistem</div>
+  <button class="sb-item">Belgeler</button>
+  <button class="sb-item">Ayarlar</button>
+</aside>
+<div class="main">
+<div class="variant-bar">
+  <b style="font-size:12px">Menü stili:</b>
+  <button class="vbtn on" onclick="setV(0,this)">v.115 · Nocturne</button>
+  <button class="vbtn" onclick="setV(3,this)">Eski · Mini ikon rayı</button>
+  <span class="vnote">Beğendiğinizi söyleyin</span>
+</div>
+  <div class="topbar">
+    <div><div class="th-title">Genel Bakış</div><div class="th-sub">Filo durumu ve özet metrikler</div></div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <button class="theme-btn" onclick="const h=document.documentElement;h.dataset.theme=h.dataset.theme==='light'?'dark':'light'">Temayı Değiştir</button>
+      <button class="add-btn">+ Araç Ekle</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="stats">
+      <div class="stat"><div class="n">24</div><div class="l">Toplam Araç</div><div class="d up">↑ %8 bu ay</div></div>
+      <div class="stat"><div class="n">17</div><div class="l">Kiradaki Araç</div><div class="d warn">7 müsait</div></div>
+      <div class="stat"><div class="n">3</div><div class="l">Yaklaşan Uyarı</div><div class="d bad">2 sigorta · 1 muayene</div></div>
+      <div class="stat"><div class="n">₺412.5K</div><div class="l">Aylık Tahsilat</div><div class="d up">↑ %12</div></div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <div class="card-h"><b>Filo Durumu</b><span>Tümünü Gör →</span></div>
+        <div class="row"><span class="plate">34 KRE 884</span><div><div class="vname">Ford Transit Courier</div><div class="vsub">2023 · Ahmet Y. · 12 gün kaldı</div></div><span class="badge bg-red">Kirada</span></div>
+        <div class="row"><span class="plate">06 ABC 12</span><div><div class="vname">VW Crafter</div><div class="vsub">2022 · boşta</div></div><span class="badge bg-green">Müsait</span></div>
+        <div class="row"><span class="plate">35 DFN 07</span><div><div class="vname">Fiat Doblo</div><div class="vsub">2021 · sigorta 12 gün içinde</div></div><span class="badge bg-amber">Uyarı</span></div>
+        <div class="row"><span class="plate">41 KL 245</span><div><div class="vname">Renault Master</div><div class="vsub">2020 · servis bakımı</div></div><span class="badge bg-red">Serviste</span></div>
+        <div class="demo-note">Demo görünüm — gerçek veri değildir. Sağ üstten temayı değiştirip iki modu da inceleyebilirsiniz.</div>
+      </div>
+      <div class="card">
+        <div class="card-h"><b>Aylık Tahsilat</b><span>Rapor →</span></div>
+        <div class="chart">
+          <div class="bar" style="height:35%"></div><div class="bar" style="height:52%"></div><div class="bar" style="height:44%"></div>
+          <div class="bar" style="height:68%"></div><div class="bar" style="height:58%"></div><div class="bar" style="height:76%"></div>
+          <div class="bar" style="height:62%"></div><div class="bar" style="height:88%"></div><div class="bar" style="height:70%"></div>
+          <div class="bar" style="height:95%"></div>
+        </div>
+        <div class="demo-note">Tasarım demo grafiği</div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+function setV(n,btn){
+  document.body.className = n===0?'':(n===3?'v3':'v'+n);
+  document.querySelectorAll('.vbtn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+}
+</script>
+</body>
+</html>
