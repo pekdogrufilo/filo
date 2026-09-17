@@ -2170,7 +2170,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-16.142</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-16.143</div>
     </div>
   </div>
 </div>
@@ -2255,6 +2255,8 @@
       <button class="sb-item" data-page="arac-yonetimi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2v-6l-3-5H4l-3 5v6h2"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="16.5" cy="17.5" r="2.5"/></svg>Araç Yönetimi</button>
       <button class="sb-item" data-page="kiralama"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Kiralama İşlemleri</button>
       <button class="sb-item" data-page="musteriler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Müşteriler</button>
+      <button class="sb-item" data-page="cari"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/><path d="M21 12a9 9 0 1 1-18 0"/></svg>Cari &amp; Tahsilat</button>
+      <button class="sb-item" data-page="faturalar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>Faturalar</button>
 
       <div class="sb-group" data-group="yonetim">
         <button class="sb-group-head" type="button">Yönetim<svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
@@ -2300,7 +2302,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-16.142</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-16.143</div>
     </div>
   </aside>
 <script>
@@ -2509,6 +2511,8 @@
 
 <section class="page" data-page="kiralama" id="page-kiralama"></section>
 <section class="page" data-page="musteriler" id="page-musteriler"></section>
+<section class="page" data-page="cari" id="page-cari"></section>
+<section class="page" data-page="faturalar" id="page-faturalar"></section>
 <section class="page" data-page="masraf" id="page-masraf"></section>
 <section class="page" data-page="finansal-analiz" id="page-finansal-analiz"></section>
 
@@ -3168,6 +3172,13 @@ let arsiv = [];
 let activityLog = [];
 let expenses = [];
 let sozlesmeler = [];
+// FAZ3: Müşteri CRM — vehicles/expenses/sozlesmeler ile birebir aynı depolama deseni
+// (tek JSON blob, storageAPI üzerinden). Ayrı Firestore koleksiyonlarına taşımak
+// sonraki büyük veri katmanı fazının kapsamındadır.
+let customers = [];
+let ledger = [];
+let invoices = [];
+let payments = [];
 let activeFilter = 'hepsi';
 let activeSirket = 'hepsi';
 let belgeFilterType = null; // null | 'sigorta' | 'muayene' | 'kira'
@@ -3207,6 +3218,22 @@ async function load(){
     const ar = await storageAPI.get('arsiv').catch(()=>null);
     arsiv = (ar && ar.value) ? JSON.parse(ar.value) : [];
   }catch(e){ arsiv = []; }
+  try{
+    const cr = await storageAPI.get('customers').catch(()=>null);
+    customers = (cr && cr.value) ? JSON.parse(cr.value) : [];
+  }catch(e){ customers = []; }
+  try{
+    const lgr = await storageAPI.get('ledger').catch(()=>null);
+    ledger = (lgr && lgr.value) ? JSON.parse(lgr.value) : [];
+  }catch(e){ ledger = []; }
+  try{
+    const ir = await storageAPI.get('invoices').catch(()=>null);
+    invoices = (ir && ir.value) ? JSON.parse(ir.value) : [];
+  }catch(e){ invoices = []; }
+  try{
+    const pr = await storageAPI.get('payments').catch(()=>null);
+    payments = (pr && pr.value) ? JSON.parse(pr.value) : [];
+  }catch(e){ payments = []; }
   updateArsivSayi();
   buildSirketFilter();
   render();
@@ -8616,6 +8643,8 @@ const PAGE_META = {
   'arac-yonetimi': {title:'Araç Yönetimi', sub:'Tüm araçları görüntüle, ekle ve düzenle'},
   'kiralama': {title:'Kiralama İşlemleri', sub:'Kiradaki araçlar ve kiracı bilgileri'},
   'musteriler': {title:'Müşteriler', sub:'Kiracı ve kurumlar: araçlar, kira toplamı ve geçmiş'},
+  'cari': {title:'Cari & Tahsilat', sub:'Müşteri bazlı cari bakiye, tahsilat ve ekstre'},
+  'faturalar': {title:'Faturalar', sub:'Fatura oluştur, durum takibi yap, yazdır'},
   'masraf': {title:'Masraf Yönetimi', sub:'Tüm araçlardaki masrafları görüntüle ve ekle'},
   'finansal-analiz': {title:'Finans', sub:'Gelir, masraf, kârlılık ve grafiksel özet'},
   'bakim': {title:'Bakım & Servis', sub:'Serviste olan araçlar ve servis planlaması'},
@@ -8798,6 +8827,8 @@ function renderCurrentPage(){
   else if(key==='ayarlar') renderAyarlarPage();
   else if(key==='kiralama') renderKiralamaPage();
   else if(key==='musteriler') renderMusterilerPage();
+  else if(key==='cari') renderCariPage();
+  else if(key==='faturalar') renderFaturalarPage();
 }
 
 // ---- Basit SVG grafik yardımcıları (dış kütüphaneye bağımlı değil) ----
@@ -9436,6 +9467,14 @@ function filoSaglikSkoruHTML(){
 
 function renderDashboard(){
   const total = vehicles.length;
+  // FAZ3: Cari & Tahsilat KPI'ları — customerCariOzet üzerinden hesaplanır.
+  // "Bekleyen Tahsilat": vadesi henüz geçmemiş kalan bakiye kısmı. "Geciken Tahsilat": vadesi geçmiş kısım.
+  let dashBekleyenTahsilat = 0, dashGecikenTahsilat = 0;
+  (typeof customers!=='undefined' ? customers : []).forEach(c=>{
+    const o = customerCariOzet(c.id);
+    if(o.kalan>0) dashBekleyenTahsilat += Math.max(0, o.kalan - o.vadesiGecen);
+    dashGecikenTahsilat += o.vadesiGecen;
+  });
   const kirada = vehicles.filter(v=>v.durum==='Kirada').length;
   const musait = vehicles.filter(v=>v.durum==='Müsait').length;
   const serviste = vehicles.filter(v=>v.durum==='Serviste').length;
@@ -9509,6 +9548,18 @@ function renderDashboard(){
   const page = document.getElementById('page-genel-bakis');
   page.innerHTML = `
     <div id="dashYedekUyari"></div>
+
+    <!-- FAZ3: Cari & Tahsilat KPI döşemeleri — mevcut .dash-stats/.dstat deseniyle birebir aynı -->
+    <div class="dash-stats" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));margin-bottom:16px;">
+      <div class="dstat" style="cursor:pointer;" onclick="switchPage('cari')">
+        <div class="dstat-ic" style="background:rgba(232,161,50,.15);color:#E8A132;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+        <div class="dstat-txt"><div class="l">Bekleyen Tahsilat</div><div class="n" style="color:#E8A132;">${fmtTL2(dashBekleyenTahsilat)}</div><div class="d">vadesi geçmemiş bakiye</div></div>
+      </div>
+      <div class="dstat" style="cursor:pointer;" onclick="switchPage('cari')">
+        <div class="dstat-ic" style="background:rgba(225,85,78,.15);color:#E1554E;">${DASH_ICONS.warn}</div>
+        <div class="dstat-txt"><div class="l">Geciken Tahsilat</div><div class="n" style="color:${dashGecikenTahsilat>0?'#E1554E':'var(--paper)'};">${fmtTL2(dashGecikenTahsilat)}</div><div class="d">vadesi geçmiş bakiye</div></div>
+      </div>
+    </div>
 
     ${bugunKritik>0 ? `
     <div class="dcard" data-goto="bildirimler" style="margin-bottom:16px;border-left:4px solid #E1554E;background:rgba(225,85,78,.08);cursor:pointer;display:flex;align-items:center;gap:14px;padding:14px 18px;box-shadow:var(--shadow-md);">
@@ -9607,6 +9658,7 @@ function renderDashboard(){
           <button class="qbtn" data-act="arac-ara"><div class="qic" style="background:var(--accent-blue);color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></div><span>Araç Ara</span></button>
           <button class="qbtn" data-act="masraf-ekle"><div class="qic" style="background:var(--accent-blue);color:#fff">${DASH_ICONS.clock}</div><span>Masraf Ekle</span></button>
           <button class="qbtn" data-act="rapor-olustur"><div class="qic" style="background:var(--accent-blue);color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg></div><span>Rapor Oluştur</span></button>
+          <button class="qbtn" data-act="tahsilat-gir"><div class="qic" style="background:var(--accent-blue);color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><span>Tahsilat Gir</span></button>
         </div>
       </div>
     </div>
@@ -9825,6 +9877,7 @@ function handleQuickAction(act){
   else if(act==='masraf-ekle'){ switchPage('masraf'); }
   else if(act==='rapor-olustur'){ switchPage('raporlar'); }
   else if(act==='excele-aktar'){ exportExcel(); }
+  else if(act==='tahsilat-gir'){ switchPage('cari'); setTimeout(()=>tahsilatFormAc(), 150); }
   else if(act==='yedekle'){ backupToJson(); }
   else if(act==='yedekten-yukle'){ document.getElementById('restoreJsonInput').click(); }
 }
@@ -12443,6 +12496,15 @@ function renderMusterilerPage(){
   const tumu = musteriListesiOlustur();
   window.__musteriList = tumu;
   const musteriler = tumu.filter(m=>!q || m.ad.toLocaleLowerCase('tr-TR').includes(q));
+  // FAZ3: gerçek müşteri kayıtları (customers[]) artık bu sayfada birincil satırlar olarak
+  // gösteriliyor; araç kayıtlarından türetilen ama gerçek kayda karşılık gelmeyen isimler
+  // "Kayıtsız (araç kayıtlarından)" olarak ayrıca listeleniyor. Üstteki istatistik kartları
+  // (Müşteri/Kurum, Aktif, Çok Araçlı, Problemli) davranışını KORUMAK için hâlâ `musteriler`
+  // (tüm türetilmiş liste) üzerinden hesaplanıyor — sayılar değişmiyor.
+  const gercekAdSet = new Set(customers.map(c=>musteriGoruntuAdi(c).trim().toLocaleLowerCase('tr-TR')).filter(Boolean));
+  const gercekMusteriler = musterileriSirali().filter(c=>!q || musteriGoruntuAdi(c).toLocaleLowerCase('tr-TR').includes(q));
+  const musterilerKayitsiz = musteriler.filter(m=>!gercekAdSet.has(m.ad.trim().toLocaleLowerCase('tr-TR')));
+  window.__musterilerKayitsizGecici = musterilerKayitsiz;
   const aktif = musteriler.filter(m=>m.kirada>0).length;
   const toplamKira = musteriler.reduce((s,m)=>s+m.toplamKira,0);
   const cokAracli = musteriler.filter(m=>m.araclar.length>1).length;
@@ -12479,10 +12541,37 @@ function renderMusterilerPage(){
         <input id="musteriAramaInput" type="text" placeholder="Müşteri veya kurum adına göre ara..." value="${esc(window.__musteriArama||'')}"
           oninput="window.__musteriArama=this.value;window.__musteriFokus=true;renderMusterilerPage()">
       </div>
-      <span style="font-size:13px;color:var(--text-3);white-space:nowrap;">${tumu.length} kayıt</span>
+      <span style="font-size:13px;color:var(--text-3);white-space:nowrap;">${gercekMusteriler.length} gerçek kayıt · ${tumu.length} araç kaydından türetilmiş</span>
+      <button class="add-btn" onclick="musteriFormAc()" style="padding:9px 16px;font-size:13px;">+ Yeni Müşteri</button>
     </div>
 
-    ${musteriler.length===0 ? `
+    ${gercekMusteriler.length ? `
+    <div style="font-size:12px;font-weight:700;color:var(--text-3);letter-spacing:.4px;margin:4px 0 8px;">GERÇEK MÜŞTERİ KAYITLARI (${gercekMusteriler.length})</div>
+    ${gercekMusteriler.map(c=>{
+      const ozet = customerCariOzet(c.id);
+      const initial = (musteriGoruntuAdi(c)||'?').trim().charAt(0).toLocaleUpperCase('tr-TR');
+      const tipEtiket = c.tip==='bireysel'?'Bireysel':c.tip==='kurumsal'?'Kurumsal':'Şirket';
+      return `
+      <div class="dcard" style="padding:0;overflow:hidden;margin-bottom:10px;cursor:pointer;" onclick="musteriDetayAc('${c.id}')">
+        <div style="display:flex;align-items:center;gap:12px;padding:13px 16px;">
+          <div style="width:38px;height:38px;border-radius:50%;background:var(--accent-blue);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex-shrink:0;">${esc(initial)}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;gap:8px;min-width:0;">
+              <span style="font-size:14px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(musteriGoruntuAdi(c))}</span>
+              <span style="flex-shrink:0;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:12px;background:rgba(232,69,58,.1);color:var(--accent-blue);">${esc(tipEtiket)}</span>
+            </div>
+            <div style="font-size:12px;color:var(--text-3);margin-top:2px;">${c.telefon?'📞 '+esc(c.telefon):'telefon yok'}${c.eposta?' · '+esc(c.eposta):''}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;">
+            <div style="font-size:11px;color:var(--text-3);">Kalan Bakiye</div>
+            <div style="font-size:14px;font-weight:700;color:${ozet.kalan>0?'#E1554E':'#36A168'};">${fmtTL2(ozet.kalan)}</div>
+          </div>
+        </div>
+      </div>`;
+    }).join('')}
+    ` : ''}
+
+    ${(gercekMusteriler.length===0 && musterilerKayitsiz.length===0) ? `
       <div class="dcard">${q ? '<div class="log-empty">Bu aramaya uygun müşteri yok.</div>' : `
         <div class="empty-state">
           <div class="empty-state-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
@@ -12491,7 +12580,10 @@ function renderMusterilerPage(){
           <button class="empty-state-cta" onclick="switchPage('kiralama')">Araç Kirala</button>
         </div>
       `}</div>
-    ` : musteriler.map((m,i)=>{
+    ` : ''}
+    ${musterilerKayitsiz.length ? `
+    <div style="font-size:12px;font-weight:700;color:var(--text-3);letter-spacing:.4px;margin:14px 0 8px;">KAYITSIZ (ARAÇ KAYITLARINDAN) (${musterilerKayitsiz.length})</div>
+    ${musterilerKayitsiz.map((m,i)=>{
       const acikMi = acik===i;
       const initial = m.ad.trim().charAt(0).toLocaleUpperCase('tr-TR');
       const renkler = ['var(--accent-blue)','#36A168','#E8A132','#9B7ED8','#E1554E','#9B7ED8'];
@@ -12501,14 +12593,16 @@ function renderMusterilerPage(){
         <div style="display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:pointer;" onclick="musteriAcKapa(${i})">
           <div style="width:38px;height:38px;border-radius:50%;background:${avRenk};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex-shrink:0;">${esc(initial)}</div>
           <div style="flex:1;min-width:0;">
-            <div style="display:flex;align-items:center;gap:8px;min-width:0;">
+            <div style="display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:wrap;">
               <span style="font-size:14px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(m.ad)}</span>
+              <span title="Bu isimle henüz gerçek müşteri kaydı oluşturulmadı" style="flex-shrink:0;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:12px;background:var(--surface-2);color:var(--text-3);border:1px solid var(--border);">Kayıtsız (araç kayıtlarından)</span>
               ${m.problemli?`<span title="Süresi geçmiş sözleşme/araca sahip" style="flex-shrink:0;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:12px;background:rgba(225,85,78,.14);color:#E1554E;border:1px solid rgba(225,85,78,.3);">⚠ Problemli (${m.problemSayi})</span>`:''}
             </div>
             <div style="font-size:12px;color:var(--text-3);margin-top:2px;">
               ${m.araclar.length} araç · ${m.kirada} kirada${m.tel?' · 📞 '+esc(m.tel):''}${m.sehirler.size?' · '+esc([...m.sehirler].slice(0,2).join(', ')):''}
             </div>
           </div>
+          <button onclick="event.stopPropagation();musteriKayitsizdanOlustur(${i})" style="flex-shrink:0;background:rgba(54,161,104,.1);border:1px solid rgba(54,161,104,.25);color:#36A168;padding:5px 10px;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;">Gerçek müşteri kaydı oluştur</button>
           <div style="text-align:right;flex-shrink:0;">
             <div style="font-size:11px;color:var(--text-3);">${acikMi?'kapat':'detay'}</div>
           </div>
@@ -12516,6 +12610,7 @@ function renderMusterilerPage(){
         ${acikMi ? musteriDetayHtml(m) : ''}
       </div>`;
     }).join('')}
+    ` : ''}
   `;
 
   if(window.__musteriFokus){
@@ -12578,6 +12673,925 @@ function musteriDetayHtml(m){
 function musteriAcKapa(i){
   window.__musteriAcik = (window.__musteriAcik===i) ? null : i;
   renderMusterilerPage();
+}
+
+// ================================================================================
+// FAZ3: Müşteri CRM — gerçek müşteri kaydı, cari hesap, fatura ve tahsilat
+// Veri modeli vehicles/expenses/sozlesmeler ile birebir aynı desen: tek JSON blob,
+// storageAPI üzerinden saklanır (persistCustomers/persistLedger/persistInvoices/
+// persistPayments). Ayrı Firestore koleksiyonlarına (companyId alanlı) taşımak
+// sonraki büyük veri katmanı fazının kapsamındadır — burada bilinçli olarak yapılmadı.
+// ================================================================================
+
+function yeniId(onEk){ return onEk + Math.random().toString(36).slice(2,10); }
+
+async function persistCustomers(){
+  try{
+    await withStorageTimeout(storageAPI.set('customers', JSON.stringify(customers)));
+    return true;
+  }catch(e){
+    showToast((e && /zaman aşımı/i.test(e.message||'')) ? e.message : 'Müşteri kaydedilemedi.', true);
+    return false;
+  }
+}
+async function persistLedger(){
+  try{
+    await withStorageTimeout(storageAPI.set('ledger', JSON.stringify(ledger)));
+    return true;
+  }catch(e){
+    showToast((e && /zaman aşımı/i.test(e.message||'')) ? e.message : 'Cari hareket kaydedilemedi.', true);
+    return false;
+  }
+}
+async function persistInvoices(){
+  try{
+    await withStorageTimeout(storageAPI.set('invoices', JSON.stringify(invoices)));
+    return true;
+  }catch(e){
+    showToast((e && /zaman aşımı/i.test(e.message||'')) ? e.message : 'Fatura kaydedilemedi.', true);
+    return false;
+  }
+}
+async function persistPayments(){
+  try{
+    await withStorageTimeout(storageAPI.set('payments', JSON.stringify(payments)));
+    return true;
+  }catch(e){
+    showToast((e && /zaman aşımı/i.test(e.message||'')) ? e.message : 'Tahsilat kaydedilemedi.', true);
+    return false;
+  }
+}
+
+// ----- Doğrulama (Ürün şartnamesi Bölüm 49) -----
+// T.C. Kimlik No — resmi sağlama (checksum) algoritması TAM olarak uygulanmıştır:
+// d1 sıfır olamaz; (d1+d3+d5+d7+d9)*7 - (d2+d4+d6+d8), 10'a bölümünden kalan d10'a eşit olmalı;
+// d1..d10 toplamının 10'a bölümünden kalan d11'e eşit olmalı.
+function tcknGecerliMi(tc){
+  const s = String(tc||'').trim();
+  if(!/^[1-9][0-9]{10}$/.test(s)) return false;
+  const d = s.split('').map(Number);
+  const tekTop = d[0]+d[2]+d[4]+d[6]+d[8];
+  const ciftTop = d[1]+d[3]+d[5]+d[7];
+  const d10Hesap = ((tekTop*7)-ciftTop)%10;
+  if(((d10Hesap%10)+10)%10 !== d[9]) return false;
+  const ilk10Toplam = d.slice(0,10).reduce((a,b)=>a+b,0);
+  if((ilk10Toplam%10) !== d[10]) return false;
+  return true;
+}
+// VKN (Vergi Kimlik No) — NOT: Gerçek Vergi Kimlik No sağlama (checksum) algoritması bu
+// fazda uygulanmadı (resmi algoritma TCKN'ye göre daha karmaşık ve dışarıdan doğrulanması
+// güçtür). Burada yalnızca 10 haneli sayısal biçim kontrolü yapılıyor — bu bilinçli bir
+// sınırlamadır, ileride tam checksum eklenene kadar VKN alanı "biçimsel olarak" doğrulanır.
+function vknFormatGecerliMi(vkn){
+  return /^[0-9]{10}$/.test(String(vkn||'').trim());
+}
+
+// ----- Müşteri yardımcıları -----
+function musteriGoruntuAdi(c){
+  if(!c) return '';
+  return c.tip==='bireysel' ? [c.ad,c.soyad].filter(Boolean).join(' ') : (c.firmaAdi||'');
+}
+function musterileriSirali(){
+  return [...customers].sort((a,b)=>musteriGoruntuAdi(a).localeCompare(musteriGoruntuAdi(b),'tr'));
+}
+function musteriSelectOptionsHtml(secili){
+  if(!customers.length) return `<option value="">Önce müşteri ekleyin</option>`;
+  return musterileriSirali().map(c=>`<option value="${c.id}" ${c.id===secili?'selected':''}>${esc(musteriGoruntuAdi(c))}</option>`).join('');
+}
+
+// ----- Cari (ledger) yardımcıları -----
+const LEDGER_TUR_ETIKET = {kira:'Kira', fatura:'Fatura', tahsilat:'Tahsilat', hasar:'Hasar', hgs:'HGS', ceza:'Ceza', yakit:'Yakıt', ekUcret:'Ek Ücret', iade:'İade', diger:'Diğer'};
+async function cariHareketEkle(customerId, tur, tutar, yon, aciklama, kaynakRef){
+  ledger.push({
+    id: yeniId('ldg'), customerId, tur, tutar: Number(tutar)||0, yon,
+    tarih: todayISO(), aciklama: aciklama||'', kaynakRef: kaynakRef||null,
+  });
+  await persistLedger();
+}
+function faturaOdenenToplam(faturaId){
+  return payments.filter(p=>p.invoiceId===faturaId).reduce((s,p)=>s+(Number(p.tutar)||0),0);
+}
+function faturaKalan(f){
+  return Math.max(0, (Number(f.genelToplam)||0) - faturaOdenenToplam(f.id));
+}
+// Bir müşterinin cari özeti: toplam borç/alacak, kalan bakiye ve vadesi geçmiş (ödenmemiş) fatura toplamı.
+function customerCariOzet(customerId){
+  const kayitlar = ledger.filter(l=>l.customerId===customerId);
+  const toplamBorc = kayitlar.filter(l=>l.yon==='borc').reduce((s,l)=>s+(Number(l.tutar)||0),0);
+  const toplamAlacak = kayitlar.filter(l=>l.yon==='alacak').reduce((s,l)=>s+(Number(l.tutar)||0),0);
+  const kalan = toplamBorc - toplamAlacak;
+  const bugun = todayISO();
+  const vadesiGecen = invoices.filter(f=>f.customerId===customerId && f.vade && f.vade<bugun && f.durum!=='Odendi' && f.durum!=='Iptal')
+    .reduce((s,f)=>s+faturaKalan(f),0);
+  return {toplamBorc, toplamAlacak, kalan, vadesiGecen};
+}
+
+// ----- Fatura yardımcıları -----
+const KDV_ORANLARI = [20,10,1,0];
+const FATURA_DURUM_ETIKET = {Taslak:'Taslak', Kesildi:'Kesildi', Odendi:'Ödendi', KismiOdendi:'Kısmi Ödendi', Gecikti:'Gecikti', Iptal:'İptal'};
+function faturaDurumRenk(durum){
+  if(durum==='Odendi') return {renk:'#36A168', bg:'rgba(54,161,104,.12)'};
+  if(durum==='Kesildi' || durum==='KismiOdendi') return {renk:'#E8A132', bg:'rgba(232,161,50,.12)'};
+  if(durum==='Gecikti') return {renk:'#E1554E', bg:'rgba(225,85,78,.12)'};
+  return {renk:'#7B7873', bg:'rgba(123,120,115,.12)'}; // Taslak / Iptal
+}
+// Kayıtlı durum alanı yalnızca ödeme akışıyla güncellenir (Kesildi/KismiOdendi/Odendi/Iptal);
+// "Gecikti" görüntü amaçlı hesaplanan bir durumdur (vade geçmiş + hâlâ borçlu ise).
+function faturaEfektifDurum(f){
+  if(f.durum==='Odendi' || f.durum==='Iptal' || f.durum==='Taslak') return f.durum;
+  if(faturaKalan(f)<=0) return 'Odendi';
+  if(f.vade && f.vade<todayISO()) return 'Gecikti';
+  return f.durum;
+}
+function sonrakiFaturaNo(){
+  const yil = new Date().getFullYear();
+  const oneki = '-'+yil+'-';
+  const max = invoices.filter(f=>(f.faturaNo||'').includes(oneki)).reduce((m,f)=>{
+    const parca = (f.faturaNo||'').split('-');
+    const n = Number(parca[parca.length-1])||0;
+    return Math.max(m,n);
+  },0);
+  return `FTR-${yil}-${String(max+1).padStart(4,'0')}`;
+}
+function faturaToplamlariHesapla(kalemler){
+  const araToplam = kalemler.reduce((s,k)=>s+(Number(k.tutar)||0),0);
+  const kdvToplam = kalemler.reduce((s,k)=>s+(Number(k.tutar)||0)*(Number(k.kdvOrani)||0)/100,0);
+  return { araToplam, kdvToplam, genelToplam: araToplam+kdvToplam };
+}
+
+// ----- Müşteri ekle/düzenle formu (modal) -----
+function musteriFormAc(id, prefillAd){
+  const c = id ? customers.find(x=>x.id===id) : null;
+  const eski = document.getElementById('musteriFormOverlay'); if(eski) eski.remove();
+  const el = document.createElement('div');
+  el.className = 'overlay show';
+  el.id = 'musteriFormOverlay';
+  const tip = c ? c.tip : 'bireysel';
+  el.innerHTML = `
+    <div class="modal" style="max-width:580px;">
+      <div class="modal-head">
+        <h2>${c?'Müşteri Düzenle':'Yeni Müşteri'}</h2>
+        <button class="modal-close" onclick="document.getElementById('musteriFormOverlay').remove()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label>Müşteri türü</label>
+          <select id="mfTip" onchange="musteriFormTipDegisti()" ${c?'disabled':''}>
+            <option value="bireysel" ${tip==='bireysel'?'selected':''}>Bireysel</option>
+            <option value="sirket" ${tip==='sirket'?'selected':''}>Şirket</option>
+            <option value="kurumsal" ${tip==='kurumsal'?'selected':''}>Kurumsal</option>
+          </select>
+        </div>
+        <div id="mfBireysel" style="${tip==='bireysel'?'':'display:none;'}">
+          <div class="field-row">
+            <div class="field"><label>Ad</label><input type="text" id="mfAd" value="${esc(c?c.ad||'':(tip==='bireysel'?(prefillAd||''):''))}" placeholder="Ad"></div>
+            <div class="field"><label>Soyad</label><input type="text" id="mfSoyad" value="${esc(c?c.soyad||'':'')}" placeholder="Soyad"></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label>T.C. Kimlik No</label><input type="text" id="mfTc" maxlength="11" value="${esc(c?c.tc||'':'')}" placeholder="11 haneli TC kimlik no"></div>
+            <div class="field"><label>Ehliyet No</label><input type="text" id="mfEhliyetNo" value="${esc(c?c.ehliyetNo||'':'')}"></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label>Ehliyet sınıfı</label><input type="text" id="mfEhliyetSinifi" value="${esc(c?c.ehliyetSinifi||'':'')}" placeholder="B, C, D..."></div>
+            <div class="field"><label>Ehliyet tarihi</label><input type="date" id="mfEhliyetTarihi" value="${esc(c?c.ehliyetTarihi||'':'')}"></div>
+          </div>
+        </div>
+        <div id="mfSirket" style="${tip!=='bireysel'?'':'display:none;'}">
+          <div class="field"><label id="mfFirmaLabel">${tip==='kurumsal'?'Kurum adı':'Firma adı'}</label><input type="text" id="mfFirmaAdi" value="${esc(c?c.firmaAdi||'':(tip!=='bireysel'?(prefillAd||''):''))}"></div>
+          <div class="field-row">
+            <div class="field"><label>VKN</label><input type="text" id="mfVkn" maxlength="10" value="${esc(c?c.vkn||'':'')}" placeholder="10 haneli vergi no"></div>
+            <div class="field"><label>Vergi dairesi</label><input type="text" id="mfVergiDairesi" value="${esc(c?c.vergiDairesi||'':'')}"></div>
+          </div>
+          <div class="field"><label>Yetkili adı</label><input type="text" id="mfYetkiliAdi" value="${esc(c?c.yetkiliAdi||'':'')}"></div>
+          <div class="field">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+              <input type="checkbox" id="mfEFatura" ${c&&c.eFaturaDurumu?'checked':''} style="width:16px;height:16px;">
+              <span>e-Fatura mükellefi</span>
+            </label>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Telefon</label><input type="tel" id="mfTelefon" value="${esc(c?c.telefon||'':'')}" placeholder="05xx xxx xx xx"></div>
+          <div class="field"><label>E-posta</label><input type="email" id="mfEposta" value="${esc(c?c.eposta||'':'')}"></div>
+        </div>
+        <div class="field"><label>Adres</label><input type="text" id="mfAdres" value="${esc(c?c.adres||'':'')}"></div>
+        <div class="field"><label>Risk limiti (₺)</label><input type="number" id="mfRiskLimiti" min="0" value="${c&&c.riskLimiti?c.riskLimiti:''}"></div>
+        <div class="field"><label>Notlar</label><input type="text" id="mfNotlar" value="${esc(c?c.notlar||'':'')}"></div>
+      </div>
+      <div class="err" id="mfErr" style="padding:0 22px;"></div>
+      <div class="modal-actions">
+        <button class="cancel" onclick="document.getElementById('musteriFormOverlay').remove()">Vazgeç</button>
+        <button class="save" onclick="musteriKaydet('${c?c.id:''}')">Kaydet</button>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+  el.onclick = e=>{ if(e.target===el) el.remove(); };
+}
+function musteriFormTipDegisti(){
+  const tip = document.getElementById('mfTip').value;
+  document.getElementById('mfBireysel').style.display = tip==='bireysel' ? '' : 'none';
+  document.getElementById('mfSirket').style.display = tip!=='bireysel' ? '' : 'none';
+  document.getElementById('mfFirmaLabel').textContent = tip==='kurumsal' ? 'Kurum adı' : 'Firma adı';
+}
+async function musteriKaydet(id){
+  if(!requireAdmin()) return;
+  const errEl = document.getElementById('mfErr');
+  errEl.style.display = 'none'; errEl.textContent = '';
+  const tip = document.getElementById('mfTip').value;
+  const veri = {
+    tip,
+    telefon: document.getElementById('mfTelefon').value.trim(),
+    eposta: document.getElementById('mfEposta').value.trim(),
+    adres: document.getElementById('mfAdres').value.trim(),
+    riskLimiti: Number(document.getElementById('mfRiskLimiti').value)||0,
+    notlar: document.getElementById('mfNotlar').value.trim(),
+  };
+
+  if(tip==='bireysel'){
+    const ad = document.getElementById('mfAd').value.trim();
+    const tc = document.getElementById('mfTc').value.trim();
+    if(!ad){ errEl.textContent='Lütfen ad alanını doldurun.'; errEl.style.display='block'; return; }
+    if(tc && !tcknGecerliMi(tc)){
+      errEl.textContent = 'Girilen T.C. Kimlik No geçersiz. Lütfen 11 haneli numarayı kontrol edin.';
+      errEl.style.display='block';
+      showToast('Geçersiz T.C. Kimlik No.', true);
+      return;
+    }
+    Object.assign(veri, {
+      ad, soyad: document.getElementById('mfSoyad').value.trim(), tc,
+      ehliyetNo: document.getElementById('mfEhliyetNo').value.trim(),
+      ehliyetSinifi: document.getElementById('mfEhliyetSinifi').value.trim(),
+      ehliyetTarihi: document.getElementById('mfEhliyetTarihi').value,
+    });
+  }else{
+    const firmaAdi = document.getElementById('mfFirmaAdi').value.trim();
+    const vkn = document.getElementById('mfVkn').value.trim();
+    if(!firmaAdi){ errEl.textContent = tip==='kurumsal' ? 'Lütfen kurum adını girin.' : 'Lütfen firma adını girin.'; errEl.style.display='block'; return; }
+    if(vkn && !vknFormatGecerliMi(vkn)){
+      errEl.textContent = 'VKN 10 haneli ve sayısal olmalıdır.';
+      errEl.style.display='block';
+      showToast('Geçersiz VKN biçimi.', true);
+      return;
+    }
+    Object.assign(veri, {
+      firmaAdi, vkn,
+      vergiDairesi: document.getElementById('mfVergiDairesi').value.trim(),
+      yetkiliAdi: document.getElementById('mfYetkiliAdi').value.trim(),
+      eFaturaDurumu: document.getElementById('mfEFatura').checked,
+    });
+  }
+
+  let c = id ? customers.find(x=>x.id===id) : null;
+  const yeniMi = !c;
+  if(c){
+    Object.assign(c, veri);
+  }else{
+    c = { id: yeniId('cus'), olusturmaTarihi: todayISO(), ...veri };
+    customers.push(c);
+  }
+  await persistCustomers();
+  const overlay = document.getElementById('musteriFormOverlay'); if(overlay) overlay.remove();
+  showToast(yeniMi ? 'Müşteri kaydedildi.' : 'Müşteri güncellendi.');
+  logActivity('add', `Müşteri ${yeniMi?'eklendi':'güncellendi'}: <b>${esc(musteriGoruntuAdi(c))}</b>`);
+  if(window.__currentPage==='musteriler') renderMusterilerPage();
+  if(window.__currentPage==='cari') renderCariPage();
+}
+async function musteriSil(id){
+  if(!requireAdmin()) return;
+  const c = customers.find(x=>x.id===id); if(!c) return;
+  if(!confirm(`${musteriGoruntuAdi(c)} müşterisini silmek istediğinize emin misiniz?\n(Cari hareketleri ve faturaları silinmez, sadece müşteri kaydı kaldırılır.)`)) return;
+  customers = customers.filter(x=>x.id!==id);
+  await persistCustomers();
+  const ov = document.getElementById('musteriDetailOverlay'); if(ov) ov.remove();
+  showToast('Müşteri kaydı silindi.');
+  logActivity('del', `Müşteri silindi: <b>${esc(musteriGoruntuAdi(c))}</b>`);
+  if(window.__currentPage==='musteriler') renderMusterilerPage();
+  if(window.__currentPage==='cari') renderCariPage();
+}
+// "Kayıtsız (araç kayıtlarından)" satırındaki "Gerçek müşteri kaydı oluştur" butonu —
+// isim serbest metin olduğu için onclick niteliğine gömmek yerine geçici bir global
+// diziden index ile okunuyor (cmdk arama kutusundaki window.__cmdkVehicles deseniyle aynı).
+function musteriKayitsizdanOlustur(i){
+  const m = (window.__musterilerKayitsizGecici||[])[i];
+  if(!m) return;
+  musteriFormAc(null, m.ad);
+}
+
+// ----- Müşteri detay çekmecesi (Genel / Cari / Kiralamalar / Notlar) -----
+function musteriDetayAc(customerId){
+  const c = customers.find(x=>x.id===customerId);
+  if(!c) return;
+  const eski = document.getElementById('musteriDetailOverlay'); if(eski) eski.remove();
+  const el = document.createElement('div');
+  el.className = 'overlay show';
+  el.id = 'musteriDetailOverlay';
+  el.style.cssText = 'z-index:60;align-items:stretch;padding:0;';
+  const tipEtiket = c.tip==='bireysel'?'Bireysel':c.tip==='kurumsal'?'Kurumsal':'Şirket';
+  el.innerHTML = `
+    <div style="background:var(--bg);width:100%;max-width:760px;height:100vh;overflow-y:auto;margin-left:auto;display:flex;flex-direction:column;">
+      <div style="padding:16px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;background:var(--surface);position:sticky;top:0;z-index:2;">
+        <button onclick="document.getElementById('musteriDetailOverlay').remove()" style="background:none;border:none;color:var(--steel-300);cursor:pointer;padding:4px;border-radius:6px;display:flex;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:16px;font-weight:700;color:var(--paper);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(musteriGoruntuAdi(c))}</div>
+          <div style="margin-top:3px;font-size:11.5px;color:var(--steel-300);">${esc(tipEtiket)}${c.telefon?' · '+esc(c.telefon):''}</div>
+        </div>
+        <button onclick="document.getElementById('musteriDetailOverlay').remove();musteriFormAc('${c.id}')" style="background:var(--accent-blue);color:#fff;border:none;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Düzenle</button>
+        <button onclick="musteriSil('${c.id}')" style="background:rgba(225,85,78,.1);border:1px solid rgba(225,85,78,.25);color:#E1554E;padding:7px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Sil</button>
+      </div>
+      <div style="padding:16px 20px;flex:1;">
+        <div style="display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:16px;">
+          <button class="modal-tab active" data-md-tab="genel" onclick="musteriDetayTabGoster(this,'genel')">Genel</button>
+          <button class="modal-tab" data-md-tab="cari" onclick="musteriDetayTabGoster(this,'cari')">Cari</button>
+          <button class="modal-tab" data-md-tab="kiralamalar" onclick="musteriDetayTabGoster(this,'kiralamalar')">Kiralamalar</button>
+          <button class="modal-tab" data-md-tab="notlar" onclick="musteriDetayTabGoster(this,'notlar')">Notlar</button>
+        </div>
+        <div class="md-tab-panel" data-md-panel="genel">${musteriDetayGenelHtml(c)}</div>
+        <div class="md-tab-panel" data-md-panel="cari" style="display:none;">${musteriDetayCariHtml(c)}</div>
+        <div class="md-tab-panel" data-md-panel="kiralamalar" style="display:none;">${musteriDetayKiralamalarHtml(c)}</div>
+        <div class="md-tab-panel" data-md-panel="notlar" style="display:none;">${musteriDetayNotlarHtml(c)}</div>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+  el.onclick = e=>{ if(e.target===el) el.remove(); };
+}
+function musteriDetayTabGoster(btn, tab){
+  const overlay = document.getElementById('musteriDetailOverlay');
+  if(!overlay) return;
+  overlay.querySelectorAll('.modal-tab[data-md-tab]').forEach(b=>b.classList.toggle('active', b===btn));
+  overlay.querySelectorAll('.md-tab-panel').forEach(p=>{ p.style.display = p.dataset.mdPanel===tab ? '' : 'none'; });
+}
+function musteriDetayGenelHtml(c){
+  const satir = (l,v)=>`<div><div style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;">${esc(l)}</div><div style="font-size:13px;font-weight:600;color:var(--paper);">${v?esc(String(v)):'—'}</div></div>`;
+  const alanlar = c.tip==='bireysel'
+    ? [satir('Ad Soyad', [c.ad,c.soyad].filter(Boolean).join(' ')), satir('T.C. Kimlik No', c.tc), satir('Ehliyet No', c.ehliyetNo), satir('Ehliyet Sınıfı', c.ehliyetSinifi), satir('Ehliyet Tarihi', c.ehliyetTarihi?fmtTarih(c.ehliyetTarihi):'')]
+    : [satir(c.tip==='kurumsal'?'Kurum Adı':'Firma Adı', c.firmaAdi), satir('VKN', c.vkn), satir('Vergi Dairesi', c.vergiDairesi), satir('Yetkili', c.yetkiliAdi), satir('e-Fatura', c.eFaturaDurumu?'Mükellef':'—')];
+  alanlar.push(satir('Telefon', c.telefon), satir('E-posta', c.eposta), satir('Adres', c.adres), satir('Risk Limiti', c.riskLimiti?fmtTL2(c.riskLimiti):''), satir('Kayıt Tarihi', c.olusturmaTarihi?fmtTarih(c.olusturmaTarihi):''));
+  return `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px 16px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;">${alanlar.join('')}</div>`;
+}
+function musteriDetayCariHtml(c){
+  const ozet = customerCariOzet(c.id);
+  const hareketler = ledger.filter(l=>l.customerId===c.id).sort((a,b)=>(b.tarih||'').localeCompare(a.tarih||''));
+  const kart = (l,v,renk)=>`<div style="background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;"><div style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;">${l}</div><div style="font-size:15px;font-weight:700;color:${renk};">${fmtTL2(v)}</div></div>`;
+  const satirlar = hareketler.map(l=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border);">
+      <span style="font-size:11.5px;color:var(--text-3);white-space:nowrap;">${fmtTarih(l.tarih)}</span>
+      <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--surface-2);color:var(--text-2);white-space:nowrap;">${esc(LEDGER_TUR_ETIKET[l.tur]||l.tur)}</span>
+      <span style="flex:1;min-width:0;font-size:12px;color:var(--text-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(l.aciklama||'')}</span>
+      <span style="font-size:13px;font-weight:700;white-space:nowrap;color:${l.yon==='borc'?'#E1554E':'#36A168'};">${l.yon==='borc'?'+':'-'}${fmtTL2(l.tutar)}</span>
+    </div>`).join('');
+  return `
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px;">
+      ${kart('Toplam Borç', ozet.toplamBorc, '#E1554E')}
+      ${kart('Toplam Alacak', ozet.toplamAlacak, '#36A168')}
+      ${kart('Kalan Bakiye', ozet.kalan, ozet.kalan>0?'#E1554E':'#36A168')}
+      ${kart('Vadesi Geçen', ozet.vadesiGecen, ozet.vadesiGecen>0?'#E1554E':'var(--paper)')}
+    </div>
+    <button onclick="tahsilatFormAc('${c.id}')" style="background:var(--accent-blue);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;margin-bottom:12px;">Tahsilat Gir</button>
+    <div class="dcard" style="padding:0;overflow:hidden;">
+      ${satirlar || '<div class="log-empty">Bu müşteriye ait cari hareket yok.</div>'}
+    </div>`;
+}
+function musteriDetayKiralamalarHtml(c){
+  const ad = musteriGoruntuAdi(c).trim().toLocaleLowerCase('tr-TR');
+  const tumu = musteriListesiOlustur();
+  const m = tumu.find(x=>x.ad.trim().toLocaleLowerCase('tr-TR')===ad);
+  if(!m) return '<div class="log-empty">Bu isimle eşleşen araç kiralama kaydı bulunamadı. Araç kartında "Kiracı" adı bu müşteri adıyla birebir aynı olduğunda kiralama geçmişi burada görünür.</div>';
+  return musteriDetayHtml(m);
+}
+function musteriDetayNotlarHtml(c){
+  return `<div class="dcard"><div style="font-size:13px;color:var(--text-2);white-space:pre-wrap;">${c.notlar?esc(c.notlar):'<span style="color:var(--text-3);">Not girilmemiş. "Düzenle" ile notlar alanını doldurabilirsiniz.</span>'}</div></div>`;
+}
+
+// ----- Fatura formu (oluştur/düzenle) -----
+function faturaFormAc(id, customerId){
+  const f = id ? invoices.find(x=>x.id===id) : null;
+  const eski = document.getElementById('faturaFormOverlay'); if(eski) eski.remove();
+  const el = document.createElement('div');
+  el.className = 'overlay show';
+  el.id = 'faturaFormOverlay';
+  window.__faturaKalemler = f ? JSON.parse(JSON.stringify(f.kalemler||[])) : [{aciklama:'', tutar:0, kdvOrani:20}];
+  el.innerHTML = `
+    <div class="modal" style="max-width:640px;">
+      <div class="modal-head">
+        <h2>${f?'Fatura Düzenle':'Yeni Fatura'}</h2>
+        <button class="modal-close" onclick="document.getElementById('faturaFormOverlay').remove()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </div>
+      <div class="modal-body">
+        <div class="field-row">
+          <div class="field"><label>Müşteri</label><select id="ffMusteri">${musteriSelectOptionsHtml(f?f.customerId:customerId)}</select></div>
+          <div class="field"><label>Tarih</label><input type="date" id="ffTarih" value="${f?f.tarih:todayISO()}"></div>
+        </div>
+        <div class="field"><label>Vade tarihi</label><input type="date" id="ffVade" value="${f&&f.vade?f.vade:''}"></div>
+        <div style="margin:14px 0 6px;font-size:12px;font-weight:700;color:var(--text-3);letter-spacing:.4px;">KALEMLER</div>
+        <div id="ffKalemler"></div>
+        <button type="button" onclick="faturaKalemEkle()" style="background:var(--surface-2);border:1px solid var(--line);color:var(--text);padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;margin-bottom:14px;">+ Kalem Ekle</button>
+        <div style="background:var(--surface-2);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;font-size:13px;">
+          <div style="display:flex;justify-content:space-between;"><span>Ara Toplam</span><b id="ffAraToplam">0 ₺</b></div>
+          <div style="display:flex;justify-content:space-between;"><span>KDV Toplamı</span><b id="ffKdvToplam">0 ₺</b></div>
+          <div style="display:flex;justify-content:space-between;font-size:15px;"><span>Genel Toplam</span><b id="ffGenelToplam" style="color:var(--accent-blue);">0 ₺</b></div>
+        </div>
+        <div style="margin-top:12px;font-size:11.5px;color:var(--text-3);">Bu belge, kayıtlı kira/hizmet tutarlarına göre otomatik oluşturulan dahili bir tahsilat/cari takip belgesidir; resmi fatura (e-Fatura/e-Arşiv) yerine geçmez.</div>
+      </div>
+      <div class="err" id="ffErr" style="padding:0 22px;"></div>
+      <div class="modal-actions">
+        <button class="cancel" onclick="document.getElementById('faturaFormOverlay').remove()">Vazgeç</button>
+        <button class="save" onclick="faturaKaydet('${f?f.id:''}','Taslak')" style="flex:0.7;">Taslak Kaydet</button>
+        <button class="save" onclick="faturaKaydet('${f?f.id:''}','Kesildi')">Kes ve Kaydet</button>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+  el.onclick = e=>{ if(e.target===el) el.remove(); };
+  faturaKalemlerRender();
+}
+function faturaKalemlerRender(){
+  const wrap = document.getElementById('ffKalemler');
+  if(!wrap) return;
+  const kalemler = window.__faturaKalemler||[];
+  wrap.innerHTML = kalemler.map((k,i)=>`
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+      <input type="text" value="${esc(k.aciklama||'')}" placeholder="Açıklama" oninput="faturaKalemGuncelle(${i},'aciklama',this.value)" style="flex:2;min-width:0;background:var(--surface-2);border:1px solid var(--line);color:var(--paper);padding:9px 10px;border-radius:8px;font-size:13px;">
+      <input type="number" min="0" value="${k.tutar||0}" placeholder="Tutar" oninput="faturaKalemGuncelle(${i},'tutar',this.value)" style="flex:1;min-width:0;background:var(--surface-2);border:1px solid var(--line);color:var(--paper);padding:9px 10px;border-radius:8px;font-size:13px;">
+      <select onchange="faturaKalemGuncelle(${i},'kdvOrani',this.value)" style="flex:0 0 82px;background:var(--surface-2);border:1px solid var(--line);color:var(--paper);padding:9px 6px;border-radius:8px;font-size:13px;">
+        ${KDV_ORANLARI.map(o=>`<option value="${o}" ${Number(k.kdvOrani)===o?'selected':''}>%${o}</option>`).join('')}
+      </select>
+      <button type="button" onclick="faturaKalemSil(${i})" style="background:none;border:none;color:#E1554E;cursor:pointer;padding:4px;flex-shrink:0;" title="Satırı sil">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg>
+      </button>
+    </div>`).join('');
+  faturaToplamGuncelle();
+}
+function faturaKalemGuncelle(i, alan, deger){
+  if(!window.__faturaKalemler[i]) return;
+  window.__faturaKalemler[i][alan] = alan==='aciklama' ? deger : Number(deger)||0;
+  faturaToplamGuncelle();
+}
+function faturaKalemEkle(){
+  window.__faturaKalemler.push({aciklama:'', tutar:0, kdvOrani:20});
+  faturaKalemlerRender();
+}
+function faturaKalemSil(i){
+  if(window.__faturaKalemler.length<=1){ showToast('En az bir kalem gerekli.', true); return; }
+  window.__faturaKalemler.splice(i,1);
+  faturaKalemlerRender();
+}
+function faturaToplamGuncelle(){
+  const t = faturaToplamlariHesapla(window.__faturaKalemler||[]);
+  const a=document.getElementById('ffAraToplam'), k=document.getElementById('ffKdvToplam'), g=document.getElementById('ffGenelToplam');
+  if(a) a.textContent = fmtTL2(t.araToplam);
+  if(k) k.textContent = fmtTL2(t.kdvToplam);
+  if(g) g.textContent = fmtTL2(t.genelToplam);
+}
+async function faturaKaydet(id, durum){
+  if(!requireAdmin()) return;
+  const errEl = document.getElementById('ffErr'); errEl.style.display='none'; errEl.textContent='';
+  const customerId = document.getElementById('ffMusteri').value;
+  if(!customerId){ errEl.textContent='Lütfen müşteri seçin.'; errEl.style.display='block'; return; }
+  const kalemler = (window.__faturaKalemler||[]).filter(k=>(k.aciklama||'').trim() || Number(k.tutar)>0);
+  if(!kalemler.length){ errEl.textContent='Lütfen en az bir kalem girin.'; errEl.style.display='block'; return; }
+  const tarih = document.getElementById('ffTarih').value || todayISO();
+  const vade = document.getElementById('ffVade').value || '';
+  const toplamlar = faturaToplamlariHesapla(kalemler);
+
+  let f = id ? invoices.find(x=>x.id===id) : null;
+  const yeniMi = !f;
+  const oncekiDurum = f ? f.durum : null;
+  if(f){
+    Object.assign(f, {customerId, tarih, vade, kalemler, ...toplamlar, durum});
+  }else{
+    f = { id: yeniId('inv'), faturaNo: sonrakiFaturaNo(), customerId, tarih, vade, kalemler, ...toplamlar, durum };
+    invoices.push(f);
+  }
+  await persistInvoices();
+  // Taslaktan Kesildi'ye geçince (ya da doğrudan Kesildi olarak oluşturulunca) cari harekete borç yazılır
+  if(durum==='Kesildi' && oncekiDurum!=='Kesildi' && oncekiDurum!=='Odendi' && oncekiDurum!=='KismiOdendi'){
+    await cariHareketEkle(customerId, 'fatura', f.genelToplam, 'borc', `${f.faturaNo} nolu fatura`, f.id);
+  }
+  const overlay = document.getElementById('faturaFormOverlay'); if(overlay) overlay.remove();
+  showToast(yeniMi ? 'Fatura oluşturuldu.' : 'Fatura güncellendi.');
+  logActivity('add', `Fatura ${yeniMi?'oluşturuldu':'güncellendi'}: <b>${esc(f.faturaNo)}</b> · ${fmtTL2(f.genelToplam)}`);
+  if(window.__currentPage==='faturalar') renderFaturalarPage();
+  if(window.__currentPage==='cari') renderCariPage();
+}
+async function faturaIptalEt(id){
+  if(!requireAdmin()) return;
+  const f = invoices.find(x=>x.id===id); if(!f) return;
+  if(!confirm(`${f.faturaNo} nolu fatura iptal edilecek. Emin misiniz?`)) return;
+  f.durum = 'Iptal';
+  await persistInvoices();
+  showToast('Fatura iptal edildi.');
+  logActivity('del', `Fatura iptal edildi: <b>${esc(f.faturaNo)}</b>`);
+  renderFaturalarPage();
+}
+function faturaYazdir(id){
+  const f = invoices.find(x=>x.id===id); if(!f) return;
+  const c = customers.find(x=>x.id===f.customerId);
+  const bugun = new Date().toLocaleDateString('tr-TR', {day:'2-digit', month:'long', year:'numeric'});
+  const rows = (f.kalemler||[]).map(k=>{
+    const tutar = Number(k.tutar)||0;
+    const kdv = tutar*(Number(k.kdvOrani)||0)/100;
+    return `<tr><td>${esc(k.aciklama||'—')}</td><td class="num">${tutar.toLocaleString('tr-TR')} ₺</td><td class="num">%${esc(String(k.kdvOrani))}</td><td class="num">${kdv.toLocaleString('tr-TR',{maximumFractionDigits:2})} ₺</td><td class="num">${(tutar+kdv).toLocaleString('tr-TR',{maximumFractionDigits:2})} ₺</td></tr>`;
+  }).join('');
+  const html = `<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>Fatura ${esc(f.faturaNo)}</title>
+  <style>
+    *{box-sizing:border-box;}
+    body{font-family:Arial,Helvetica,sans-serif;color:#15171A;margin:0;padding:32px;background:#fff;}
+    .head{display:flex;align-items:center;gap:14px;border-bottom:3px solid #E1554E;padding-bottom:14px;margin-bottom:18px;}
+    .head img{width:42px;height:42px;}
+    .head h1{font-size:19px;margin:0;}
+    .head .d{font-size:13px;color:#666;margin-top:2px;}
+    .musteri{margin-bottom:18px;font-size:13px;}
+    .grand{display:flex;gap:14px;margin-bottom:24px;flex-wrap:wrap;}
+    .grand div{background:#F4F2F0;border-radius:8px;padding:12px 18px;}
+    .grand .l{font-size:12px;text-transform:uppercase;letter-spacing:.3px;color:#777;margin-bottom:4px;}
+    .grand .v{font-size:17px;font-weight:bold;}
+    table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:18px;}
+    th{text-align:left;background:#EDEAE7;padding:7px 10px;font-size:12px;text-transform:uppercase;letter-spacing:.3px;}
+    td{padding:6px 10px;border-bottom:1px solid #ddd;}
+    .num{text-align:right;font-variant-numeric:tabular-nums;}
+    tfoot td{font-weight:bold;background:#F8F7F6;border-top:2px solid #ccc;}
+    .foot{margin-top:14px;font-size:12px;color:#888;}
+    @media print{ body{padding:12mm;} }
+  </style></head>
+  <body>
+    <div class="head">
+      <img src="${SIRKET_LOGOS['PEKDOĞRU GRUP']}" alt="">
+      <div>
+        <h1>Fatura — ${esc(f.faturaNo)}</h1>
+        <div class="d">Tarih: ${fmtTarih(f.tarih)}${f.vade?' · Vade: '+fmtTarih(f.vade):''} · Durum: ${esc(FATURA_DURUM_ETIKET[faturaEfektifDurum(f)]||f.durum)}</div>
+      </div>
+    </div>
+    <div class="musteri"><b>Müşteri:</b> ${esc(c?musteriGoruntuAdi(c):'—')}${c&&c.adres?' · '+esc(c.adres):''}${c&&(c.vkn||c.tc)?' · '+(c.vkn?('VKN: '+esc(c.vkn)):('TC: '+esc(c.tc))):''}</div>
+    <table>
+      <thead><tr><th>Açıklama</th><th class="num">Tutar</th><th class="num">KDV Oranı</th><th class="num">KDV</th><th class="num">Toplam</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div class="grand">
+      <div><div class="l">Ara Toplam</div><div class="v">${Number(f.araToplam).toLocaleString('tr-TR',{maximumFractionDigits:2})} ₺</div></div>
+      <div><div class="l">KDV</div><div class="v">${Number(f.kdvToplam).toLocaleString('tr-TR',{maximumFractionDigits:2})} ₺</div></div>
+      <div><div class="l">Genel Toplam</div><div class="v">${Number(f.genelToplam).toLocaleString('tr-TR',{maximumFractionDigits:2})} ₺</div></div>
+    </div>
+    <div class="foot">PEKDOĞRU GRUP · Filo Kontrol Paneli · Bu belge kayıtlı kira/hizmet tutarlarına göre otomatik oluşturulmuştur, resmi fatura (e-Fatura/e-Arşiv) yerine geçmez. · Oluşturulma: ${bugun}</div>
+  </body></html>`;
+  const w = window.open('', '_blank');
+  w.document.open(); w.document.write(html); w.document.close();
+  w.onload = ()=>{ w.focus(); w.print(); };
+}
+function faturaExcelDisaAktar(){
+  if(!invoices.length){ showToast('Aktarılacak fatura kaydı yok.', true); return; }
+  const rows = invoices.map(f=>{
+    const c = customers.find(x=>x.id===f.customerId);
+    return {
+      'Fatura No': f.faturaNo||'',
+      'Müşteri': c?musteriGoruntuAdi(c):'',
+      'Tarih': f.tarih||'',
+      'Vade': f.vade||'',
+      'Ara Toplam (TL)': f.araToplam||0,
+      'KDV (TL)': f.kdvToplam||0,
+      'Genel Toplam (TL)': f.genelToplam||0,
+      'Durum': FATURA_DURUM_ETIKET[faturaEfektifDurum(f)]||f.durum,
+    };
+  });
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws['!cols'] = [{wch:16},{wch:26},{wch:12},{wch:12},{wch:14},{wch:12},{wch:16},{wch:14}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Faturalar');
+  XLSX.writeFile(wb, `faturalar-${todayISO()}.xlsx`);
+}
+
+// ----- Tahsilat (ödeme) formu -----
+function tahsilatFormAc(customerId, invoiceId){
+  const eski = document.getElementById('tahsilatFormOverlay'); if(eski) eski.remove();
+  const el = document.createElement('div');
+  el.className = 'overlay show';
+  el.id = 'tahsilatFormOverlay';
+  el.innerHTML = `
+    <div class="modal" style="max-width:480px;">
+      <div class="modal-head">
+        <h2>Tahsilat Gir</h2>
+        <button class="modal-close" onclick="document.getElementById('tahsilatFormOverlay').remove()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </div>
+      <div class="modal-body">
+        <div class="field"><label>Müşteri</label>
+          <select id="tfMusteri" onchange="tahsilatMusteriDegisti()">
+            <option value="">Müşteri seçin</option>
+            ${musteriSelectOptionsHtml(customerId)}
+          </select>
+        </div>
+        <div class="field"><label>Fatura (opsiyonel)</label>
+          <select id="tfFatura" onchange="tahsilatFaturaDegisti()"><option value="">Faturasız / genel tahsilat</option></select>
+        </div>
+        <div id="tfFaturaBilgi" style="display:none;background:var(--surface-2);border-radius:9px;padding:10px 12px;font-size:12.5px;color:var(--text-2);margin-bottom:14px;"></div>
+        <div class="field-row">
+          <div class="field"><label>Tutar (₺)</label><input type="number" min="0" id="tfTutar" oninput="tahsilatFaturaDegisti()"></div>
+          <div class="field"><label>Tarih</label><input type="date" id="tfTarih" value="${todayISO()}"></div>
+        </div>
+        <div class="field"><label>Yöntem</label>
+          <select id="tfYontem">
+            <option>Nakit</option><option>Havale</option><option>EFT</option><option value="KrediKarti">Kredi Kartı</option><option>POS</option><option>Diğer</option>
+          </select>
+        </div>
+        <div class="field"><label>Açıklama</label><input type="text" id="tfAciklama" placeholder="Not (opsiyonel)"></div>
+      </div>
+      <div class="err" id="tfErr" style="padding:0 22px;"></div>
+      <div class="modal-actions">
+        <button class="cancel" onclick="document.getElementById('tahsilatFormOverlay').remove()">Vazgeç</button>
+        <button class="save" onclick="tahsilatKaydet()">Kaydet</button>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+  el.onclick = e=>{ if(e.target===el) el.remove(); };
+  if(customerId){
+    tahsilatMusteriDegisti();
+    if(invoiceId) setTimeout(()=>{ const sel=document.getElementById('tfFatura'); if(sel){ sel.value=invoiceId; tahsilatFaturaDegisti(); } }, 0);
+  }
+}
+function tahsilatMusteriDegisti(){
+  const customerId = document.getElementById('tfMusteri').value;
+  const sel = document.getElementById('tfFatura');
+  const acikFaturalar = invoices.filter(f=>f.customerId===customerId && ['Kesildi','KismiOdendi'].includes(f.durum) && faturaKalan(f)>0);
+  sel.innerHTML = `<option value="">Faturasız / genel tahsilat</option>` + acikFaturalar.map(f=>`<option value="${f.id}">${esc(f.faturaNo)} — Kalan ${fmtTL2(faturaKalan(f))}</option>`).join('');
+  tahsilatFaturaDegisti();
+}
+function tahsilatFaturaDegisti(){
+  const invoiceId = document.getElementById('tfFatura').value;
+  const bilgi = document.getElementById('tfFaturaBilgi');
+  if(!invoiceId){ bilgi.style.display='none'; return; }
+  const f = invoices.find(x=>x.id===invoiceId);
+  if(!f){ bilgi.style.display='none'; return; }
+  const odenen = faturaOdenenToplam(f.id);
+  const kalan = faturaKalan(f);
+  const tutarAlani = Number(document.getElementById('tfTutar').value)||0;
+  const kalanSonra = Math.max(0, kalan - tutarAlani);
+  bilgi.style.display='block';
+  bilgi.innerHTML = `Fatura tutarı: <b>${fmtTL2(f.genelToplam)}</b> · Şimdiye kadar ödenen: <b>${fmtTL2(odenen)}</b> · Kalan: <b>${fmtTL2(kalan)}</b>${tutarAlani>0?` · Bu tahsilattan sonra kalan: <b style="color:${kalanSonra<=0?'#36A168':'#E8A132'};">${fmtTL2(kalanSonra)}</b>`:''}`;
+}
+async function tahsilatKaydet(){
+  if(!requireAdmin()) return;
+  const errEl = document.getElementById('tfErr'); errEl.style.display='none'; errEl.textContent='';
+  const customerId = document.getElementById('tfMusteri').value;
+  if(!customerId){ errEl.textContent='Lütfen müşteri seçin.'; errEl.style.display='block'; return; }
+  const tutar = Number(document.getElementById('tfTutar').value);
+  if(!tutar || tutar<=0){ errEl.textContent='Lütfen geçerli bir tutar girin.'; errEl.style.display='block'; return; }
+  const invoiceId = document.getElementById('tfFatura').value || null;
+  const tarih = document.getElementById('tfTarih').value || todayISO();
+  const yontem = document.getElementById('tfYontem').value;
+  const aciklama = document.getElementById('tfAciklama').value.trim();
+
+  const p = { id: yeniId('pay'), customerId, invoiceId, tutar, tarih, yontem, aciklama };
+  payments.push(p);
+  await persistPayments();
+  await cariHareketEkle(customerId, 'tahsilat', tutar, 'alacak', aciklama || (invoiceId?'Fatura tahsilatı':'Genel tahsilat'), p.id);
+
+  if(invoiceId){
+    const f = invoices.find(x=>x.id===invoiceId);
+    if(f){
+      const toplamOdenen = faturaOdenenToplam(f.id);
+      if(toplamOdenen >= Number(f.genelToplam)) f.durum = 'Odendi';
+      else if(toplamOdenen > 0) f.durum = 'KismiOdendi';
+      await persistInvoices();
+    }
+  }
+  const overlay = document.getElementById('tahsilatFormOverlay'); if(overlay) overlay.remove();
+  showToast('Tahsilat kaydedildi.');
+  const c = customers.find(x=>x.id===customerId);
+  logActivity('add', `Tahsilat alındı: <b>${esc(c?musteriGoruntuAdi(c):'—')}</b> · ${fmtTL2(tutar)}`);
+  if(window.__currentPage==='cari') renderCariPage();
+  if(window.__currentPage==='faturalar') renderFaturalarPage();
+  if(window.__currentPage==='musteriler') renderMusterilerPage();
+}
+
+// ----- "Cari & Tahsilat" sayfası -----
+function renderCariPage(){
+  const page = document.getElementById('page-cari');
+  if(!page) return;
+  const siralama = window.__cariSiralama || 'kalan_desc';
+  let satirlar = customers.map(c=>({ c, ozet: customerCariOzet(c.id) }));
+  const siraliFonksiyonlar = {
+    kalan_desc: (a,b)=>b.ozet.kalan-a.ozet.kalan,
+    kalan_asc: (a,b)=>a.ozet.kalan-b.ozet.kalan,
+    vadesiGecen: (a,b)=>b.ozet.vadesiGecen-a.ozet.vadesiGecen,
+    ad: (a,b)=>musteriGoruntuAdi(a.c).localeCompare(musteriGoruntuAdi(b.c),'tr'),
+  };
+  satirlar.sort(siraliFonksiyonlar[siralama]||siraliFonksiyonlar.kalan_desc);
+
+  const toplamKalan = satirlar.reduce((s,r)=>s+r.ozet.kalan,0);
+  const toplamVadesiGecen = satirlar.reduce((s,r)=>s+r.ozet.vadesiGecen,0);
+  const bekleyenMusteri = satirlar.filter(r=>r.ozet.kalan>0).length;
+
+  page.innerHTML = `
+    <div class="dash-stats" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:16px;">
+      <div class="dstat" style="cursor:default;">
+        <div class="dstat-ic" style="background:rgba(100,116,139,.15);color:#7B7873;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <div class="dstat-txt"><div class="l">Müşteri</div><div class="n">${customers.length}</div></div>
+      </div>
+      <div class="dstat" style="cursor:default;">
+        <div class="dstat-ic" style="background:rgba(232,161,50,.15);color:#E8A132;">${DASH_ICONS.clock}</div>
+        <div class="dstat-txt"><div class="l">Bekleyen Bakiyeli</div><div class="n">${bekleyenMusteri}</div></div>
+      </div>
+      <div class="dstat" style="cursor:default;">
+        <div class="dstat-ic" style="background:rgba(225,85,78,.15);color:#E1554E;">${DASH_ICONS.warn}</div>
+        <div class="dstat-txt"><div class="l">Toplam Kalan Bakiye</div><div class="n" style="color:${toplamKalan>0?'#E1554E':'var(--paper)'};">${fmtTL2(toplamKalan)}</div></div>
+      </div>
+      <div class="dstat" style="cursor:default;">
+        <div class="dstat-ic" style="background:rgba(225,85,78,.15);color:#E1554E;">${DASH_ICONS.warn}</div>
+        <div class="dstat-txt"><div class="l">Vadesi Geçen</div><div class="n" style="color:${toplamVadesiGecen>0?'#E1554E':'var(--paper)'};">${fmtTL2(toplamVadesiGecen)}</div></div>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <select onchange="window.__cariSiralama=this.value;renderCariPage()" style="background:var(--surface-2);border:1px solid var(--line);color:var(--paper);padding:8px 10px;border-radius:8px;font-size:12.5px;">
+          <option value="kalan_desc" ${siralama==='kalan_desc'?'selected':''}>Kalan (çoktan aza)</option>
+          <option value="kalan_asc" ${siralama==='kalan_asc'?'selected':''}>Kalan (azdan çoğa)</option>
+          <option value="vadesiGecen" ${siralama==='vadesiGecen'?'selected':''}>Vadesi geçen (çoktan aza)</option>
+          <option value="ad" ${siralama==='ad'?'selected':''}>Müşteri adı (A-Z)</option>
+        </select>
+        <button onclick="cariExcelDisaAktar()" style="background:var(--surface-2);border:1px solid var(--line);color:var(--text);padding:8px 14px;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;">Excel'e Aktar</button>
+      </div>
+      <button class="add-btn" onclick="tahsilatFormAc()">Tahsilat Gir</button>
+    </div>
+
+    <div class="dcard" style="padding:0;overflow-x:auto;">
+      ${satirlar.length===0 ? `
+        <div class="empty-state">
+          <div class="empty-state-title">Henüz müşteri kaydı yok</div>
+          <div class="empty-state-desc">Cari hesap takibi için önce Müşteriler sayfasından bir müşteri ekleyin.</div>
+          <button class="empty-state-cta" onclick="switchPage('musteriler')">Müşteriler'e Git</button>
+        </div>` : `
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead><tr style="text-align:left;border-bottom:1px solid var(--border);">
+          <th style="padding:10px 14px;">Müşteri</th>
+          <th style="padding:10px 14px;text-align:right;">Toplam Borç</th>
+          <th style="padding:10px 14px;text-align:right;">Toplam Alacak</th>
+          <th style="padding:10px 14px;text-align:right;">Kalan</th>
+          <th style="padding:10px 14px;text-align:right;">Vadesi Geçen</th>
+          <th style="padding:10px 14px;"></th>
+        </tr></thead>
+        <tbody>
+        ${satirlar.map(r=>`
+          <tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:10px 14px;cursor:pointer;font-weight:600;color:var(--text);" onclick="musteriDetayAc('${r.c.id}')">${esc(musteriGoruntuAdi(r.c))}</td>
+            <td style="padding:10px 14px;text-align:right;">${fmtTL2(r.ozet.toplamBorc)}</td>
+            <td style="padding:10px 14px;text-align:right;">${fmtTL2(r.ozet.toplamAlacak)}</td>
+            <td style="padding:10px 14px;text-align:right;font-weight:700;color:${r.ozet.kalan>0?'#E1554E':'#36A168'};">${fmtTL2(r.ozet.kalan)}</td>
+            <td style="padding:10px 14px;text-align:right;color:${r.ozet.vadesiGecen>0?'#E1554E':'var(--text-3)'};">${fmtTL2(r.ozet.vadesiGecen)}</td>
+            <td style="padding:10px 14px;text-align:right;white-space:nowrap;">
+              <button onclick="tahsilatFormAc('${r.c.id}')" style="background:rgba(232,69,58,.1);border:1px solid rgba(232,69,58,.2);color:var(--accent-blue);padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;">Tahsilat</button>
+              <button onclick="cariEkstreYazdir('${r.c.id}')" style="background:var(--surface-2);border:1px solid var(--line);color:var(--text);padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;">Ekstre</button>
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`}
+    </div>
+  `;
+}
+function cariEkstreYazdir(customerId){
+  const c = customers.find(x=>x.id===customerId); if(!c) return;
+  const ozet = customerCariOzet(customerId);
+  const hareketler = ledger.filter(l=>l.customerId===customerId).sort((a,b)=>(a.tarih||'').localeCompare(b.tarih||''));
+  let bakiye = 0;
+  const rows = hareketler.map(l=>{
+    bakiye += l.yon==='borc' ? (Number(l.tutar)||0) : -(Number(l.tutar)||0);
+    return `<tr><td>${esc(fmtTarih(l.tarih))}</td><td>${esc(LEDGER_TUR_ETIKET[l.tur]||l.tur)}</td><td>${esc(l.aciklama||'—')}</td><td class="num">${l.yon==='borc'?Number(l.tutar).toLocaleString('tr-TR'):''}</td><td class="num">${l.yon==='alacak'?Number(l.tutar).toLocaleString('tr-TR'):''}</td><td class="num">${bakiye.toLocaleString('tr-TR',{maximumFractionDigits:2})} ₺</td></tr>`;
+  }).join('');
+  const bugun = new Date().toLocaleDateString('tr-TR', {day:'2-digit', month:'long', year:'numeric'});
+  const html = `<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>Cari Ekstre — ${esc(musteriGoruntuAdi(c))}</title>
+  <style>
+    *{box-sizing:border-box;}
+    body{font-family:Arial,Helvetica,sans-serif;color:#15171A;margin:0;padding:32px;background:#fff;}
+    .head{display:flex;align-items:center;gap:14px;border-bottom:3px solid #E1554E;padding-bottom:14px;margin-bottom:18px;}
+    .head img{width:42px;height:42px;}
+    .head h1{font-size:19px;margin:0;}
+    .head .d{font-size:13px;color:#666;margin-top:2px;}
+    .grand{display:flex;gap:14px;margin-bottom:24px;flex-wrap:wrap;}
+    .grand div{background:#F4F2F0;border-radius:8px;padding:12px 18px;}
+    .grand .l{font-size:12px;text-transform:uppercase;letter-spacing:.3px;color:#777;margin-bottom:4px;}
+    .grand .v{font-size:17px;font-weight:bold;}
+    table{width:100%;border-collapse:collapse;font-size:13px;}
+    th{text-align:left;background:#EDEAE7;padding:7px 10px;font-size:12px;text-transform:uppercase;letter-spacing:.3px;}
+    td{padding:6px 10px;border-bottom:1px solid #ddd;}
+    .num{text-align:right;font-variant-numeric:tabular-nums;}
+    .foot{margin-top:14px;font-size:12px;color:#888;}
+    @media print{ body{padding:12mm;} }
+  </style></head>
+  <body>
+    <div class="head">
+      <img src="${SIRKET_LOGOS['PEKDOĞRU GRUP']}" alt="">
+      <div><h1>Cari Hesap Ekstresi</h1><div class="d">${esc(musteriGoruntuAdi(c))} · Oluşturulma: ${bugun}</div></div>
+    </div>
+    <div class="grand">
+      <div><div class="l">Toplam Borç</div><div class="v">${ozet.toplamBorc.toLocaleString('tr-TR')} ₺</div></div>
+      <div><div class="l">Toplam Alacak</div><div class="v">${ozet.toplamAlacak.toLocaleString('tr-TR')} ₺</div></div>
+      <div><div class="l">Kalan Bakiye</div><div class="v">${ozet.kalan.toLocaleString('tr-TR',{maximumFractionDigits:2})} ₺</div></div>
+    </div>
+    <table>
+      <thead><tr><th>Tarih</th><th>Tür</th><th>Açıklama</th><th class="num">Borç</th><th class="num">Alacak</th><th class="num">Bakiye</th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">Kayıtlı cari hareket yok.</td></tr>'}</tbody>
+    </table>
+    <div class="foot">PEKDOĞRU GRUP · Filo Kontrol Paneli · Bu ekstre kayıtlı cari hareketlere göre otomatik oluşturulmuştur, resmi fatura yerine geçmez.</div>
+  </body></html>`;
+  const w = window.open('', '_blank');
+  w.document.open(); w.document.write(html); w.document.close();
+  w.onload = ()=>{ w.focus(); w.print(); };
+}
+function cariExcelDisaAktar(){
+  if(!customers.length){ showToast('Aktarılacak müşteri kaydı yok.', true); return; }
+  const rows = customers.map(c=>{
+    const ozet = customerCariOzet(c.id);
+    return {
+      'Müşteri': musteriGoruntuAdi(c),
+      'Tür': c.tip==='bireysel'?'Bireysel':c.tip==='kurumsal'?'Kurumsal':'Şirket',
+      'Telefon': c.telefon||'',
+      'Toplam Borç (TL)': ozet.toplamBorc,
+      'Toplam Alacak (TL)': ozet.toplamAlacak,
+      'Kalan (TL)': ozet.kalan,
+      'Vadesi Geçen (TL)': ozet.vadesiGecen,
+    };
+  });
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws['!cols'] = [{wch:26},{wch:12},{wch:16},{wch:16},{wch:16},{wch:14},{wch:16}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Cari Özet');
+  XLSX.writeFile(wb, `cari-tahsilat-${todayISO()}.xlsx`);
+}
+
+// ----- "Faturalar" sayfası -----
+function renderFaturalarPage(){
+  const page = document.getElementById('page-faturalar');
+  if(!page) return;
+  const durumFiltre = window.__faturaDurumFiltre || 'hepsi';
+  const musteriFiltre = window.__faturaMusteriFiltre || '';
+  let liste = [...invoices].sort((a,b)=>(b.tarih||'').localeCompare(a.tarih||'') || (b.faturaNo||'').localeCompare(a.faturaNo||''));
+  if(musteriFiltre) liste = liste.filter(f=>f.customerId===musteriFiltre);
+  if(durumFiltre!=='hepsi') liste = liste.filter(f=>faturaEfektifDurum(f)===durumFiltre);
+
+  const toplamTutar = liste.reduce((s,f)=>s+(Number(f.genelToplam)||0),0);
+
+  page.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <select onchange="window.__faturaDurumFiltre=this.value;renderFaturalarPage()" style="background:var(--surface-2);border:1px solid var(--line);color:var(--paper);padding:8px 10px;border-radius:8px;font-size:12.5px;">
+          <option value="hepsi" ${durumFiltre==='hepsi'?'selected':''}>Tüm durumlar</option>
+          ${Object.keys(FATURA_DURUM_ETIKET).map(d=>`<option value="${d}" ${durumFiltre===d?'selected':''}>${FATURA_DURUM_ETIKET[d]}</option>`).join('')}
+        </select>
+        <select onchange="window.__faturaMusteriFiltre=this.value;renderFaturalarPage()" style="background:var(--surface-2);border:1px solid var(--line);color:var(--paper);padding:8px 10px;border-radius:8px;font-size:12.5px;">
+          <option value="">Tüm müşteriler</option>
+          ${musterileriSirali().map(c=>`<option value="${c.id}" ${musteriFiltre===c.id?'selected':''}>${esc(musteriGoruntuAdi(c))}</option>`).join('')}
+        </select>
+        <button onclick="faturaExcelDisaAktar()" style="background:var(--surface-2);border:1px solid var(--line);color:var(--text);padding:8px 14px;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;">Excel'e Aktar</button>
+      </div>
+      <button class="add-btn" onclick="faturaFormAc()">+ Yeni Fatura</button>
+    </div>
+
+    <div class="dash-stats" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:16px;">
+      <div class="dstat" style="cursor:default;"><div class="dstat-ic" style="background:rgba(100,116,139,.15);color:#7B7873;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg></div><div class="dstat-txt"><div class="l">Fatura</div><div class="n">${liste.length}</div></div></div>
+      <div class="dstat" style="cursor:default;"><div class="dstat-ic" style="background:rgba(54,161,104,.15);color:#36A168;">${DASH_ICONS.check}</div><div class="dstat-txt"><div class="l">Listelenen Tutar</div><div class="n">${fmtTL2(toplamTutar)}</div></div></div>
+    </div>
+
+    <div class="dcard" style="padding:0;overflow-x:auto;">
+      ${liste.length===0 ? `
+        <div class="empty-state">
+          <div class="empty-state-title">Fatura kaydı yok</div>
+          <div class="empty-state-desc">"+ Yeni Fatura" ile ilk faturanızı oluşturun.</div>
+        </div>` : `
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead><tr style="text-align:left;border-bottom:1px solid var(--border);">
+          <th style="padding:10px 14px;">Fatura No</th>
+          <th style="padding:10px 14px;">Müşteri</th>
+          <th style="padding:10px 14px;">Tarih</th>
+          <th style="padding:10px 14px;">Vade</th>
+          <th style="padding:10px 14px;text-align:right;">Tutar</th>
+          <th style="padding:10px 14px;">Durum</th>
+          <th style="padding:10px 14px;"></th>
+        </tr></thead>
+        <tbody>
+        ${liste.map(f=>{
+          const c = customers.find(x=>x.id===f.customerId);
+          const efektif = faturaEfektifDurum(f);
+          const renkler = faturaDurumRenk(efektif);
+          return `<tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:10px 14px;font-family:monospace;font-weight:700;">${esc(f.faturaNo)}</td>
+            <td style="padding:10px 14px;">${esc(c?musteriGoruntuAdi(c):'—')}</td>
+            <td style="padding:10px 14px;">${fmtTarih(f.tarih)}</td>
+            <td style="padding:10px 14px;">${f.vade?fmtTarih(f.vade):'—'}</td>
+            <td style="padding:10px 14px;text-align:right;font-weight:700;">${fmtTL2(f.genelToplam)}</td>
+            <td style="padding:10px 14px;"><span style="font-size:11px;font-weight:700;padding:2px 9px;border-radius:12px;background:${renkler.bg};color:${renkler.renk};">${esc(FATURA_DURUM_ETIKET[efektif]||efektif)}</span></td>
+            <td style="padding:10px 14px;text-align:right;white-space:nowrap;">
+              <button onclick="faturaFormAc('${f.id}')" style="background:var(--surface-2);border:1px solid var(--line);color:var(--text);padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;">Düzenle</button>
+              <button onclick="faturaYazdir('${f.id}')" style="background:rgba(232,69,58,.1);border:1px solid rgba(232,69,58,.2);color:var(--accent-blue);padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;">Yazdır</button>
+              ${efektif!=='Odendi' && efektif!=='Iptal' ? `<button onclick="tahsilatFormAc('${f.customerId}','${f.id}')" style="background:rgba(54,161,104,.1);border:1px solid rgba(54,161,104,.2);color:#36A168;padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;">Tahsilat</button>` : ''}
+              ${f.durum!=='Iptal' ? `<button onclick="faturaIptalEt('${f.id}')" style="background:none;border:1px solid var(--line);color:#E1554E;padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;">İptal</button>` : ''}
+            </td>
+          </tr>`;
+        }).join('')}
+        </tbody>
+      </table>`}
+    </div>
+  `;
 }
 
 // ===== WhatsApp / E-posta hatırlatma =====
@@ -14341,6 +15355,14 @@ initInstallPrompt();
       <button class="bn-tile" onclick="closeMoreSheet();switchPage('musteriler')">
         <div class="bn-tile-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
         <span>Müşteriler</span>
+      </button>
+      <button class="bn-tile" onclick="closeMoreSheet();switchPage('cari')">
+        <div class="bn-tile-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/><path d="M21 12a9 9 0 1 1-18 0"/></svg></div>
+        <span>Cari &amp; Tahsilat</span>
+      </button>
+      <button class="bn-tile" onclick="closeMoreSheet();switchPage('faturalar')">
+        <div class="bn-tile-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg></div>
+        <span>Faturalar</span>
       </button>
       <button class="bn-tile" onclick="closeMoreSheet();switchPage('bakim')">
         <div class="bn-tile-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14.7 6.3-6.4 6.4a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l6.4-6.4a4 4 0 1 0-3-3Z"/><path d="M8 12 4 16l4 4 4-4"/></svg><span class="bn-tile-badge" id="bnTileBakimBadge" style="display:none">0</span></div>
