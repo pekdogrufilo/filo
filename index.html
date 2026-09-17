@@ -2170,7 +2170,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-16.143</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-16.144</div>
     </div>
   </div>
 </div>
@@ -2302,7 +2302,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-16.143</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-16.144</div>
     </div>
   </aside>
 <script>
@@ -3179,6 +3179,10 @@ let customers = [];
 let ledger = [];
 let invoices = [];
 let payments = [];
+// FAZ4: Kiralama durum makinesi — vehicles/customers ile birebir aynı depolama deseni
+// (tek JSON blob, storageAPI üzerinden, persistRentals). Hızlı ("Kirala"/"İade Al") ve
+// adım adım akışların ikisi de aynı rentals koleksiyonuna yazar; bkz. rentalOlusturVeyaGuncelle.
+let rentals = [];
 let activeFilter = 'hepsi';
 let activeSirket = 'hepsi';
 let belgeFilterType = null; // null | 'sigorta' | 'muayene' | 'kira'
@@ -3234,6 +3238,10 @@ async function load(){
     const pr = await storageAPI.get('payments').catch(()=>null);
     payments = (pr && pr.value) ? JSON.parse(pr.value) : [];
   }catch(e){ payments = []; }
+  try{
+    const rtr = await storageAPI.get('rentals').catch(()=>null);
+    rentals = (rtr && rtr.value) ? JSON.parse(rtr.value) : [];
+  }catch(e){ rentals = []; }
   updateArsivSayi();
   buildSirketFilter();
   render();
@@ -5833,6 +5841,14 @@ function openIadeForm(id){
           <label>İade notu (opsiyonel)</label>
           <textarea id="iadeNot" placeholder="Hasar detayı, eksik parça, özel durum...">${v.iadeNot||''}</textarea>
         </div>
+        <!-- FAZ4 Part B.5: İade kontrol listesi — teslimde de dolduranlar için otomatik hasar
+             tespiti (Part B.5) burada hesaplanır; teslim tarafında kontrol listesi doldurulmadıysa
+             (rentals'ta kayıt yoksa ya da teslimKontrol boşsa) bu form yine sorunsuz çalışır, sadece
+             karşılaştırma/otomatik tespit adımı sessizce atlanır. -->
+        <details ${(()=>{ const r=rentalAcikBul(v.id); return (r&&r.teslimKontrol)?'open':''; })()} style="margin-bottom:10px;">
+          <summary style="cursor:pointer;font-size:12.5px;font-weight:600;color:var(--text-2);padding:6px 2px;">İade Kontrol Listesi ${(()=>{ const r=rentalAcikBul(v.id); return (r&&r.teslimKontrol)?'<span style=\"color:#36A168;\">(teslim kaydı bulundu — karşılaştırma yapılacak)</span>':'(opsiyonel)'; })()}</summary>
+          <div style="padding:10px 2px 2px;">${kontrolListesiHtml('iadeChk', (()=>{ const r=rentalAcikBul(v.id); return (r&&r.teslimKontrol&&r.teslimKontrol.kontrolListesi)||{}; })())}</div>
+        </details>
         <label style="display:flex;align-items:center;gap:8px;padding:10px 2px;font-size:13px;color:var(--text-2);cursor:pointer;">
           <input type="checkbox" id="iadeTutanak" checked style="width:16px;height:16px;accent-color:var(--accent-blue);">
           İade Tutanağı da oluştur (yazdır/PDF)
@@ -6058,6 +6074,46 @@ async function saveIade(id){
   const tYakit = document.getElementById('iadeYakit')?.value||'';
   const tHasar = document.getElementById('iadeHasar')?.value||'Hasarsız';
   const tNot = document.getElementById('iadeNot')?.value?.trim()||'';
+  // FAZ4 Part B.5: bağlı rentals kaydı varsa (bu araç için açık bir kayıt) iade kontrol
+  // listesini işle, teslim kontrol listesiyle karşılaştır ve fazla km / eksik yakıt bedelini
+  // hesapla. Bağlı kayıt yoksa (FAZ4 öncesi kiralama) hiçbir şey yapılmaz — mevcut davranış
+  // birebir korunur, hata da fırlatılmaz.
+  const iadeKontrolListesi = kontrolListesiOku('iadeChk');
+  const acikRental = rentalAcikBul(id);
+  let yeniHasarBilgisi = null;
+  if(acikRental){
+    const oncekiTeslimKontrol = acikRental.teslimKontrol;
+    acikRental.iadeKontrol = { tarih: iadeTarih, km: kmBit||null, yakitSeviyesi: tYakit, kontrolListesi: iadeKontrolListesi, fotograflar: [] };
+    // Fazla km — Part B.5'te tanımlanan basit (aylık orana bölünmemiş) formül:
+    // (iade km - teslim km) - kmLimiti, pozitifse fazlaKmBedeli ile çarpılır.
+    const rentalKmLimiti = acikRental.kmLimiti || kmLimiti || v.kmLimiti || 0;
+    const rentalFazlaKmBirim = acikRental.fazlaKmBedeli || v.kmAsimFiyat || 0;
+    const kullanim = (kmBas>0 && kmBit>kmBas) ? (kmBit-kmBas) : 0;
+    const fazlaKm = rentalKmLimiti>0 ? Math.max(0, kullanim-rentalKmLimiti) : 0;
+    acikRental.hesaplananFazlaKmBedeli = fazlaKm>0 ? Math.round(fazlaKm*rentalFazlaKmBirim*100)/100 : 0;
+    // Eksik yakıt bedeli — bkz. TAHMİNİ_DEPO_LITRE/TAHMİNİ_YAKIT_FIYATI_TL tanımındaki not:
+    // bunlar doğrulanmış gerçek değerler değil, işletmenin ayarlayabileceği kaba tahminlerdir.
+    if(oncekiTeslimKontrol && oncekiTeslimKontrol.yakitSeviyesi){
+      const eskiIdx = YAKIT_SEVIYE_INDEKS[oncekiTeslimKontrol.yakitSeviyesi];
+      const yeniIdx = YAKIT_SEVIYE_INDEKS[tYakit];
+      if(eskiIdx!=null && yeniIdx!=null && yeniIdx<eskiIdx){
+        const kademeFarki = eskiIdx-yeniIdx; // 5 kademeli ölçek (Boş..Dolu), her kademe deponun 1/4'ü
+        acikRental.hesaplananYakitBedeli = Math.round((kademeFarki/4)*TAHMINI_DEPO_LITRE*TAHMINI_YAKIT_FIYATI_TL);
+      }else{
+        acikRental.hesaplananYakitBedeli = 0;
+      }
+    }
+    if(oncekiTeslimKontrol && oncekiTeslimKontrol.kontrolListesi){
+      const degisenler = kontrolListesiKarsilastir(oncekiTeslimKontrol.kontrolListesi, iadeKontrolListesi);
+      if(degisenler.length) yeniHasarBilgisi = {vehicleId:id, rentalId:acikRental.id, degisenler};
+    }
+    acikRental.durum = 'iadeAlindi';
+    await persistRentals();
+    // Basitleştirme: mutabakat/ek ücret tahsilat takibi bu fazın kapsamı dışında — iade
+    // işlendiği anda kayıt doğrudan kapatılır (bkz. Part B.5).
+    acikRental.durum = 'kapandi';
+    await persistRentals();
+  }
   await persist();
   render();
   renderStatMasraf();
@@ -6075,6 +6131,82 @@ async function saveIade(id){
       kmLimiti, kmHakki, kmAsim,
     });
   }
+  if(acikRental && (yeniHasarBilgisi || acikRental.hesaplananFazlaKmBedeli>0 || acikRental.hesaplananYakitBedeli>0)){
+    iadeSonucBanneriGoster(id, acikRental, yeniHasarBilgisi);
+  }
+}
+
+// FAZ4 Part B.5: İade sonrası — yeni hasar tespiti / fazla km / eksik yakıt bildirimi.
+// Hiçbir şeyi otomatik/sessiz kaydetmez; her aksiyon personelin onayına açık bir sonraki
+// adımı (önceden doldurulmuş hasar formu veya ek ücret onayı) tetikler.
+function iadeSonucBanneriGoster(vehicleId, rentalKaydi, yeniHasarBilgisi){
+  const v = vehicles.find(x=>x.id===vehicleId);
+  const musteri = rentalKaydi.customerId ? customers.find(c=>c.id===rentalKaydi.customerId) : null;
+  const el = document.createElement('div');
+  el.className = 'overlay show';
+  el.id = 'iadeSonucOverlay';
+  el.style.cssText = 'z-index:85;';
+  const hasarBlok = yeniHasarBilgisi ? `
+    <div style="background:rgba(225,85,78,.1);border:1px solid rgba(225,85,78,.3);border-radius:10px;padding:12px 14px;margin-bottom:12px;">
+      <div style="font-size:13.5px;font-weight:700;color:var(--safety);margin-bottom:6px;">⚠ Yeni Hasar Tespit Edildi</div>
+      <ul style="margin:0 0 10px 18px;padding:0;font-size:12.5px;color:var(--text-2);">
+        ${yeniHasarBilgisi.degisenler.map(d=>`<li><b>${esc(d.etiket)}</b>: ${KONTROL_DURUM_ETIKET[d.eski]} → <span style="color:var(--safety);font-weight:700;">${KONTROL_DURUM_ETIKET[d.yeni]}</span></li>`).join('')}
+      </ul>
+      <button onclick="hasarOtomatikFormAc('${vehicleId}','${yeniHasarBilgisi.degisenler[0].kalem}')" style="background:var(--safety);color:#fff;border:none;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Otomatik hasar kaydı oluştur</button>
+    </div>` : '';
+  const fazlaKm = rentalKaydi.hesaplananFazlaKmBedeli||0;
+  const yakitBedel = rentalKaydi.hesaplananYakitBedeli||0;
+  const ucretBlok = (fazlaKm>0 || yakitBedel>0) ? `
+    <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:12px;">
+      <div style="font-size:13px;font-weight:700;color:var(--paper);margin-bottom:8px;">Hesaplanan Ek Ücretler</div>
+      ${fazlaKm>0?`<div style="display:flex;justify-content:space-between;font-size:12.5px;color:var(--text-2);margin-bottom:4px;"><span>Fazla km bedeli</span><b style="color:var(--paper);">${fmtTL2(fazlaKm)}</b></div>`:''}
+      ${yakitBedel>0?`<div style="display:flex;justify-content:space-between;font-size:12.5px;color:var(--text-2);margin-bottom:4px;"><span>Eksik yakıt bedeli <i style="color:var(--steel-500);">(tahmini — ${TAHMINI_DEPO_LITRE}L depo × ${TAHMINI_YAKIT_FIYATI_TL}₺/L varsayımıyla)</i></span><b style="color:var(--paper);">${fmtTL2(yakitBedel)}</b></div>`:''}
+      ${musteri ? `<button onclick="iadeEkUcretiEkle('${vehicleId}','${rentalKaydi.id}')" style="margin-top:8px;background:var(--accent-blue);color:#fff;border:none;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Ek ücret olarak ekle — ${esc(musteriGoruntuAdi(musteri))}</button>`
+        : `<div style="margin-top:8px;font-size:11.5px;color:#E8A132;">Bu kiralamaya bağlı bir müşteri kaydı yok — cari hesaba işlemek için önce Müşteriler'den bir müşteri eşleştirin.</div>`}
+    </div>` : '';
+  el.innerHTML = `
+    <div class="modal" style="max-width:480px;">
+      <div class="modal-head">
+        <h2>İade Sonucu — ${esc(v?v.plaka:'')}</h2>
+        <button class="modal-close" onclick="document.getElementById('iadeSonucOverlay').remove()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        ${hasarBlok}
+        ${ucretBlok}
+      </div>
+      <div class="modal-actions">
+        <button class="cancel" onclick="document.getElementById('iadeSonucOverlay').remove()">Kapat</button>
+      </div>
+    </div>`;
+  el.onclick = e=>{ if(e.target===el) el.remove(); };
+  document.body.appendChild(el);
+}
+// Diyagramdaki bölge eşlemesini kullanarak hasar formunu önceden doldurup açar — hiçbir kayıt
+// sessizce oluşturulmaz, personel formu gözden geçirip "Kaydet"e basmalıdır.
+function hasarOtomatikFormAc(vehicleId, kalem){
+  document.getElementById('iadeSonucOverlay')?.remove();
+  const etiket = (KONTROL_KALEMLERI.find(k=>k[0]===kalem)||[])[1] || kalem;
+  const bolge = KONTROL_BOLGE_ESLEME[kalem] || '';
+  hasarFormAcVePrefill(vehicleId, bolge, 'diger', `Otomatik tespit: ${etiket} teslimde iyiyken iadede hasarlı bulundu.`);
+}
+// Fazla km / eksik yakıt bedelini bağlı müşterinin carisine borç olarak işler (FAZ3 fonksiyonları
+// yeniden kullanılır — cariHareketEkle) ve rentals kaydına "eklendi" olarak not düşer.
+async function iadeEkUcretiEkle(vehicleId, rentalId){
+  const r = rentals.find(x=>x.id===rentalId); if(!r) return;
+  if(!r.customerId){ showToast('Bu kiralamaya bağlı bir müşteri yok.', true); return; }
+  const v = vehicles.find(x=>x.id===vehicleId);
+  const toplam = (r.hesaplananFazlaKmBedeli||0) + (r.hesaplananYakitBedeli||0);
+  if(toplam<=0){ showToast('Eklenecek bir ek ücret yok.', true); return; }
+  const parcalar = [];
+  if(r.hesaplananFazlaKmBedeli>0) parcalar.push(`Fazla km bedeli: ${fmtTL2(r.hesaplananFazlaKmBedeli)}`);
+  if(r.hesaplananYakitBedeli>0) parcalar.push(`Eksik yakıt bedeli (tahmini): ${fmtTL2(r.hesaplananYakitBedeli)}`);
+  await cariHareketEkle(r.customerId, 'ekUcret', toplam, 'borc', `${(v?v.plaka:'Araç')} iade ek ücreti — ${parcalar.join(', ')}`, r.id);
+  r.hesaplananEkUcretler = toplam;
+  await persistRentals();
+  document.getElementById('iadeSonucOverlay')?.remove();
+  showToast('Ek ücret cari hesaba işlendi.');
 }
 
 // ===== Sözleşme uzatma =====
@@ -6151,6 +6283,12 @@ async function saveUzatma(id){
     uzatmalar: [...(v.uzatmalar||[]), {tarih: todayISO(), eskiBitis: eski, yeniBitis: yeni, kira: kira||v.kira||0, not}],
   };
   await persist();
+  // FAZ4 Part B.6: bağlı bir rentals kaydı varsa bitiş tarihini de günceller — en iyi çaba
+  // (best-effort): bağlı kayıt yoksa (FAZ4 öncesi kiralama) sessizce atlanır, davranış değişmez.
+  try{
+    const acikRental = rentalAcikBul(id);
+    if(acikRental){ acikRental.bitis = yeni; await persistRentals(); }
+  }catch(e){}
   render();
   if(window.__currentPage && window.__currentPage!=='arac-yonetimi') renderCurrentPage();
   document.getElementById('uzatModal')?.remove();
@@ -6287,6 +6425,13 @@ function openAracKirala(vehicleId){
           <label>Özel şartlar / notlar</label>
           <input type="text" id="krNotlar" placeholder="Varsa özel koşullar...">
         </div>
+        <!-- FAZ4: Teslim kontrol listesi — opsiyonel; boş bırakılırsa (varsayılan hepsi "İyi")
+             yine de rentals kaydına teslimKontrol olarak yazılır, ki İade Al sırasında otomatik
+             hasar tespiti (Part B.5) çalışabilsin. Doldurulmaması mevcut hızlı akışı bozmaz. -->
+        <details style="margin-bottom:10px;">
+          <summary style="cursor:pointer;font-size:12.5px;font-weight:600;color:var(--text-2);padding:6px 2px;">Teslim Kontrol Listesi (opsiyonel — açmak için tıklayın)</summary>
+          <div style="padding:10px 2px 2px;">${kontrolListesiHtml('krChk', {})}</div>
+        </details>
         <label style="display:flex;align-items:center;gap:8px;padding:8px 2px;font-size:13px;color:var(--text-2);cursor:pointer;">
           <input type="checkbox" id="krTutanak" checked style="width:16px;height:16px;accent-color:var(--accent-blue);">
           Sözleşmeyle birlikte <b>&nbsp;Teslim Tutanağı&nbsp;</b> (Ek-1) de oluştur
@@ -6479,6 +6624,11 @@ async function kirayaVerVeSozlesme(format){
   render();
   if(window.__currentPage && window.__currentPage!=='arac-yonetimi') renderCurrentPage();
   const tutanakIstendi = document.getElementById('krTutanak')?.checked;
+  // FAZ4: Modal kaldırılmadan önce teslim kontrol listesini ve yakıt seviyesini yakala —
+  // görünür davranış (tutanak/sözleşme oluşturma) hiç değişmedi, bu sadece arka planda
+  // rentals kaydına yazılacak ek bir veri.
+  const krTeslimYakit = document.getElementById('krYakit')?.value||'Dolu';
+  const krKontrolListesi = kontrolListesiOku('krChk');
   document.getElementById('kiralaModal')?.remove();
   const plakalar = secilen.map(v=>esc(v.plaka)).join(', ');
   logActivity('edit', secilen.length===1
@@ -6528,9 +6678,27 @@ async function kirayaVerVeSozlesme(format){
     tarih: new Date().toLocaleDateString('tr-TR'),
     sozNo: 'SOZ-'+new Date().getFullYear()+'-'+Date.now().toString().slice(-4),
   };
-  await sozKaydet(sozData, bas, bitis);
+  const sozRec = await sozKaydet(sozData, bas, bitis);
   if(format==='pdf') sozlesmeHtmlPdf(sozData);
   else sozlesmeDocx(sozData);
+  // FAZ4 Part B.2: Hızlı "Araç Kirala" akışı da diğer tüm kiralamalarla aynı rentals
+  // koleksiyonuna yazar. teklif/rezervasyon adımları atlanıp doğrudan 'teslimEdildi'
+  // durumuna geçilir çünkü bu akış zaten personel için bilinçli bir kısayoldur.
+  const krCustomerId = customerIdAdaGoreBul(kiraci);
+  for(const {v, kira, teslimKm} of aracVerileri){
+    await rentalOlusturVeyaGuncelle(v.id, {
+      customerId: krCustomerId,
+      durum: 'teslimEdildi',
+      baslangic: bas, bitis: bitis,
+      kiraTutari: kira||null,
+      depozito: depozito!=='' && depozito!=null && !isNaN(Number(depozito)) ? Number(depozito) : null,
+      kmLimiti: kmLimit!=='' && kmLimit!=null ? Number(kmLimit) : null,
+      fazlaKmBedeli: kmAsim!=='' && kmAsim!=null && !isNaN(Number(kmAsim)) ? Number(kmAsim) : null,
+      ekHizmetler: notlar||'',
+      teslimKontrol: { tarih: bas, km: teslimKm||null, yakitSeviyesi: krTeslimYakit, kontrolListesi: krKontrolListesi, fotograflar: [] },
+      sozlesmeId: sozRec ? sozRec.id : null,
+    });
+  }
   if(tutanakIstendi){
     setTimeout(()=>teslimTutanakAc(sozData), 1200);
   }
@@ -6972,12 +7140,30 @@ function openVehicleDetail(id){
             <div style="font-size:12px;font-weight:700;color:var(--paper);">${ICO('crash',13)} Hasar / Kaza Kayıtları ${hasarlar.length?`<span style="font-weight:400;color:var(--steel-300);">(${hasarlar.length})</span>`:''}</div>
             <button onclick="document.getElementById('hasarForm').style.display=document.getElementById('hasarForm').style.display==='none'?'block':'none'" style="background:rgba(232,69,58,.1);border:1px solid rgba(232,69,58,.2);color:var(--accent-blue);padding:5px 12px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;">+ Ekle</button>
           </div>
+          <!-- FAZ4 Part A: Görsel hasar haritası — bölgeye tıklamak formu açıp bölgeyi ön doldurur.
+               Kırmızı işaretli/sayılı bölgeler o bölgede en az bir kayıtlı hasar olduğunu gösterir. -->
+          <div style="margin-bottom:10px;">${aracSilhouetteSvg(hasarlar, null)}</div>
           <div id="hasarForm" style="display:none;background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:12px;margin-bottom:10px;">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
               <input type="date" id="hasarTarih" style="background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:14px;color:var(--paper);font-family:inherit;">
               <input type="number" id="hasarTutar" placeholder="Hasar tutarı (₺)" min="0" style="background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:14px;color:var(--paper);font-family:inherit;">
             </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+              <select id="hasarBolge" style="background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;color:var(--paper);font-family:inherit;">
+                <option value="">Bölge (opsiyonel)</option>
+                ${Object.entries(HASAR_BOLGE_ETIKET).map(([k,l])=>`<option value="${k}">${esc(l)}</option>`).join('')}
+              </select>
+              <select id="hasarTur" style="background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;color:var(--paper);font-family:inherit;">
+                <option value="">Tür (opsiyonel)</option>
+                ${Object.entries(HASAR_TUR_ETIKET).map(([k,l])=>`<option value="${k}">${esc(l)}</option>`).join('')}
+              </select>
+            </div>
             <input type="text" id="hasarAciklama" placeholder="Açıklama (ör. ön tampon hasarı, tramer kaydı…)" style="width:100%;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:14px;color:var(--paper);font-family:inherit;margin-bottom:8px;">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px;">
+              <input type="number" id="hasarKm" placeholder="Km (o anki)" min="0" style="background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;color:var(--paper);font-family:inherit;">
+              <input type="number" id="hasarMaliyet" placeholder="Onarım maliyeti (₺)" min="0" style="background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;color:var(--paper);font-family:inherit;">
+              <input type="number" id="hasarMusteriBedel" placeholder="Müşteriye yansıtılan (₺)" min="0" style="background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;color:var(--paper);font-family:inherit;">
+            </div>
             <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
               <label style="font-size:12px;color:var(--accent-blue);cursor:pointer;font-weight:600;">
                 📷 Fotoğraflar (toplu seçilebilir)<input type="file" id="hasarFoto" accept="image/*" multiple style="display:none" onchange="document.getElementById('hasarFotoAd').textContent=this.files.length?(this.files.length+' fotoğraf seçildi'):'Fotoğraf seçilmedi'">
@@ -6991,8 +7177,8 @@ function openVehicleDetail(id){
             ${hasarlar.slice().sort((a,b)=>(b.tarih||'').localeCompare(a.tarih||'')).map(h=>`
               <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line);">
                 <div style="min-width:0;">
-                  <div style="font-size:12.5px;font-weight:600;color:var(--paper);">${esc(h.aciklama||'Hasar kaydı')}</div>
-                  <div style="font-size:11px;color:var(--steel-500);margin-top:2px;">${fmtTarih(h.tarih)}</div>
+                  <div style="font-size:12.5px;font-weight:600;color:var(--paper);">${esc(h.aciklama||'Hasar kaydı')}${h.bolge?` <span style="background:rgba(225,85,78,.12);color:var(--safety);font-size:10px;font-weight:700;padding:2px 6px;border-radius:5px;margin-left:4px;">${esc(HASAR_BOLGE_ETIKET[h.bolge]||h.bolge)}</span>`:''}${h.tur?` <span style="background:rgba(130,130,130,.15);color:var(--text-2);font-size:10px;font-weight:600;padding:2px 6px;border-radius:5px;margin-left:4px;">${esc(HASAR_TUR_ETIKET[h.tur]||h.tur)}</span>`:''}</div>
+                  <div style="font-size:11px;color:var(--steel-500);margin-top:2px;">${fmtTarih(h.tarih)}${h.km!=null?' · '+Number(h.km).toLocaleString('tr-TR')+' km':''}${h.maliyet!=null?' · Maliyet: '+fmtTL2(h.maliyet):''}${h.musteriyeYansitilanBedel!=null?' · Müşteriye yansıtılan: '+fmtTL2(h.musteriyeYansitilanBedel):''}</div>
                 </div>
                 <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;margin-left:12px;">
                   ${h.tutar!=null && h.tutar!=='' ? `<div style="font-size:12.5px;font-weight:700;color:#E1554E;">${fmtTL2(h.tutar)}</div>` : ''}
@@ -7248,6 +7434,82 @@ ${gecmis.map(g=>`<tr><td>${esc(g.tarihTxt||'—')}</td><td>${esc(g.baslik||'—'
 }
 
 // ===== Hasar / Kaza kayıtları =====
+// FAZ4 Part A: Bölge/tür seçimi, km ve maliyet alanları ile görsel hasar haritası. Bu alanların
+// hepsi OPSİYONELDİR — eski kayıtlarda (bolge/tur/km/maliyet/musteriyeYansitilanBedel yok) hiçbiri
+// zorunlu olmadığından geriye dönük tam uyumlu; sadece aciklama + tarih zorunlu kalmaya devam eder.
+const HASAR_BOLGE_ETIKET = {on:'Ön', arka:'Arka', sag:'Sağ', sol:'Sol', kaput:'Kaput', tavan:'Tavan', bagaj:'Bagaj', cam:'Cam', jant:'Jant'};
+const HASAR_TUR_ETIKET = {cizik:'Çizik', gocuk:'Göçük', kirik:'Kırık', boya:'Boya', catlak:'Çatlak', diger:'Diğer'};
+// Basit üstten/3-4 görünümlü araç silüeti — her bölge tıklanabilir bir <rect data-bolge="...">.
+// Tıklama, tablonun geri kalanıyla aynı desenle (inline onclick="fn('...')") bağlanır; ayrı bir
+// event-delegation mekanizması eklenmedi çünkü uygulamanın hiçbir yerinde (hasarKaydet/hasarSil,
+// tablo satırları vb.) böyle bir mekanizma kullanılmıyor. Hasar kaydı olan bölgeler kırmızı
+// (var(--safety)) dolgu ve kayıt sayısıyla işaretlenir — mevcut hasar renk kullanımıyla tutarlı.
+function aracSilhouetteSvg(hasarlar, activeBolge){
+  hasarlar = Array.isArray(hasarlar) ? hasarlar : [];
+  const sayilar = {};
+  hasarlar.forEach(h=>{ if(h && h.bolge) sayilar[h.bolge] = (sayilar[h.bolge]||0)+1; });
+  const zonStil = (bolge)=>{
+    const n = sayilar[bolge]||0;
+    return {
+      fill: n>0 ? 'rgba(225,85,78,.35)' : 'rgba(130,130,130,.08)',
+      stroke: bolge===activeBolge ? 'var(--accent-blue)' : 'var(--line)',
+      sw: bolge===activeBolge ? 3 : 1,
+      n,
+    };
+  };
+  const zonRect = (bolge, x, y, w, h)=>{
+    const s = zonStil(bolge);
+    const etiket = HASAR_BOLGE_ETIKET[bolge]||bolge;
+    let out = `<rect data-bolge="${bolge}" x="${x}" y="${y}" width="${w}" height="${h}" rx="6" fill="${s.fill}" stroke="${s.stroke}" stroke-width="${s.sw}" style="cursor:pointer;" onclick="hasarBolgeSec('${bolge}')"><title>${esc(etiket)}${s.n?' — '+s.n+' kayıt':''}</title></rect>`;
+    if(s.n) out += `<text x="${x+w/2}" y="${y+h/2+4}" font-size="12" font-weight="700" fill="var(--safety)" text-anchor="middle" style="pointer-events:none;">${s.n}</text>`;
+    return out;
+  };
+  let out = `<svg id="hasarSilhouette" viewBox="0 0 200 320" width="100%" height="250" style="max-width:260px;display:block;margin:0 auto;">`;
+  out += `<rect x="30" y="8" width="140" height="304" rx="34" fill="none" stroke="var(--line)" stroke-width="1.5"/>`;
+  out += zonRect('on',    40, 10,  120, 18);  // ön tampon
+  out += zonRect('kaput', 40, 30,  120, 46);  // kaput
+  out += zonRect('cam',   55, 78,  90,  18);  // ön cam
+  out += zonRect('tavan', 45, 98,  110, 108); // tavan
+  out += zonRect('cam',   55, 208, 90,  18);  // arka cam (aynı bölge: cam)
+  out += zonRect('bagaj', 40, 228, 120, 66);  // bagaj
+  out += zonRect('arka',  40, 296, 120, 16);  // arka tampon
+  out += zonRect('sol',   16, 96,  20,  128); // sol kapılar
+  out += zonRect('sag',   164,96,  20,  128); // sağ kapılar
+  [[6,66],[6,214],[174,66],[174,214]].forEach(([x,y])=>{ out += zonRect('jant', x, y, 16, 36); });
+  out += `</svg>`;
+  return out;
+}
+// Diyagramda bir bölgeye tıklanınca hasar formunu açar ve bölgeyi ön-doldurur (Part A.3).
+function hasarBolgeSec(bolge){
+  const formEl = document.getElementById('hasarForm');
+  if(formEl) formEl.style.display = 'block';
+  const sel = document.getElementById('hasarBolge');
+  if(sel) sel.value = bolge;
+  document.querySelectorAll('#hasarSilhouette rect[data-bolge]').forEach(elm=>{
+    const on = elm.dataset.bolge===bolge;
+    elm.setAttribute('stroke', on ? 'var(--accent-blue)' : 'var(--line)');
+    elm.setAttribute('stroke-width', on ? '3' : '1');
+  });
+  const tarihEl = document.getElementById('hasarTarih');
+  if(tarihEl && !tarihEl.value) tarihEl.value = todayISO();
+  formEl?.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+// Otomatik hasar tespiti (Part B.5) ve dış tetikleyicilerin araç detayını açıp hasar formunu
+// bölge/tür/açıklama ön dolumuyla göstermesi için ortak yol — hasarKaydet'i DEĞİŞTİRMEZ, sadece
+// formu önceden doldurup gösterir; kayıt yine personelin "Kaydet"e basmasıyla oluşur (sessiz
+// otomatik kayıt yok, her zaman bir gözden geçirme adımı var).
+function hasarFormAcVePrefill(vehicleId, bolge, tur, aciklamaOnDolum){
+  document.getElementById('vehicleDetailOverlay')?.remove();
+  openVehicleDetail(vehicleId);
+  setTimeout(()=>{
+    try{
+      if(typeof vdShowTab==='function') vdShowTab('bakim');
+      hasarBolgeSec(bolge||'');
+      const turEl = document.getElementById('hasarTur'); if(turEl && tur) turEl.value = tur;
+      const aciklamaEl = document.getElementById('hasarAciklama'); if(aciklamaEl && aciklamaOnDolum && !aciklamaEl.value) aciklamaEl.value = aciklamaOnDolum;
+    }catch(e){}
+  }, 60);
+}
 async function hasarKaydet(id){
   if(!requireAdmin()) return;
   const v = vehicles.find(x=>x.id===id); if(!v) return;
@@ -7260,7 +7522,19 @@ async function hasarKaydet(id){
   const dosyalar = [...(fotoInp.files||[])];
   if(dosyalar.some(f=>f.size > 10*1024*1024)){ showToast('Bazı fotoğraflar çok büyük (en fazla 10 MB).', true); return; }
   if(dosyalar.some(f=>f.type === 'image/svg+xml')){ showToast('SVG dosyaları desteklenmiyor.', true); return; }
-  const h = {id:'h'+Date.now(), tarih, aciklama, tutar: tutar===''?null:Number(tutar), fotoKey:null, fotolar:[]};
+  const bolgeEl = document.getElementById('hasarBolge');
+  const turEl = document.getElementById('hasarTur');
+  const kmEl = document.getElementById('hasarKm');
+  const maliyetEl = document.getElementById('hasarMaliyet');
+  const musteriBedelEl = document.getElementById('hasarMusteriBedel');
+  const h = {
+    id:'h'+Date.now(), tarih, aciklama, tutar: tutar===''?null:Number(tutar), fotoKey:null, fotolar:[],
+    bolge: (bolgeEl && bolgeEl.value) ? bolgeEl.value : null,
+    tur: (turEl && turEl.value) ? turEl.value : null,
+    km: (kmEl && kmEl.value!=='') ? Number(kmEl.value) : null,
+    maliyet: (maliyetEl && maliyetEl.value!=='') ? Number(maliyetEl.value) : null,
+    musteriyeYansitilanBedel: (musteriBedelEl && musteriBedelEl.value!=='') ? Number(musteriBedelEl.value) : null,
+  };
   try{
     for(let i=0;i<dosyalar.length;i++){
       let dataUrl = await fotoSikistir(dosyalar[i], 1600, 0.72);
@@ -10703,7 +10977,24 @@ async function sozlesmeOlustur(format){
   }
 
   // Doğrudan oluştur — GitHub Pages'te /api olmadığından sunucu denemesi yapılmaz
-  await sozKaydet(sozData, bas, bitis);
+  const sozRec2 = await sozKaydet(sozData, bas, bitis);
+  // FAZ4 Part B.2: bu ekran da doğrudan aracı "Kirada" yaptığı için diğer hızlı yollarla aynı
+  // şekilde rentals koleksiyonuna işlenir. Bu formda ayrı bir teslim kontrol listesi yok —
+  // teslimKontrol boş kalır, bu da İade Al sırasında (Part B.5) otomatik hasar karşılaştırmasının
+  // sessizce atlanmasına yol açar; bu bilinçli ve zararsız bir sınırlamadır.
+  if(vIdx>-1){
+    await rentalOlusturVeyaGuncelle(vehicleId, {
+      customerId: customerIdAdaGoreBul(kiraci),
+      durum: 'teslimEdildi',
+      baslangic: bas, bitis: bitis,
+      kiraTutari: kira ? Number(kira) : null,
+      depozito: depozito!=='' && depozito!=null && !isNaN(Number(depozito)) ? Number(depozito) : null,
+      kmLimiti: kmLimit!=='' && kmLimit!=null ? Number(kmLimit) : null,
+      fazlaKmBedeli: kmAsim!=='' && kmAsim!=null && !isNaN(Number(kmAsim)) ? Number(kmAsim) : null,
+      ekHizmetler: notlar||'',
+      sozlesmeId: sozRec2 ? sozRec2.id : null,
+    });
+  }
   if(format==='pdf'){
     if(log) log.innerHTML = '<div style="color:var(--text-3);font-size:13px;">✅ PDF sözleşme açıldı — yazdır penceresinden kaydedin.</div>';
     sozlesmeHtmlPdf(sozData);
@@ -11274,6 +11565,236 @@ function sozChipRenk(f){
   const m = {tumu:'var(--accent-blue)', aktif:'#36A168', gecmis:'#E1554E', iade:'var(--accent-blue)'};
   return m[f]||'var(--steel-300)';
 }
+// ================================================================================
+// FAZ4 Part B.3: Yeni Kiralama (Adım Adım) — teklif → sözleşme → teslim akışı.
+// Hızlı "Araç Kirala" akışına EK bir seçenektir; hiçbir mevcut düğme/etiket/zorunlu alan
+// değiştirilmedi. Sözleşme adımı mevcut sozKaydet/sozlesmeHtmlPdf akışını yeniden kullanır,
+// teslim adımı mevcut teslimTutanakAc şablonunu yeniden kullanır — hiçbiri yeniden yazılmadı.
+// ================================================================================
+let ykSihirbazState = null; // {rentalId, sozData}
+const YK_DURUM_ETIKET = {teklif:'Teklif', rezervasyon:'Rezervasyon', sozlesmeHazir:'Sözleşme Hazır', teslimEdildi:'Teslim Edildi', iadeAlindi:'İade Alındı', kapandi:'Kapandı', iptal:'İptal'};
+function openYeniKiralamaSihirbazi(){
+  if(!requireAdmin()){ showToast('Bu işlem için yönetici girişi gerekir.', true); return; }
+  ykSihirbazState = { rentalId: null, sozData: null };
+  const eski = document.getElementById('ykModal'); if(eski) eski.remove();
+  const el = document.createElement('div');
+  el.className = 'iade-modal';
+  el.id = 'ykModal';
+  el.innerHTML = ykSihirbaziHtml();
+  el.addEventListener('click', e=>{ if(e.target===el) el.remove(); });
+  document.body.appendChild(el);
+}
+function ykSihirbaziHtml(){
+  const r = (ykSihirbazState && ykSihirbazState.rentalId) ? rentals.find(x=>x.id===ykSihirbazState.rentalId) : null;
+  const durum = r ? r.durum : null;
+  const v = r ? vehicles.find(x=>x.id===r.vehicleId) : null;
+  return `
+    <div class="iade-card" style="max-width:620px;">
+      <div class="iade-head">
+        <h3>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#36A168" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8v8h6l4 4V4L9 8H3Z"/></svg>
+          Yeni Kiralama — Adım Adım ${durum?`<span class="mini-plaka" style="font-size:11px;">${esc(YK_DURUM_ETIKET[durum]||durum)}</span>`:''}
+        </h3>
+        <button class="vqm-close" onclick="document.getElementById('ykModal').remove()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="iade-body" style="max-height:70vh;overflow-y:auto;">
+        <div class="iade-section">1 — Müşteri</div>
+        <div class="iade-row">
+          <div class="iade-field" style="grid-column:1/-1;">
+            <label>Müşteri (gerçek müşteri kaydı — Müşteriler/CRM)</label>
+            <select id="ykMusteri" ${durum?'disabled':''}>
+              <option value="">— Müşteri seçin (opsiyonel, teklif için zorunlu değil) —</option>
+              ${musterileriSirali().map(c=>`<option value="${c.id}" ${r&&r.customerId===c.id?'selected':''}>${esc(musteriGoruntuAdi(c))}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        ${!durum ? `<button type="button" onclick="ykYeniMusteriAc()" style="background:none;border:1px dashed var(--border-2);color:var(--accent-blue);padding:5px 10px;border-radius:7px;font-size:11.5px;font-weight:600;cursor:pointer;margin:2px 0 10px;">+ Yeni müşteri ekle</button>` : ''}
+
+        <div class="iade-section">2 — Araç</div>
+        <div class="iade-row">
+          <div class="iade-field" style="grid-column:1/-1;">
+            <label>Araç ${durum?'':'(sadece "Müsait" araçlar listelenir)'}</label>
+            <select id="ykArac" ${durum?'disabled':''}>
+              <option value="">— Araç seçin —</option>
+              ${vehicles.filter(x=>durum ? x.id===(r&&r.vehicleId) : x.durum==='Müsait').map(x=>`<option value="${x.id}" ${r&&r.vehicleId===x.id?'selected':''}>${esc(x.plaka)} — ${esc([x.marka,x.model].filter(Boolean).join(' ')||'Araç')}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+
+        <div class="iade-section">3 — Kira Koşulları</div>
+        <div class="iade-row">
+          <div class="iade-field"><label>Başlangıç</label><input type="date" id="ykBas" value="${r?(r.baslangic||''):todayISO()}" ${durum?'disabled':''}></div>
+          <div class="iade-field"><label>Bitiş</label><input type="date" id="ykBitis" value="${r?(r.bitis||''):isoPlusYil(todayISO(),1)}" ${durum?'disabled':''}></div>
+        </div>
+        <div class="iade-row">
+          <div class="iade-field"><label>Kira tutarı (₺)</label><input type="number" id="ykKira" min="0" value="${r&&r.kiraTutari!=null?r.kiraTutari:''}" ${durum?'disabled':''}></div>
+          <div class="iade-field"><label>Depozito (₺)</label><input type="number" id="ykDepozito" min="0" value="${r&&r.depozito!=null?r.depozito:''}" ${durum?'disabled':''}></div>
+        </div>
+        <div class="iade-row">
+          <div class="iade-field"><label>Aylık km limiti</label><input type="number" id="ykKmLimit" min="0" value="${r&&r.kmLimiti!=null?r.kmLimiti:3000}" ${durum?'disabled':''}></div>
+          <div class="iade-field"><label>Fazla km bedeli (₺/km)</label><input type="number" id="ykFazlaKmBedeli" min="0" step="0.5" value="${r&&r.fazlaKmBedeli!=null?r.fazlaKmBedeli:3}" ${durum?'disabled':''}></div>
+        </div>
+        <div class="iade-field"><label>Ek hizmetler / notlar</label><input type="text" id="ykEkHizmetler" value="${r?esc(r.ekHizmetler||''):''}" placeholder="Varsa özel koşullar, ek hizmetler..." ${durum?'disabled':''}></div>
+
+        ${durum && durum!=='teslimEdildi' ? `
+        <div class="iade-section">4 — Sözleşme</div>
+        ${durum==='teklif' ? `<p style="font-size:12.5px;color:var(--text-2);margin:0 0 10px;">Teklif oluşturuldu. Devam etmek için mevcut sözleşme şablonuyla (23 madde + Ekler) sözleşmeyi hazırlayın.</p>
+          <button class="add-btn" onclick="ykSozlesmeyeIlerle()">Sözleşmeye ilerle</button>` : ''}
+        ` : ''}
+        ${durum==='sozlesmeHazir' ? `
+        <div class="iade-section">5 — Teslim Et</div>
+        <p style="font-size:12.5px;color:var(--text-2);margin:0 0 10px;">Sözleşme hazır. Aracı teslim ederken km/yakıt ve kontrol listesini girin — kaydettiğinizde araç otomatik "Kirada" olur ve Teslim Tutanağı (Ek-1) açılır.</p>
+        <div class="iade-row">
+          <div class="iade-field"><label>Teslim km</label><input type="number" id="ykTeslimKm" min="0" value="${v?v.teslimKm||'':''}"></div>
+          <div class="iade-field">
+            <label>Teslim yakıt seviyesi</label>
+            <select id="ykTeslimYakit">
+              <option>Dolu</option><option>3/4</option><option>Yarım</option><option>1/4</option><option>Boş</option>
+            </select>
+          </div>
+        </div>
+        <details open style="margin-bottom:10px;">
+          <summary style="cursor:pointer;font-size:12.5px;font-weight:600;color:var(--text-2);padding:6px 2px;">Teslim Kontrol Listesi</summary>
+          <div style="padding:10px 2px 2px;">${kontrolListesiHtml('ykChk', {})}</div>
+        </details>
+        <button class="add-btn" onclick="ykTeslimEt()">Teslim Et</button>
+        ` : ''}
+        ${durum==='teslimEdildi' ? `<div style="background:rgba(54,161,104,.1);border:1px solid rgba(54,161,104,.3);border-radius:9px;padding:12px 14px;color:#36A168;font-weight:600;font-size:13px;">✓ Araç teslim edildi, durum "Kirada". İade işlemi normal "İade Al" akışından yapılır.</div>` : ''}
+      </div>
+      <div class="iade-foot">
+        <button class="iade-btn-cancel" onclick="document.getElementById('ykModal').remove()">${durum?'Kapat':'Vazgeç'}</button>
+        ${!durum ? `<button class="iade-btn-save" onclick="ykTeklifOlustur()">Teklif Oluştur</button>` : ''}
+      </div>
+    </div>`;
+}
+function ykYeniMusteriAc(){
+  musteriFormAc(null);
+  // Müşteri kaydedilip formu kapanınca sihirbazı yeniden çiz ki yeni müşteri seçilebilsin.
+  const gozlemci = setInterval(()=>{
+    if(!document.getElementById('musteriFormOverlay')){
+      clearInterval(gozlemci);
+      const modal = document.getElementById('ykModal');
+      if(modal) modal.innerHTML = ykSihirbaziHtml();
+    }
+  }, 350);
+}
+async function ykTeklifOlustur(){
+  const customerId = document.getElementById('ykMusteri')?.value||null;
+  const vehicleId = document.getElementById('ykArac')?.value;
+  const bas = document.getElementById('ykBas')?.value;
+  const bitis = document.getElementById('ykBitis')?.value;
+  if(!vehicleId){ showToast('Lütfen araç seçin.', true); return; }
+  if(!bas || !bitis || bitis<=bas){ showToast('Geçerli bir tarih aralığı girin (bitiş, başlangıçtan sonra olmalı).', true); return; }
+  const v = vehicles.find(x=>x.id===vehicleId);
+  if(!v){ showToast('Araç bulunamadı.', true); return; }
+  if(v.durum!=='Müsait'){ showToast('Bu araç şu anda müsait değil.', true); return; }
+  const r = await rentalOlusturVeyaGuncelle(vehicleId, {
+    customerId: customerId||null,
+    durum: 'teklif',
+    baslangic: bas, bitis: bitis,
+    kiraTutari: (()=>{ const n=Number(document.getElementById('ykKira')?.value); return isNaN(n)||n===0?null:n; })(),
+    depozito: (()=>{ const n=Number(document.getElementById('ykDepozito')?.value); return isNaN(n)||n===0?null:n; })(),
+    kmLimiti: (()=>{ const n=Number(document.getElementById('ykKmLimit')?.value); return isNaN(n)||n===0?null:n; })(),
+    fazlaKmBedeli: (()=>{ const n=Number(document.getElementById('ykFazlaKmBedeli')?.value); return isNaN(n)||n===0?null:n; })(),
+    ekHizmetler: document.getElementById('ykEkHizmetler')?.value?.trim()||'',
+  });
+  ykSihirbazState = { rentalId: r.id, sozData: null };
+  showToast('Kiralama teklifi oluşturuldu.');
+  logActivity('add', `Kiralama teklifi oluşturuldu (adım adım akış): <b>${esc(v.plaka)}</b>`);
+  const modal = document.getElementById('ykModal'); if(modal) modal.innerHTML = ykSihirbaziHtml();
+}
+async function ykSozlesmeyeIlerle(){
+  const r = rentals.find(x=>x.id===(ykSihirbazState&&ykSihirbazState.rentalId)); if(!r) return;
+  if(!r.customerId){ showToast('Sözleşme oluşturmak için önce bir müşteri seçin.', true); return; }
+  const v = vehicles.find(x=>x.id===r.vehicleId); if(!v) return;
+  const musteri = customers.find(c=>c.id===r.customerId);
+  const kiraci = musteriGoruntuAdi(musteri)||'—';
+  const basTxt = (r.baslangic||'').split('-').reverse().join('.');
+  const bitisTxt = (r.bitis||'').split('-').reverse().join('.');
+  // Mevcut sözleşme şablonuyla (sozKaydet/sozlesmeHtmlPdf) BİREBİR aynı veri şekli —
+  // kirayaVerVeSozlesme/sozlesmeOlustur'daki sozData ile tutarlı, yeniden icat edilmedi.
+  const sozData = {
+    firmaAdi: 'PEKDOĞRU OTOMOTİV TURİZM TAŞIMACILIK NAKLİYE HAYVANCILIK TİCARET LİMİTED ŞİRKETİ',
+    firmaAdres: localStorage.getItem('filoPaneli_firmaAdres')||'Ferhuniye Mah. Sultanşah Cad. No:24B Selçuklu / KONYA',
+    firmaTelefon: localStorage.getItem('filoPaneli_firmaTelefon')||'',
+    firmaVergiNo: localStorage.getItem('filoPaneli_firmaVergiNo')||'',
+    firmaEposta: localStorage.getItem('filoPaneli_firmaEposta')||'',
+    sozlesmeTip: 'Operasyonel Kiralama',
+    kiraci, kiraciVergi: (musteri&&(musteri.vkn||musteri.tc))||'', kiraciAdres: (musteri&&musteri.adres)||'', kiraciTel: (musteri&&musteri.telefon)||'', kiraciEhliyet: (musteri&&musteri.ehliyetNo)||'', kiraciVKN: (musteri&&(musteri.vkn||musteri.tc))||'',
+    kefil: '', kefilTC: '',
+    yakit: 'Dolu', teslimYer: '',
+    bas: basTxt, bitis: bitisTxt,
+    plaka: v.plaka, marka: v.marka||'', model: v.model||'',
+    versiyon: v.versiyon||'', aracCinsi: v.aracCinsi||'',
+    modelYili: v.modelYili||'', renk: v.renk||'',
+    ruhsatNo: v.ruhsatSeriNo||'', sasiNo: v.sasiNo||'', motorNo: v.motorNo||'',
+    teslimKm: v.teslimKm ? Number(v.teslimKm).toLocaleString('tr-TR') : '—',
+    aylikKira: r.kiraTutari ? Number(r.kiraTutari).toLocaleString('tr-TR',{minimumFractionDigits:2}) : '—',
+    yillikKira: r.kiraTutari ? (Number(r.kiraTutari)*12).toLocaleString('tr-TR',{minimumFractionDigits:2}) : '—',
+    kmLimit: r.kmLimiti ? Number(r.kmLimiti).toLocaleString('tr-TR') : '3.000',
+    kmAsimFiyat: r.fazlaKmBedeli!=null ? Number(r.fazlaKmBedeli).toLocaleString('tr-TR',{minimumFractionDigits:2}) : '3,00',
+    depozito: r.depozito!=null ? Number(r.depozito).toLocaleString('tr-TR',{minimumFractionDigits:2}) : '—',
+    sure: (r.baslangic&&r.bitis) ? (()=>{ const g=Math.round((new Date(r.bitis)-new Date(r.baslangic))/86400000); return g>=30?Math.round(g/30)+' ay':g+' gün'; })() : '—',
+    notlar: r.ekHizmetler||'',
+    tarih: new Date().toLocaleDateString('tr-TR'),
+    sozNo: 'SOZ-'+new Date().getFullYear()+'-'+Date.now().toString().slice(-4),
+  };
+  const sozRec = await sozKaydet(sozData, r.baslangic, r.bitis);
+  sozlesmeHtmlPdf(sozData);
+  r.durum = 'sozlesmeHazir';
+  r.sozlesmeId = sozRec ? sozRec.id : null;
+  await persistRentals();
+  ykSihirbazState.sozData = sozData;
+  showToast('Sözleşme oluşturuldu — PDF açıldı. Bir sonraki adımda aracı teslim edebilirsiniz.');
+  logActivity('edit', `Sözleşme hazırlandı (adım adım akış): <b>${esc(v.plaka)}</b> · ${esc(kiraci)}`);
+  const modal = document.getElementById('ykModal'); if(modal) modal.innerHTML = ykSihirbaziHtml();
+}
+async function ykTeslimEt(){
+  const r = rentals.find(x=>x.id===(ykSihirbazState&&ykSihirbazState.rentalId)); if(!r) return;
+  const v = vehicles.find(x=>x.id===r.vehicleId); if(!v) return;
+  const teslimKm = Number(document.getElementById('ykTeslimKm')?.value)||v.teslimKm||0;
+  const yakit = document.getElementById('ykTeslimYakit')?.value||'Dolu';
+  const kontrolListesi = kontrolListesiOku('ykChk');
+  const musteri = r.customerId ? customers.find(c=>c.id===r.customerId) : null;
+  const kiraci = musteri ? musteriGoruntuAdi(musteri) : '';
+  const idx = vehicles.findIndex(x=>x.id===v.id);
+  vehicles[idx] = {
+    ...v,
+    durum: 'Kirada',
+    kiraciAdi: kiraci||v.kiraciAdi||'',
+    kiraciVergi: musteri ? (musteri.vkn||musteri.tc||'') : (v.kiraciVergi||''),
+    kiraciTel: musteri ? (musteri.telefon||'') : (v.kiraciTel||''),
+    kiraciAdres: musteri ? (musteri.adres||'') : (v.kiraciAdres||''),
+    kira: r.kiraTutari||v.kira||0,
+    kiraBitis: r.bitis||v.kiraBitis,
+    sozlesmeBitis: r.bitis||v.sozlesmeBitis,
+    teslimKm: teslimKm||v.teslimKm||0,
+    teslimTarih: r.baslangic||v.teslimTarih||'',
+    kmLimiti: r.kmLimiti!=null ? r.kmLimiti : v.kmLimiti,
+    kmAsimFiyat: r.fazlaKmBedeli!=null ? r.fazlaKmBedeli : v.kmAsimFiyat,
+    depozito: r.depozito!=null ? r.depozito : v.depozito,
+    kiraGecmisi: [...(v.kiraGecmisi||[]), {bas:r.baslangic, bitis:r.bitis, yer:kiraci, teslimKm: teslimKm||v.teslimKm||0, iadeKm:0, yakit:'', hasar:'', not: r.ekHizmetler||''}],
+  };
+  await persist();
+  render();
+  if(window.__currentPage && window.__currentPage!=='arac-yonetimi') renderCurrentPage();
+  r.durum = 'teslimEdildi';
+  r.teslimKontrol = { tarih: todayISO(), km: teslimKm||null, yakitSeviyesi: yakit, kontrolListesi, fotograflar: [] };
+  await persistRentals();
+  logActivity('edit', `Araç teslim edildi (adım adım akış): <b>${esc(v.plaka)}</b> · ${esc(kiraci)}`);
+  showToast(v.plaka+' teslim edildi, durum "Kirada" olarak güncellendi.');
+  // Mevcut Teslim Tutanağı (Ek-1) şablonunu (teslimTutanakAc) yeniden kullan.
+  const d = Object.assign({}, ykSihirbazState.sozData||{});
+  d.araclar = [{ plaka: v.plaka, marka: v.marka||'', model: v.model||'', modelYili: v.modelYili||'', renk: v.renk||'', teslimKm: teslimKm ? teslimKm.toLocaleString('tr-TR') : '—' }];
+  d.yakit = yakit;
+  d.plaka = v.plaka;
+  teslimTutanakAc(d);
+  document.getElementById('ykModal')?.remove();
+  renderKiralamaPage();
+}
+
 function renderKiralamaPage(){
   const page = document.getElementById('page-kiralama');
   const kirada = vehicles.filter(v=>v.durum==='Kirada');
@@ -11312,11 +11833,12 @@ function renderKiralamaPage(){
       <button onclick="krTabSet('islem')" data-kr="islem" style="padding:9px 20px;border-radius:999px;font-size:13px;font-weight:700;cursor:pointer;border:1px solid var(--accent-blue);background:var(--accent-blue);color:#fff;">① İşlemler</button>
       <button onclick="krTabSet('sozlesme')" data-kr="sozlesme" style="padding:9px 20px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--border-2);background:var(--surface);color:var(--text-2);">② Sözleşmeler</button>
       <button onclick="krTabSet('gecmis')" data-kr="gecmis" style="padding:9px 20px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--border-2);background:var(--surface);color:var(--text-2);">③ Geçmiş</button>
+      <button onclick="openYeniKiralamaSihirbazi()" style="margin-left:auto;padding:9px 16px;border-radius:999px;font-size:12.5px;font-weight:700;cursor:pointer;border:1px solid rgba(54,161,104,.35);background:rgba(54,161,104,.12);color:#36A168;">+ Yeni Kiralama (Adım Adım)</button>
     </div>
     <div class="kr-pane" data-kr="islem">
     <div class="dcard" style="margin-bottom:16px;">
       <h3 style="margin-bottom:2px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8v8h6l4 4V4L9 8H3Z"/></svg>Kira İşlemleri</h3>
-      <p style="font-size:13px;color:var(--text-2);margin:2px 0 14px;">Bir araç seçip kiralama, teslim veya iade işlemini buradan yönetin.</p>
+      <p style="font-size:13px;color:var(--text-2);margin:2px 0 14px;">Bir araç seçip kiralama, teslim veya iade işlemini buradan yönetin. Bu, personelin en sık kullandığı hızlı akıştır — hiçbir alanı/etiketi değişmedi. Müşteri kaydına bağlı, teklif/sözleşme/teslim adımlarını tek tek izleyen bir akış isterseniz sağ üstteki "Yeni Kiralama (Adım Adım)" butonunu kullanın.</p>
       <div class="field" style="max-width:420px;position:relative;margin-bottom:0;">
         <label>Araç seç</label>
         <input type="text" id="kiOpAra" placeholder="Plaka veya model ara..." autocomplete="off" oninput="kiOpFiltrele()" onfocus="kiOpFiltrele()">
@@ -12721,6 +13243,117 @@ async function persistPayments(){
     return false;
   }
 }
+async function persistRentals(){
+  try{
+    await withStorageTimeout(storageAPI.set('rentals', JSON.stringify(rentals)));
+    return true;
+  }catch(e){
+    showToast((e && /zaman aşımı/i.test(e.message||'')) ? e.message : 'Kiralama kaydı kaydedilemedi.', true);
+    return false;
+  }
+}
+
+// ================================================================================
+// FAZ4: Kiralama durum makinesi + Teslim/İade kontrol listesi + otomatik hasar tespiti
+// Mevcut hızlı "Araç Kirala" (kirayaVerVeSozlesme/sozlesmeOlustur) ve "İade Al" (saveIade)
+// akışları GÖRÜNÜR OLARAK hiç değişmedi — bu fonksiyonlar arka planda ayrıca bir rentals
+// kaydı oluşturup güncelliyor ki her kiralama (hızlı ya da adım adım) tek bir yerden
+// izlenebilsin. FAZ4 öncesi oluşmuş kiralamaların rentals'ta hiç kaydı yoktur — bu normaldir,
+// aşağıdaki fonksiyonlar bu durumu (rental===null) her yerde sessizce tolere eder.
+// ================================================================================
+
+// Bir araç için açık (kapanmamış) rentals kaydını bulur; yoksa null döner.
+function rentalAcikBul(vehicleId){
+  return rentals.find(r=>r.vehicleId===vehicleId && r.durum!=='kapandi' && r.durum!=='iptal') || null;
+}
+// Ada göre (FAZ3) gerçek bir customers kaydı arar — bulunamazsa null (müşteri seçimi eski
+// hızlı akışta zorunlu değildir, bu durumda rental.customerId boş kalır).
+function customerIdAdaGoreBul(ad){
+  const q = String(ad||'').trim().toLocaleLowerCase('tr-TR');
+  if(!q) return null;
+  const bul = customers.find(c=>musteriGoruntuAdi(c).trim().toLocaleLowerCase('tr-TR')===q);
+  return bul ? bul.id : null;
+}
+// Hızlı/adım-adım akışların ortak köprüsü: bir araç için açık kaydı günceller, yoksa yeni
+// oluşturur. Var olan alanlar korunur (Object.assign ile yalnızca patch'teki alanlar değişir).
+async function rentalOlusturVeyaGuncelle(vehicleId, patch){
+  let r = rentalAcikBul(vehicleId);
+  if(!r){
+    r = {
+      id: yeniId('rnt'), vehicleId, customerId: null, durum: 'teklif',
+      baslangic: null, bitis: null, kiraTutari: null, depozito: null, kmLimiti: null,
+      fazlaKmBedeli: null, ekHizmetler: '',
+      teslimKontrol: null, iadeKontrol: null,
+      hesaplananFazlaKmBedeli: null, hesaplananYakitBedeli: null, hesaplananEkUcretler: null,
+      sozlesmeId: null,
+    };
+    rentals.push(r);
+  }
+  Object.assign(r, patch);
+  await persistRentals();
+  return r;
+}
+
+// ----- Teslim / İade kontrol listesi (Part B.4/B.5) -----
+// Basit üç durumlu (İyi/Hasarlı/Eksik) kalem listesi. kapiSol/kapiSag ayrımı bilinçli bir
+// tercih: tek bir genel "kapı" kalemi hangi tarafın hasarlı olduğunu ayırt edemezdi.
+const KONTROL_KALEMLERI = [
+  ['tampon','Tampon (ön/arka)'], ['kapiSol','Kapı (sol)'], ['kapiSag','Kapı (sağ)'],
+  ['kaput','Kaput'], ['bagaj','Bagaj'], ['cam','Camlar'], ['far','Far / Stop'],
+  ['ayna','Aynalar'], ['jant','Jant'], ['lastik','Lastikler'], ['icMekan','İç mekân'],
+  ['stepne','Stepne'], ['kriko','Kriko / takım'], ['ruhsat','Ruhsat'], ['anahtar','Anahtar(lar)'],
+  ['hgs','HGS/OGS'], ['aksesuar','Aksesuar'],
+];
+const KONTROL_DURUM_ETIKET = {iyi:'İyi', hasarli:'Hasarlı', eksik:'Eksik'};
+// Kontrol kalemi → hasar bölgesi eşlemesi (Part A bölge listesine göre). Dış gövdeyle
+// doğrudan ilişkisi olmayan kalemler için otomatik bölge tahmini anlamsız olacağından null
+// bırakılır; personel açılan hasar formunda bölgeyi elle seçer/düzeltir.
+const KONTROL_BOLGE_ESLEME = {
+  tampon:'on', kapiSol:'sol', kapiSag:'sag', kaput:'kaput', bagaj:'bagaj',
+  cam:'cam', far:'on', ayna:'sag', jant:'jant', lastik:'jant',
+  icMekan:null, stepne:null, kriko:null, ruhsat:null, anahtar:null, hgs:null, aksesuar:null,
+};
+function kontrolListesiHtml(prefix, mevcut){
+  mevcut = mevcut || {};
+  return `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;">
+    ${KONTROL_KALEMLERI.map(([k,l])=>`
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
+        <label style="font-size:11.5px;color:var(--text-2);flex:1;">${esc(l)}</label>
+        <select id="${prefix}_${k}" style="font-size:12px;padding:4px 6px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);">
+          <option value="iyi" ${(!mevcut[k]||mevcut[k]==='iyi')?'selected':''}>İyi</option>
+          <option value="hasarli" ${mevcut[k]==='hasarli'?'selected':''}>Hasarlı</option>
+          <option value="eksik" ${mevcut[k]==='eksik'?'selected':''}>Eksik</option>
+        </select>
+      </div>`).join('')}
+  </div>`;
+}
+function kontrolListesiOku(prefix){
+  const out = {};
+  KONTROL_KALEMLERI.forEach(([k])=>{
+    const el = document.getElementById(prefix+'_'+k);
+    out[k] = el ? el.value : 'iyi';
+  });
+  return out;
+}
+// Teslim → iade arasında "iyi"den "hasarlı"ya geçen kalemleri bulur (Part B.5).
+function kontrolListesiKarsilastir(teslim, iade){
+  if(!teslim || !iade) return [];
+  const degisenler = [];
+  KONTROL_KALEMLERI.forEach(([k,l])=>{
+    const eski = teslim[k]||'iyi';
+    const yeni = iade[k]||'iyi';
+    if(eski!=='hasarli' && yeni==='hasarli') degisenler.push({kalem:k, etiket:l, eski, yeni});
+  });
+  return degisenler;
+}
+// Yakıt seviyesi ölçeği — mevcut Dolu/3/4/Yarım/1/4/Boş seçenekleriyle birebir aynı sırayla.
+const YAKIT_SEVIYE_INDEKS = {'Boş':0, '1/4':1, 'Yarım':2, '3/4':3, 'Dolu':4};
+// TAHMİNİ sabitler — GERÇEK/DOĞRULANMIŞ DEĞİLDİR. Ortalama depo hacmi ve güncel yakıt fiyatı
+// işletmeden işletmeye ve zamana göre değişir; burada bilinçli olarak sabit kodlanmıştır ki
+// eksik yakıt bedeli en azından kabaca hesaplanabilsin. İşletme sahibi bu iki sabiti kendi
+// filosuna/güncel piyasa fiyatına göre güncellemelidir (arayüzde de "tahmini" olarak etiketlenir).
+const TAHMINI_DEPO_LITRE = 50;      // TAHMİNİ ortalama depo hacmi (L)
+const TAHMINI_YAKIT_FIYATI_TL = 45; // TAHMİNİ ₺/L — gerçek zamanlı/doğrulanmış bir fiyat değildir
 
 // ----- Doğrulama (Ürün şartnamesi Bölüm 49) -----
 // T.C. Kimlik No — resmi sağlama (checksum) algoritması TAM olarak uygulanmıştır:
