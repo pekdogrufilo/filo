@@ -2163,7 +2163,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-16.148</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-16.149</div>
     </div>
   </div>
 </div>
@@ -2298,7 +2298,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-16.148</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-16.149</div>
     </div>
   </aside>
 <script>
@@ -3221,6 +3221,11 @@ let trafficFines = [];
 // bu iki dizi onların üzerine eklenen, ek bilgi taşıyan bir katmandır.
 let documents = [];
 let notifications = [];
+// FAZ8: Otomasyon Kuralları — documents/notifications ile birebir aynı depolama deseni (tek
+// JSON blob, storageAPI üzerinden, persistAutomationRules). bildirimUret()'in ürettiği kalıcı
+// notifications kaydını TEMEL ALIR (bkz. bildirimEkleyeBil) — ayrı bir bildirim mekanizması
+// İCAT EDİLMEDİ, kural motoru aynı fonksiyonu kullanır.
+let automationRules = [];
 let activeFilter = 'hepsi';
 let activeSirket = 'hepsi';
 let belgeFilterType = null; // null | 'sigorta' | 'muayene' | 'kira'
@@ -3312,11 +3317,29 @@ async function load(){
     const nr = await storageAPI.get('notifications').catch(()=>null);
     notifications = (nr && nr.value) ? JSON.parse(nr.value) : [];
   }catch(e){ notifications = []; }
+  // FAZ8: automationRules — storageAPI'de kayıt HİÇ yoksa (ilk açılış, vehicles/IMPORTED_DATA
+  // ile AYNI ilke) örnek/varsayılan kurallarla başlar; kullanıcı hepsini silmişse (kayıt var
+  // ama boş dizi) o tercihe saygı gösterilir, yeniden seed EDİLMEZ.
+  try{
+    const arr = await storageAPI.get('automationRules').catch(()=>null);
+    if(arr && arr.value){
+      automationRules = JSON.parse(arr.value);
+    }else{
+      automationRules = OTOMASYON_VARSAYILAN_KURALLAR.map(r=>({...r, id: yeniId('rule'), sonCalismaTarihi: null}));
+      await persistAutomationRules();
+    }
+  }catch(e){ automationRules = []; }
   // FAZ6: bildirim kayıtlarını (dedupe'lu) üret — sayfa her açıldığında değil, sadece burada,
   // uygulama yüklenirken bir kez çalışır. Yeni kayıt eklendiyse kalıcı olarak saklanır.
   try{
     if(bildirimUret()) await persistNotifications();
   }catch(e){ console.error('bildirimUret hatası:', e); }
+  // FAZ8: otomasyon kurallarını çalıştır — günde en fazla bir kez (localStorage'daki son
+  // çalışma tarihine bakılır, bkz. otomasyonKurallariCalistirGerekliMi). Eşleşen durumlar
+  // bildirimUret() ile AYNI kalıcı notifications kaydına (bildirimEkleyeBil) yazılır.
+  try{
+    await otomasyonKurallariCalistir();
+  }catch(e){ console.error('otomasyonKurallariCalistir hatası:', e); }
   updateArsivSayi();
   buildSirketFilter();
   render();
@@ -13602,6 +13625,94 @@ function belgeMerkeziGecmisGoster(ilgiliTip, ilgiliId, tur){
   document.body.appendChild(el);
 }
 
+// ================================================================================
+// FAZ8: Gelişmiş Analitik — Raporlar sayfasına eklenen 6 aylık trend grafikleri + gider
+// kalemleri dökümü. Mevcut FAZ7 formüllerini (giderKaynaklariAyIcin, aracAmortismanAylik,
+// vehicleGercekGelirHesapla, aracDolulukIcinGunSayisi, computeMasrafKategoriData) AYNEN
+// kullanır — yeni bir hesaplama mantığı İCAT EDİLMEZ, sadece zaman serisine yayılır.
+// ================================================================================
+
+// vehicleGercekGelirHesapla() "araç ŞU AN Kirada mı" varsayımına dayanır — bu TEK bir (yakın)
+// ay için makuldür ama 6 aylık bir trend geçmiş ayları da kapsadığından aracın BUGÜNKÜ
+// durumuna göre geçmiş ayları yanlış temsil edebilir (ör. araç bugün Müsait ama 4 ay önce
+// kiradaydı). Bu yüzden trend grafiğinde: gerçek fatura verisi varsa (kaynak:'fatura') o
+// kullanılır; yoksa o AYA ÖZGÜ gerçek kiralama gün sayısı oranında (rentals üzerinden
+// aracDolulukIcinGunSayisi — FAZ7, Araç Doluluk Raporu'yla AYNI fonksiyon) kira geliri tahmin
+// edilir. Bu, güncel duruma bakmaktan daha dürüst bir basitleştirmedir ama yine de bir
+// TAHMİNDİR — gerçek fatura/tahsilat verisi olmayan aylar için kesin değildir (bkz. UI notu).
+function aracAyGeliriTahminEt(v, ayKey){
+  const gelirBilgisi = vehicleGercekGelirHesapla(v, ayKey);
+  if(gelirBilgisi.kaynak==='fatura') return gelirBilgisi.gelir;
+  if(!v.kira) return 0;
+  const ayBas = ayKey+'-01';
+  const ayBit = new Date(Number(ayKey.slice(0,4)), Number(ayKey.slice(5,7)), 0).toISOString().slice(0,10);
+  const {toplamGun, kiradaGun} = aracDolulukIcinGunSayisi(v, ayBas, ayBit);
+  if(!toplamGun || !kiradaGun) return 0;
+  return Math.round(Number(v.kira) * (kiradaGun/toplamGun));
+}
+// Filodaki TÜM araçların kârlılığını (aracAyGeliriTahminEt + giderKaynaklariAyIcin +
+// aracAmortismanAylik — üçü de mevcut FAZ5/7 fonksiyonları) son 6 ay için toplayan seri.
+function karlilikTrendSon6Ay(){
+  const aylar = [];
+  const now = new Date();
+  for(let i=5;i>=0;i--){
+    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    aylar.push({key:`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`, label: d.toLocaleDateString('tr-TR',{month:'short'})});
+  }
+  return aylar.map(a=>{
+    let gelir=0, gider=0;
+    vehicles.forEach(v=>{
+      gelir += aracAyGeliriTahminEt(v, a.key);
+      const g = giderKaynaklariAyIcin(a.key, v.id);
+      gider += g.toplam + aracAmortismanAylik(v);
+    });
+    return {label:a.label, gelir:Math.round(gelir), gider:Math.round(gider), kar:Math.round(gelir-gider)};
+  });
+}
+// Filo doluluk oranı zaman serisi — aracDolulukIcinGunSayisi() (FAZ7, Araç Doluluk Raporu'nda
+// kullanılan AYNI fonksiyon) her ay için ayrı ayrı çağrılır. rentals kaydı hiç olmayan araçlar
+// (FAZ4 öncesi) bu trendde de %0 doluluk gösterir — Araç Doluluk Raporu'yla AYNI, dokümante
+// edilmiş sınırlama; yeni bir doluluk mantığı İCAT EDİLMEDİ.
+function dolulukTrendSon6Ay(){
+  const aylar = [];
+  const now = new Date();
+  for(let i=5;i>=0;i--){
+    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    const bas = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-01`;
+    const bit = new Date(d.getFullYear(), d.getMonth()+1, 0).toISOString().slice(0,10);
+    aylar.push({label: d.toLocaleDateString('tr-TR',{month:'short'}), bas, bit});
+  }
+  return aylar.map(a=>{
+    let toplamGun=0, kiradaGun=0;
+    vehicles.forEach(v=>{
+      const r = aracDolulukIcinGunSayisi(v, a.bas, a.bit);
+      toplamGun += r.toplamGun; kiradaGun += r.kiradaGun;
+    });
+    return {label:a.label, yuzde: toplamGun>0 ? Math.round(kiradaGun/toplamGun*100) : 0};
+  });
+}
+// En yüksek gider kalemleri dökümü — mevcut computeMasrafKategoriData() (Genel Bakış'taki
+// masraf donut grafiğinde kullanılan AYNI fonksiyon) tekrar kullanılır, yeni bir kategori
+// mantığı eklenmez. Yatay çubuk listesi, Genel Bakış'taki "Araç Bazlı Masraf Kırılımı"
+// widget'ıyla AYNI CSS deseniyle çizilir (yeni bir grafik kütüphanesi eklenmedi).
+function giderKalemleriDokumHTML(donem){
+  const kategori = computeMasrafKategoriData(donem||'6-ay').slice().sort((a,b)=>b.value-a.value);
+  if(!kategori.length) return '<div class="log-empty">Bu dönemde masraf kaydedilmedi.</div>';
+  const toplam = kategori.reduce((s,k)=>s+k.value,0);
+  const max = kategori[0].value || 1;
+  return `<div style="display:flex;flex-direction:column;gap:10px;">
+    ${kategori.map(k=>`
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span style="width:92px;flex-shrink:0;font-size:12px;color:var(--text-2);">${esc(k.label)}</span>
+      <div style="flex:1;height:18px;background:var(--surface-2);border-radius:6px;overflow:hidden;">
+        <div style="height:100%;width:${Math.max(4,Math.round(k.value/max*100))}%;background:${esc(k.color)};border-radius:6px;"></div>
+      </div>
+      <span style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace;font-size:12px;font-weight:700;color:var(--paper);width:104px;text-align:right;">${fmtTL2(k.value)}</span>
+      <span style="font-size:11px;color:var(--steel-300);width:46px;text-align:right;">%${toplam?Math.round(k.value/toplam*100):0}</span>
+    </div>`).join('')}
+  </div>`;
+}
+
 // ===== Raporlar sayfası =====
 function renderRaporlarPage(){
   const page = document.getElementById('page-raporlar');
@@ -13642,6 +13753,16 @@ function renderRaporlarPage(){
   const toplamGelir = karlilik.filter(x=>x.v.durum==='Kirada').reduce((s,x)=>s+x.aylikGelir,0);
   const toplamMasraf = karlilik.reduce((s,x)=>s+x.aylikMasrafTahmini,0);
   const toplamKar = toplamGelir - toplamMasraf;
+
+  // FAZ8: Gelişmiş Analitik verileri. Kârlılık trendi ve gider kalemleri TUTAR içerir; mevcut
+  // Araç Bazlı Karlılık tablosundaki fmtTL_role/fmtTL2_role deseni tek tek hücreleri maskeler
+  // ama bu grafiklerin eksen etiketleri paylaşılan svgDualLineChart/svgBarChart fonksiyonları
+  // İÇİNDE üretilir (o fonksiyonlar değiştirilmedi) — tek tek maskeleme mümkün olmadığından,
+  // "kira/cari tutarları sadece admin'e açık olsun" ilkesiyle tutarlı olacak şekilde bu iki alt
+  // bölüm bilinçli olarak TÜMÜYLE admin rolüyle sınırlandı. Doluluk trendi (%) parasal
+  // olmadığı için her rolde görünür.
+  const karTrend = isAdmin() ? karlilikTrendSon6Ay() : [];
+  const dolulukTrend = dolulukTrendSon6Ay();
 
   page.innerHTML = `
     ${filoSaglikSkoruHTML()}
@@ -13695,6 +13816,26 @@ function renderRaporlarPage(){
         }).join('')}</tbody>
       </table></div>` : '<div class="log-empty">Karlılık analizi için araçlara kira tutarı ve masraf ekleyin.</div>'}
       <div style="margin-top:12px;font-size:12px;color:var(--steel-100)">* Aylık masraf artık yalnızca masraf kayıtlarını değil, o aya ait yakıt, müşteriye yansıtılmamış HGS/ceza ve takılma ayındaki lastik maliyetini de içerir (bkz. "Gider Detayı"). Servis/bakım maliyeti ayrıca eklenmez çünkü zaten masraf kayıtlarına otomatik işlenmiştir (çift sayım önlenir). Kayıt olan en güncel ay baz alınır (bu ay kayıt yoksa önceki ay). Araç kartında alış fiyatı girilmişse, ${VARSAYILAN_KULLANIM_OMRU_AY} aylık varsayılan kullanım ömrü üzerinden düz-oranlı bir amortisman gideri de ("<span title="Amortisman dahil" style="border:1px solid var(--line);border-radius:8px;padding:0 4px;">A</span>" işaretiyle) dahil edilir. "<span title="Fatura kaynaklı gelir" style="border:1px solid var(--line);border-radius:8px;padding:0 4px;">F</span>" işareti, o aracın gelirinin tahmini kira yerine gerçek fatura verisinden alındığını gösterir (yalnızca müşterinin başka aracı kirada değilse kullanılır — bkz. vehicleGercekGelirHesapla).</div>
+    </div>
+
+    <div class="dcard" style="margin-bottom:16px;">
+      <h3>Gelişmiş Analitik <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;background:rgba(22,160,134,.12);color:var(--accent-blue);">FAZ8</span></h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
+        <div>
+          <h4 style="margin:0 0 8px;font-size:13px;color:var(--text-2);">Kârlılık Trendi (Son 6 Ay)</h4>
+          ${isAdmin() ? `
+            ${svgDualLineChart(karTrend.map(x=>x.gelir), karTrend.map(x=>x.gider), karTrend.map(x=>x.label), 320, 170, 'Tahmini Gelir (doluluk oranlı)')}
+            <div style="margin-top:8px;font-size:11px;color:var(--text-3);">Gerçek fatura/tahsilat verisi varsa o kullanılır; yoksa o aydaki GERÇEK kiralama gün sayısı (rentals) oranında kira geliri tahmin edilir — aracın BUGÜNKÜ durumuna göre değil.</div>
+          ` : `<div class="log-empty">Bu analiz için yönetici girişi gerekir.</div>`}
+        </div>
+        <div>
+          <h4 style="margin:0 0 8px;font-size:13px;color:var(--text-2);">Filo Doluluk Oranı (Son 6 Ay)</h4>
+          ${svgBarChart(dolulukTrend.map(x=>x.yuzde), dolulukTrend.map(x=>x.label), 320, 170, '#36A168')}
+          <div style="margin-top:8px;font-size:11px;color:var(--text-3);">Birim: %. FAZ4 kiralama kayıtları (rentals) üzerinden hesaplanır — bu modülden önceki kiralamalar için veri yoktur (Araç Doluluk Raporu'yla AYNI sınırlama).</div>
+        </div>
+      </div>
+      <h4 style="margin:0 0 8px;font-size:13px;color:var(--text-2);">En Yüksek Gider Kalemleri (Son 6 Ay)</h4>
+      ${isAdmin() ? giderKalemleriDokumHTML('6-ay') : `<div class="log-empty">Bu analiz için yönetici girişi gerekir.</div>`}
     </div>
 
     <div class="dcard" style="margin-bottom:16px;">
@@ -14504,6 +14645,202 @@ async function persistDocuments(){
 async function persistNotifications(){
   try{ await withStorageTimeout(storageAPI.set('notifications', JSON.stringify(notifications))); return true; }
   catch(e){ showToast((e && /zaman aşımı/i.test(e.message||'')) ? e.message : 'Bildirim kaydedilemedi.', true); return false; }
+}
+// FAZ8: automationRules — documents/notifications ile birebir aynı desen.
+async function persistAutomationRules(){
+  try{ await withStorageTimeout(storageAPI.set('automationRules', JSON.stringify(automationRules))); return true; }
+  catch(e){ showToast((e && /zaman aşımı/i.test(e.message||'')) ? e.message : 'Otomasyon kuralı kaydedilemedi.', true); return false; }
+}
+
+// ================================================================================
+// FAZ8: Otomasyon Kuralları — basit, kural-tabanlı bir otomasyon katmanı. FAZ6'nın
+// bildirimUret()/bildirimEkleyeBil() altyapısını TEMEL ALIR; her kural, uygulama günde en
+// fazla bir kez açıldığında (localStorage'daki son çalışma tarihi kontrol edilerek) taranır
+// ve eşleşen durumlar için AYNI kalıcı notifications kaydına (bildirimEkleyeBil, haftalık
+// dedupe anahtarıyla) bir bildirim düşer — ayrı/paralel bir bildirim mekanizması İCAT
+// EDİLMEDİ. Veri modeli: documents/notifications ile birebir aynı desen (tek JSON blob,
+// storageAPI üzerinden, persistAutomationRules) — tam bir Firestore koleksiyon migrasyonu
+// BİLİNÇLİ OLARAK bu fazın kapsamı dışındadır (FAZ3/4/5/6'da olduğu gibi).
+// ================================================================================
+const OTOMASYON_TETIKLEYICI_ETIKET = {
+  sigortaNGunKala: 'Sigorta bitimine N gün kala uyar',
+  cariVadesiGecti: 'Müşteri cari vadesi geçtiğinde uyar',
+  kiralamaBitimiYaklasiyor: 'Kiralama bitimi N gün kala uyar',
+  hakedisYuklenmedi: 'Ayın hakedişi yüklenmediğinde uyar',
+};
+const OTOMASYON_PARAMETRE_ETIKET = {
+  sigortaNGunKala: 'Kaç gün kala uyarsın? (gün)',
+  cariVadesiGecti: 'Kullanılmıyor — vadesi geçen HER tutar için uyarır',
+  kiralamaBitimiYaklasiyor: 'Kaç gün kala uyarsın? (gün)',
+  hakedisYuklenmedi: 'Ayın kaçından itibaren kontrol edilsin? (gün)',
+};
+// İlk açılışta (storageAPI'de automationRules kaydı hiç yoksa) önerilen örnek kural seti —
+// vehicles/IMPORTED_DATA ile AYNI "ilk açılış" ilkesi (bkz. load()). Kullanıcı istediğini
+// silebilir/düzenleyebilir; bir daha otomatik seed EDİLMEZ (bkz. load()'daki koşul).
+const OTOMASYON_VARSAYILAN_KURALLAR = [
+  {ad:'Sigorta bitimine 30 gün kala uyar', tetikleyici:'sigortaNGunKala', parametre:30, aktif:true},
+  {ad:'Cari vadesi geçen tahsilat', tetikleyici:'cariVadesiGecti', parametre:null, aktif:true},
+  {ad:'Kiralama bitimine 7 gün kala uyar', tetikleyici:'kiralamaBitimiYaklasiyor', parametre:7, aktif:true},
+  {ad:'Ayın 5\'inden sonra hakediş yüklenmemişse uyar', tetikleyici:'hakedisYuklenmedi', parametre:5, aktif:true},
+];
+// Uygulama bu tarayıcı/cihazda BUGÜN zaten çalıştıysa tekrar çalıştırmaz — cihaz-yerel, kritik
+// olmayan bir durumdur, bu yüzden storageAPI değil localStorage kullanılır (görev kuralı).
+function otomasyonKurallariCalistirGerekliMi(){
+  try{ return localStorage.getItem('filoPaneli_otomasyonSonCalisma') !== todayISO(); }
+  catch(e){ return true; }
+}
+// force:true → "Şimdi Çalıştır" butonundan günlük sınırlamayı atlayarak manuel tetikleme.
+async function otomasyonKurallariCalistir(force){
+  if(!force && !otomasyonKurallariCalistirGerekliMi()) return false;
+  const bugun = todayISO();
+  const aktifKurallar = automationRules.filter(r=>r.aktif!==false);
+  let eklendi = false;
+  aktifKurallar.forEach(kural=>{
+    const param = kural.parametre==null ? null : Number(kural.parametre);
+    if(kural.tetikleyici==='sigortaNGunKala'){
+      const gunSayisi = param==null||isNaN(param) ? 30 : param;
+      vehicles.forEach(v=>{
+        const dl = daysLeft(v.sigortaTarihi);
+        if(dl===null || dl<0 || dl>gunSayisi) return;
+        const icerik = `[Otomasyon: ${kural.ad}] ${v.plaka} — sigorta için ${dl} gün kaldı.`;
+        if(bildirimEkleyeBil('otomasyonSigorta', 'arac', v.id, icerik, dl, kural.id+'_'+v.id)) eklendi = true;
+      });
+    } else if(kural.tetikleyici==='cariVadesiGecti'){
+      customers.forEach(c=>{
+        const o = customerCariOzet(c.id);
+        if(o.vadesiGecen>0){
+          const icerik = `[Otomasyon: ${kural.ad}] ${musteriGoruntuAdi(c)} — vadesi geçmiş ${fmtTL2(o.vadesiGecen)} tahsilat bekliyor.`;
+          if(bildirimEkleyeBil('otomasyonCari', 'musteri', c.id, icerik, -1, kural.id+'_'+c.id)) eklendi = true;
+        }
+      });
+    } else if(kural.tetikleyici==='kiralamaBitimiYaklasiyor'){
+      const gunSayisi = param==null||isNaN(param) ? 7 : param;
+      rentals.filter(r=>r.durum==='teslimEdildi' && r.bitis).forEach(r=>{
+        const dl = daysLeft(r.bitis);
+        if(dl===null || dl<0 || dl>gunSayisi) return;
+        const v = vehicles.find(x=>x.id===r.vehicleId);
+        const icerik = `[Otomasyon: ${kural.ad}] ${v?v.plaka:'Araç'} — kiralama bitimine ${dl} gün kaldı.`;
+        if(bildirimEkleyeBil('otomasyonKiralama', 'arac', r.vehicleId, icerik, dl, kural.id+'_'+r.id)) eklendi = true;
+      });
+    } else if(kural.tetikleyici==='hakedisYuklenmedi'){
+      const gunEsik = param==null||isNaN(param) ? 5 : param;
+      const simdi = new Date();
+      if(simdi.getDate()>=gunEsik){
+        const guncelAy = `${simdi.getFullYear()}-${String(simdi.getMonth()+1).padStart(2,'0')}`;
+        vehicles.filter(v=>v.durum==='Kirada' && !(v.hakedisGecmisi||[]).some(h=>h.donemKey===guncelAy)).forEach(v=>{
+          const icerik = `[Otomasyon: ${kural.ad}] ${v.plaka} — bu ayın hakedişi henüz yüklenmedi.`;
+          if(bildirimEkleyeBil('otomasyonHakedis', 'arac', v.id, icerik, -1, kural.id+'_'+v.id+'_'+guncelAy)) eklendi = true;
+        });
+      }
+    }
+    kural.sonCalismaTarihi = bugun;
+  });
+  if(aktifKurallar.length) await persistAutomationRules();
+  if(eklendi) await persistNotifications();
+  try{ localStorage.setItem('filoPaneli_otomasyonSonCalisma', bugun); }catch(e){}
+  return eklendi;
+}
+function automationRuleFormAc(id){
+  if(!requireAdmin()) return;
+  const eski = document.getElementById('otomasyonFormOverlay'); if(eski) eski.remove();
+  const r = id ? automationRules.find(x=>x.id===id) : null;
+  const inp = 'width:100%;margin-top:4px;background:var(--surface-2);border:1px solid var(--line);color:var(--paper);padding:8px 10px;border-radius:8px;font-size:13px;font-family:inherit;';
+  const el = document.createElement('div');
+  el.className='overlay show'; el.id='otomasyonFormOverlay'; el.style.cssText='z-index:75;';
+  const seciliTetik = (r&&r.tetikleyici) || 'sigortaNGunKala';
+  el.innerHTML = `
+    <div style="background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px;width:min(92vw,420px);max-height:88vh;overflow-y:auto;">
+      <h3 style="margin:0 0 4px;font-size:16px;color:var(--paper);">${r?'Kuralı Düzenle':'Yeni Otomasyon Kuralı'}</h3>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">
+        <label style="font-size:12px;color:var(--text-2);">Kural adı<input type="text" id="orAd" value="${r?esc(r.ad):''}" placeholder="ör. Sigorta 30 gün kala uyar" style="${inp}"></label>
+        <label style="font-size:12px;color:var(--text-2);">Tetikleyici<select id="orTetikleyici" style="${inp}" onchange="const h=document.getElementById('orParamHint'); if(h) h.textContent = OTOMASYON_PARAMETRE_ETIKET[this.value]||'';">
+          ${Object.keys(OTOMASYON_TETIKLEYICI_ETIKET).map(k=>`<option value="${esc(k)}" ${seciliTetik===k?'selected':''}>${esc(OTOMASYON_TETIKLEYICI_ETIKET[k])}</option>`).join('')}
+        </select></label>
+        <label style="font-size:12px;color:var(--text-2);">Parametre<input type="number" id="orParametre" min="0" value="${r&&r.parametre!=null?r.parametre:''}" style="${inp}"></label>
+        <div id="orParamHint" style="font-size:11px;color:var(--text-3);margin-top:-4px;">${esc(OTOMASYON_PARAMETRE_ETIKET[seciliTetik]||'')}</div>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-2);cursor:pointer;">
+          <input type="checkbox" id="orAktif" ${!r || r.aktif!==false?'checked':''} style="width:16px;height:16px;accent-color:var(--teal);"> Aktif
+        </label>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:16px;">
+        <button onclick="automationRuleKaydet(${id?`'${id}'`:'null'})" style="flex:1;background:var(--accent-blue);border:none;color:#fff;padding:10px 0;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-ui);">Kaydet</button>
+        <button onclick="document.getElementById('otomasyonFormOverlay').remove()" style="background:var(--surface-2);border:1px solid var(--line);color:var(--text-2);padding:10px 16px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-ui);">Vazgeç</button>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+  el.onclick = e=>{ if(e.target===el) el.remove(); };
+}
+async function automationRuleKaydet(id){
+  if(!requireAdmin()) return;
+  const ad = document.getElementById('orAd').value.trim();
+  const tetikleyici = document.getElementById('orTetikleyici').value;
+  const parametreVal = document.getElementById('orParametre').value;
+  const parametre = parametreVal==='' ? null : Number(parametreVal);
+  const aktif = document.getElementById('orAktif').checked;
+  if(!ad){ showToast('Lütfen kurala bir ad verin.', true); return; }
+  if(!OTOMASYON_TETIKLEYICI_ETIKET[tetikleyici]){ showToast('Lütfen geçerli bir tetikleyici seçin.', true); return; }
+  let r = id ? automationRules.find(x=>x.id===id) : null;
+  const yeniMi = !r;
+  if(r){
+    Object.assign(r, {ad, tetikleyici, parametre, aktif});
+  }else{
+    r = {id: yeniId('rule'), ad, tetikleyici, parametre, aktif, sonCalismaTarihi: null};
+    automationRules.push(r);
+  }
+  await persistAutomationRules();
+  document.getElementById('otomasyonFormOverlay')?.remove();
+  showToast(yeniMi?'Otomasyon kuralı eklendi.':'Otomasyon kuralı güncellendi.');
+  logActivity(yeniMi?'add':'edit', `Otomasyon kuralı ${yeniMi?'eklendi':'güncellendi'}: <b>${esc(ad)}</b>`).catch(()=>{});
+  renderAyarlarPage();
+}
+async function automationRuleSil(id){
+  if(!requireAdmin()) return;
+  const r = automationRules.find(x=>x.id===id); if(!r) return;
+  if(!confirm(`"${r.ad}" kuralı silinsin mi?`)) return;
+  automationRules = automationRules.filter(x=>x.id!==id);
+  await persistAutomationRules();
+  showToast('Otomasyon kuralı silindi.');
+  logActivity('delete', `Otomasyon kuralı silindi: <b>${esc(r.ad)}</b>`).catch(()=>{});
+  renderAyarlarPage();
+}
+async function automationRuleAktifToggle(id){
+  if(!requireAdmin()) return;
+  const r = automationRules.find(x=>x.id===id); if(!r) return;
+  r.aktif = !(r.aktif!==false);
+  await persistAutomationRules();
+  renderAyarlarPage();
+}
+// Ayarlar sayfasındaki "Otomasyon Kuralları" kartı — settings-card deseniyle AYNI (bkz.
+// renderAyarlarPage). Yalnızca admin rolünde gösterilir (kural içerikleri cari/kira gibi
+// finansal tetikleyiciler barındırabilir).
+function automationRulesCardHTML(){
+  if(!isAdmin()) return '';
+  const satirlar = automationRules.map(r=>{
+    const etiket = OTOMASYON_TETIKLEYICI_ETIKET[r.tetikleyici] || r.tetikleyici;
+    const paramGoster = (r.parametre!=null && r.tetikleyici!=='cariVadesiGecti') ? ` · ${esc(String(r.parametre))} gün` : '';
+    const sonCalisma = r.sonCalismaTarihi ? ` · Son çalışma: ${esc(fmtTarih(r.sonCalismaTarihi))}` : ' · Henüz çalışmadı';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);">
+      <label style="display:flex;align-items:center;cursor:pointer;flex-shrink:0;">
+        <input type="checkbox" ${r.aktif!==false?'checked':''} onchange="automationRuleAktifToggle('${r.id}')" style="width:16px;height:16px;accent-color:var(--accent-blue);cursor:pointer;">
+      </label>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:600;color:var(--paper);">${esc(r.ad)}</div>
+        <div style="font-size:11.5px;color:var(--text-3);">${esc(etiket)}${paramGoster}${sonCalisma}</div>
+      </div>
+      <button onclick="automationRuleFormAc('${r.id}')" style="background:var(--surface-2);border:1px solid var(--line);color:var(--text-2);padding:5px 10px;border-radius:7px;font-size:11.5px;font-weight:600;cursor:pointer;">Düzenle</button>
+      <button onclick="automationRuleSil('${r.id}')" style="background:none;border:1px solid var(--line);color:var(--safety);padding:5px 10px;border-radius:7px;font-size:11.5px;font-weight:600;cursor:pointer;">Sil</button>
+    </div>`;
+  }).join('');
+  return `
+      <div class="settings-card">
+        <h3><span class="settings-ic" style="background:var(--accent-blue)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg></span> Otomasyon Kuralları <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;background:rgba(22,160,134,.12);color:var(--accent-blue);">FAZ8</span></h3>
+        <p>Belirlediğin koşullar (ör. sigorta bitimine N gün kala) her gün otomatik kontrol edilir; eşleşme olursa Bildirimler'e otomatik kayıt düşer.</p>
+        ${satirlar || '<div class="log-empty" style="padding:14px 0;">Henüz kural yok.</div>'}
+        <div class="row-btns" style="margin-top:12px;">
+          <button class="add-btn" id="apOtomasyonEkle">+ Yeni Kural</button>
+          <button class="settings-btn" id="apOtomasyonCalistir">Şimdi Çalıştır</button>
+        </div>
+      </div>`;
 }
 
 // ================================================================================
@@ -16676,6 +17013,10 @@ function renderAiPage(){
             'Filom için öneriler oluştur',
             'Km aşımı olan araçlar hangileri?',
             'Hasar/kaza kaydı olan araçlar',
+            'Vadesi geçmiş tahsilatı olan müşteriler',
+            'Şu an kirada olan ve bekleyen kiralamalar',
+            'Diş derinliği kritik lastikler',
+            'Ödenmemiş HGS ve trafik cezası ne kadar?',
           ].map(k=>`<button onclick="aiSend(${JSON.stringify(k)})" style="background:var(--surface-2);border:1px solid var(--border);color:var(--text-2);padding:7px 13px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;transition:all .12s ease;font-family:inherit;" onmouseover="this.style.borderColor='var(--accent-blue)';this.style.color='var(--accent-blue)';this.style.background='var(--surface-3)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-2)';this.style.background='var(--surface-2)'">${esc(k)}</button>`).join('')}
         </div>
       </div>` : ''}
@@ -17540,6 +17881,92 @@ async function aiSend(mesaj){
         const guncelAy = `${simdi.getFullYear()}-${String(simdi.getMonth()+1).padStart(2,'0')}`;
         return vehicles.filter(v=>v.durum==='Kirada' && !(v.hakedisGecmisi||[]).some(h=>h.donemKey===guncelAy)).map(v=>v.plaka);
       })()} : {}),
+      // ============================================================================
+      // FAZ8: AI'ya FAZ3-5'te eklenen cari/fatura/kiralama-durumu/lastik/yakıt/HGS-ceza
+      // verileri de aktarılır. Mevcut hakedisGecmisi/kira İLKESİYLE (yukarıdaki isAdmin()
+      // deseni) AYNI şekilde: TUTAR içeren alanlar (cariOzet, faturaOzet, aktifKiralamalar
+      // içindeki kiraTutari, yakitOzet.toplamTutar, hasarCezaOzet) SADECE admin rolünde
+      // veride bulunur. Parasal olmayan durum/miktar alanları (lastikUyarilari, aktif
+      // Kiralamalar'ın durum/tarih kısmı, yakitOzet.toplamLitre) her rolde bulunur.
+      // ============================================================================
+      // FAZ3: cari (ledger/customers) özeti — müşteri bazlı bakiye + vadesi geçmiş tutar.
+      // customerCariOzet() Cari sayfasındaki AYNI fonksiyondur, yeni bir hesap İCAT EDİLMEZ.
+      ...(isAdmin() ? {cariOzet: (()=>{
+        const detay = customers.map(c=>{
+          const o = customerCariOzet(c.id);
+          return {musteri: musteriGoruntuAdi(c), bakiye: Math.round(o.kalan), vadesiGecen: Math.round(o.vadesiGecen)};
+        }).filter(x=>x.bakiye!==0 || x.vadesiGecen>0);
+        return {
+          musteriSayisi: customers.length,
+          toplamBakiye: Math.round(detay.reduce((s,x)=>s+x.bakiye,0)),
+          vadesiGecenToplam: Math.round(detay.reduce((s,x)=>s+x.vadesiGecen,0)),
+          vadesiGecenMusteriSayisi: detay.filter(x=>x.vadesiGecen>0).length,
+          detay: detay.slice(0,30),
+        };
+      })()} : {}),
+      // FAZ3: fatura durum dağılımı — faturaEfektifDurum()/faturaKalan() Faturalar sayfasındaki
+      // AYNI fonksiyonlardır (Odendi/Kesildi/KismiOdendi/Gecikti/Iptal/Taslak).
+      ...(isAdmin() ? {faturaOzet: (()=>{
+        const durumSayilari = {}, durumTutarlari = {};
+        invoices.forEach(f=>{
+          const d = faturaEfektifDurum(f);
+          durumSayilari[d] = (durumSayilari[d]||0)+1;
+          durumTutarlari[d] = Math.round((durumTutarlari[d]||0)+(Number(f.genelToplam)||0));
+        });
+        const acikToplamKalan = invoices.filter(f=>{ const d=faturaEfektifDurum(f); return d!=='Odendi' && d!=='Iptal'; }).reduce((s,f)=>s+faturaKalan(f),0);
+        return {toplamFatura: invoices.length, durumSayilari, durumTutarlari, acikToplamKalan: Math.round(acikToplamKalan)};
+      })()} : {}),
+      // FAZ4: kiralama durum makinesi — rentals'taki 'kapandi'/'iptal' dışındaki tüm kayıtlar
+      // (teklif/sözleşmeHazır/teslimEdildi = aktif veya bekleyen kiralama).
+      aktifKiralamalar: rentals.filter(r=>['teklif','sozlesmeHazir','teslimEdildi'].includes(r.durum)).map(r=>{
+        const v = vehicles.find(x=>x.id===r.vehicleId);
+        const c = r.customerId ? customers.find(x=>x.id===r.customerId) : null;
+        return {
+          plaka: v?v.plaka:'', musteri: c?musteriGoruntuAdi(c):(v?(v.kiraciAdi||''):''), durum: r.durum,
+          baslangic: r.baslangic||'', bitis: r.bitis||'',
+          ...(isAdmin() ? {kiraTutari: r.kiraTutari||null} : {}),
+        };
+      }),
+      // FAZ5: diş derinliği kritik lastikler — lastikDisDusukMu()/LASTIK_DIS_DERINLIGI_ESIK_MM
+      // Lastikler sayfasındaki AYNI eşik ve fonksiyondur (Lastikler > "DÜŞÜK" rozetiyle aynı).
+      lastikUyarilari: tires.filter(t=>lastikDisDusukMu(t)).map(t=>{
+        const v = vehicles.find(x=>x.id===t.vehicleId);
+        return {plaka: v?v.plaka:'', konum: t.konum||'', disDerinligi: t.disDerinligi};
+      }),
+      // FAZ5: bu ayın yakıt tüketim özeti (fuelRecords).
+      yakitOzet: (()=>{
+        const simdi = new Date();
+        const ym = `${simdi.getFullYear()}-${String(simdi.getMonth()+1).padStart(2,'0')}`;
+        const buAyKayitlari = fuelRecords.filter(f=>(f.tarih||'').slice(0,7)===ym);
+        const aracBazli = {};
+        buAyKayitlari.forEach(f=>{
+          const v = vehicles.find(x=>x.id===f.vehicleId);
+          const plaka = v?v.plaka:'Bilinmiyor';
+          if(!aracBazli[plaka]) aracBazli[plaka] = {litre:0, tutar:0, kayitSayisi:0};
+          aracBazli[plaka].litre += Number(f.litre)||0;
+          aracBazli[plaka].tutar += Number(f.toplam)||0;
+          aracBazli[plaka].kayitSayisi++;
+        });
+        return {
+          donem: ym,
+          toplamLitre: Math.round(buAyKayitlari.reduce((s,f)=>s+(Number(f.litre)||0),0)),
+          ...(isAdmin() ? {toplamTutar: Math.round(buAyKayitlari.reduce((s,f)=>s+(Number(f.toplam)||0),0))} : {}),
+          aracBazli: Object.entries(aracBazli).map(([plaka,d])=>({plaka, litre:Math.round(d.litre), ...(isAdmin()?{tutar:Math.round(d.tutar)}:{}), kayitSayisi:d.kayitSayisi})),
+        };
+      })(),
+      // FAZ5: şirket çapında ödenmemiş HGS/OGS ve trafik cezası borcu (araçlardaki eski
+      // hasarlar[] dizisinden AYRI bir koleksiyon — bkz. hasarCezalar modülü/tolls/trafficFines).
+      ...(isAdmin() ? {hasarCezaOzet: (()=>{
+        const odenmemisHgs = tolls.filter(t=>!t.odendi);
+        const odenmemisCeza = trafficFines.filter(f=>!f.odendi);
+        return {
+          odenmemisHgsSayisi: odenmemisHgs.length,
+          odenmemisHgsToplam: Math.round(odenmemisHgs.reduce((s,t)=>s+(Number(t.tutar)||0),0)),
+          odenmemisCezaSayisi: odenmemisCeza.length,
+          odenmemisCezaToplam: Math.round(odenmemisCeza.reduce((s,f)=>s+(Number(f.tutar)||0),0)),
+          gecikmisCezaSayisi: odenmemisCeza.filter(f=>{ const dl=daysLeft(f.sonOdemeTarihi); return dl!==null && dl<0; }).length,
+        };
+      })()} : {}),
     };
 
     const system = `Sen ${FIRMA_ADI} şirketinin akıllı AI filo yönetim asistanısın.
@@ -17584,6 +18011,24 @@ KM AŞIMI / HASAR / HAKEDİŞ İÇİN:
 - hakedisYuklenmemisAraclar SADECE yönetici rolünde veride bulunur (varsa: bu ayın kira/hakediş bilgisi henüz sisteme yüklenmemiş kiradaki araçlar); bu alan veride yoksa bu konuda soru gelirse "bu bilgiye erişimin yok" de, uydurma
 - Kira/hakediş TUTARLARI (kira, hakedisGecmisi) SADECE yönetici rolünde veride bulunur; veride yoksa bu soruları cevaplama, "bu bilgiye erişimin yok" de
 
+CARİ / FATURA / TAHSİLAT İÇİN (FAZ8):
+- cariOzet ve faturaOzet SADECE yönetici rolünde veride bulunur; veride yoksa bu konudaki sorulara "bu bilgiye erişimin yok" de, tutar uydurma
+- cariOzet.detay: her müşterinin GÜNCEL bakiyesi (kalan) ve vadesi geçmiş tahsilat tutarı (vadesiGecen); bakiye pozitifse müşteri borçlu, negatifse alacaklı — kendi başına yorum katma, veride ne varsa onu söyle
+- "Vadesi geçmiş / gecikmiş tahsilatı olan müşteriler?" → cariOzet.detay içinde vadesiGecen>0 olanlar
+- faturaOzet.durumSayilari/durumTutarlari: fatura durumuna (Taslak/Kesildi/Odendi/KismiOdendi/Gecikti/Iptal) göre sayı ve toplam tutar kırılımı; faturaOzet.acikToplamKalan henüz tahsil edilmemiş (Ödendi/İptal dışı) faturaların toplam kalan bakiyesidir
+
+KİRALAMA DURUMU İÇİN (FAZ8):
+- aktifKiralamalar: FAZ4 kiralama durum makinesinden (rentals) gelen, henüz kapanmamış/iptal edilmemiş TÜM kiralamalar (durum: teklif=henüz sözleşme hazır değil, sozlesmeHazir=sözleşme hazır teslim bekliyor, teslimEdildi=araç şu an fiilen kirada)
+- "teslimEdildi" durumundakiler GERÇEKTEN şu an kirada olan araçlardır; "teklif"/"sozlesmeHazir" henüz teslim edilmemiş, BEKLEYEN kiralamalardır — bu ikisini karıştırma
+- kiraTutari alanı SADECE yönetici rolünde bulunur; yoksa "bu bilgiye erişimin yok" de
+- FAZ4 öncesi (eski) kiralamaların rentals'ta kaydı olmayabilir — bu durumda o kiralama bu listede GÖRÜNMEZ, araçlar listesindeki durum/kiraciAdi alanlarına bakılmalı, "veri yok" deme
+
+LASTİK / YAKIT / HGS-CEZA İÇİN (FAZ8 — FAZ5 modüllerinden):
+- lastikUyarilari: diş derinliği kritik eşiğin (3mm) altındaki TAKILI lastikler; her rolde görünür, tutar içermez
+- yakitOzet: bu ayki yakıt tüketimi; toplamLitre her rolde var, toplamTutar VE aracBazli.tutar SADECE yönetici rolünde bulunur — personel rolünde soru gelirse litre bilgisini ver, tutar için "bu bilgiye erişimin yok" de
+- hasarCezaOzet: şirket çapında ÖDENMEMİŞ HGS/OGS geçişi ve trafik cezası borcu (araç kartlarındaki eski hasarlar[] listesinden TAMAMEN AYRI bir veridir, karıştırma); SADECE yönetici rolünde bulunur
+- "Ödenmemiş HGS/ceza ne kadar?" → hasarCezaOzet.odenmemisHgsToplam / odenmemisCezaToplam (veride yoksa yetkin olmadığını belirt)
+
 SIKÇA SORULAN SORULAR:
 - "İhaleye uygun araç kaç tane?" → ihaleUygunAraclar listesini say ve göster
 - "Müsait araçlar?" → musaitAraclar listesini göster
@@ -17595,6 +18040,12 @@ SIKÇA SORULAN SORULAR:
 - "X aracının km aşım ücreti / aşımı ne kadar tutar?" → kmAsimFiyat (TL/km) ve kmAsimTutari (toplam TL) alanlarını göster; kmAsimFiyat null ise "sözleşmede km aşım ücreti kayıtlı değil" de
 - "X aracının hasar geçmişi nedir?" → o aracın hasarlar dizisini göster
 - "Bu ayın hakedişi yüklenmemiş araçlar?" → hakedisYuklenmemisAraclar (veride yoksa yetkin olmadığını belirt)
+- "Vadesi geçen/gecikmiş tahsilatı olan müşteriler?" → cariOzet.detay içinde vadesiGecen>0 olanlar (yönetici değilse erişim yok de)
+- "Kaç açık faturamız var, toplam ne kadar?" → faturaOzet.toplamFatura ve faturaOzet.acikToplamKalan
+- "Şu an kirada olan / bekleyen kiralamalar?" → aktifKiralamalar'ı durum alanına göre ayır (teslimEdildi=kirada, teklif/sozlesmeHazir=bekliyor)
+- "Diş derinliği kritik lastikler hangileri?" → lastikUyarilari listesini göster
+- "Bu ayki yakıt tüketimi ne kadar?" → yakitOzet (litre her rolde, tutar sadece yöneticide)
+- "Ödenmemiş HGS/OGS ve trafik cezası ne kadar?" → hasarCezaOzet.odenmemisHgsToplam / odenmemisCezaToplam (yönetici değilse erişim yok de)
 
 FİLO VERİSİ:
 ${JSON.stringify(filoOzet, null, 1)}`;
@@ -17796,6 +18247,7 @@ function renderAyarlarPage(){
         <h3><span class="settings-ic" style="background:#9B7ED8"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg></span> AI Otomatik Doldurma (Gemini)</h3>
         <p style="font-size:13px;color:var(--text-2);">Belge okuma artık güvenli bir sunucu üzerinden çalışıyor — anahtar tarayıcıda tutulmuyor, buraya bir şey girmene gerek yok. <span style="color:#36A168;">✓ Aktif</span></p>
       </div>
+      ${automationRulesCardHTML()}
       <div class="settings-card">
         <h3><span class="settings-ic" style="background:#7B7873"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg></span> Yedekleme</h3>
         <p>Tüm veriyi (araçlar, masraflar, kayıtlı sözleşmeler, etkinlik geçmişi) tek bir dosyaya indir, ya da bir yedekten geri yükle.</p>
@@ -17821,6 +18273,13 @@ function renderAyarlarPage(){
   document.getElementById('apBackup').onclick = backupToJson;
   document.getElementById('apRestore').onclick = ()=>document.getElementById('restoreJsonInput').click();
   sonYedekOku().then(k=>{ const info=document.getElementById('sonYedekInfo'); if(info) info.innerHTML = sonYedekMetni(k); });
+  if(document.getElementById('apOtomasyonEkle')) document.getElementById('apOtomasyonEkle').onclick = ()=>automationRuleFormAc(null);
+  if(document.getElementById('apOtomasyonCalistir')) document.getElementById('apOtomasyonCalistir').onclick = async ()=>{
+    const eklendi = await otomasyonKurallariCalistir(true);
+    showToast(eklendi ? 'Otomasyon çalıştı — yeni bildirim(ler) oluşturuldu.' : 'Otomasyon çalıştı — eşleşen yeni durum yok.');
+    updateShellChrome();
+    renderAyarlarPage();
+  };
 }
 
 // ===== Triomobil / N2 Mobil Km Raporu Yükleme =====
