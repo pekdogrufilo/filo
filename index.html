@@ -4,6 +4,16 @@
 <meta charset="UTF-8">
 <title>Filo Kontrol Paneli</title>
 <meta name="robots" content="noindex, nofollow">
+<!-- FAZ10 güvenlik: Content-Security-Policy. Bu uygulama TEK bir HTML dosyası olduğu için
+     ana mantığın tamamı inline <script> içinde ve onclick="..." gibi inline event handler'lar
+     YAYGIN kullanılıyor — bu yüzden script-src/style-src 'unsafe-inline' İÇERMEK ZORUNDA
+     (nonce/hash'e geçmek bu fazın kapsamı dışında, çok büyük bir refactor gerektirir).
+     Amaç "mükemmel" değil ÇALIŞAN bir politika: dış script'ler (cdnjs/jsdelivr/unpkg/gstatic),
+     Google Fonts, Firebase SDK + Firestore/Auth ağ istekleri, Cloudflare Worker (Gemini proxy)
+     ve data:/blob: tabanlı resim & belge önizlemeleri hâlâ çalışsın. Playwright ile hem
+     design_audit.py hem design_audit_faz5.py bu değişiklikten SONRA "pageerrors: []" ile
+     tekrar doğrulanmıştır. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; media-src 'self' data: blob:; connect-src 'self' https: wss:; frame-src 'self' blob: data:; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';">
 <link rel="icon" type="image/png" href="data:image/png;base64,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">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -154,6 +164,14 @@
     --fixed-dark:#1A1C1F;
   }
   *{box-sizing:border-box;}
+  /* FAZ10 mobil düzeltme: .log-drawer gibi position:fixed + transform:translateX(100%) ile
+     kapalıyken ekran dışına itilen "off-canvas" panellerin, bazı mobil tarayıcılarda belge
+     genişliğini (documentElement.scrollWidth) gerçekte görünmeyen bir miktar şişirip sayfada
+     hayalet bir yatay kaydırma boşluğu bırakması engellenir. Panellerin kendi iç yatay
+     kaydırmaları (.table-scroll, .bottom-nav-items vb. overflow-x:auto) alt öğelerde kaldığı
+     için bu kuraldan etkilenmez.
+  */
+  html,body{overflow-x:hidden;}
   body{
     margin:0;color:var(--text);font-family:var(--font-body);-webkit-font-smoothing:antialiased;font-size:14px;line-height:1.6;
     background:var(--bg);
@@ -520,7 +538,14 @@
   .masraf-row .mdel:hover{color:var(--coral);}
 
   /* ===== Yeni kabuk: sol menü + üst çubuk + sayfa sistemi ===== */
-  .app-shell{display:flex;min-height:100vh;}
+  /* FAZ10 mobil düzeltme: .app-shell, body'nin (display:flex) bir flex öğesidir. min-width:0
+     olmadan tarayıcı otomatik minimum genişliği İÇERİĞE göre hesaplıyor — AI sayfasındaki
+     yatay kaydırmalı "Hızlı Komutlar" satırı gibi nowrap içerikler, iç içe flex katmanlarından
+     yukarı sızarak .app-shell'i (ve dolayısıyla tüm sayfayı) mobilde 390px yerine ~860px+
+     genişliğe zorluyordu — sonuç: sayfanın sağ tarafı görünmez şekilde kesiliyor, hayalet bir
+     yatay kaydırma alanı oluşuyordu. .main-area'da zaten var olan min-width:0 deseniyle aynı,
+     tek satırlık ve düşük riskli bir düzeltme. */
+  .app-shell{display:flex;min-height:100vh;min-width:0;}
   .sidebar{width:210px;flex-shrink:0;background:var(--sidebar-bg);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;transition:width .2s cubic-bezier(.22,1,.36,1);}
   .sidebar.collapsed{width:64px;}
   .sidebar.collapsed .sb-brand{justify-content:center;padding:20px 0 16px;}
@@ -1923,6 +1948,17 @@
     display:none !important;
   }
 
+  /* FAZ10 mobil düzeltme: küçük ekranlarda (≤900px) AI Filo Asistanı sayfası aktifken
+     sabit konumlu #filoKaydetBtn, sohbet giriş çubuğu/gönder butonuyla geometrik olarak
+     çakışıyordu (aynı köşede iki sabit-konumlu eleman üst üste biniyordu). Masaüstünde
+     çakışma yok, bu yüzden sadece ≤900px'te ve sadece AI sayfası aktifken gizliyoruz;
+     buton hâlâ diğer tüm sayfalarda normal şekilde çalışmaya devam ediyor. */
+  @media (max-width:900px){
+    body:has(#page-ai.active) #filoKaydetBtn{
+      display:none !important;
+    }
+  }
+
   /* v.125: "Aynı kaliteyi tüm panele yay" — dashboard'daki (.add-btn/#filoKaydetBtn) glow+hover
      efektini, modallerde/detay panellerinde/AI sohbetinde onlarca yerde inline stille yazılmış
      "background:var(--accent-blue)" birincil aksiyon butonlarına da tek noktadan yayıyoruz.
@@ -2163,7 +2199,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-16.150</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-16.151</div>
     </div>
   </div>
 </div>
@@ -2308,7 +2344,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-16.150</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-16.151</div>
     </div>
   </aside>
 <script>
@@ -3237,6 +3273,12 @@ let notifications = [];
 // notifications kaydını TEMEL ALIR (bkz. bildirimEkleyeBil) — ayrı bir bildirim mekanizması
 // İCAT EDİLMEDİ, kural motoru aynı fonksiyonu kullanır.
 let automationRules = [];
+// FAZ10: KVKK veri silme TALEP kayıtları — documents/notifications/automationRules ile
+// birebir aynı depolama deseni (tek JSON blob, storageAPI üzerinden, persistKvkkTalepleri).
+// ÖNEMLİ: bu dizi hiçbir gerçek veriyi SİLMEZ — sadece "şu kişi/tarihte silme talep etti"
+// bilgisini kayıt altına alır. Gerçek silme işlemi ilgili modülde (Müşteriler, Belgeler vb.)
+// yönetici tarafından elle yapılır. Bkz. Ayarlar > KVKK / Veri Yönetimi kartı.
+let kvkkTalepleri = [];
 let activeFilter = 'hepsi';
 let activeSirket = 'hepsi';
 let belgeFilterType = null; // null | 'sigorta' | 'muayene' | 'kira'
@@ -3340,6 +3382,10 @@ async function load(){
       await persistAutomationRules();
     }
   }catch(e){ automationRules = []; }
+  try{
+    const kvr = await storageAPI.get('kvkkTalepleri').catch(()=>null);
+    kvkkTalepleri = (kvr && kvr.value) ? JSON.parse(kvr.value) : [];
+  }catch(e){ kvkkTalepleri = []; }
   // FAZ6: bildirim kayıtlarını (dedupe'lu) üret — sayfa her açıldığında değil, sadece burada,
   // uygulama yüklenirken bir kez çalışır. Yeni kayıt eklendiyse kalıcı olarak saklanır.
   try{
@@ -3365,6 +3411,147 @@ async function load(){
   await checkDailyReminder();
   await checkWeeklyBackupReminder();
   applyPlakaFromUrl();
+  checkOnboardingWizard().catch(e=>console.error('onboarding kontrolü hatası:', e));
+}
+
+// ===== FAZ10: İlk Kurulum Sihirbazı (Onboarding Wizard) =====
+// Amaç: yeni bir şirket kaydından (bkz. createCompanyAndAdminUser) sonraki İLK girişte,
+// kullanıcıyı 3 kısa adımda (şirket bilgisi / ilk aracı ekle / ayarlara göz at) yönlendirmek.
+// Basit sezgi: vehicles.length===0 VE activityLog'da "login" dışında hiçbir kayıt yoksa
+// (yani hesap gerçekten "boş, yeni açılmış" görünüyorsa) sihirbaz gösterilir. Her adımda
+// kapatma/atlama mümkündür — kullanıcı asla kilitlenmez. "Tamamlandı" bayrağı storageAPI'de
+// tutulur, bir daha göstermemek için (kullanıcı sihirbazı bitirsin ya da kapatsın, ikisi de
+// bayrağı set eder; sadece hiç etkileşim olmadan sayfa yenilenirse bir dahaki girişte tekrar
+// sorulabilir — bu kasıtlı, zorlayıcı değil).
+const ONBOARDING_FLAG_KEY = 'onboardingTamamlandi';
+let __onboardingStep = 1;
+
+function onboardingIlkGirisSezgisiMi(){
+  try{
+    if(!Array.isArray(vehicles) || vehicles.length>0) return false;
+    if(!Array.isArray(activityLog)) return true;
+    return activityLog.every(l=>l && l.action==='login');
+  }catch(e){ return false; }
+}
+
+async function checkOnboardingWizard(){
+  try{
+    const flag = await storageAPI.get(ONBOARDING_FLAG_KEY).catch(()=>null);
+    if(flag && flag.value) return; // daha önce tamamlanmış/kapatılmış
+    if(!onboardingIlkGirisSezgisiMi()) return;
+    __onboardingStep = 1;
+    onboardingWizardGoster();
+  }catch(e){ console.error('checkOnboardingWizard hatası:', e); }
+}
+
+async function onboardingWizardTamamlaBayragi(){
+  try{ await storageAPI.set(ONBOARDING_FLAG_KEY, '1'); }catch(e){}
+}
+
+function onboardingWizardKapat(){
+  const el = document.getElementById('onboardingWizardOverlay');
+  if(el) el.remove();
+  onboardingWizardTamamlaBayragi();
+}
+
+function onboardingWizardAdimGec(delta){
+  __onboardingStep = Math.min(3, Math.max(1, __onboardingStep + delta));
+  onboardingWizardGoster();
+}
+
+function onboardingWizardAracEkleBaslat(){
+  onboardingWizardKapat();
+  switchPage('arac-yonetimi');
+  setTimeout(()=>{ if(typeof openAdd==='function') openAdd(); }, 100);
+}
+
+function onboardingWizardAyarlaraGit(){
+  onboardingWizardKapat();
+  switchPage('ayarlar');
+}
+
+async function onboardingWizardSirketKaydet(){
+  const input = document.getElementById('obwUnvan');
+  if(!input) return;
+  const yeniUnvan = input.value.trim();
+  if(!yeniUnvan){ showToast('Şirket unvanı boş olamaz.', true); return; }
+  if(window.__cloudSyncActive && window.currentCompanyId){
+    try{
+      await window.__cloudDb.collection('companies').doc(window.currentCompanyId).update({unvan: yeniUnvan});
+      if(window.currentCompanyDoc) window.currentCompanyDoc.unvan = yeniUnvan;
+      showToast('Şirket unvanı güncellendi.');
+    }catch(e){
+      // Bilerek engelleyici değil: bulut yazımı başarısız olsa bile sihirbazda ilerlemeyi
+      // engellemiyoruz, sadece bilgilendiriyoruz. Kullanıcı isterse Ayarlar'dan tekrar dener.
+      showToast('Unvan güncellenemedi (bağlantı sorunu olabilir) — Ayarlar\'dan tekrar deneyebilirsiniz.', true);
+    }
+  }
+  onboardingWizardAdimGec(1);
+}
+
+function onboardingWizardAdimIcerikHTML(step){
+  const kullaniciAdi = (window.currentUserDoc && window.currentUserDoc.adSoyad) || (window.currentUser && window.currentUser.email) || '';
+  const mevcutUnvan = (window.currentCompanyDoc && window.currentCompanyDoc.unvan) || '';
+  if(step===1){
+    return `
+      <h2 style="margin-bottom:6px;">Hoş geldin${kullaniciAdi?', '+esc(kullaniciAdi):''}! 👋</h2>
+      <p style="color:var(--text-2);margin-bottom:18px;">PEKDOĞRU FİLO paneline ilk girişin. Seni panelle tanıştırmak için 3 kısa adım hazırladık — istersen sağ üstten hemen kapatıp kendi başına da keşfedebilirsin.</p>
+      ${window.__cloudSyncActive ? `
+        <div class="field">
+          <label>Şirket unvanı</label>
+          <input type="text" id="obwUnvan" value="${esc(mevcutUnvan)}" placeholder="Örn. Pekdoğru Otomotiv Ltd. Şti.">
+        </div>
+        <p style="font-size:12.5px;color:var(--text-3);">Kayıt sırasında girdiğin unvan burada — yanlışsa şimdi düzeltebilirsin, istersen sonra Ayarlar'dan da değiştirebilirsin.</p>
+      ` : `<p style="font-size:12.5px;color:var(--text-3);">Bu panel şu an tek cihazda (bulut senkron kapalı) çalışıyor — istersen Ayarlar &gt; Bulut Senkronizasyonu'ndan daha sonra bağlayabilirsin.</p>`}
+    `;
+  }
+  if(step===2){
+    return `
+      <h2 style="margin-bottom:6px;">İlk aracını ekle 🚗</h2>
+      <p style="color:var(--text-2);margin-bottom:18px;">Filo takibine başlamak için en az bir araç eklemen gerekiyor. Şimdi ekleyebilir ya da bu adımı atlayıp sonra "Yeni Araç Ekle" kısayolunu kullanabilirsin.</p>
+      <button class="lock-btn-main" type="button" onclick="onboardingWizardAracEkleBaslat()">+ Şimdi araç ekle</button>
+    `;
+  }
+  return `
+    <h2 style="margin-bottom:6px;">Son bir kaç şey 🛠️</h2>
+    <p style="color:var(--text-2);margin-bottom:18px;">Panelin geri kalanını Ayarlar sayfasından yönetebilirsin: tema, personel erişimi, yedekleme, bulut senkronizasyonu ve daha fazlası. AI Filo Asistanı zaten hazır — sunucu taraflı güvenli bağlantı üzerinden çalışıyor, ekstra bir kurulum gerekmiyor.</p>
+    <button class="lock-btn-main" type="button" onclick="onboardingWizardAyarlaraGit()">Ayarlar'a göz at</button>
+  `;
+}
+
+function onboardingWizardGoster(){
+  const eski = document.getElementById('onboardingWizardOverlay'); if(eski) eski.remove();
+  const step = __onboardingStep;
+  const el = document.createElement('div');
+  el.className = 'overlay show';
+  el.id = 'onboardingWizardOverlay';
+  const dots = [1,2,3].map(n=>`<span style="width:7px;height:7px;border-radius:50%;display:inline-block;background:${n===step?'var(--accent-blue)':'var(--surface-3, #3a3a3a)'};transition:background .2s;"></span>`).join('');
+  const geriBtn = step>1 ? `<button class="cancel" type="button" onclick="onboardingWizardAdimGec(-1)">Geri</button>` : `<span></span>`;
+  const ileriBtn = step===1
+    ? (window.__cloudSyncActive
+        ? `<button class="save" type="button" onclick="onboardingWizardSirketKaydet()">İleri</button>`
+        : `<button class="save" type="button" onclick="onboardingWizardAdimGec(1)">İleri</button>`)
+    : (step===3
+        ? `<button class="save" type="button" onclick="onboardingWizardKapat()">Bitir</button>`
+        : `<button class="save" type="button" onclick="onboardingWizardAdimGec(1)">Atla / İleri</button>`);
+  el.innerHTML = `
+    <div class="modal" style="max-width:460px;">
+      <div class="modal-head">
+        <h2 style="font-size:14px;letter-spacing:.5px;text-transform:uppercase;color:var(--text-3);">İlk Kurulum — Adım ${step}/3</h2>
+        <button class="modal-close" onclick="onboardingWizardKapat()" title="Kapat (istediğin zaman atlayabilirsin)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body" id="onboardingWizardBody">${onboardingWizardAdimIcerikHTML(step)}</div>
+      <div class="modal-actions" style="align-items:center;">
+        ${geriBtn}
+        <div style="display:flex;gap:6px;align-items:center;">${dots}</div>
+        ${ileriBtn}
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+  // Modal dışına (arka plan overlay) tıklamak KASITLI OLARAK kapatmaz — yanlışlıkla dışarı
+  // tıklayıp sihirbazı erken kapatmayı önlemek için; kapatmak isteyen üstteki X'i kullanır.
 }
 
 function updateShellChrome(){
@@ -3634,6 +3821,53 @@ document.getElementById('menuCloudSync').onclick = ()=>{
   document.getElementById('cloudOverlay').classList.add('show');
 };
 document.getElementById('cloudCancel').onclick = ()=>document.getElementById('cloudOverlay').classList.remove('show');
+// FAZ10 güvenlik: bu, projedeki SON kod-çalıştırma noktasıydı — kullanıcının yapıştırdığı
+// (güvenilmeyen) metin Function() ile doğrudan JS olarak ÇALIŞTIRILIYORDU. Aşağıdaki
+// jsObjectLiteralToJson() hiçbir kod ÇALIŞTIRMAZ; metni karakter karakter tarayıp
+// (string/yorum/tırnaksız-anahtar farkındalığıyla) geçerli JSON'a çevirir, sonra JSON.parse
+// eder. eval/Function KULLANILMAZ.
+function jsObjectLiteralToJson(text){
+  let out = '', i = 0;
+  const n = text.length;
+  while(i < n){
+    const ch = text[i];
+    // Yorumları at (// ve /* */) — Firebase konsol çıktısında normalde olmaz, zararsız
+    if(ch === '/' && text[i+1] === '/'){ while(i < n && text[i] !== '\n') i++; continue; }
+    if(ch === '/' && text[i+1] === '*'){ i += 2; while(i < n && !(text[i]==='*' && text[i+1]==='/')) i++; i += 2; continue; }
+    // Tek tırnaklı string -> çift tırnaklı JSON string
+    if(ch === "'"){
+      let j = i+1, s = '';
+      while(j < n && text[j] !== "'"){
+        if(text[j] === '\\' && j+1<n){ s += text[j]+text[j+1]; j += 2; continue; }
+        if(text[j] === '"'){ s += '\\"'; j++; continue; }
+        s += text[j]; j++;
+      }
+      out += '"' + s + '"'; i = j+1; continue;
+    }
+    // Çift tırnaklı string olduğu gibi (escape'leri koruyarak) kopyalanır
+    if(ch === '"'){
+      let j = i+1, s = '"';
+      while(j < n && text[j] !== '"'){
+        if(text[j] === '\\' && j+1<n){ s += text[j]+text[j+1]; j += 2; continue; }
+        s += text[j]; j++;
+      }
+      s += '"'; out += s; i = j+1; continue;
+    }
+    // Tanımlayıcı, ':' takip ediyorsa (yani bir anahtarsa) tırnakla
+    if(/[A-Za-z_$]/.test(ch)){
+      let j = i;
+      while(j < n && /[A-Za-z0-9_$]/.test(text[j])) j++;
+      const ident = text.slice(i, j);
+      let k = j;
+      while(k < n && /\s/.test(text[k])) k++;
+      out += (text[k] === ':') ? ('"' + ident + '"') : ident;
+      i = j; continue;
+    }
+    out += ch; i++;
+  }
+  // Sondaki fazladan virgülleri temizle: ",}" veya ",]"
+  return out.replace(/,(\s*[}\]])/g, '$1');
+}
 function parseFirebaseConfigInput(raw){
   // 1) Doğrudan saf JSON denenir
   try{ return JSON.parse(raw); }catch(e){}
@@ -3648,7 +3882,7 @@ function parseFirebaseConfigInput(raw){
   })();
   if(objText){
     try{
-      const obj = Function('"use strict"; return (' + objText + ')')();
+      const obj = JSON.parse(jsObjectLiteralToJson(objText));
       if(obj && typeof obj === 'object') return obj;
     }catch(e){}
   }
@@ -3657,7 +3891,7 @@ function parseFirebaseConfigInput(raw){
   if(/[a-zA-Z0-9_]+\s*:/.test(raw)){
     try{
       const trimmed = raw.trim().replace(/,\s*$/, ''); // sondaki fazladan virgülü temizle
-      const obj = Function('"use strict"; return ({' + trimmed + '})')();
+      const obj = JSON.parse(jsObjectLiteralToJson('{' + trimmed + '}'));
       if(obj && typeof obj === 'object' && Object.keys(obj).length) return obj;
     }catch(e){}
   }
@@ -8170,6 +8404,41 @@ function giderKaynaklariAyIcin(ayKey, vehicleId){
     .reduce((s,t)=>s+(Number(t.maliyet)||0),0);
   return {expenseToplam, yakit, hgsCeza, lastik, toplam: expenseToplam+yakit+hgsCeza+lastik};
 }
+// FAZ10 performans: Raporlar sayfası (ve 6 aylık kârlılık trendi) giderKaynaklariAyIcin()'i
+// FİLODAKİ HER ARAÇ İÇİN ayrı ayrı çağırıyordu — her çağrı expenses/fuelRecords/tolls/
+// trafficFines/tires dizilerinin TAMAMINI tekrar tarıyor, bu da O(araç × kayıt) büyümesine
+// (1000 araçlık bir filoda ~11.5 saniyelik render'a) yol açıyordu. Bu fonksiyon AYNI filtre
+// kurallarını (satır satır birebir aynı) kullanır ama TEK GEÇİŞTE tüm araçlar için gider
+// toplamlarını çıkarır — O(kayıt) — giderKaynaklariAyIcin() KENDİSİ DEĞİŞTİRİLMEDİ (tekil
+// araç/tekil ay için hâlâ diğer tüm çağıran yerlerde kullanılıyor), sadece Raporlar'daki N
+// araçlık döngü bu indekslenmiş sürüme geçirildi.
+function giderKaynaklariAyIcinTumAraclar(ayKey){
+  const bos = ()=>({expenseToplam:0, yakit:0, hgsCeza:0, lastik:0, toplam:0});
+  const sonuc = new Map();
+  const al = (vid)=>{ if(!sonuc.has(vid)) sonuc.set(vid, bos()); return sonuc.get(vid); };
+  if(!ayKey) return {get:(vid)=>sonuc.get(vid)||bos()};
+  expenses.forEach(e=>{
+    if(!e.vehicleId || (e.tarih||'').slice(0,7)!==ayKey) return;
+    const o = al(e.vehicleId); const t = Number(e.tutar)||0; o.expenseToplam += t; o.toplam += t;
+  });
+  fuelRecords.forEach(f=>{
+    if(!f.vehicleId || (f.tarih||'').slice(0,7)!==ayKey) return;
+    const o = al(f.vehicleId); const t = Number(f.toplam)||0; o.yakit += t; o.toplam += t;
+  });
+  tolls.forEach(t=>{
+    if(!t.vehicleId || t.musteriyeYansitildi || (t.tarih||'').slice(0,7)!==ayKey) return;
+    const o = al(t.vehicleId); const tutar = Number(t.tutar)||0; o.hgsCeza += tutar; o.toplam += tutar;
+  });
+  trafficFines.forEach(f=>{
+    if(!f.vehicleId || f.musteriyeYansitildi || (f.tarih||'').slice(0,7)!==ayKey) return;
+    const o = al(f.vehicleId); const tutar = Number(f.tutar)||0; o.hgsCeza += tutar; o.toplam += tutar;
+  });
+  tires.forEach(t=>{
+    if(!t.vehicleId || (t.takilmaTarihi||'').slice(0,7)!==ayKey) return;
+    const o = al(t.vehicleId); const tutar = Number(t.maliyet)||0; o.lastik += tutar; o.toplam += tutar;
+  });
+  return {get:(vid)=>sonuc.get(vid)||bos()};
+}
 // aylikMasrafHedefiHesapla() (FAZ5) hâlâ "hangi ay hedef alınsın" (hedefAy — bu ay kayıt yoksa
 // en güncel ay) kararını verir; bu fonksiyon SADECE o ayın rakamını FAZ5 kaynaklarıyla genişletir.
 function aylikGiderGenisletilmisHesapla(){
@@ -8207,6 +8476,47 @@ function vehicleGercekGelirHesapla(v, hedefAy){
   const faturaToplam = musteriFaturalari.reduce((s,f)=>s+(Number(f.genelToplam)||0),0);
   const tahsilatToplam = musteriFaturalari.reduce((s,f)=>s+faturaOdenenToplam(f.id),0);
   return {gelir:faturaToplam, kaynak:'fatura', faturaToplam, tahsilatToplam};
+}
+// FAZ10 performans: vehicleGercekGelirHesapla()'nın da Raporlar'da (ve 6 aylık trendde) HER
+// araç için rentals/invoices dizilerinin tamamını tekrar tekrar taraması aynı O(araç × kayıt)
+// sorununa yol açıyordu. vehicleGercekGelirHesapla() KENDİSİ DEĞİŞTİRİLMEDİ (tekil çağıran
+// yerlerde hâlâ kullanılıyor); bu fabrika fonksiyonu AYNI karar mantığını (adım adım aynı
+// sıradaki kontroller) TEK GEÇİŞTE hazırlanmış indekslerle uygulayıp N araç için ayrı ayrı
+// çağrılabilecek ucuz bir fonksiyon döndürür.
+function vehicleGercekGelirHesaplaTopluOlustur(hedefAy){
+  const aktifByVehicle = new Map(); // vehicleId -> ilk 'teslimEdildi' rental (rentals.find ile AYNI sıra)
+  const musteriAraclari = new Map(); // customerId -> Set(vehicleId) ('teslimEdildi' olanlar)
+  rentals.forEach(r=>{
+    if(r.durum!=='teslimEdildi') return;
+    if(!aktifByVehicle.has(r.vehicleId)) aktifByVehicle.set(r.vehicleId, r);
+    if(r.customerId){
+      if(!musteriAraclari.has(r.customerId)) musteriAraclari.set(r.customerId, new Set());
+      musteriAraclari.get(r.customerId).add(r.vehicleId);
+    }
+  });
+  const faturaByCustomer = new Map(); // customerId -> {toplam, idler:[]}
+  if(hedefAy){
+    invoices.forEach(f=>{
+      if(f.customerId==null || (f.tarih||'').slice(0,7)!==hedefAy || f.durum==='Taslak' || f.durum==='Iptal') return;
+      if(!faturaByCustomer.has(f.customerId)) faturaByCustomer.set(f.customerId, {toplam:0, idler:[]});
+      const o = faturaByCustomer.get(f.customerId);
+      o.toplam += Number(f.genelToplam)||0;
+      o.idler.push(f.id);
+    });
+  }
+  return function(v){
+    const tahminiGelir = v.durum==='Kirada' ? (Number(v.kira)||0) : 0;
+    const geriDon = ()=> ({gelir:tahminiGelir, kaynak:'tahmini', faturaToplam:0, tahsilatToplam:0});
+    const aktifRental = aktifByVehicle.get(v.id);
+    if(!aktifRental || !aktifRental.customerId || !hedefAy) return geriDon();
+    const digerAraclar = musteriAraclari.get(aktifRental.customerId);
+    const musteriBaskaAracta = !!digerAraclar && (digerAraclar.size>1 || !digerAraclar.has(v.id));
+    if(musteriBaskaAracta) return geriDon();
+    const faturaBilgi = faturaByCustomer.get(aktifRental.customerId);
+    if(!faturaBilgi || !faturaBilgi.idler.length) return geriDon();
+    const tahsilatToplam = faturaBilgi.idler.reduce((s,id)=>s+faturaOdenenToplam(id),0);
+    return {gelir:faturaBilgi.toplam, kaynak:'fatura', faturaToplam:faturaBilgi.toplam, tahsilatToplam};
+  };
 }
 
 function renderMasrafDrawer(vehicleId){
@@ -8448,7 +8758,24 @@ function getAracGorsel(hint){
   return '';
 }
 
-function normPlaka(p){ return String(p||'').trim().toLocaleUpperCase('tr-TR').replace(/\s+/g,''); }
+// FAZ10 performans: normPlaka() saf bir fonksiyondur (aynı girdi HER ZAMAN aynı çıktıyı verir),
+// ama toLocaleUpperCase('tr-TR') (Türkçe İ/i kurallarını doğru uygulamak için ICU'ya gidiyor)
+// düz toUpperCase()'e göre gözle görülür şekilde yavaştır. expensesForVehicle() gibi fonksiyonlar
+// bunu N araç × M kayıt kadar ÇOK KEZ AYNI plaka için tekrar tekrar çağırıyordu — 1000 araç/3000
+// masraf ölçeğinde Raporlar sayfasını tek başına ~9,5 saniyeye taşıyan asıl darboğaz buydu.
+// Basit bir Map önbelleği (saf fonksiyon olduğu için geçersiz kılma/eskime riski YOKTUR) bu
+// tekrar hesaplamayı ortadan kaldırır; filodaki farklı plaka sayısı sınırlı olduğundan önbellek
+// küçük kalır, yine de patolojik büyümeye karşı basit bir üst sınırla temizleniyor.
+const _normPlakaCache = new Map();
+function normPlaka(p){
+  const key = p==null ? '' : String(p);
+  const cached = _normPlakaCache.get(key);
+  if(cached!==undefined) return cached;
+  const val = key.trim().toLocaleUpperCase('tr-TR').replace(/\s+/g,'');
+  if(_normPlakaCache.size > 8000) _normPlakaCache.clear();
+  _normPlakaCache.set(key, val);
+  return val;
+}
 function validPlaka(p){
   const il = parseInt(p.slice(0,2),10);
   if(isNaN(il) || il<1 || il>81) return false;
@@ -13144,6 +13471,7 @@ function sozlesmeMesajOlustur(sonuc){
 async function otoBelgeSec(file, statusEl){
   if(!file) return;
   if(file.size > 10*1024*1024){ showToast('Dosya çok büyük (en fazla 10 MB).', true); return; }
+  if(file.type === 'image/svg+xml'){ showToast('SVG dosyaları desteklenmiyor.', true); return; }
   const setBusy = t=>{ [statusEl, document.getElementById('otoBelgeBtnText')].filter(Boolean).forEach(el=>{ el.textContent = t; }); };
   setBusy('Okunuyor…');
 
@@ -13386,6 +13714,13 @@ function otoBelgeFallbackId(){
   return (du&&du.value) || (bl&&bl.value) || '';
 }
 async function belgeVeriOku(file){
+  // FAZ10 güvenlik: SVG, script çalıştırabilen bir "resim" türüdür (özellikle bu dosya daha
+  // sonra viewBelgeByKey() ile blob URL olarak yeni sekmede AÇILDIĞINDA — <img> içine
+  // gömülmekten farklı olarak üst-seviye gezinmede SVG içindeki <script> çalışır). Çağıran
+  // fonksiyonların çoğu zaten bu kontrolü kendi başına yapıyor, ama bu ORTAK okuma fonksiyonu
+  // olduğu için burada da (savunma derinliği / defense-in-depth) tekrar reddediyoruz — ileride
+  // eklenecek yeni bir çağıran noktası bu kontrolü unutursa bile korunmuş olur.
+  if(file.type === 'image/svg+xml') throw new Error('SVG dosyaları desteklenmiyor.');
   let dataUrl = null;
   if(file.type && file.type.startsWith('image/') && file.type!=='image/gif'){
     dataUrl = await fotoSikistir(file, 1800, 0.78);
@@ -13421,6 +13756,7 @@ async function belgeAnalizEt(onceden){
 async function belgeTopluTek(file, fallbackId){
   try{
     if(file.size > 10*1024*1024) return {durum:'hata', mesaj:'10 MB sınırı aşıldı'};
+    if(file.type === 'image/svg+xml') return {durum:'hata', mesaj:'SVG dosyaları desteklenmiyor'};
     const onceden = await belgeVeriOku(file);
     const bilgi = getGeminiKey() ? await belgeAnalizEt(onceden) : null;
     const tur = ((bilgi&&bilgi.belgeTuru)||'diger').toLowerCase();
@@ -13799,8 +14135,26 @@ function aracAyGeliriTahminEt(v, ayKey){
   if(!toplamGun || !kiradaGun) return 0;
   return Math.round(Number(v.kira) * (kiradaGun/toplamGun));
 }
+// FAZ10 performans: aracAyGeliriTahminEt() ile MANTIKSAL OLARAK BİREBİR AYNI (aynı sıradaki
+// aynı kontroller), ama vehicleGercekGelirHesapla()/aracDolulukIcinGunSayisi() yerine önceden
+// hazırlanmış (bu ay için TEK SEFER kurulan) indeksli sürümlerini kullanır. aracAyGeliriTahminEt
+// KENDİSİ DEĞİŞTİRİLMEDİ — hâlâ diğer (tekil araç) çağıran yerlerde kullanılabilir durumda.
+function aracAyGeliriTahminEtIndexed(v, ayKey, gelirFn, dolulukFn){
+  const gelirBilgisi = gelirFn(v);
+  if(gelirBilgisi.kaynak==='fatura') return gelirBilgisi.gelir;
+  if(!v.kira) return 0;
+  const {toplamGun, kiradaGun} = dolulukFn(v);
+  if(!toplamGun || !kiradaGun) return 0;
+  return Math.round(Number(v.kira) * (kiradaGun/toplamGun));
+}
 // Filodaki TÜM araçların kârlılığını (aracAyGeliriTahminEt + giderKaynaklariAyIcin +
 // aracAmortismanAylik — üçü de mevcut FAZ5/7 fonksiyonları) son 6 ay için toplayan seri.
+// FAZ10 performans: 1000 araçlık bir filoda bu fonksiyon eskiden 6 ay × 1000 araç için
+// expenses/fuelRecords/tolls/trafficFines/tires/rentals/invoices dizilerinin TAMAMINI tekrar
+// tekrar tarıyordu (Raporlar sayfası render'ının ~11 saniyesinin büyük kısmı buradaydı). Aşağıda
+// her ay için indeksler (giderKaynaklariAyIcinTumAraclar/vehicleGercekGelirHesaplaTopluOlustur/
+// aracDolulukIcinGunSayisiTopluOlustur) TEK SEFER kurulup N araç için ucuza tekrar kullanılıyor
+// — sonuç değerleri eski koddakiyle BİREBİR AYNI, sadece hesaplama sırası/verimliliği değişti.
 function karlilikTrendSon6Ay(){
   const aylar = [];
   const now = new Date();
@@ -13809,10 +14163,15 @@ function karlilikTrendSon6Ay(){
     aylar.push({key:`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`, label: d.toLocaleDateString('tr-TR',{month:'short'})});
   }
   return aylar.map(a=>{
+    const giderIdx = giderKaynaklariAyIcinTumAraclar(a.key);
+    const gelirFn = vehicleGercekGelirHesaplaTopluOlustur(a.key);
+    const ayBas = a.key+'-01';
+    const ayBit = new Date(Number(a.key.slice(0,4)), Number(a.key.slice(5,7)), 0).toISOString().slice(0,10);
+    const dolulukFn = aracDolulukIcinGunSayisiTopluOlustur(ayBas, ayBit);
     let gelir=0, gider=0;
     vehicles.forEach(v=>{
-      gelir += aracAyGeliriTahminEt(v, a.key);
-      const g = giderKaynaklariAyIcin(a.key, v.id);
+      gelir += aracAyGeliriTahminEtIndexed(v, a.key, gelirFn, dolulukFn);
+      const g = giderIdx.get(v.id);
       gider += g.toplam + aracAmortismanAylik(v);
     });
     return {label:a.label, gelir:Math.round(gelir), gider:Math.round(gider), kar:Math.round(gelir-gider)};
@@ -13821,7 +14180,9 @@ function karlilikTrendSon6Ay(){
 // Filo doluluk oranı zaman serisi — aracDolulukIcinGunSayisi() (FAZ7, Araç Doluluk Raporu'nda
 // kullanılan AYNI fonksiyon) her ay için ayrı ayrı çağrılır. rentals kaydı hiç olmayan araçlar
 // (FAZ4 öncesi) bu trendde de %0 doluluk gösterir — Araç Doluluk Raporu'yla AYNI, dokümante
-// edilmiş sınırlama; yeni bir doluluk mantığı İCAT EDİLMEDİ.
+// edilmiş sınırlama; yeni bir doluluk mantığı İCAT EDİLMEDİ. FAZ10 performans: N araç için
+// rentals'ı ayrı ayrı taramak yerine aracDolulukIcinGunSayisiTopluOlustur() ile ay başına TEK
+// SEFER indekslenir (bkz. karlilikTrendSon6Ay'daki aynı desen) — sonuç birebir aynıdır.
 function dolulukTrendSon6Ay(){
   const aylar = [];
   const now = new Date();
@@ -13832,9 +14193,10 @@ function dolulukTrendSon6Ay(){
     aylar.push({label: d.toLocaleDateString('tr-TR',{month:'short'}), bas, bit});
   }
   return aylar.map(a=>{
+    const dolulukFn = aracDolulukIcinGunSayisiTopluOlustur(a.bas, a.bit);
     let toplamGun=0, kiradaGun=0;
     vehicles.forEach(v=>{
-      const r = aracDolulukIcinGunSayisi(v, a.bas, a.bit);
+      const r = dolulukFn(v);
       toplamGun += r.toplamGun; kiradaGun += r.kiradaGun;
     });
     return {label:a.label, yuzde: toplamGun>0 ? Math.round(kiradaGun/toplamGun*100) : 0};
@@ -13872,6 +14234,13 @@ function renderRaporlarPage(){
   // v.85: bu mantık Genel Bakış'taki Net Kâr ile de hizalanması için aylikMasrafHedefiHesapla()'ya taşındı.
   const {hedefAy, etiket: hedefAyEtiket} = aylikMasrafHedefiHesapla();
 
+  // FAZ10 performans: 1000+ araçlık bir filoda giderKaynaklariAyIcin()/vehicleGercekGelirHesapla()
+  // her araç için expenses/fuelRecords/.../rentals/invoices dizilerinin TAMAMINI yeniden
+  // taradığından bu sayfa saniyeler sürebiliyordu (bkz. karlilikTrendSon6Ay üstündeki not — asıl
+  // ağırlık orada, ama tablo da aynı O(araç×kayıt) desenine sahipti). Aynı gider/gelir sonuçlarını
+  // veren indeksli sürümler burada da (tabloda) kullanılıyor.
+  const giderIdxTablo = giderKaynaklariAyIcinTumAraclar(hedefAy);
+  const gelirFnTablo = vehicleGercekGelirHesaplaTopluOlustur(hedefAy || todayISO().slice(0,7));
   const karlilik = vehicles.map(v=>{
     const vMasrafListesi = expensesForVehicle(v);
     const toplamMasraf = vMasrafListesi.reduce((s,e)=>s+(Number(e.tutar)||0),0);
@@ -13879,7 +14248,7 @@ function renderRaporlarPage(){
     // FAZ7: hedef ay için TÜM gerçek gider kaynakları (masraf kayıtları + yakıt + HGS/ceza
     // (yansıtılmamış) + lastik) — giderKaynaklariAyIcin() tek kaynaktır, çift sayım yapmaz
     // (bkz. fonksiyon tanımındaki not — serviceParts bilinçli olarak dahil edilmez).
-    const gider = hedefAy ? giderKaynaklariAyIcin(hedefAy, v.id) : {expenseToplam:0, yakit:0, hgsCeza:0, lastik:0, toplam:0};
+    const gider = hedefAy ? giderIdxTablo.get(v.id) : {expenseToplam:0, yakit:0, hgsCeza:0, lastik:0, toplam:0};
     // FAZ5: alış fiyatı girilmiş araçlarda aylık amortisman da bir "gider kalemi" olarak
     // kârlılığa dahil edilir — alış fiyatı hiç girilmemiş (mevcut) araçlarda bu satır 0 döner,
     // yani bu fazdan önce hesaplanan kâr rakamı hiç değişmez (bkz. aracAmortismanAylik).
@@ -13888,7 +14257,7 @@ function renderRaporlarPage(){
     const aylikMasrafTahmini = gider.toplam + amortisman;
     // FAZ7: mümkünse gerçek fatura/tahsilat verisi, değilse kayıtlı `kira` alanına dayalı tahmin
     // (bkz. vehicleGercekGelirHesapla üzerindeki dürüstlük notu — invoices'ta vehicleId yok).
-    const gelirBilgisi = vehicleGercekGelirHesapla(v, hedefAy || todayISO().slice(0,7));
+    const gelirBilgisi = gelirFnTablo(v);
     const aylikGelir = gelirBilgisi.gelir;
     const aylikKar = aylikGelir - aylikMasrafTahmini;
     return { v, aylikGelir, toplamMasraf, masrafSayisi, aylikMasrafTahmini, aylikMasrafTahminiHam, amortisman, aylikKar, gider, gelirBilgisi };
@@ -14208,6 +14577,33 @@ function aracDolulukIcinGunSayisi(v, bas, bit){
     kiradaGun += Math.round((new Date(oe)-new Date(os))/86400000)+1;
   });
   return {toplamGun, kiradaGun: Math.min(kiradaGun, toplamGun)};
+}
+// FAZ10 performans: aracDolulukIcinGunSayisi()'nin KENDİSİ DEĞİŞTİRİLMEDİ (tekil araç/tekil
+// aralık için hâlâ Araç Doluluk Raporu'nda kullanılıyor). Bu, 6 aylık doluluk trendinin (ve
+// kâr trendindeki doluluk-oranlı gelir tahmininin) HER araç için rentals dizisinin tamamını
+// tekrar taramasını önlemek üzere rentals'ı vehicleId'ye göre TEK SEFERDE gruplar; iç mantık
+// (tarih aralığı kesişimi) satır satır aynıdır.
+function aracDolulukIcinGunSayisiTopluOlustur(bas, bit){
+  const toplamGun = Math.max(1, Math.round((new Date(bit)-new Date(bas))/86400000)+1);
+  const rentalsByVehicle = new Map();
+  rentals.forEach(r=>{
+    if(!r.vehicleId || !r.baslangic) return;
+    if(!rentalsByVehicle.has(r.vehicleId)) rentalsByVehicle.set(r.vehicleId, []);
+    rentalsByVehicle.get(r.vehicleId).push(r);
+  });
+  return function(v){
+    let kiradaGun = 0;
+    (rentalsByVehicle.get(v.id)||[]).forEach(r=>{
+      const rBas = r.baslangic;
+      const rBit = (r.iadeKontrol&&r.iadeKontrol.tarih) || r.bitis || (r.durum==='teslimEdildi'?todayISO():rBas);
+      if(!rBas || !rBit) return;
+      const os = rBas>bas ? rBas : bas;
+      const oe = rBit<bit ? rBit : bit;
+      if(os>oe) return;
+      kiradaGun += Math.round((new Date(oe)-new Date(os))/86400000)+1;
+    });
+    return {toplamGun, kiradaGun: Math.min(kiradaGun, toplamGun)};
+  };
 }
 function aracDolulukRaporuOlustur(bas, bit, format){
   const satirlar = vehicles.map(v=>{
@@ -14800,6 +15196,11 @@ async function persistAutomationRules(){
   try{ await withStorageTimeout(storageAPI.set('automationRules', JSON.stringify(automationRules))); return true; }
   catch(e){ showToast((e && /zaman aşımı/i.test(e.message||'')) ? e.message : 'Otomasyon kuralı kaydedilemedi.', true); return false; }
 }
+// FAZ10: kvkkTalepleri — documents/notifications/automationRules ile birebir aynı desen.
+async function persistKvkkTalepleri(){
+  try{ await withStorageTimeout(storageAPI.set('kvkkTalepleri', JSON.stringify(kvkkTalepleri))); return true; }
+  catch(e){ showToast((e && /zaman aşımı/i.test(e.message||'')) ? e.message : 'Talep kaydedilemedi.', true); return false; }
+}
 
 // ================================================================================
 // FAZ8: Otomasyon Kuralları — basit, kural-tabanlı bir otomasyon katmanı. FAZ6'nın
@@ -14990,6 +15391,145 @@ function automationRulesCardHTML(){
           <button class="settings-btn" id="apOtomasyonCalistir">Şimdi Çalıştır</button>
         </div>
       </div>`;
+}
+
+// ================================================================================
+// FAZ10: KVKK / Veri Yönetimi — (1) müşteri formundaki rıza onayı bu bölümün bir parçası
+// (bkz. musteriFormAc/musteriKaydet), (2) burada statik ÖRNEK bir Aydınlatma Metni ve
+// (3) "veri silme talebi" KAYIT defteri var. ÇOK ÖNEMLİ: bu modül hiçbir veriyi otomatik
+// SİLMEZ. Sadece "şu kişi, şu tarihte, şu nedenle silme talep etti" bilgisini storageAPI'de
+// (kvkkTalepleri, documents/notifications/automationRules ile birebir aynı blob deseni) kayıt
+// altına alır. Gerçek silme işlemi — müşteri kaydı, belge, vb. — ilgili modülde yönetici
+// tarafından ELLE yapılmalıdır (ör. Müşteriler sayfasında "Sil" butonu). Aşağıdaki örnek metin
+// GERÇEK bir hukuki belge DEĞİLDİR — ticari kullanımdan önce mutlaka bir hukuk danışmanına
+// kontrol ettirilmelidir.
+function kvkkAydinlatmaMetniGoster(){
+  const eski = document.getElementById('kvkkMetinOverlay'); if(eski) eski.remove();
+  const el = document.createElement('div');
+  el.className = 'overlay show';
+  el.id = 'kvkkMetinOverlay';
+  el.innerHTML = `
+    <div class="modal" style="max-width:640px;">
+      <div class="modal-head">
+        <h2>KVKK Aydınlatma Metni (Örnek)</h2>
+        <button class="modal-close" onclick="document.getElementById('kvkkMetinOverlay').remove()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div style="background:rgba(225,85,78,.1);border:1px solid rgba(225,85,78,.35);color:var(--safety);border-radius:10px;padding:12px 14px;font-size:12.5px;font-weight:600;margin-bottom:16px;line-height:1.5;">
+          ⚠️ Bu metin yalnızca ÖRNEK/YER TUTUCUDUR, gerçek bir hukuki belge DEĞİLDİR. Ticari
+          kullanıma geçmeden önce şirketinize özel, güncel mevzuata uygun bir Aydınlatma Metni'ni
+          mutlaka bir hukuk danışmanına hazırlatıp/onaylatıp buradaki yerine koymalısınız.
+        </div>
+        <div style="font-size:13px;line-height:1.7;color:var(--text-2);">
+          <p><b>1. Veri Sorumlusu:</b> İşbu Aydınlatma Metni, 6698 sayılı Kişisel Verilerin Korunması
+          Kanunu ("KVKK") uyarınca, şirketimiz tarafından veri sorumlusu sıfatıyla işlenen kişisel
+          verileriniz hakkında sizi bilgilendirmek amacıyla hazırlanmıştır.</p>
+          <p><b>2. İşlenen Veriler:</b> Ad-soyad, T.C. kimlik no, iletişim bilgileri (telefon,
+          e-posta, adres), ehliyet bilgileri, araç kiralama ve ödeme geçmişi gibi veriler
+          işlenmektedir.</p>
+          <p><b>3. İşleme Amaçları:</b> Araç kiralama sözleşmesinin kurulması ve ifası, faturalama
+          ve tahsilat süreçlerinin yürütülmesi, yasal yükümlülüklerin yerine getirilmesi ve müşteri
+          ilişkilerinin yönetilmesi.</p>
+          <p><b>4. Aktarım:</b> Verileriniz, yasal zorunluluklar dışında üçüncü kişilerle
+          paylaşılmaz.</p>
+          <p><b>5. Haklarınız:</b> KVKK'nın 11. maddesi uyarınca, verilerinizin işlenip
+          işlenmediğini öğrenme, düzeltilmesini veya silinmesini talep etme dahil kanunda sayılan
+          haklara sahipsiniz. Talepleriniz için şirketimizle iletişime geçebilirsiniz — bu paneldeki
+          "Veri Silme Talepleri" defteri, talebinizin kayıt altına alınması amacıyla kullanılır;
+          talebiniz idari olarak değerlendirildikten sonra ilgili modülde manuel olarak işleme
+          alınır.</p>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="save" onclick="document.getElementById('kvkkMetinOverlay').remove()">Kapat</button>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+  el.onclick = e=>{ if(e.target===el) el.remove(); };
+}
+
+function kvkkTalepListesiHTML(){
+  if(!kvkkTalepleri.length) return '<div class="log-empty" style="padding:14px 0;">Henüz kayıtlı talep yok.</div>';
+  return [...kvkkTalepleri].sort((a,b)=>(b.tarih||'').localeCompare(a.tarih||'')).map(t=>`
+    <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:600;color:var(--paper);">${esc(t.adSoyad)}</div>
+        <div style="font-size:11.5px;color:var(--text-3);">${esc(fmtTarih(t.tarih))}${t.not?' · '+esc(t.not):''}</div>
+      </div>
+      <button onclick="kvkkTalepSil('${t.id}')" style="background:none;border:1px solid var(--line);color:var(--safety);padding:5px 10px;border-radius:7px;font-size:11.5px;font-weight:600;cursor:pointer;flex-shrink:0;">Sil</button>
+    </div>`).join('');
+}
+function kvkkCardHTML(){
+  return `
+      <div class="settings-card" id="kvkkCard">
+        <h3><span class="settings-ic" style="background:#E1554E">${DASH_ICONS.shield}</span> KVKK / Veri Yönetimi <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;background:rgba(22,160,134,.12);color:var(--accent-blue);">FAZ10</span></h3>
+        <p>Müşteri eklerken artık KVKK rıza onayı zorunlu tutuluyor. Aşağıdan örnek Aydınlatma
+        Metni'ni görüntüleyebilir ve gelen "veri silme" taleplerini kayıt altına alabilirsin.</p>
+        <div class="row-btns"><button class="settings-btn" onclick="kvkkAydinlatmaMetniGoster()">Aydınlatma Metnini görüntüle</button></div>
+        <div style="background:rgba(232,161,50,.1);border:1px solid rgba(232,161,50,.35);color:#E8A132;border-radius:10px;padding:10px 12px;font-size:12px;font-weight:600;margin:14px 0;line-height:1.5;">
+          ⚠️ Aşağıdaki defter hiçbir veriyi OTOMATİK SİLMEZ — yalnızca talebi kayıt altına alır.
+          Gerçek silme işlemini (ör. müşteri kaydı, belge) ilgili modülde yönetici elle yapmalıdır.
+        </div>
+        <h4 style="font-size:12.5px;font-weight:700;color:var(--text-2);margin:12px 0 4px;">Veri Silme Talepleri</h4>
+        <div id="kvkkTalepListesi">${kvkkTalepListesiHTML()}</div>
+        <div class="row-btns" style="margin-top:12px;">
+          <button class="add-btn" onclick="kvkkTalepFormAc()">+ Talep Kaydet</button>
+        </div>
+      </div>`;
+}
+function kvkkTalepFormAc(){
+  const eski = document.getElementById('kvkkTalepFormOverlay'); if(eski) eski.remove();
+  const el = document.createElement('div');
+  el.className = 'overlay show';
+  el.id = 'kvkkTalepFormOverlay';
+  el.innerHTML = `
+    <div class="modal" style="max-width:440px;">
+      <div class="modal-head">
+        <h2>Veri Silme Talebi Kaydet</h2>
+        <button class="modal-close" onclick="document.getElementById('kvkkTalepFormOverlay').remove()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="field"><label>Ad Soyad (müşteri/kullanıcı)</label><input type="text" id="ktAd" placeholder="Talep eden kişi"></div>
+        <div class="field"><label>Talep tarihi</label><input type="date" id="ktTarih" value="${todayISO()}"></div>
+        <div class="field"><label>Not (opsiyonel)</label><input type="text" id="ktNot" placeholder="Ör. hangi veriler, iletişim kanalı vb."></div>
+        <p style="font-size:12px;color:var(--text-3);">Bu kayıt yalnızca talebi belgeler — kaydettikten sonra ilgili müşteri/veri kaydını gerekiyorsa ilgili modülden elle silmeyi unutmayın.</p>
+      </div>
+      <div class="err" id="ktErr" style="padding:0 22px;"></div>
+      <div class="modal-actions">
+        <button class="cancel" onclick="document.getElementById('kvkkTalepFormOverlay').remove()">Vazgeç</button>
+        <button class="save" onclick="kvkkTalepKaydet()">Kaydet</button>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+  el.onclick = e=>{ if(e.target===el) el.remove(); };
+  document.getElementById('ktAd').focus();
+}
+async function kvkkTalepKaydet(){
+  if(!requireAdmin()) return;
+  const errEl = document.getElementById('ktErr');
+  errEl.style.display = 'none'; errEl.textContent = '';
+  const adSoyad = document.getElementById('ktAd').value.trim();
+  const tarih = document.getElementById('ktTarih').value || todayISO();
+  const not = document.getElementById('ktNot').value.trim();
+  if(!adSoyad){ errEl.textContent = 'Lütfen ad soyad girin.'; errEl.style.display = 'block'; return; }
+  kvkkTalepleri.push({ id: yeniId('kvkk'), adSoyad, tarih, not, olusturmaTarihi: todayISO() });
+  await persistKvkkTalepleri();
+  const overlay = document.getElementById('kvkkTalepFormOverlay'); if(overlay) overlay.remove();
+  showToast('Talep kaydedildi (veri OTOMATİK silinmedi — gerekiyorsa ilgili modülden elle silin).');
+  logActivity('add', `KVKK veri silme talebi kaydedildi: <b>${esc(adSoyad)}</b>`);
+  const list = document.getElementById('kvkkTalepListesi'); if(list) list.innerHTML = kvkkTalepListesiHTML();
+}
+async function kvkkTalepSil(id){
+  if(!requireAdmin()) return;
+  if(!confirm('Bu talep kaydını (sadece kaydı, veriyi DEĞİL) silmek istediğinize emin misiniz?')) return;
+  kvkkTalepleri = kvkkTalepleri.filter(x=>x.id!==id);
+  await persistKvkkTalepleri();
+  const list = document.getElementById('kvkkTalepListesi'); if(list) list.innerHTML = kvkkTalepListesiHTML();
+  showToast('Talep kaydı silindi.');
 }
 
 // ================================================================================
@@ -15572,6 +16112,15 @@ function musteriFormAc(id, prefillAd){
         <div class="field"><label>Adres</label><input type="text" id="mfAdres" value="${esc(c?c.adres||'':'')}"></div>
         <div class="field"><label>Risk limiti (₺)</label><input type="number" id="mfRiskLimiti" min="0" value="${c&&c.riskLimiti?c.riskLimiti:''}"></div>
         <div class="field"><label>Notlar</label><input type="text" id="mfNotlar" value="${esc(c?c.notlar||'':'')}"></div>
+        <div class="field" style="background:var(--surface-2);border-radius:10px;padding:12px 14px;">
+          <label style="display:flex;align-items:flex-start;gap:9px;cursor:pointer;font-weight:500;">
+            <input type="checkbox" id="mfKvkkOnay" ${c&&c.kvkkOnay?'checked':''} style="width:16px;height:16px;margin-top:2px;flex-shrink:0;">
+            <span style="font-size:13px;line-height:1.5;">
+              <b>KVKK Aydınlatma Metni'ni okudum</b>, kişisel verilerimin bu kapsamda işlenmesine açıkça rıza gösteriyorum.
+              <a href="#" onclick="kvkkAydinlatmaMetniGoster();return false;" style="color:var(--accent-blue);text-decoration:underline;">Metni oku</a>
+            </span>
+          </label>
+        </div>
       </div>
       <div class="err" id="mfErr" style="padding:0 22px;"></div>
       <div class="modal-actions">
@@ -15635,6 +16184,17 @@ async function musteriKaydet(id){
       eFaturaDurumu: document.getElementById('mfEFatura').checked,
     });
   }
+
+  // FAZ10 (KVKK): rıza onayı olmadan müşteri kaydı OLUŞTURULAMAZ/GÜNCELLENEMEZ — bkz. Ayarlar
+  // > KVKK / Veri Yönetimi kartı (statik örnek metin, gerçek hukuki metin DEĞİLDİR).
+  const kvkkOnayli = document.getElementById('mfKvkkOnay').checked;
+  if(!kvkkOnayli){
+    errEl.textContent = 'Devam etmek için KVKK Aydınlatma Metni onay kutusunu işaretlemeniz gerekiyor.';
+    errEl.style.display = 'block';
+    showToast('KVKK onayı olmadan müşteri kaydedilemez.', true);
+    return;
+  }
+  Object.assign(veri, { kvkkOnay: true, kvkkOnayTarihi: todayISO() });
 
   let c = id ? customers.find(x=>x.id===id) : null;
   const yeniMi = !c;
@@ -17683,6 +18243,7 @@ window.__aiPendingBelge = null; // plaka okunamayan belge — kullanıcı bir so
 async function aiBelgeYukle(file){
   if(!file) return;
   if(file.size > 10*1024*1024){ showToast('Dosya çok büyük (en fazla 10 MB).', true); return; }
+  if(file.type === 'image/svg+xml'){ showToast('SVG dosyaları desteklenmiyor.', true); return; }
   const key = getGeminiKey();
   aiMessages.push({role:'user', raw:true, content: `📎 <strong>${esc(file.name)}</strong> gönderildi — inceleniyor...`});
   renderAiPage();
@@ -18397,6 +18958,7 @@ function renderAyarlarPage(){
         <p style="font-size:13px;color:var(--text-2);">Belge okuma artık güvenli bir sunucu üzerinden çalışıyor — anahtar tarayıcıda tutulmuyor, buraya bir şey girmene gerek yok. <span style="color:#36A168;">✓ Aktif</span></p>
       </div>
       ${automationRulesCardHTML()}
+      ${kvkkCardHTML()}
       <div class="settings-card">
         <h3><span class="settings-ic" style="background:#7B7873"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg></span> Yedekleme</h3>
         <p>Tüm veriyi (araçlar, masraflar, kayıtlı sözleşmeler, etkinlik geçmişi) tek bir dosyaya indir, ya da bir yedekten geri yükle.</p>
@@ -18717,6 +19279,16 @@ Tip tespiti: trafik/kasko/ferdi kaza poliçesi→sigorta veya kasko, muayene rap
       if(file.size > 10*1024*1024){
         logSpan.style.color='var(--safety)';
         logSpan.textContent = 'Dosya çok büyük (en fazla 10 MB) — yüklenmedi';
+        basarisiz++;
+        continue;
+      }
+      // FAZ10 güvenlik: diğer tüm yükleme noktalarıyla aynı SVG reddi — bu belgeler daha
+      // sonra standart belge yuvalarına (police_/kasko_/muayenebelge_/contract_/ruhsat_)
+      // yazılıp viewBelgeByKey() ile yeni sekmede açılabiliyor; SVG orada üst-seviye
+      // gezinmede script çalıştırabilir.
+      if(file.type === 'image/svg+xml'){
+        logSpan.style.color='var(--safety)';
+        logSpan.textContent = 'SVG dosyaları desteklenmiyor — yüklenmedi';
         basarisiz++;
         continue;
       }
