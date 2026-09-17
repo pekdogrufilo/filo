@@ -2170,7 +2170,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-16.145</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-16.146</div>
     </div>
   </div>
 </div>
@@ -2305,7 +2305,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-16.145</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-16.146</div>
     </div>
   </aside>
 <script>
@@ -3221,6 +3221,13 @@ let tires = [];
 let fuelRecords = [];
 let tolls = [];
 let trafficFines = [];
+// FAZ6: Merkezi Belgeler (araç + müşteri, versiyonlu) ve gerçek kalıcı Bildirimler kayıtları —
+// vehicles/customers/rentals ile birebir aynı depolama deseni (tek JSON blob, storageAPI
+// üzerinden, persistDocuments/persistNotifications). Mevcut sabit 5 belge yuvası (sözleşme/
+// poliçe/kasko/muayene/ruhsat) ve eski urgentList() türevi bildirim mantığı KALDIRILMADI —
+// bu iki dizi onların üzerine eklenen, ek bilgi taşıyan bir katmandır.
+let documents = [];
+let notifications = [];
 let activeFilter = 'hepsi';
 let activeSirket = 'hepsi';
 let belgeFilterType = null; // null | 'sigorta' | 'muayene' | 'kira'
@@ -3304,6 +3311,19 @@ async function load(){
     const tfr = await storageAPI.get('trafficFines').catch(()=>null);
     trafficFines = (tfr && tfr.value) ? JSON.parse(tfr.value) : [];
   }catch(e){ trafficFines = []; }
+  try{
+    const dr = await storageAPI.get('documents').catch(()=>null);
+    documents = (dr && dr.value) ? JSON.parse(dr.value) : [];
+  }catch(e){ documents = []; }
+  try{
+    const nr = await storageAPI.get('notifications').catch(()=>null);
+    notifications = (nr && nr.value) ? JSON.parse(nr.value) : [];
+  }catch(e){ notifications = []; }
+  // FAZ6: bildirim kayıtlarını (dedupe'lu) üret — sayfa her açıldığında değil, sadece burada,
+  // uygulama yüklenirken bir kez çalışır. Yeni kayıt eklendiyse kalıcı olarak saklanır.
+  try{
+    if(bildirimUret()) await persistNotifications();
+  }catch(e){ console.error('bildirimUret hatası:', e); }
   updateArsivSayi();
   buildSirketFilter();
   render();
@@ -3328,16 +3348,21 @@ function updateShellChrome(){
     statusEl.textContent = window.__cloudSyncActive ? 'Aktif' : 'Kapalı';
   }
   const urgent = urgentList();
+  // FAZ6: bell/"Bildirimler" rozetleri artık gerçek kalıcı notifications kaydındaki OKUNMAMIŞ
+  // sayısını gösterir (eskiden urgentList().length — anlık/yeniden hesaplanan bir sayıydı).
+  // Bakım/Belgeler gibi diğer kategori rozetleri (aşağıda) hâlâ urgentList() tabanlı — onlar
+  // "bell" değil, ayrı bölüm göstergeleri.
+  const okunmamisBildirim = notifOkunmamisSayisi();
   const badge = document.getElementById('sbBildirimBadge');
   if(badge){
-    if(urgent.length>0){ badge.textContent = urgent.length; badge.style.display='inline-block'; }
+    if(okunmamisBildirim>0){ badge.textContent = okunmamisBildirim; badge.style.display='inline-block'; }
     else{ badge.style.display='none'; }
   }
   // Mobilde alt çubuktaki "Daha Fazla" sekmesi, Bildirimler artık çubukta
-  // doğrudan görünmediği için acil uyarı sayısını rozet olarak gösterir
+  // doğrudan görünmediği için okunmamış bildirim sayısını rozet olarak gösterir
   const bnBadge = document.getElementById('bnMoreBadge');
   if(bnBadge){
-    if(urgent.length>0){ bnBadge.textContent = urgent.length; bnBadge.style.display='inline-block'; }
+    if(okunmamisBildirim>0){ bnBadge.textContent = okunmamisBildirim; bnBadge.style.display='inline-block'; }
     else{ bnBadge.style.display='none'; }
   }
   // Mobilde sol menüyü açan hamburger butonu sadece küçük ekranda görünsün
@@ -3371,7 +3396,7 @@ function updateShellChrome(){
   }
   const tileBildirim = document.getElementById('bnTileBildirimBadge');
   if(tileBildirim){
-    if(urgent.length>0){ tileBildirim.textContent = urgent.length; tileBildirim.style.display='flex'; }
+    if(okunmamisBildirim>0){ tileBildirim.textContent = okunmamisBildirim; tileBildirim.style.display='flex'; }
     else{ tileBildirim.style.display='none'; }
   }
 }
@@ -3507,8 +3532,8 @@ async function initNotifications(){
       await storageAPI.set('lastNotif', today).catch(()=>{});
     }
   }
-  const urgent = urgentList();
-  bellDot.classList.toggle('show', urgent.length>0);
+  // FAZ6: zil noktası artık gerçek okunmamış bildirim sayısına bakıyor (bkz. updateShellChrome).
+  bellDot.classList.toggle('show', notifOkunmamisSayisi()>0);
 }
 
 // ===== E-posta hatırlatma =====
@@ -5806,6 +5831,8 @@ function openEditWithDurum(id, durum){
 function openIadeForm(id){
   const v = vehicles.find(x=>x.id===id);
   if(!v) return;
+  // FAZ6: bu form her açıldığında imza yakalama durumu sıfırlanır.
+  window.__iadeImza = {kiraci:null, kirayaVeren:null};
   const el = document.createElement('div');
   el.className = 'iade-modal';
   el.id = 'iadeModal';
@@ -5916,6 +5943,17 @@ function openIadeForm(id){
           <input type="checkbox" id="iadeTutanak" checked style="width:16px;height:16px;accent-color:var(--accent-blue);">
           İade Tutanağı da oluştur (yazdır/PDF)
         </label>
+        <!-- FAZ6: Dijital İmza Yakalama — opsiyonel; atlanırsa tutanak eskisi gibi boş çizgiyle basılır. -->
+        <div style="border:1px dashed var(--border);border-radius:9px;padding:8px 10px;margin-bottom:6px;">
+          <div style="font-size:11.5px;color:var(--text-3);margin-bottom:6px;">Dijital İmza Yakalama (opsiyonel) — resmi/nitelikli elektronik imza yerine geçmez.</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button type="button" onclick="imzaWidgetAc('Kiracı İmzası',(d)=>{window.__iadeImza.kiraci=d;document.getElementById('iadeImzaKiraciDurum').textContent='✓ Kiracı imzası alındı';})" style="background:var(--surface-2);border:1px solid var(--border);color:var(--text-2);padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Kiracı imzası yakala</button>
+            <button type="button" onclick="imzaWidgetAc('Kiraya Veren Yetkilisi İmzası',(d)=>{window.__iadeImza.kirayaVeren=d;document.getElementById('iadeImzaKvDurum').textContent='✓ Kiraya veren imzası alındı';})" style="background:var(--surface-2);border:1px solid var(--border);color:var(--text-2);padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Kiraya veren imzası yakala</button>
+          </div>
+          <div style="display:flex;gap:14px;margin-top:6px;font-size:11px;color:#36A168;font-weight:600;">
+            <span id="iadeImzaKiraciDurum"></span><span id="iadeImzaKvDurum"></span>
+          </div>
+        </div>
         </div><!-- /ia-step 3 -->
       </div>
       <div class="iade-foot">
@@ -6051,8 +6089,8 @@ ${logoTag}
 <p style="text-align:justify;">KİRACI, yukarıda özellikleri yazılı aracı ${b.hasar==='Hasarsız'?'hasarsız':'yukarıda belirtilen hasar durumuyla'} KİRAYA VEREN'e teslim ettiğini, kilometre ve yakıt bilgilerinin doğru olduğunu beyan eder. KİRAYA VEREN, aracı yukarıda yazılı durumda teslim almıştır. Hasar tespiti sonrasında çıkacak giderler (tamir, eksik yakıt, ceza vb.) sözleşme hükümlerine göre KİRACI'ya yansıtılır. Bu tutanak, aralarındaki kira sözleşmesinin ekidir.</p>
 
 <div class="imza">
-  <div class="imza-box"><div class="imza-line">KİRAYA VEREN / Yetkili</div></div>
-  <div class="imza-box"><div class="imza-line">KİRACI / Yetkili</div></div>
+  ${imzaBoxHtml('KİRAYA VEREN / Yetkili', b.imzaKirayaVeren)}
+  ${imzaBoxHtml('KİRACI / Yetkili', b.imzaKiraci)}
 </div>
 </body></html>`;
 }
@@ -6185,6 +6223,11 @@ async function saveIade(id){
   showToast(v.plaka+' başarıyla iade alındı, durum "Müsait" olarak güncellendi.');
   if(tutanakIstendi){
     const soz = (sozlesmeler||[]).find(r=>(r.plakalar||[]).includes(v.plaka) && r.bitisISO && r.bitisISO>=iadeTarih);
+    // FAZ6: yakalanmışsa (opsiyonel) dijital imzalar — diğer fotoğraf/belgelerle aynı
+    // storageAPI deposuna kalıcı olarak da yazılır (kayıt amaçlı).
+    const iadeImza = window.__iadeImza||{};
+    if(iadeImza.kiraci) await storageAPI.set('imza_iade_'+id+'_'+iadeTarih+'_kiraci', iadeImza.kiraci).catch(()=>{});
+    if(iadeImza.kirayaVeren) await storageAPI.set('imza_iade_'+id+'_'+iadeTarih+'_kirayaVeren', iadeImza.kirayaVeren).catch(()=>{});
     iadeTutanakAc(v, {
       tutanakTarihi: fmtTarih(iadeTarih),
       kiraci: (soz&&soz.kiraci)||v.yer||v.kiraciAdi||'',
@@ -6192,6 +6235,8 @@ async function saveIade(id){
       kiraBas, iadeTarih, kmBas, kmBit,
       yakit: tYakit, hasar: tHasar, not: tNot,
       kmLimiti, kmHakki, kmAsim,
+      imzaKiraci: iadeImza.kiraci||null,
+      imzaKirayaVeren: iadeImza.kirayaVeren||null,
     });
   }
   if(acikRental && (yeniHasarBilgisi || acikRental.hesaplananFazlaKmBedeli>0 || acikRental.hesaplananYakitBedeli>0)){
@@ -6363,6 +6408,8 @@ async function saveUzatma(id){
 function openAracKirala(vehicleId){
   if(!requireAdmin()){ showToast('Araç kiralamak için yönetici girişi gerekir.', true); return; }
   if(!vehicles.length){ showToast('Önce araç ekleyin.', true); return; }
+  // FAZ6: bu modal her açıldığında imza yakalama durumu sıfırlanır (önceki kiralamadan kalmasın).
+  window.__krImza = {kiraci:null, kirayaVeren:null};
   const el = document.createElement('div');
   el.className = 'iade-modal';
   el.id = 'kiralaModal';
@@ -6499,6 +6546,18 @@ function openAracKirala(vehicleId){
           <input type="checkbox" id="krTutanak" checked style="width:16px;height:16px;accent-color:var(--accent-blue);">
           Sözleşmeyle birlikte <b>&nbsp;Teslim Tutanağı&nbsp;</b> (Ek-1) de oluştur
         </label>
+        <!-- FAZ6: Dijital İmza Yakalama — tamamen opsiyonel; atlanırsa mevcut "boş çizgi,
+             elle imzala" davranışı hiç değişmeden korunur. -->
+        <div style="border:1px dashed var(--line);border-radius:9px;padding:8px 10px;margin-top:4px;">
+          <div style="font-size:11.5px;color:var(--text-3);margin-bottom:6px;">Dijital İmza Yakalama (opsiyonel) — resmi/nitelikli elektronik imza yerine geçmez, atlanırsa sözleşme/tutanak boş imza çizgisiyle yazdırılır.</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button type="button" onclick="imzaWidgetAc('Kiracı İmzası',(d)=>{window.__krImza.kiraci=d;document.getElementById('krImzaKiraciDurum').textContent='✓ Kiracı imzası alındı';})" style="background:var(--surface-2);border:1px solid var(--line);color:var(--text-2);padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Kiracı imzası yakala</button>
+            <button type="button" onclick="imzaWidgetAc('Kiraya Veren Yetkilisi İmzası',(d)=>{window.__krImza.kirayaVeren=d;document.getElementById('krImzaKvDurum').textContent='✓ Kiraya veren imzası alındı';})" style="background:var(--surface-2);border:1px solid var(--line);color:var(--text-2);padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Kiraya veren imzası yakala</button>
+          </div>
+          <div style="display:flex;gap:14px;margin-top:6px;font-size:11px;color:#36A168;font-weight:600;">
+            <span id="krImzaKiraciDurum"></span><span id="krImzaKvDurum"></span>
+          </div>
+        </div>
         <div style="background:rgba(232,69,58,.08);border:1px solid rgba(232,69,58,.25);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--text-2);margin-top:4px;">
           <b>Not:</b> Kaydet'te araç otomatik <b>"Kirada"</b> olur, kiracı bilgileri araç kartına işlenir ve 23 maddelik kapsamlı sözleşme (Ekler dahil) hazırlanır.
         </div>
@@ -6596,8 +6655,8 @@ ${logoTag}
 <p style="text-align:justify;">KİRAYA VEREN, yukarıda özellikleri yazılı araç(ları) ${esc(d.bas)} tarihinde KİRACI'ya belirtilen yakıt seviyesi ve kilometre durumunda sağlam ve temiz olarak teslim ettiğini beyan eder. KİRACI, araç(ları) bu durumda teslim aldığını, araçların mevcut hasar/kusurlarını şimdiden gördüğünü ve kabul ettiğini, aracı kira süresi sonunda ödeşmeden aynı durumda iade etmekle yükümlü olduğunu kabul ve taahhüt eder. Bu tutanak, taraflar arasındaki ${esc(d.sozNo)} numaralı kira sözleşmesinin ayrılmaz eki (Ek-1) niteliğindedir.</p>
 
 <div class="imza">
-  <div class="imza-box"><div class="imza-line">KİRAYA VEREN / Yetkili</div></div>
-  <div class="imza-box"><div class="imza-line">KİRACI / Yetkili</div></div>
+  ${imzaBoxHtml('KİRAYA VEREN / Yetkili', d.imzaKirayaVeren)}
+  ${imzaBoxHtml('KİRACI / Yetkili', d.imzaKiraci)}
   ${d.kefil?'<div class="imza-box"><div class="imza-line">KEFİL / '+esc(d.kefil)+'</div></div>':''}
 </div>
 </body></html>`;
@@ -6740,7 +6799,14 @@ async function kirayaVerVeSozlesme(format){
     notlar: notlar||'',
     tarih: new Date().toLocaleDateString('tr-TR'),
     sozNo: 'SOZ-'+new Date().getFullYear()+'-'+Date.now().toString().slice(-4),
+    // FAZ6: yakalanmışsa (opsiyonel) dijital imzalar — yoksa şablonlar mevcut boş çizgiyi basar.
+    imzaKiraci: (window.__krImza||{}).kiraci||null,
+    imzaKirayaVeren: (window.__krImza||{}).kirayaVeren||null,
   };
+  // FAZ6: yakalanan imzalar da (varsa) diğer fotoğraf/belgelerle aynı storageAPI deposuna
+  // kalıcı olarak yazılır (kayıt amaçlı — yazdırma zaten yukarıdaki sozData.imza* alanlarını kullanır).
+  if(sozData.imzaKiraci) await storageAPI.set('imza_'+sozData.sozNo+'_kiraci', sozData.imzaKiraci).catch(()=>{});
+  if(sozData.imzaKirayaVeren) await storageAPI.set('imza_'+sozData.sozNo+'_kirayaVeren', sozData.imzaKirayaVeren).catch(()=>{});
   const sozRec = await sozKaydet(sozData, bas, bitis);
   if(format==='pdf') sozlesmeHtmlPdf(sozData);
   else sozlesmeDocx(sozData);
@@ -8325,6 +8391,17 @@ document.getElementById('saveBtn').onclick = async ()=>{
           if(!res) throw new Error('kayıt başarısız');
           adi = st.file.name;
           tip = st.file.type;
+          // FAZ6: aynı dosya merkezi Belgeler kaydına da (bağımsız anahtar + versiyon
+          // numarasıyla) eklenir — sabit yuvanın kendisi (üzerine yazma) hiç değişmedi.
+          const merkeziTur = {sozlesme:'Sözleşme', police:'Sigorta', muayene:'Muayene', kasko:'Kasko', ruhsat:'Ruhsat'}[d.key];
+          const merkeziTarihField = {sozlesme:'fSozlesmeBitis', police:'fSigorta', muayene:'fMuayene', kasko:'fKaskoBitis', ruhsat:null}[d.key];
+          if(merkeziTur){
+            try{
+              const verKey = await belgeDosyaSakla('arac_'+vehicleId+'_'+d.key, st.file.data);
+              const sonGecerlilik = merkeziTarihField ? (document.getElementById(merkeziTarihField).value||null) : null;
+              await belgeMerkeziKaydet({ilgiliTip:'arac', ilgiliId:vehicleId, tur:merkeziTur, tarih:todayISO(), sonGecerlilik, dosyaRef:verKey});
+            }catch(e){ console.error('Merkezi belge kaydı hatası:', e); }
+          }
         }catch(e){
           docWarnings.push(`${d.label} dosyası kaydedilemedi (depolama dolu ya da dosya çok büyük olabilir). Diğer bilgiler kaydedildi, dosyayı tekrar yüklemeyi deneyebilirsin.`);
         }
@@ -11502,8 +11579,8 @@ ${d.notlar?`<div class="madde"><span class="madde-no">ÖZEL ŞARTLAR:</span> ${e
 </table>
 <p style="font-size:11px;">Yukarıda nitelikleri belirtilen araç(lar), sözleşme şartlarına uygun olarak eksiksiz ve hasar durumu işaretlenerek teslim edilmiştir.</p>
 <div class="imza">
-  <div class="imza-box"><div class="imza-line">KİRAYA VEREN / Yetkili</div></div>
-  <div class="imza-box"><div class="imza-line">KİRACI / Yetkili</div></div>
+  ${imzaBoxHtml('KİRAYA VEREN / Yetkili', d.imzaKirayaVeren)}
+  ${imzaBoxHtml('KİRACI / Yetkili', d.imzaKiraci)}
   ${d.kefil?'<div class="imza-box"><div class="imza-line">KEFİL (Müteselsil Sorumlu) / '+esc(d.kefil)+'</div></div>':''}
 </div>
 
@@ -11528,14 +11605,18 @@ ${d.notlar?`<div class="madde"><span class="madde-no">ÖZEL ŞARTLAR:</span> ${e
 
 <div class="imza" style="margin-top:70px;">
   <div class="imza-box">
+    ${d.imzaKirayaVeren?`<img src="${d.imzaKirayaVeren}" alt="İmza" style="max-height:56px;max-width:92%;display:block;margin:0 auto 4px;">`:''}
     <div class="imza-line">KİRAYA VEREN</div>
     <div style="font-size:11px;margin-top:4px;"><strong>${d.firmaAdi}</strong></div>
     <div style="font-size:10.5px;color:#333;margin-top:8px;">Ad Soyad / Unvan: ..............................<br>Tarih: ....../....../..........<br>Kaşe:</div>
+    ${d.imzaKirayaVeren?'<div style="font-size:8.5px;color:#777;margin-top:4px;">Dijital imza yakalama — nitelikli elektronik imza değildir.</div>':''}
   </div>
   <div class="imza-box">
+    ${d.imzaKiraci?`<img src="${d.imzaKiraci}" alt="İmza" style="max-height:56px;max-width:92%;display:block;margin:0 auto 4px;">`:''}
     <div class="imza-line">KİRACI</div>
     <div style="font-size:11px;margin-top:4px;"><strong>${esc(d.kiraci)}</strong></div>
     <div style="font-size:10.5px;color:#333;margin-top:8px;">Ad Soyad / Unvan: ..............................<br>Tarih: ....../....../..........<br>Kaşe:</div>
+    ${d.imzaKiraci?'<div style="font-size:8.5px;color:#777;margin-top:4px;">Dijital imza yakalama — nitelikli elektronik imza değildir.</div>':''}
   </div>
 </div>
 </body></html>`;
@@ -12838,6 +12919,15 @@ async function otoBelgeSec(file, statusEl){
       // Bu belgeler ne zaman yüklendi bilinsin diye burada zaman damgası tutuluyor.
       if(!v.belgeYuklemeZamanlari) v.belgeYuklemeZamanlari = {};
       v.belgeYuklemeZamanlari[tur] = new Date().toISOString();
+      // FAZ6: aynı desen — merkezi Belgeler kaydı da bağımsız anahtar + versiyonla eklenir.
+      const merkeziTur = {sigorta:'Sigorta', kasko:'Kasko', muayene:'Muayene', ruhsat:'Ruhsat', sozlesme:'Sözleşme'}[tur];
+      if(merkeziTur){
+        try{
+          const verKey = await belgeDosyaSakla('arac_'+v.id+'_'+tur, onceden.dataUrl);
+          const sonGecerlilik = std.tarihF ? (v[std.tarihF]||null) : null;
+          await belgeMerkeziKaydet({ilgiliTip:'arac', ilgiliId:v.id, tur:merkeziTur, tarih: okunanTarih||todayISO(), sonGecerlilik, dosyaRef:verKey});
+        }catch(e){ console.error('Merkezi belge kaydı hatası:', e); }
+      }
     }else{
       await belgeAracaEkle(v, tur, file.name, onceden.mime, onceden.dataUrl, okunanTarih);
     }
@@ -12993,6 +13083,9 @@ async function standartBelgeSil(vehicleId, tur){
   v[std.tipF] = '';
   if(v.belgeYuklemeZamanlari) delete v.belgeYuklemeZamanlari[tur];
   await persist();
+  // FAZ6: merkezi kayıt SİLİNMEZ (geçmiş sürüm olarak kalır), sadece "aktif değil" yapılır.
+  const merkeziTur = {sigorta:'Sigorta', kasko:'Kasko', muayene:'Muayene', ruhsat:'Ruhsat', sozlesme:'Sözleşme'}[tur];
+  if(merkeziTur) await belgeMerkeziPasifYap('arac', v.id, merkeziTur).catch(()=>{});
   logActivity('del', `Belge silindi: <b>${esc(v.plaka)}</b> · ${esc(std.label)}`).catch(()=>{});
   showToast('Belge silindi.');
   renderDocUploadPage();
@@ -13061,6 +13154,15 @@ async function belgeTopluTek(file, fallbackId){
       if(std.tarihF && okunanTarih) v[std.tarihF] = okunanTarih;
       if(!v.belgeYuklemeZamanlari) v.belgeYuklemeZamanlari = {};
       v.belgeYuklemeZamanlari[tur] = new Date().toISOString();
+      // FAZ6: merkezi Belgeler kaydı (bkz. otoBelgeSec'teki aynı desen)
+      const merkeziTur = {sigorta:'Sigorta', kasko:'Kasko', muayene:'Muayene', ruhsat:'Ruhsat', sozlesme:'Sözleşme'}[tur];
+      if(merkeziTur){
+        try{
+          const verKey = await belgeDosyaSakla('arac_'+v.id+'_'+tur, onceden.dataUrl);
+          const sonGecerlilik = std.tarihF ? (v[std.tarihF]||null) : null;
+          await belgeMerkeziKaydet({ilgiliTip:'arac', ilgiliId:v.id, tur:merkeziTur, tarih: okunanTarih||todayISO(), sonGecerlilik, dosyaRef:verKey});
+        }catch(e){ console.error('Merkezi belge kaydı hatası:', e); }
+      }
     }else{
       await belgeAracaEkle(v, tur, file.name, onceden.mime, onceden.dataUrl, okunanTarih);
     }
@@ -13210,7 +13312,178 @@ function renderBelgelerPage(){
       </tbody>
     </table></div>
     `}
+
+    ${belgeMerkeziYukleKartiHtml()}
+    ${belgeMerkeziBolumuHtml()}
   `;
+  belgeMerkeziIlgiliSecenekleriGuncelle();
+}
+
+// ================================================================================
+// FAZ6: Belgeler sayfasının company-wide (araç + müşteri) genişletmesi. Yukarıdaki tablo ve
+// "Belge Yükle" (otoBelgeSec/AI okuma) akışı DEĞİŞMEDEN kalır; bu bölüm onun altına eklenir.
+// ================================================================================
+function belgeMerkeziYukleKartiHtml(){
+  const selStyle = 'background:var(--surface-2);border:1px solid transparent;border-radius:10px;color:var(--text);padding:8px 10px;font-size:13px;font-family:inherit;';
+  return `
+  <div class="dcard" style="margin:16px 0;">
+    <div style="font-size:14px;font-weight:700;margin-bottom:4px;">Yeni belge yükle — Kimlik / Ehliyet / Fatura / Diğer</div>
+    <div style="font-size:12px;color:var(--text-3);margin-bottom:10px;">Sabit 5 yuvanın (sözleşme/poliçe/kasko/muayene/ruhsat) dışındaki belgeler için: bir araca veya MÜŞTERİYE bağlı serbest kategori belgesi yükleyin.</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+      <select id="bmIlgiliTip" style="${selStyle}" onchange="belgeMerkeziIlgiliSecenekleriGuncelle()">
+        <option value="arac">Araç</option>
+        <option value="musteri">Müşteri</option>
+      </select>
+      <select id="bmIlgiliId" style="${selStyle}min-width:150px;"></select>
+      <select id="bmTur" style="${selStyle}">
+        ${['Kimlik','Ehliyet','Fatura','Servis Faturası','Hasar Fotoğrafı','Diğer'].map(t=>`<option value="${t}">${t}</option>`).join('')}
+      </select>
+      <input type="date" id="bmSonGecerlilik" title="Son geçerlilik tarihi (opsiyonel)" style="${selStyle}">
+      <input type="file" id="bmDosya" accept=".pdf,image/*" style="max-width:180px;">
+      <button onclick="belgeMerkeziFormdanYukle()" style="background:var(--accent-blue);border:none;color:#fff;padding:8px 16px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;">Yükle</button>
+    </div>
+  </div>`;
+}
+function belgeMerkeziIlgiliSecenekleriGuncelle(){
+  const tipSel = document.getElementById('bmIlgiliTip');
+  const idSel = document.getElementById('bmIlgiliId');
+  if(!tipSel || !idSel) return;
+  if(tipSel.value==='musteri'){
+    idSel.innerHTML = customers.map(c=>`<option value="${c.id}">${esc(musteriGoruntuAdi(c))}</option>`).join('') || '<option value="">(müşteri yok)</option>';
+  }else{
+    idSel.innerHTML = vehicles.map(v=>`<option value="${v.id}">${esc(v.plaka)}</option>`).join('') || '<option value="">(araç yok)</option>';
+  }
+}
+async function belgeMerkeziFormdanYukle(){
+  const ilgiliTip = document.getElementById('bmIlgiliTip').value;
+  const ilgiliId = document.getElementById('bmIlgiliId').value;
+  const tur = document.getElementById('bmTur').value;
+  const sonGecerlilik = document.getElementById('bmSonGecerlilik').value || null;
+  const dosyaInput = document.getElementById('bmDosya');
+  const file = dosyaInput.files[0];
+  if(!ilgiliId){ showToast('Lütfen araç/müşteri seçin.', true); return; }
+  if(!file){ showToast('Lütfen bir dosya seçin.', true); return; }
+  const kayit = await belgeYeniYukle(ilgiliTip, ilgiliId, tur, file, sonGecerlilik);
+  if(kayit){
+    showToast('Belge yüklendi.');
+    dosyaInput.value = '';
+    renderBelgelerPage();
+  }
+}
+// Araç + müşteri belgelerini tek bir arama/filtre edilebilir listede gösterir.
+function belgeMerkeziSatirlariHesapla(){
+  return documents.filter(d=>d.aktif!==false).map(d=>{
+    const ad = d.ilgiliTip==='arac'
+      ? ((vehicles.find(v=>v.id===d.ilgiliId)||{}).plaka || '(silinmiş araç)')
+      : musteriGoruntuAdi(customers.find(c=>c.id===d.ilgiliId)||{}) || '(silinmiş müşteri)';
+    const dur = d.sonGecerlilik ? belgeDurumHesapla(d.sonGecerlilik) : null;
+    const durumAnahtari = !dur ? 'yok' : dur.dl<0 ? 'gecmis' : dur.dl<=30 ? 'yakinda' : 'gecerli';
+    const eskiSayisi = documents.filter(x=>x.ilgiliTip===d.ilgiliTip && x.ilgiliId===d.ilgiliId && x.tur===d.tur && x.id!==d.id).length;
+    return {...d, ad, dur, durumAnahtari, eskiSayisi};
+  });
+}
+function belgeMerkeziBolumuHtml(){
+  const f = window.__belgeMerkezFiltre || {tur:'', ilgiliTip:'', durum:'', q:''};
+  let rows = belgeMerkeziSatirlariHesapla();
+  if(f.tur) rows = rows.filter(r=>r.tur===f.tur);
+  if(f.ilgiliTip) rows = rows.filter(r=>r.ilgiliTip===f.ilgiliTip);
+  if(f.durum) rows = rows.filter(r=>r.durumAnahtari===f.durum);
+  if(f.q){
+    const q = f.q.toLocaleLowerCase('tr-TR');
+    rows = rows.filter(r=>(r.ad||'').toLocaleLowerCase('tr-TR').includes(q) || (r.tur||'').toLocaleLowerCase('tr-TR').includes(q));
+  }
+  rows.sort((a,b)=>(a.dur?a.dur.dl:9999)-(b.dur?b.dur.dl:9999));
+  const durumEtiket = {gecmis:'Süresi Geçmiş', yakinda:'Yakında Dolacak', gecerli:'Geçerli', yok:'—'};
+  const durumRenk = {gecmis:'#E1554E', yakinda:'#E8A132', gecerli:'#36A168', yok:'var(--text-3)'};
+  const selStyle = 'background:var(--surface-2);border:1px solid transparent;border-radius:10px;color:var(--text);padding:7px 10px;font-size:12.5px;font-family:inherit;';
+  return `
+  <div class="dcard" style="margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+      <div style="font-size:15px;font-weight:700;">Tüm Belgeler — şirket geneli (araç + müşteri)</div>
+      <span style="font-size:12px;color:var(--text-3);">${rows.length} aktif belge</span>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+      <input type="text" id="bmArama" placeholder="Plaka / müşteri / tür ara…" value="${esc(f.q)}"
+        oninput="window.__belgeMerkezFiltre=Object.assign({},window.__belgeMerkezFiltre,{q:this.value});belgeMerkeziListesiYenile();"
+        style="${selStyle}flex:1;min-width:160px;">
+      <select onchange="window.__belgeMerkezFiltre=Object.assign({},window.__belgeMerkezFiltre,{tur:this.value});renderBelgelerPage();" style="${selStyle}">
+        <option value="">Tüm türler</option>
+        ${BELGE_TUR_LISTESI.map(t=>`<option value="${t}" ${f.tur===t?'selected':''}>${t}</option>`).join('')}
+      </select>
+      <select onchange="window.__belgeMerkezFiltre=Object.assign({},window.__belgeMerkezFiltre,{ilgiliTip:this.value});renderBelgelerPage();" style="${selStyle}">
+        <option value="">Araç + Müşteri</option>
+        <option value="arac" ${f.ilgiliTip==='arac'?'selected':''}>Sadece Araç</option>
+        <option value="musteri" ${f.ilgiliTip==='musteri'?'selected':''}>Sadece Müşteri</option>
+      </select>
+      <select onchange="window.__belgeMerkezFiltre=Object.assign({},window.__belgeMerkezFiltre,{durum:this.value});renderBelgelerPage();" style="${selStyle}">
+        <option value="">Tüm durumlar</option>
+        <option value="gecmis" ${f.durum==='gecmis'?'selected':''}>Süresi Geçmiş</option>
+        <option value="yakinda" ${f.durum==='yakinda'?'selected':''}>Yakında Dolacak (30 gün)</option>
+        <option value="gecerli" ${f.durum==='gecerli'?'selected':''}>Geçerli</option>
+      </select>
+    </div>
+    <div id="bmListeWrap">${belgeMerkeziListesiHtml(rows, durumEtiket, durumRenk)}</div>
+  </div>`;
+}
+function belgeMerkeziListesiHtml(rows, durumEtiket, durumRenk){
+  if(!rows.length) return '<div class="log-empty">Bu filtrede belge bulunamadı.</div>';
+  return `<div class="table-scroll"><table class="mini-table">
+    <thead><tr><th>Kayıt</th><th>Tür</th><th>Versiyon</th><th>Geçerlilik</th><th>Durum</th><th></th></tr></thead>
+    <tbody>
+      ${rows.map(r=>`<tr>
+        <td><span style="font-weight:600;">${esc(r.ad)}</span> <span style="font-size:10px;color:var(--text-3);">(${r.ilgiliTip==='arac'?'Araç':'Müşteri'})</span></td>
+        <td>${esc(r.tur)}</td>
+        <td>v${r.versiyon||1}${r.eskiSayisi?` <button onclick="belgeMerkeziGecmisGoster('${r.ilgiliTip}','${r.ilgiliId}','${esc(r.tur)}')" style="background:none;border:1px solid var(--border);color:var(--text-2);padding:1px 7px;border-radius:6px;font-size:10.5px;cursor:pointer;">+${r.eskiSayisi} geçmiş</button>`:''}</td>
+        <td>${r.sonGecerlilik?fmtTarih(r.sonGecerlilik):'—'}</td>
+        <td><span style="font-weight:700;color:${durumRenk[r.durumAnahtari]};">${durumEtiket[r.durumAnahtari]}</span></td>
+        <td><button onclick="viewBelgeByKey('${r.dosyaRef}','${esc(r.tur)}')" style="background:var(--blue-dim);border:none;color:var(--accent-blue);padding:4px 10px;border-radius:7px;font-size:11.5px;font-weight:600;cursor:pointer;">Gör</button></td>
+      </tr>`).join('')}
+    </tbody>
+  </table></div>`;
+}
+// Arama kutusu her tuş vuruşunda tüm sayfayı yeniden çizmesin diye (odak kaybı) sadece
+// liste gövdesini yeniler; filtre/tür/durum select'leri değiştiğinde tam renderBelgelerPage() kullanılır.
+function belgeMerkeziListesiYenile(){
+  const wrap = document.getElementById('bmListeWrap');
+  if(!wrap) return;
+  const f = window.__belgeMerkezFiltre || {tur:'', ilgiliTip:'', durum:'', q:''};
+  let rows = belgeMerkeziSatirlariHesapla();
+  if(f.tur) rows = rows.filter(r=>r.tur===f.tur);
+  if(f.ilgiliTip) rows = rows.filter(r=>r.ilgiliTip===f.ilgiliTip);
+  if(f.durum) rows = rows.filter(r=>r.durumAnahtari===f.durum);
+  if(f.q){
+    const q = f.q.toLocaleLowerCase('tr-TR');
+    rows = rows.filter(r=>(r.ad||'').toLocaleLowerCase('tr-TR').includes(q) || (r.tur||'').toLocaleLowerCase('tr-TR').includes(q));
+  }
+  rows.sort((a,b)=>(a.dur?a.dur.dl:9999)-(b.dur?b.dur.dl:9999));
+  const durumEtiket = {gecmis:'Süresi Geçmiş', yakinda:'Yakında Dolacak', gecerli:'Geçerli', yok:'—'};
+  const durumRenk = {gecmis:'#E1554E', yakinda:'#E8A132', gecerli:'#36A168', yok:'var(--text-3)'};
+  wrap.innerHTML = belgeMerkeziListesiHtml(rows, durumEtiket, durumRenk);
+}
+// Bir belgenin geçmiş sürümlerini (aktif:false kayıtlar) ayrı bir pencerede listeler — hiçbiri
+// silinmez, sadece "Gör" ile açılabilir.
+function belgeMerkeziGecmisGoster(ilgiliTip, ilgiliId, tur){
+  const gecmis = documents.filter(d=>d.ilgiliTip===ilgiliTip && d.ilgiliId===ilgiliId && d.tur===tur)
+    .sort((a,b)=>(b.versiyon||0)-(a.versiyon||0));
+  const el = document.createElement('div');
+  el.className = 'overlay show';
+  el.style.cssText = 'z-index:80;';
+  el.innerHTML = `
+    <div style="background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;width:min(92vw,440px);max-height:80vh;overflow-y:auto;">
+      <h3 style="margin:0 0 12px;font-size:15px;color:var(--paper);">${esc(tur)} — Sürüm Geçmişi</h3>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        ${gecmis.map(g=>`<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px;border:1px solid var(--line);border-radius:9px;">
+          <div>
+            <div style="font-size:12.5px;font-weight:700;color:var(--paper);">v${g.versiyon||1} ${g.aktif!==false?'<span style="color:#36A168;">(aktif)</span>':'<span style="color:var(--steel-300);">(geçmiş)</span>'}</div>
+            <div style="font-size:11px;color:var(--steel-300);">${fmtTarih((g.yuklemeTarihi||'').slice(0,10))}${g.sonGecerlilik?' · Geçerlilik: '+fmtTarih(g.sonGecerlilik):''}</div>
+          </div>
+          <button onclick="viewBelgeByKey('${g.dosyaRef}','${esc(tur)}')" style="background:var(--blue-dim);border:none;color:var(--accent-blue);padding:5px 12px;border-radius:8px;font-size:11.5px;font-weight:600;cursor:pointer;">Gör</button>
+        </div>`).join('')}
+      </div>
+      <button onclick="this.closest('.overlay').remove()" style="margin-top:14px;width:100%;background:var(--surface-2);border:1px solid var(--line);color:var(--text-2);padding:9px 0;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;">Kapat</button>
+    </div>`;
+  el.onclick = e=>{ if(e.target===el) el.remove(); };
+  document.body.appendChild(el);
 }
 
 // ===== Raporlar sayfası =====
@@ -13644,6 +13917,240 @@ async function persistTrafficFines(){
   try{ await withStorageTimeout(storageAPI.set('trafficFines', JSON.stringify(trafficFines))); return true; }
   catch(e){ showToast((e && /zaman aşımı/i.test(e.message||'')) ? e.message : 'Trafik cezası kaydedilemedi.', true); return false; }
 }
+// FAZ6: documents/notifications — suppliers/serviceParts/... ile birebir aynı desen.
+async function persistDocuments(){
+  try{ await withStorageTimeout(storageAPI.set('documents', JSON.stringify(documents))); return true; }
+  catch(e){ showToast((e && /zaman aşımı/i.test(e.message||'')) ? e.message : 'Belge kaydedilemedi.', true); return false; }
+}
+async function persistNotifications(){
+  try{ await withStorageTimeout(storageAPI.set('notifications', JSON.stringify(notifications))); return true; }
+  catch(e){ showToast((e && /zaman aşımı/i.test(e.message||'')) ? e.message : 'Bildirim kaydedilemedi.', true); return false; }
+}
+
+// ================================================================================
+// FAZ6: Merkezi Belgeler — company-wide, versiyonlu belge kaydı. Var olan 5 sabit yuva
+// (sözleşme/poliçe/kasko/muayene/ruhsat, storageAPI'de tek-anahtarlı/üzerine-yazılan dosyalar)
+// ve otoBelgeler (araç bazlı serbest liste) KALDIRILMADI, davranışları birebir aynı — bu dizi
+// onların YANINA, arama/filtre/versiyon geçmişi ve müşteri belgeleri için eklenen bir katmandır.
+// ================================================================================
+const BELGE_TUR_LISTESI = ['Ruhsat','Sigorta','Kasko','Muayene','Sözleşme','Ehliyet','Kimlik','Fatura','Servis Faturası','Hasar Fotoğrafı','Diğer'];
+
+// Her belge dosyası kendi bağımsız storageAPI anahtarı altında saklanır (mevcut foto/belge
+// depolama deseniyle birebir aynı — bkz. storageAPI.set(k+'_'+id, data) düzeni). Sabit yuvalı
+// belgelerde (sözleşme/poliçe/kasko/muayene/ruhsat) bu, aracın kendi tekil yuvasına (ör.
+// contract_<id>) EK olarak yapılır — o yuva sonradan üzerine yazılsa da bu bağımsız anahtar
+// (ve dolayısıyla eski sürüm) etkilenmez, "geçmiş sürümler" gerçekten görüntülenebilir kalır.
+async function belgeDosyaSakla(etiket, dataUrl){
+  const key = 'docver_'+etiket+'_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+  const res = await storageAPI.set(key, dataUrl);
+  if(!res) throw new Error('depolama kaydı başarısız');
+  return key;
+}
+
+// Aynı ilgiliTip+ilgiliId+tur için önceki AKTİF kayıt(lar) SİLİNMEZ — aktif:false yapılarak
+// "geçmiş sürüm" olarak saklanır; yeni kayıt bir üst versiyon numarasıyla aktif eklenir.
+async function belgeMerkeziKaydet({ilgiliTip, ilgiliId, tur, tarih, sonGecerlilik, dosyaRef}){
+  const ayniGrup = documents.filter(d=>d.ilgiliTip===ilgiliTip && d.ilgiliId===ilgiliId && d.tur===tur);
+  const maxVersiyon = ayniGrup.reduce((m,d)=>Math.max(m, Number(d.versiyon)||0), 0);
+  ayniGrup.forEach(d=>{ d.aktif = false; });
+  const kayit = {
+    id: yeniId('doc'), ilgiliTip, ilgiliId, tur,
+    tarih: tarih || todayISO(),
+    sonGecerlilik: sonGecerlilik || null,
+    dosyaRef, versiyon: maxVersiyon+1, aktif: true,
+    yuklemeTarihi: new Date().toISOString(),
+  };
+  documents.push(kayit);
+  await persistDocuments();
+  return kayit;
+}
+// Sabit yuvadaki belge silindiğinde (standartBelgeSil) merkezi kayıt da "aktif değil" yapılır —
+// dosya/kayıt SİLİNMEZ, sadece artık güncel olmadığı işaretlenir (geçmiş sürüm olarak kalır).
+async function belgeMerkeziPasifYap(ilgiliTip, ilgiliId, tur){
+  let degisti = false;
+  documents.filter(d=>d.ilgiliTip===ilgiliTip && d.ilgiliId===ilgiliId && d.tur===tur && d.aktif!==false).forEach(d=>{ d.aktif=false; degisti=true; });
+  if(degisti) await persistDocuments();
+  return degisti;
+}
+// Belge durum rengi/etiketi — renderBelgelerPage() içindeki yerel belgeDurum() ile aynı eşikler
+// (7/30/90 gün), merkezi belge listesi ve müşteri "Belgeler" sekmesinden ortak kullanılabilsin
+// diye üst seviyeye taşındı (var olan yerel fonksiyona dokunulmadı).
+function belgeDurumHesapla(tarih){
+  const dl = daysLeft(tarih);
+  if(dl === null) return null;
+  if(dl < 0) return {renk:'#E1554E', etiket:'Süresi Geçti', dl};
+  if(dl <= 30) return {renk:'#E8A132', etiket:`${dl} gün kaldı`, dl};
+  return {renk:'#36A168', etiket:'Geçerli', dl};
+}
+// Sabit 5 yuvanın (Kimlik/Ehliyet/Diğer/Fatura/Servis Faturası/Hasar Fotoğrafı) DIŞINDA kalan,
+// bir araca veya müşteriye bağlı SERBEST belge yükleme — FAZ6'nın gerçekten yeni yeteneği.
+// Dosya doğrulaması, mevcut yükleme noktalarıyla (wireDocType/otoBelgeSec) birebir aynı: 10MB
+// sınırı ve SVG reddi.
+async function belgeYeniYukle(ilgiliTip, ilgiliId, tur, file, sonGecerlilik){
+  if(!requireAdmin()) return null;
+  if(!file) return null;
+  if(file.size > 10*1024*1024){ showToast('Dosya çok büyük. En fazla 10MB yükleyebilirsin.', true); return null; }
+  if(file.type === 'image/svg+xml'){ showToast('SVG dosyaları desteklenmiyor.', true); return null; }
+  try{
+    const dataUrl = await new Promise((res,rej)=>{
+      const fr = new FileReader();
+      fr.onload = ()=>res(fr.result);
+      fr.onerror = ()=>rej(new Error('Dosya okunamadı'));
+      fr.readAsDataURL(file);
+    });
+    const dosyaRef = await belgeDosyaSakla(ilgiliTip+'_'+ilgiliId+'_'+tur, dataUrl);
+    const kayit = await belgeMerkeziKaydet({ilgiliTip, ilgiliId, tur, tarih: todayISO(), sonGecerlilik: sonGecerlilik||null, dosyaRef});
+    const ad = ilgiliTip==='arac' ? ((vehicles.find(x=>x.id===ilgiliId)||{}).plaka||'') : musteriGoruntuAdi(customers.find(x=>x.id===ilgiliId)||{});
+    logActivity('add', `Belge yüklendi: <b>${esc(tur)}</b> — ${esc(ad)}`).catch(()=>{});
+    return kayit;
+  }catch(e){
+    console.error('Belge yükleme hatası:', e);
+    showToast('Belge kaydedilemedi: '+(e.message||'bilinmeyen hata'), true);
+    return null;
+  }
+}
+
+// ================================================================================
+// FAZ6: Bildirimler motoru — gerçek, kalıcı `notifications` kaydı. Eskiden bu sayfa her
+// render'da urgentList()'i (vehicles/rentals verisinden anlık türetilen bir liste) baştan
+// hesaplıyor, "okundu" durumu da yalnızca localStorage'daki okunanBildirimler dizisinde
+// (plaka_tip anahtarlarıyla) hackleniyordu — hiçbir yerde kalıcı bir "bildirim kaydı" yoktu.
+// bildirimUret(): urgentList()/dashboard uyarılarının kontrol ettiği AYNI koşulları tarar
+// (sigorta/kasko/muayene, kira bitişi/geciken kira, bakım-km, FAZ3 tahsilat/fatura, FAZ5
+// HGS/ceza, FAZ6 belge süresi) ve her biri için EN FAZLA bir kez (haftalık dedupe anahtarı)
+// kalıcı bir kayıt oluşturur. Sadece load()'da bir kez çağrılır — render'larda DEĞİL.
+// ================================================================================
+// Haftalık dedupe anahtarı — "aynı süregelen durum" için her render'da değil, haftada bir
+// yeni kayıt üretilsin diye. Takvim haftası değil, epoch gün sayısının 7'ye bölümü — basit
+// ve kararlı (aynı gün/hafta içinde her zaman aynı değeri döner).
+function haftaAnahtari(){
+  return String(Math.floor(Date.now()/86400000/7));
+}
+// tur+dedupeId+hafta anahtarıyla daha önce kayıt yoksa yeni bir bildirim ekler, eklendiyse
+// true döner (persist edilmesi gerektiğini çağırana bildirmek için). dedupeId verilmezse
+// ilgiliId kullanılır (ör. araç/müşteri bazlı tekil koşullar); fatura/HGS/ceza/belge gibi
+// aynı ilgiliId için birden fazla kaydı olabilecek koşullarda kendi id'leri (f.id, t.id, d.id)
+// dedupeId olarak verilir ki iki farklı fatura aynı haftada birbirini ezmesin.
+function bildirimEkleyeBil(tur, ilgiliTip, ilgiliId, icerik, dl, dedupeId){
+  const period = haftaAnahtari();
+  const anahtar = dedupeId!=null ? String(dedupeId) : String(ilgiliId);
+  const varMi = notifications.some(n=>n.tur===tur && n._anahtar===anahtar && n._periyot===period);
+  if(varMi) return false;
+  notifications.push({
+    id: yeniId('notif'), tur, ilgiliTip, ilgiliId, icerik,
+    olusturmaTarihi: new Date().toISOString(), okunduMu: false, kanal: ['uygulamaIci'],
+    _anahtar: anahtar, _periyot: period, _dl: dl!=null ? dl : null,
+  });
+  return true;
+}
+function bildirimUret(){
+  let eklendi = false;
+  vehicles.forEach(v=>{
+    [['sigorta', v.sigortaTarihi, 'Sigorta'], ['kasko', v.kaskoBitis, 'Kasko'], ['muayene', v.muayeneTarihi, 'Muayene']].forEach(([tur, tarih, etiket])=>{
+      if(!tarih) return;
+      const dl = daysLeft(tarih);
+      if(dl===null || dl>30) return;
+      const icerik = dl<0 ? `${v.plaka} — ${etiket} süresi ${Math.abs(dl)} gün geçti.` : `${v.plaka} — ${etiket} için ${dl} gün kaldı.`;
+      if(bildirimEkleyeBil(tur, 'arac', v.id, icerik, dl)) eklendi = true;
+    });
+    const kiraTarih = v.kiraBitis || v.sozlesmeBitis;
+    if(kiraTarih){
+      const dl = daysLeft(kiraTarih);
+      if(dl!==null && dl<=30){
+        const tur = dl<0 ? 'gecikenKira' : 'kiraBitis';
+        const icerik = dl<0 ? `${v.plaka} — kiralama süresi ${Math.abs(dl)} gün geçti, iade bekleniyor.` : `${v.plaka} — kiralama ${dl} gün içinde bitiyor.`;
+        if(bildirimEkleyeBil(tur, 'arac', v.id, icerik, dl)) eklendi = true;
+      }
+    }
+    if(v.sonBakimKm && v.bakimPeriyotKm){
+      const mevcutKm = Math.max(Number(v.sonKm)||0, Number(v.teslimKm)||0, ...(v.kmGecmisi||[]).map(k=>Number(k.bitKm)||0));
+      const kalan = Math.round(v.sonBakimKm + v.bakimPeriyotKm - mevcutKm);
+      if(kalan<=2000){
+        const icerik = kalan<=0 ? `${v.plaka} — bakım kilometresi ${Math.abs(kalan).toLocaleString('tr-TR')} km geçti.` : `${v.plaka} — bakıma ${kalan.toLocaleString('tr-TR')} km kaldı.`;
+        if(bildirimEkleyeBil('servis', 'arac', v.id, icerik, kalan<=0?-1:20)) eklendi = true;
+      }
+    }
+  });
+  // FAZ3: tahsilat (müşteri bazlı vadesi geçmiş bakiye) + fatura (vadesi yaklaşan/geçmiş, tek tek)
+  (typeof customers!=='undefined'?customers:[]).forEach(c=>{
+    const o = customerCariOzet(c.id);
+    if(o.vadesiGecen>0){
+      const icerik = `${musteriGoruntuAdi(c)} — vadesi geçmiş ${fmtTL2(o.vadesiGecen)} tahsilat bekliyor.`;
+      if(bildirimEkleyeBil('tahsilat', 'musteri', c.id, icerik, -1)) eklendi = true;
+    }
+  });
+  (typeof invoices!=='undefined'?invoices:[]).forEach(f=>{
+    if(!f.vade || f.durum==='Odendi' || f.durum==='Iptal' || faturaKalan(f)<=0) return;
+    const dl = daysLeft(f.vade);
+    if(dl===null || dl>7) return;
+    const c = customers.find(x=>x.id===f.customerId);
+    const icerik = dl<0 ? `${f.faturaNo||'Fatura'} — vadesi ${Math.abs(dl)} gün geçti${c?' ('+musteriGoruntuAdi(c)+')':''}.` : `${f.faturaNo||'Fatura'} — vadesine ${dl} gün kaldı${c?' ('+musteriGoruntuAdi(c)+')':''}.`;
+    if(bildirimEkleyeBil('fatura', 'musteri', f.customerId, icerik, dl, f.id)) eklendi = true;
+  });
+  // FAZ5: HGS/OGS (ödenmemiş geçişler) + trafik cezaları (son ödeme tarihi yaklaşan/geçmiş)
+  (typeof tolls!=='undefined'?tolls:[]).filter(t=>!t.odendi).forEach(t=>{
+    const v = vehicles.find(x=>x.id===t.vehicleId);
+    const icerik = `${v?v.plaka:'Araç'} — ödenmemiş HGS/OGS geçişi (${fmtTL2(t.tutar)}).`;
+    if(bildirimEkleyeBil('hgs', 'arac', t.vehicleId, icerik, -1, t.id)) eklendi = true;
+  });
+  (typeof trafficFines!=='undefined'?trafficFines:[]).forEach(f=>{
+    if(f.odendi || !f.sonOdemeTarihi) return;
+    const dl = daysLeft(f.sonOdemeTarihi);
+    if(dl===null || dl>7) return;
+    const v = vehicles.find(x=>x.id===f.vehicleId);
+    const icerik = dl<0 ? `${v?v.plaka:'Araç'} — trafik cezası son ödeme tarihi ${Math.abs(dl)} gün geçti.` : `${v?v.plaka:'Araç'} — trafik cezası son ödeme tarihine ${dl} gün kaldı.`;
+    if(bildirimEkleyeBil('ceza', 'arac', f.vehicleId, icerik, dl, f.id)) eklendi = true;
+  });
+  // FAZ6: merkezi belgeler — aktif ve süresi yaklaşan/geçmiş belgeler
+  (typeof documents!=='undefined'?documents:[]).filter(d=>d.aktif!==false && d.sonGecerlilik).forEach(d=>{
+    const dl = daysLeft(d.sonGecerlilik);
+    if(dl===null || dl>30) return;
+    const ad = d.ilgiliTip==='arac' ? ((vehicles.find(v=>v.id===d.ilgiliId)||{}).plaka||'Kayıt') : musteriGoruntuAdi(customers.find(c=>c.id===d.ilgiliId)||{});
+    const icerik = dl<0 ? `${ad} — ${d.tur} belgesinin süresi ${Math.abs(dl)} gün geçti.` : `${ad} — ${d.tur} belgesine ${dl} gün kaldı.`;
+    if(bildirimEkleyeBil('belge', d.ilgiliTip, d.ilgiliId, icerik, dl, d.id)) eklendi = true;
+  });
+  return eklendi;
+}
+function notifOkunmamisSayisi(){
+  return notifications.filter(n=>!n.okunduMu).length;
+}
+async function bildirimOkunduIsaretle(id){
+  const n = notifications.find(x=>x.id===id);
+  if(!n || n.okunduMu) return;
+  n.okunduMu = true;
+  await persistNotifications();
+  renderBildirimlerPage();
+  updateShellChrome();
+}
+async function bildirimTumunuOkunduYap(){
+  let degisti = false;
+  notifications.forEach(n=>{ if(!n.okunduMu){ n.okunduMu = true; degisti = true; } });
+  if(degisti) await persistNotifications();
+  renderBildirimlerPage();
+  updateShellChrome();
+}
+// "E-posta" kanalı dürüstlük notu: bu uygulamada gerçek bir SMTP/e-posta sunucusu YOK, bu
+// yüzden otomatik gönderim yapılamaz. Bu buton, o günün okunmamış bildirimlerini türe göre
+// gruplayıp TEK bir mailto: taslağı hazırlar (eskiden hatirlatEposta() ile tek tek, ayrı ayrı
+// taslak açılıyordu) — kullanıcı taslağı inceleyip kendisi gönderir, otomatik gönderim değildir.
+function bildirimlerEpostaTaslagiHazirla(){
+  const bugunAnahtari = new Date().toDateString();
+  const bugunku = notifications.filter(n=>!n.okunduMu && new Date(n.olusturmaTarihi).toDateString()===bugunAnahtari);
+  const liste = bugunku.length ? bugunku : notifications.filter(n=>!n.okunduMu);
+  if(!liste.length){ showToast('Hazırlanacak okunmamış bildirim yok.'); return; }
+  const TUR_ETIKET = {sigorta:'Sigorta', kasko:'Kasko', muayene:'Muayene', kiraBitis:'Kira Bitişi', gecikenKira:'Geciken Kira', servis:'Bakım/Servis', tahsilat:'Tahsilat', fatura:'Fatura', hgs:'HGS/OGS', ceza:'Trafik Cezası', belge:'Belge'};
+  const gruplar = {};
+  liste.forEach(n=>{ (gruplar[n.tur] = gruplar[n.tur]||[]).push(n); });
+  let body = `Filo Kontrol Paneli — Bildirim Özeti (${new Date().toLocaleDateString('tr-TR')})\n\n`;
+  Object.keys(gruplar).forEach(tur=>{
+    body += `${(TUR_ETIKET[tur]||tur).toLocaleUpperCase('tr-TR')} (${gruplar[tur].length}):\n`;
+    gruplar[tur].forEach(n=> body += `- ${n.icerik}\n`);
+    body += '\n';
+  });
+  const to = (window.__reminderEmail||'').trim();
+  const subject = encodeURIComponent(`Filo Kontrol Paneli — ${liste.length} bildirim (${new Date().toLocaleDateString('tr-TR')})`);
+  window.location.href = `mailto:${encodeURIComponent(to)}?subject=${subject}&body=${encodeURIComponent(body)}`;
+}
 
 // ================================================================================
 // FAZ4: Kiralama durum makinesi + Teslim/İade kontrol listesi + otomatik hasar tespiti
@@ -13746,6 +14253,102 @@ const YAKIT_SEVIYE_INDEKS = {'Boş':0, '1/4':1, 'Yarım':2, '3/4':3, 'Dolu':4};
 // filosuna/güncel piyasa fiyatına göre güncellemelidir (arayüzde de "tahmini" olarak etiketlenir).
 const TAHMINI_DEPO_LITRE = 50;      // TAHMİNİ ortalama depo hacmi (L)
 const TAHMINI_YAKIT_FIYATI_TL = 45; // TAHMİNİ ₺/L — gerçek zamanlı/doğrulanmış bir fiyat değildir
+
+// ================================================================================
+// FAZ6: Dijital İmza Yakalama — canvas tabanlı, yeniden kullanılabilir basit imza aracı.
+//
+// ÖNEMLİ / DÜRÜSTLÜK NOTU: Bu, parmak/mouse ile çizilen bir "dijital imza yakalama" aracıdır.
+// 5070 sayılı Elektronik İmza Kanunu anlamında NİTELİKLİ ELEKTRONİK İMZA DEĞİLDİR ve ıslak
+// imzayla aynı hukuki geçerliliğe sahip olduğu iddia edilmez — bunun için sertifikalı bir
+// e-imza servis sağlayıcısı (nitelikli elektronik sertifika) gerekir. Bu araç, tarafların
+// aynı ekranda/cihazda görsel bir onay izi bırakmasını sağlayan hızlı, opsiyonel bir katmandır;
+// hiçbir akışta ZORUNLU değildir — imza atılmazsa mevcut "elle imzalanacak boş çizgi" davranışı
+// aynen korunur.
+// ================================================================================
+function imzaWidgetAc(baslik, onSave){
+  const eski = document.getElementById('imzaWidgetOverlay'); if(eski) eski.remove();
+  const el = document.createElement('div');
+  el.className = 'overlay show';
+  el.id = 'imzaWidgetOverlay';
+  el.style.cssText = 'z-index:90;';
+  el.innerHTML = `
+    <div style="background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;width:min(92vw,440px);">
+      <h3 style="margin:0 0 4px;font-size:15px;color:var(--paper);">${esc(baslik||'Dijital İmza Yakalama')}</h3>
+      <div style="font-size:11.5px;color:var(--steel-300);margin-bottom:10px;">Bu, hızlı bir dijital imza yakalama aracıdır; resmi/nitelikli elektronik imza yerine geçmez. Islak imzayla aynı hukuki geçerliliğe sahip değildir.</div>
+      <canvas id="imzaCanvas" width="380" height="180" style="width:100%;height:180px;background:#fff;border:1px solid var(--line);border-radius:10px;touch-action:none;cursor:crosshair;"></canvas>
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <button id="imzaTemizleBtn" style="flex:1;background:var(--surface-2);border:1px solid var(--line);color:var(--text-2);padding:9px 0;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Temizle</button>
+        <button id="imzaVazgecBtn" style="flex:1;background:var(--surface-2);border:1px solid var(--line);color:var(--text-2);padding:9px 0;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Vazgeç</button>
+        <button id="imzaKaydetBtn" style="flex:1;background:var(--accent-blue);border:none;color:#fff;padding:9px 0;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Kaydet</button>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+  const canvas = document.getElementById('imzaCanvas');
+  const ctx = canvas.getContext('2d');
+  // CSS ile ölçeklenen canvas'ın çizim koordinatlarını gerçek piksel boyutuna eşitle
+  // (aksi halde retina/farklı genişliklerde imza kayar/tıraşlanır).
+  function boyutlandir(){
+    const oran = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width*oran;
+    canvas.height = rect.height*oran;
+    ctx.scale(oran, oran);
+    ctx.lineWidth = 2.2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = '#15171A';
+  }
+  boyutlandir();
+  let ciziliMi = false;
+  let cizerken = false;
+  let sonNokta = null;
+  function noktaAl(e){
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX!=null ? e.clientX : (e.touches&&e.touches[0].clientX)) - rect.left;
+    const y = (e.clientY!=null ? e.clientY : (e.touches&&e.touches[0].clientY)) - rect.top;
+    return {x,y};
+  }
+  function ciz(e){
+    if(!cizerken) return;
+    const p = noktaAl(e);
+    ctx.beginPath();
+    ctx.moveTo(sonNokta.x, sonNokta.y);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+    sonNokta = p;
+    ciziliMi = true;
+  }
+  canvas.addEventListener('pointerdown', e=>{ cizerken=true; sonNokta=noktaAl(e); canvas.setPointerCapture(e.pointerId); });
+  canvas.addEventListener('pointermove', ciz);
+  canvas.addEventListener('pointerup', ()=>{ cizerken=false; });
+  canvas.addEventListener('pointerleave', ()=>{ cizerken=false; });
+  document.getElementById('imzaTemizleBtn').onclick = ()=>{
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ciziliMi = false;
+  };
+  document.getElementById('imzaVazgecBtn').onclick = ()=>el.remove();
+  document.getElementById('imzaKaydetBtn').onclick = ()=>{
+    if(!ciziliMi){ showToast('Lütfen önce imza alanına çizin, ya da bu adımı Vazgeç ile atlayın.', true); return; }
+    const dataUrl = canvas.toDataURL('image/png');
+    el.remove();
+    if(typeof onSave==='function') onSave(dataUrl);
+  };
+  el.addEventListener('click', e=>{ if(e.target===el) el.remove(); });
+}
+// İmzalı/imzasız durumda tutarlı bir <div class="imza-box"> üretir — sozlesmeHtml/
+// teslimTutanakHtml/iadeTutanakHtml şablonlarının hepsinde aynı .imza/.imza-box/.imza-line
+// CSS sınıflarını kullandığı için tek bir yerden üretiliyor. imzaDataUrl verilmezse davranış
+// birebir eskisiyle aynıdır (boş çizgi — elle imzalanır).
+function imzaBoxHtml(etiket, imzaDataUrl){
+  if(imzaDataUrl){
+    return `<div class="imza-box">
+      <img src="${imzaDataUrl}" alt="İmza" style="max-height:56px;max-width:92%;display:block;margin:24px auto 0;">
+      <div class="imza-line" style="margin-top:6px;">${etiket}</div>
+      <div style="font-size:8.5px;color:#777;margin-top:2px;">Dijital imza yakalama — nitelikli elektronik imza değildir.</div>
+    </div>`;
+  }
+  return `<div class="imza-box"><div class="imza-line">${etiket}</div></div>`;
+}
 
 // ----- Doğrulama (Ürün şartnamesi Bölüm 49) -----
 // T.C. Kimlik No — resmi sağlama (checksum) algoritması TAM olarak uygulanmıştır:
@@ -14033,11 +14636,13 @@ function musteriDetayAc(customerId){
           <button class="modal-tab" data-md-tab="cari" onclick="musteriDetayTabGoster(this,'cari')">Cari</button>
           <button class="modal-tab" data-md-tab="kiralamalar" onclick="musteriDetayTabGoster(this,'kiralamalar')">Kiralamalar</button>
           <button class="modal-tab" data-md-tab="notlar" onclick="musteriDetayTabGoster(this,'notlar')">Notlar</button>
+          <button class="modal-tab" data-md-tab="belgeler" onclick="musteriDetayTabGoster(this,'belgeler')">Belgeler</button>
         </div>
         <div class="md-tab-panel" data-md-panel="genel">${musteriDetayGenelHtml(c)}</div>
         <div class="md-tab-panel" data-md-panel="cari" style="display:none;">${musteriDetayCariHtml(c)}</div>
         <div class="md-tab-panel" data-md-panel="kiralamalar" style="display:none;">${musteriDetayKiralamalarHtml(c)}</div>
         <div class="md-tab-panel" data-md-panel="notlar" style="display:none;">${musteriDetayNotlarHtml(c)}</div>
+        <div class="md-tab-panel" data-md-panel="belgeler" style="display:none;">${musteriDetayBelgelerHtml(c)}</div>
       </div>
     </div>`;
   document.body.appendChild(el);
@@ -14089,6 +14694,75 @@ function musteriDetayKiralamalarHtml(c){
 }
 function musteriDetayNotlarHtml(c){
   return `<div class="dcard"><div style="font-size:13px;color:var(--text-2);white-space:pre-wrap;">${c.notlar?esc(c.notlar):'<span style="color:var(--text-3);">Not girilmemiş. "Düzenle" ile notlar alanını doldurabilirsiniz.</span>'}</div></div>`;
+}
+// FAZ6: Müşteriye bağlı belgeler (Kimlik, Ehliyet fotoğrafı, Diğer) — merkezi `documents`
+// dizisinden bu müşterinin kayıtları. Yükleme + versiyon geçmişi burada, görüntüleme
+// company-wide Belgeler sayfasıyla aynı `viewBelgeByKey` yolunu kullanır.
+function musteriDetayBelgelerHtml(c){
+  const tumu = documents.filter(d=>d.ilgiliTip==='musteri' && d.ilgiliId===c.id);
+  const turler = [...new Set(tumu.map(d=>d.tur))];
+  const selStyle = 'background:var(--surface-2);border:1px solid var(--line);border-radius:9px;color:var(--paper);padding:7px 9px;font-size:12.5px;font-family:inherit;';
+  const yukleKart = `
+    <div class="dcard" style="margin-bottom:12px;">
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px;">Yeni belge yükle</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <select id="mdBelgeTur" style="${selStyle}">
+          <option value="Kimlik">Kimlik</option>
+          <option value="Ehliyet">Ehliyet</option>
+          <option value="Fatura">Fatura</option>
+          <option value="Diğer">Diğer</option>
+        </select>
+        <input type="date" id="mdBelgeSonGecerlilik" title="Son geçerlilik (opsiyonel)" style="${selStyle}">
+        <input type="file" id="mdBelgeDosya" accept=".pdf,image/*" style="max-width:170px;">
+        <button onclick="musteriDetayBelgeYukle('${c.id}')" style="background:var(--accent-blue);border:none;color:#fff;padding:7px 14px;border-radius:9px;font-size:12.5px;font-weight:600;cursor:pointer;">Yükle</button>
+      </div>
+    </div>`;
+  if(!turler.length){
+    return yukleKart + '<div class="log-empty">Bu müşteriye ait belge yüklenmedi.</div>';
+  }
+  const liste = turler.map(tur=>{
+    const grup = tumu.filter(d=>d.tur===tur).sort((a,b)=>(b.versiyon||0)-(a.versiyon||0));
+    const aktifD = grup.find(d=>d.aktif!==false) || grup[0];
+    const gecmis = grup.filter(d=>d.id!==aktifD.id);
+    const dur = aktifD.sonGecerlilik ? belgeDurumHesapla(aktifD.sonGecerlilik) : null;
+    return `<div style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <span style="font-size:13px;font-weight:700;color:var(--paper);">${esc(tur)}</span>
+        <span style="font-size:11px;color:var(--steel-300);">v${aktifD.versiyon||1}</span>
+        ${dur?`<span style="font-size:11px;font-weight:700;color:${dur.renk};">${dur.etiket}</span>`:''}
+        <button onclick="viewBelgeByKey('${aktifD.dosyaRef}','${esc(tur)}')" style="margin-left:auto;background:var(--blue-dim);border:none;color:var(--accent-blue);padding:4px 10px;border-radius:7px;font-size:11.5px;font-weight:600;cursor:pointer;">Gör</button>
+      </div>
+      <div style="font-size:11px;color:var(--steel-300);margin-top:3px;">Yüklenme: ${fmtTarih((aktifD.yuklemeTarihi||'').slice(0,10))}${aktifD.sonGecerlilik?' · Geçerlilik: '+fmtTarih(aktifD.sonGecerlilik):''}</div>
+      ${gecmis.length?`<details style="margin-top:6px;"><summary style="cursor:pointer;font-size:11px;color:var(--text-2);">${gecmis.length} geçmiş sürüm</summary>
+        <div style="margin-top:6px;display:flex;flex-direction:column;gap:5px;">
+          ${gecmis.map(g=>`<div style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--steel-300);">
+            <span>v${g.versiyon||'—'} · ${fmtTarih((g.yuklemeTarihi||'').slice(0,10))}</span>
+            <button onclick="viewBelgeByKey('${g.dosyaRef}','${esc(tur)}')" style="background:none;border:1px solid var(--line);color:var(--text-2);padding:2px 8px;border-radius:6px;font-size:10.5px;cursor:pointer;">Gör</button>
+          </div>`).join('')}
+        </div>
+      </details>`:''}
+    </div>`;
+  }).join('');
+  return yukleKart + liste;
+}
+async function musteriDetayBelgeYukle(customerId){
+  const tur = document.getElementById('mdBelgeTur').value;
+  const sonGecerlilik = document.getElementById('mdBelgeSonGecerlilik').value || null;
+  const dosyaInput = document.getElementById('mdBelgeDosya');
+  const file = dosyaInput.files[0];
+  if(!file){ showToast('Lütfen bir dosya seçin.', true); return; }
+  const kayit = await belgeYeniYukle('musteri', customerId, tur, file, sonGecerlilik);
+  if(kayit){
+    showToast('Belge yüklendi.');
+    const overlay = document.getElementById('musteriDetailOverlay');
+    if(overlay) overlay.remove();
+    musteriDetayAc(customerId);
+    // Belgeler sekmesi açık kalsın
+    setTimeout(()=>{
+      const btn = document.querySelector('#musteriDetailOverlay .modal-tab[data-md-tab="belgeler"]');
+      if(btn) btn.click();
+    }, 0);
+  }
 }
 
 // ----- Fatura formu (oluştur/düzenle) -----
@@ -15256,31 +15930,52 @@ function hatirlatEposta(plaka, tip){
   location.href = `mailto:?subject=${encodeURIComponent(konu)}&body=${encodeURIComponent(metin)}`;
 }
 
+// FAZ6: notifications kayıtlarını görüntüleme alanlarına (plaka/müşteri adı, Türkçe tür etiketi,
+// gün farkı) çevirir — eski urgentList()-türevi satırlarla (plaka/tip/dl) aynı şekli taşır ki
+// aşağıdaki render, hatirlatWhatsApp/hatirlatEposta gibi mevcut yardımcılarla değişmeden çalışsın.
+const BILDIRIM_TUR_ETIKET = {
+  sigorta:'Sigorta', kasko:'Kasko Bitişi', muayene:'Muayene', kiraBitis:'Kira Bitişi',
+  gecikenKira:'Kira Bitişi', servis:'Bakım (km)', tahsilat:'Tahsilat', fatura:'Fatura',
+  hgs:'HGS/OGS', ceza:'Trafik Cezası', belge:'Belge',
+};
+function bildirimGoruntuSatiri(n){
+  let ad = '—';
+  if(n.ilgiliTip==='arac'){ const v = vehicles.find(x=>x.id===n.ilgiliId); ad = v?v.plaka:'(silinmiş araç)'; }
+  else{ const c = customers.find(x=>x.id===n.ilgiliId); ad = c?musteriGoruntuAdi(c):'(silinmiş müşteri)'; }
+  return { id:n.id, tur:n.tur, plaka:ad, tip: BILDIRIM_TUR_ETIKET[n.tur]||n.tur, dl: n._dl, icerik:n.icerik, okunduMu:n.okunduMu, olusturmaTarihi:n.olusturmaTarihi };
+}
 function renderBildirimlerPage(){
   const page = document.getElementById('page-bildirimler');
-  // v.85: eskiden urgentList() (≤7 gün) çağrılıyordu, bu da "Tümü" listesinin zaten hep ≤7 gün
-  // olması ve "Kritik (≤7 gün)" filtresinin hiçbir şey değiştirmemesi anlamına geliyordu. Artık
-  // uygulamanın geri kalanıyla tutarlı 30 günlük "yaklaşan" penceresi kullanılıyor.
-  const list = urgentList(30).sort((a,b)=>a.dl-b.dl);
-  const okunmuslar = JSON.parse(localStorage.getItem('okunanBildirimler')||'[]');
+  // FAZ6: artık her render'da yeniden TÜRETİLMİYOR — gerçek, kalıcı `notifications` dizisi
+  // load()'da bir kez (bildirimUret()) üretilip storageAPI'ye yazılıyor; burada sadece okunuyor
+  // ve görüntüleme alanlarına çevriliyor. "okundu" durumu artık gerçek bir kayıt alanı
+  // (okunduMu) — eski okunanBildirimler localStorage hack'i kaldırıldı.
+  const list = notifications.map(bildirimGoruntuSatiri).sort((a,b)=>(a.dl??9999)-(b.dl??9999));
   const filter = window.__bildirimFilter || 'hepsi';
 
-  const filtered = filter==='okunmamis' ? list.filter(u=>!okunmuslar.includes(u.plaka+'_'+u.tip))
-    : filter==='gecmis' ? list.filter(u=>u.dl<0)
-    : filter==='kritik' ? list.filter(u=>u.dl<=7)
+  const filtered = filter==='okunmamis' ? list.filter(u=>!u.okunduMu)
+    : filter==='gecmis' ? list.filter(u=>(u.dl??0)<0)
+    : filter==='kritik' ? list.filter(u=>(u.dl??999)<=7)
     : list;
 
-  const okunmamisSayi = list.filter(u=>!okunmuslar.includes(u.plaka+'_'+u.tip)).length;
+  const okunmamisSayi = list.filter(u=>!u.okunduMu).length;
 
   page.innerHTML = `
     <div class="topbar">
       <div class="topbar-left">
         <h1>Bildirimler</h1>
-        <span style="font-size:13px;color:var(--text-3);">${list.length} uyarı · ${okunmamisSayi} okunmamış</span>
+        <span style="font-size:13px;color:var(--text-3);">${list.length} bildirim · ${okunmamisSayi} okunmamış</span>
       </div>
       <div class="topbar-right">
-        <button onclick="localStorage.setItem('okunanBildirimler',JSON.stringify(${JSON.stringify(list.map(u=>u.plaka+'_'+u.tip))}));renderBildirimlerPage()" style="background:none;border:1px solid var(--border);color:var(--text-2);padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer;font-family:inherit;">✓ Tümünü okundu yap</button>
+        <button onclick="bildirimTumunuOkunduYap()" style="background:none;border:1px solid var(--border);color:var(--text-2);padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer;font-family:inherit;">✓ Tümünü okundu yap</button>
       </div>
+    </div>
+
+    <div style="background:rgba(142,142,147,.08);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:space-between;">
+      <span style="font-size:12px;color:var(--text-2);">
+        <b>E-posta kanalı hakkında:</b> Bu, taslağınızı e-posta uygulamanızda açar — göndermek size kalır; bu uygulamadan otomatik e-posta gönderimi YAPILMAZ (sunucu tarafı bir e-posta servisi entegrasyonu gerekir).
+      </span>
+      <button onclick="bildirimlerEpostaTaslagiHazirla()" style="background:var(--accent-blue);border:none;color:#fff;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">Bugünün bildirimlerini e-posta olarak hazırla</button>
     </div>
 
     <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
@@ -15298,37 +15993,33 @@ function renderBildirimlerPage(){
         <div class="empty-state">
           <div class="empty-state-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
           <div class="empty-state-title">Her şey yolunda</div>
-          <div class="empty-state-desc">Yaklaşan sigorta, muayene, kira bitişi veya bakım uyarısı bulunmuyor. Yeni bir tarih yaklaştığında burada görünecek.</div>
+          <div class="empty-state-desc">Yaklaşan sigorta, muayene, kira bitişi, tahsilat/fatura, HGS/ceza veya belge uyarısı bulunmuyor. Yeni bir durum tespit edildiğinde burada görünecek.</div>
         </div>
       ` : '<div class="log-empty">Bu filtrede bildirim yok.</div>') : filtered.map(u=>{
-        const key = u.plaka+'_'+u.tip;
-        const okundu = okunmuslar.includes(key);
-        const bad = u.dl<0;
-        const renk = u.dl<0?'#E1554E':u.dl<=7?'#E1554E':u.dl<=30?'#E8A132':'#36A168';
-        const dtxt = u.km!==undefined
-          ? (u.km<=0 ? `${Math.abs(u.km).toLocaleString('tr-TR')} km gecikti!` : `${u.km.toLocaleString('tr-TR')} km kaldı`)
-          : (u.dl<0?`${Math.abs(u.dl)} gün gecikti!`:u.dl===0?'Bugün!':u.dl<=7?`${u.dl} gün kaldı ⚠️`:`${u.dl} gün kaldı`);
+        const okundu = u.okunduMu;
+        const renk = (u.dl??0)<0?'#E1554E':(u.dl??999)<=7?'#E1554E':(u.dl??999)<=30?'#E8A132':'#36A168';
+        const dtxt = u.dl==null ? '' : (u.dl<0?`${Math.abs(u.dl)} gün gecikti!`:u.dl===0?'Bugün!':u.dl<=7?`${u.dl} gün kaldı ⚠️`:`${u.dl} gün kaldı`);
+        const arac = vehicles.find(x=>x.plaka===u.plaka);
         return `
           <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);opacity:${okundu?'.5':'1'};flex-wrap:wrap;">
             <div style="width:8px;height:8px;border-radius:50%;background:${okundu?'var(--border)':renk};flex-shrink:0;"></div>
-            <div style="flex:1;">
-              <div style="display:flex;align-items:center;gap:8px;">
+            <div style="flex:1;min-width:180px;">
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
                 <span style="font-size:13px;font-weight:700;color:var(--text);font-family:monospace;">${esc(u.plaka)}</span>
                 <span style="font-size:12px;color:var(--text-2);">—</span>
                 <span style="font-size:13px;color:var(--text-2);">${esc(u.tip)}</span>
               </div>
-              <div style="font-size:12px;font-weight:600;color:${renk};margin-top:2px;">${dtxt}</div>
+              <div style="font-size:12px;color:var(--text-2);margin-top:2px;">${esc(u.icerik)}</div>
+              ${dtxt?`<div style="font-size:12px;font-weight:600;color:${renk};margin-top:2px;">${dtxt}</div>`:''}
             </div>
             <button onclick="hatirlatWhatsApp('${esc(u.plaka)}','${esc(u.tip)}')" title="WhatsApp ile hatırlat" style="background:rgba(37,211,102,.12);border:1px solid rgba(37,211,102,.3);color:#128C7E;padding:4px 9px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">WA</button>
-            <button onclick="hatirlatEposta('${esc(u.plaka)}','${esc(u.tip)}')" title="E-posta ile hatırlat" style="background:rgba(142,142,147,.12);border:1px solid var(--border);color:var(--text-2);padding:4px 9px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">✉</button>
-            <button onclick="
-              const o=JSON.parse(localStorage.getItem('okunanBildirimler')||'[]');
-              if(!o.includes('${key}'))o.push('${key}');
-              localStorage.setItem('okunanBildirimler',JSON.stringify(o));
-              renderBildirimlerPage();"
-              style="background:none;border:1px solid var(--border);color:var(--text-3);padding:4px 9px;border-radius:6px;font-size:11px;cursor:pointer;white-space:nowrap;">${okundu?'✓ Okundu':'Okundu işaretle'}</button>
-            <button onclick="switchPage('arac-yonetimi');setTimeout(()=>{const v=vehicles.find(x=>x.plaka==='${esc(u.plaka)}');if(v)openVehicleDetail(v.id);},100);"
-              style="background:rgba(232,69,58,.1);border:1px solid rgba(232,69,58,.2);color:var(--accent-blue);padding:4px 9px;border-radius:6px;font-size:11px;cursor:pointer;white-space:nowrap;">Araca Git</button>
+            <button onclick="hatirlatEposta('${esc(u.plaka)}','${esc(u.tip)}')" title="E-posta ile hatırlat (taslak açar, otomatik gönderim değildir)" style="background:rgba(142,142,147,.12);border:1px solid var(--border);color:var(--text-2);padding:4px 9px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">✉</button>
+            <button title="SMS — yakında" disabled style="background:none;border:1px solid var(--border);color:var(--text-3);padding:4px 9px;border-radius:6px;font-size:11px;font-weight:700;cursor:not-allowed;white-space:nowrap;opacity:.6;">SMS (Yakında)</button>
+            <button onclick="bildirimOkunduIsaretle('${u.id}')" ${okundu?'disabled':''}
+              style="background:none;border:1px solid var(--border);color:var(--text-3);padding:4px 9px;border-radius:6px;font-size:11px;cursor:${okundu?'default':'pointer'};white-space:nowrap;">${okundu?'✓ Okundu':'Okundu işaretle'}</button>
+            ${arac ? `<button onclick="switchPage('arac-yonetimi');setTimeout(()=>{const v=vehicles.find(x=>x.plaka==='${esc(u.plaka)}');if(v)openVehicleDetail(v.id);},100);"
+              style="background:rgba(232,69,58,.1);border:1px solid rgba(232,69,58,.2);color:var(--accent-blue);padding:4px 9px;border-radius:6px;font-size:11px;cursor:pointer;white-space:nowrap;">Araca Git</button>`
+              : `<button onclick="switchPage('musteriler')" style="background:rgba(232,69,58,.1);border:1px solid rgba(232,69,58,.2);color:var(--accent-blue);padding:4px 9px;border-radius:6px;font-size:11px;cursor:pointer;white-space:nowrap;">Müşteriye Git</button>`}
           </div>`;
       }).join('')}
     </div>
