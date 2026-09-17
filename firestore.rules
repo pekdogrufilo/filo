@@ -1,0 +1,85 @@
+// =============================================================================
+// FİLO PANELİ — Firestore Güvenlik Kuralları (FAZ 2)
+// =============================================================================
+//
+// (a) BU DOSYA BURADAN OTOMATİK OLARAK YAYINLANMAZ (deploy edilmez). Bu kodu
+//     çalıştıran ajan bu proje sahibinin Firebase projesine bağlanamaz ve
+//     kuralları kendi başına deploy edemez. Proje sahibi bu dosyanın TÜMÜNÜ
+//     kopyalayıp Firebase Console → (ilgili proje) → Firestore Database →
+//     "Rules" sekmesine YAPIŞTIRMALI ve "Publish" ile yayınlamalıdır.
+//     (İsteyen, `firebase deploy --only firestore:rules` ile CLI üzerinden de
+//     yayınlayabilir, ama bu da proje sahibinin kendi makinesinde/CI'ında
+//     çalıştırması gereken ayrı bir adımdır.)
+//
+// (b) `filoPaneliData/{docId}` kuralı KASITLI olarak sadece "giriş yapmış olmak"
+//     (isSignedIn()) istiyor, şirket bazlı (companyId) bir izolasyon YAPMIYOR.
+//     Sebebi: bu koleksiyon panelin ESKİ, düz anahtar-değer (chunked blob)
+//     deposu — her doküman hangi şirkete ait olduğunu belirten bir companyId
+//     alanı taşımıyor, dolayısıyla bu aşamada kural motorunun şirket bazında
+//     ayrım yapabilmesi mümkün değil. Bu koleksiyondaki kayıtların gerçek
+//     kiracı (tenant) izolasyonu, verisi companies/{companyId} bazlı yeni
+//     koleksiyonlara taşındıktan sonra, SONRAKİ bir fazda gelecek — o zamana
+//     kadar aynı Firebase projesini paylaşan farklı şirketlerin bu koleksiyon
+//     üzerinden birbirinin verisini görebileceğini unutmayın (bkz. FAZ2
+//     raporundaki "yapılmayanlar" listesi).
+//
+//     Ayrıca not: aşağıdaki `users/{uid}` bloğundaki `allow list: if isSignedIn();`
+//     kuralı da şirket bazlı değildir — Firestore kuralları bir "list" (koleksiyon
+//     sorgusu) isteğini şirket filtresine ZORLAYAMAZ; bu yüzden teknik olarak
+//     giriş yapmış herhangi bir kullanıcı users/ koleksiyonunu sorgulayabilir.
+//     Gerçek izolasyon için istemci kodunun HER ZAMAN sorguya
+//     where('companyId','==',...) filtresi eklemesi gerekir (bu kural, filtresiz
+//     bir sorguyu reddetmez) — bu, FAZ2b'de ele alınması gereken bir sıkılaştırmadır.
+//
+// (c) YAYINLAMADAN ÖNCE, Firebase Console'un "Rules Playground" (kural
+//     simülatörü) aracıyla EN AZ şu iki senaryoyu test edin:
+//       1) A şirketinden bir kullanıcının, B şirketine ait
+//          companies/{B'nin companyId'si} dokümanını "get" etmeye çalışması
+//          → REDDEDİLMELİ.
+//       2) Bir kullanıcının, kendisi olmayan başka bir uid'ye ait
+//          users/{başkasının uid'si} dokümanını "update" etmeye çalışması
+//          → o kullanıcı aynı şirketin admin'i DEĞİLSE REDDEDİLMELİ.
+//     (Rules Playground: Firestore Database → Rules sekmesi → "Rules
+//     playground" düğmesi; simüle edilecek auth.uid ve belge yolunu elle
+//     girebilirsiniz.)
+//
+// ÖNEMLİ GÜVENLİK NOTU — anonim kimlik doğrulama: Bu panelin istemci kodu
+// artık (FAZ2 itibarıyla) HİÇBİR ZAMAN otomatik "anonim" Firebase oturumu
+// AÇMIYOR (bkz. index.html içindeki makeFirestoreAdapter() yorumu). Ancak bu
+// kurallardaki isSignedIn(), sadece "request.auth != null" kontrolü yaptığı
+// için, eğer bu Firebase projesinde Authentication → Sign-in method →
+// "Anonymous" sağlayıcısı AÇIK bırakılırsa, panelin arayüzünü hiç kullanmadan,
+// tarayıcı konsolundan doğrudan firebase.auth().signInAnonymously() çağıran
+// biri de "isSignedIn()" testini geçebilir. Bu, FAZ2'nin kapatmaya çalıştığı
+// tam olarak aynı türde bir açıktır. Bu yüzden proje sahibine ÖNERİMİZ:
+// Firebase Console → Authentication → Sign-in method → "Anonymous" sağlayıcısını
+// KAPALI tutun (varsayılan olarak zaten kapalıdır; yalnızca panelin ESKİ
+// sürümü için daha önce açtıysanız kapatmayı unutmayın).
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() { return request.auth != null; }
+    function myUserDoc() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data; }
+    function isSameCompany(companyId) { return isSignedIn() && myUserDoc().companyId == companyId; }
+    function isAdmin() { return isSignedIn() && myUserDoc().roleId == 'admin'; }
+
+    match /companies/{companyId} {
+      allow read: if isSameCompany(companyId);
+      allow create: if isSignedIn();
+      allow update: if isSameCompany(companyId) && isAdmin();
+      allow delete: if false;
+    }
+
+    match /users/{uid} {
+      allow get: if isSignedIn() && (request.auth.uid == uid || isSameCompany(resource.data.companyId));
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && request.auth.uid == uid;
+      allow update: if isSignedIn() && (request.auth.uid == uid || (isSameCompany(resource.data.companyId) && isAdmin()));
+      allow delete: if isSignedIn() && isSameCompany(resource.data.companyId) && isAdmin();
+    }
+
+    match /filoPaneliData/{docId} {
+      allow read, write: if isSignedIn();
+    }
+  }
+}

@@ -2170,7 +2170,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-16.141</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-16.142</div>
     </div>
   </div>
 </div>
@@ -2300,7 +2300,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-16.141</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-16.142</div>
     </div>
   </aside>
 <script>
@@ -3019,13 +3019,16 @@ async function makeFirestoreAdapter(config){
   const app = existing || firebase.initializeApp(config, appName);
   const db = firebase.firestore(app);
   const col = db.collection('filoPaneliData');
-  // Firestore kuralları "request.auth != null" istediği için anonim oturum açılır;
-  // panelin kendi şifre ekranı erişim kontrolünü yapar, auth yalnızca kural kapısıdır.
-  try{
-    if(!app.auth().currentUser) await app.auth().signInAnonymously();
-  }catch(e){
-    console.warn('Anonim Firebase girişi başarısız:', e && e.message);
-  }
+  // FAZ2 GÜVENLİK DÜZELTMESİ: Eskiden burada "request.auth != null" kuralını sağlamak için
+  // otomatik ANONİM Firebase oturumu açılıyordu — bu, panelin kendi şifre ekranını tamamen
+  // etkisiz kılan bir güvenlik açığıydı (Firebase yapılandırmasını ele geçiren herkes, panelin
+  // şifre ekranını hiç görmeden, tarayıcı konsolundan signInAnonymously() çağırıp doğrudan
+  // Firestore'a erişebiliyordu). Artık burada HİÇBİR otomatik oturum açma yapılmıyor; gerçek
+  // veri erişimi yalnızca kullanıcı gerçek Firebase Authentication (e-posta/şifre) ile giriş
+  // yaptıktan sonra, o kullanıcının kendi kimliğiyle mümkün olur (bkz. initCloudAuth(),
+  // onCloudLoginSubmit(), onCloudSignupSubmit()). Giriş yapılmadan önce bu adaptörle yapılan
+  // istekler (ör. initCloudSync'teki bağlantı testi) Firestore kurallarına göre
+  // "permission-denied" ile sonuçlanır; bu BEKLENEN bir durumdur, hata değildir.
 
   async function writeChunked(key, value){
     // Önce eski chunk'ları temizle (boyutu küçülmüş olabilir)
@@ -3102,6 +3105,10 @@ async function makeFirestoreAdapter(config){
     set: (key, value)=>withStorageTimeout(rawAdapter.set(key, value)),
     delete: (key)=>withStorageTimeout(rawAdapter.delete(key)),
     list: (prefix)=>withStorageTimeout(rawAdapter.list(prefix)),
+    // FAZ2: companies/ ve users/ koleksiyonlarına (bu adaptörün sardığı düz filoPaneliData
+    // koleksiyonunun DIŞINDA) erişebilmek ve auth'u doğru Firebase app örneğine (isimli app,
+    // "[DEFAULT]" değil) bağlayabilmek için app/db referanslarını da dışarı veriyoruz.
+    app, db,
   };
 }
 
@@ -3110,10 +3117,20 @@ async function initCloudSync(){
   if(!cfg) return false;
   try{
     const adapter = await makeFirestoreAdapter(cfg);
-    // Bağlantıyı gerçekten doğrulamak için basit bir okuma dene
-    await adapter.get('_baglanti_testi').catch(e=>{ if(e.message!=='bulunamadı') throw e; });
+    // Bağlantıyı gerçekten doğrulamak için basit bir okuma dene. FAZ2: artık açılışta (kimse
+    // giriş yapmadan) otomatik anonim oturum açılmıyor (bkz. makeFirestoreAdapter), bu yüzden
+    // bu okuma büyük olasılıkla "permission-denied" ile sonuçlanacak — bu, Firestore projesine
+    // gerçekten ulaşılabildiğinin (yapılandırmanın geçerli olduğunun) kanıtıdır ve hata
+    // sayılmaz. Gerçek veri okuma/yazma, kullanıcı e-posta/şifre ile giriş yaptıktan SONRA
+    // (bkz. initCloudAuth/enterCloudSession) çalışır.
+    await adapter.get('_baglanti_testi').catch(e=>{
+      const izinYok = e && (e.code==='permission-denied' || /permission|izin/i.test(e.message||''));
+      if(e.message!=='bulunamadı' && !izinYok) throw e;
+    });
     storageAPI = adapter;
     window.__cloudSyncActive = true;
+    window.__cloudApp = adapter.app;
+    window.__cloudDb = adapter.db;
     return true;
   }catch(e){
     window.__cloudSyncError = (e && e.message) || 'Bilinmeyen hata';
@@ -8009,6 +8026,24 @@ const infoSvg = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" str
 let appLoaded = false;
 window.currentRole = sessionStorage.getItem('filoRole') || 'admin';
 
+// ===== FAZ2: Firma/Kullanıcı veri modeli — rol eşlemesi =====
+// Bulut modunda (window.__cloudSyncActive) gerçek kullanıcı kimliği artık Firestore'daki
+// users/{uid} dokümanından geliyor: { companyId, adSoyad, email, roleId: 'admin'|'personel', ... }.
+// Uygulamanın geri kalanı (aşağıdaki isAdmin()/requireAdmin() ve ~25 çağrı noktası) tarihsel
+// olarak window.currentRole değişkenini 'admin' | 'staff' değerleriyle kontrol ediyor — bu,
+// FAZ2 kapsamında DEĞİŞTİRİLMEDİ. Bulut girişinde roleId -> currentRole eşlemesi şöyle:
+//   roleId 'admin'    -> currentRole 'admin'
+//   roleId 'personel' -> currentRole 'staff'
+// (bkz. roleIdToCurrentRole()). Yerel (bulutsuz) modda hâlâ eski paylaşımlı şifre-hash sistemi
+// kullanılıyor ve currentRole doğrudan 'admin'/'staff' olarak atanıyor (değişmedi).
+// TODO FAZ2b: genişletilmiş rol/izin sistemi (ürün spesifikasyonundaki 9 rollü tam izin
+// matrisi) bu fazın kapsamı dışındadır.
+window.currentUser = null;       // FAZ2: Firebase Auth kullanıcı nesnesi (yalnızca bulut modu)
+window.currentCompanyId = null;  // FAZ2: giriş yapan kullanıcının bağlı olduğu companies/{id}
+window.currentUserDoc = null;    // FAZ2: users/{uid} dokümanının tamamı (adSoyad, email, roleId, ...)
+
+function roleIdToCurrentRole(roleId){ return roleId==='admin' ? 'admin' : 'staff'; }
+
 function isAdmin(){ return window.currentRole === 'admin'; }
 
 // Personel rolü yalnızca görüntüleme: değişiklik isteklerini reddet
@@ -8034,12 +8069,18 @@ function applyRoleVisibility(){
   const sbUserAvatar = document.getElementById('sbUserAvatar');
   if(sbUserRoleLabel) sbUserRoleLabel.textContent = role==='admin' ? 'Yönetici' : 'Personel';
   if(sbUserName){
-    sbUserName.textContent = role==='admin' ? 'Yönetici' : 'Personel';
+    if(window.__cloudSyncActive && window.currentUserDoc){
+      sbUserName.textContent = window.currentUserDoc.adSoyad || window.currentUserDoc.email || (role==='admin' ? 'Yönetici' : 'Personel');
+    }else{
+      sbUserName.textContent = role==='admin' ? 'Yönetici' : 'Personel';
+    }
   }
   if(sbUserAvatar) sbUserAvatar.textContent = role==='admin' ? 'Y' : 'P';
-  // Ayarlar sayfasındaki personel şifre kartını göster/gizle
+  // Ayarlar sayfasındaki personel şifre kartını göster/gizle — bulut modunda bu, eski
+  // paylaşımlı-şifre personel modeline ait olduğu ve artık kullanılamadığı (bkz. FAZ2 rol
+  // eşlemesi yorumu) için her zaman gizlenir.
   const staffCard = document.getElementById('staffPwCard');
-  if(staffCard) staffCard.style.display = role==='admin' ? '' : 'none';
+  if(staffCard) staffCard.style.display = (role==='admin' && !window.__cloudSyncActive) ? '' : 'none';
 }
 
 // Kira tutarlarını personelden gizle
@@ -8249,7 +8290,265 @@ async function onChangePwSubmit(){
   logActivity('pw', 'Panel şifresi değiştirildi.');
 }
 
+// ===== FAZ2: Bulut modunda gerçek Firebase Authentication (e-posta/şifre) =====
+// Yerel (bulutsuz) mod BU BÖLÜMDEN HİÇ ETKİLENMEZ: initAuth() aşağıda, cloud aktif değilse
+// dosyanın en başından beri var olan eski şifre-hash akışına aynen devam eder.
+const mailSvg = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg>';
+const buildingSvg = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="1"/><path d="M9 22v-4h6v4M9 6h.01M9 10h.01M9 14h.01M15 6h.01M15 10h.01M15 14h.01"/></svg>';
+
+// Adaptör isimli bir Firebase app ("filoPaneli") kullanıyor — bare firebase.auth() varsayılan
+// "[DEFAULT]" app'i arar ve bulamayınca hata fırlatır. Bu yüzden auth her zaman bu yardımcı
+// üzerinden, doğru app'e bağlı olarak alınır.
+function cloudAuth(){
+  return (window.__cloudApp || firebase.apps.find(a=>a.name==='filoPaneli')).auth();
+}
+
+async function fetchUserDoc(uid){
+  if(!window.__cloudDb) return null;
+  const snap = await window.__cloudDb.collection('users').doc(uid).get();
+  return snap.exists ? snap.data() : null;
+}
+
+async function createCompanyAndAdminUser(uid, email, unvan){
+  const db = window.__cloudDb;
+  const now = new Date().toISOString();
+  const companyRef = db.collection('companies').doc();
+  const companyDoc = { unvan, olusturmaTarihi: now, plan: 'Starter', durum: 'aktif' };
+  await companyRef.set(companyDoc);
+  const userDoc = { companyId: companyRef.id, adSoyad: '', email, roleId: 'admin', aktif: true, olusturmaTarihi: now };
+  await db.collection('users').doc(uid).set(userDoc);
+  return userDoc;
+}
+
+function cloudAuthErrorMessage(e){
+  const code = e && e.code;
+  switch(code){
+    case 'auth/wrong-password':
+    case 'auth/user-not-found':
+    case 'auth/invalid-credential':
+    case 'auth/invalid-login-credentials':
+      return 'E-posta veya şifre hatalı.';
+    case 'auth/invalid-email':
+      return 'Geçerli bir e-posta adresi girin.';
+    case 'auth/user-disabled':
+      return 'Bu hesap devre dışı bırakılmış. Yöneticinizle iletişime geçin.';
+    case 'auth/too-many-requests':
+      return 'Çok fazla hatalı deneme yapıldı. Lütfen biraz sonra tekrar deneyin.';
+    case 'auth/email-already-in-use':
+      return 'Bu e-posta adresi zaten kayıtlı. Giriş yapmayı deneyin.';
+    case 'auth/weak-password':
+      return 'Şifre çok zayıf — en az 6 karakter olmalı.';
+    case 'auth/network-request-failed':
+      return 'Bağlantı hatası, internet bağlantınızı kontrol edip tekrar deneyin.';
+    default:
+      return 'Beklenmedik bir hata oluştu: ' + ((e && e.message) || 'bilinmeyen hata');
+  }
+}
+
+async function enterCloudSession(user, userDoc){
+  window.currentUser = user;
+  window.currentUserDoc = userDoc;
+  window.currentCompanyId = userDoc.companyId;
+  window.currentRole = roleIdToCurrentRole(userDoc.roleId);
+  lockScreenHide();
+  if(!appLoaded){ appLoaded = true; await load(); }
+  else { applyRoleVisibility(); }
+  logActivity('login', `<b>${esc(userDoc.adSoyad || user.email || 'Kullanıcı')}</b> panele giriş yaptı — ${new Date().toLocaleString('tr-TR')}`).catch(()=>{});
+}
+
+function renderCloudAuth(mode, opts){
+  opts = opts || {};
+  const body = document.getElementById('lockBody');
+  if(mode==='signup'){
+    body.innerHTML = `
+      <h2 style="margin-bottom:18px;">Yeni <i>Şirket</i> Kaydı</h2>
+      <div class="lock-field has-icon">
+        <label>Şirket Adı</label>
+        <span class="lf-ic">${buildingSvg}</span>
+        <input type="text" id="clsUnvan" autocomplete="organization" placeholder="Örn. Pekdoğru Otomotiv Ltd. Şti." style="letter-spacing:normal;text-transform:none;">
+      </div>
+      <div class="lock-field has-icon">
+        <label>E-posta</label>
+        <span class="lf-ic">${mailSvg}</span>
+        <input type="email" id="clsEmail" autocomplete="email" placeholder="ornek@sirket.com" style="letter-spacing:normal;text-transform:none;">
+      </div>
+      <div class="lock-field has-icon">
+        <label>Şifre (en az 6 karakter)</label>
+        <span class="lf-ic">${lockIconSvg}</span>
+        <input type="password" id="clsPassword" autocomplete="new-password" placeholder="••••••">
+        <button type="button" class="eye" data-target="clsPassword">${eyeSvg}</button>
+      </div>
+      <div class="lock-field">
+        <label>Şifre (tekrar)</label>
+        <input type="password" id="clsPassword2" autocomplete="new-password" placeholder="••••••">
+      </div>
+      <div class="lock-err" id="lockErr">${opts.error ? esc(opts.error) : ''}</div>
+      <button class="lock-btn-main" id="clsSubmit">Şirket oluştur ve devam et</button>
+      <button class="lock-forgot" id="clsGotoLogin">Zaten hesabım var, giriş yap</button>
+    `;
+    wireEyeToggles();
+    document.getElementById('clsSubmit').onclick = onCloudSignupSubmit;
+    document.getElementById('clsGotoLogin').onclick = ()=>renderCloudAuth('login');
+    body.querySelectorAll('input').forEach(inp=>inp.addEventListener('keydown', e=>{ if(e.key==='Enter') onCloudSignupSubmit(); }));
+    document.getElementById('clsUnvan').focus();
+  }else{
+    body.innerHTML = `
+      <h2 style="margin-bottom:18px;">Giriş <i>Yap</i></h2>
+      <div class="lock-field has-icon">
+        <label>E-posta</label>
+        <span class="lf-ic">${mailSvg}</span>
+        <input type="email" id="claEmail" autocomplete="email" placeholder="ornek@sirket.com" style="letter-spacing:normal;text-transform:none;">
+      </div>
+      <div class="lock-field has-icon">
+        <label>Şifre</label>
+        <span class="lf-ic">${lockIconSvg}</span>
+        <input type="password" id="claPassword" autocomplete="current-password" placeholder="••••••">
+        <button type="button" class="eye" data-target="claPassword">${eyeSvg}</button>
+      </div>
+      <div class="lock-err" id="lockErr">${opts.error ? esc(opts.error) : ''}</div>
+      <button class="lock-btn-main" id="claSubmit">Giriş Yap</button>
+      <button class="lock-forgot" id="claForgot">Şifremi unuttum</button>
+      <div class="lock-divider"></div>
+      <button class="lock-forgot" id="claGotoSignup" style="margin-top:14px;">Yeni şirket kaydı oluştur</button>
+    `;
+    wireEyeToggles();
+    document.getElementById('claSubmit').onclick = onCloudLoginSubmit;
+    document.getElementById('claForgot').onclick = onCloudForgotPassword;
+    document.getElementById('claGotoSignup').onclick = ()=>renderCloudAuth('signup');
+    document.getElementById('claEmail').addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('claPassword').focus(); });
+    document.getElementById('claPassword').addEventListener('keydown', e=>{ if(e.key==='Enter') onCloudLoginSubmit(); });
+    document.getElementById('claEmail').focus();
+  }
+}
+
+async function onCloudLoginSubmit(){
+  const email = (document.getElementById('claEmail').value||'').trim();
+  const password = document.getElementById('claPassword').value;
+  const err = document.getElementById('lockErr');
+  err.textContent = '';
+  if(!email || !password){ err.textContent = 'E-posta ve şifre gerekli.'; shakeLockCard(); return; }
+  const btn = document.getElementById('claSubmit');
+  btn.disabled = true;
+  try{
+    const cred = await cloudAuth().signInWithEmailAndPassword(email, password);
+    const userDoc = await fetchUserDoc(cred.user.uid);
+    if(!userDoc){
+      err.textContent = 'Bu hesap bir şirkete bağlı değil, yöneticinizle iletişime geçin.';
+      shakeLockCard();
+      await cloudAuth().signOut();
+      return;
+    }
+    await enterCloudSession(cred.user, userDoc);
+  }catch(e){
+    err.textContent = cloudAuthErrorMessage(e);
+    shakeLockCard();
+  }finally{
+    btn.disabled = false;
+  }
+}
+
+async function onCloudSignupSubmit(){
+  const unvan = (document.getElementById('clsUnvan').value||'').trim();
+  const email = (document.getElementById('clsEmail').value||'').trim();
+  const p1 = document.getElementById('clsPassword').value;
+  const p2 = document.getElementById('clsPassword2').value;
+  const err = document.getElementById('lockErr');
+  err.textContent = '';
+  if(!unvan){ err.textContent = 'Şirket adını girin.'; shakeLockCard(); return; }
+  if(!email){ err.textContent = 'E-posta adresini girin.'; shakeLockCard(); return; }
+  if(p1.length<6){ err.textContent = 'Şifre en az 6 karakter olmalı.'; shakeLockCard(); return; }
+  if(p1!==p2){ err.textContent = 'Şifreler birbiriyle eşleşmiyor.'; shakeLockCard(); return; }
+  const btn = document.getElementById('clsSubmit');
+  btn.disabled = true;
+  try{
+    const cred = await cloudAuth().createUserWithEmailAndPassword(email, p1);
+    const userDoc = await createCompanyAndAdminUser(cred.user.uid, email, unvan);
+    await enterCloudSession(cred.user, userDoc);
+  }catch(e){
+    err.textContent = cloudAuthErrorMessage(e);
+    shakeLockCard();
+  }finally{
+    btn.disabled = false;
+  }
+}
+
+async function onCloudForgotPassword(){
+  const email = (document.getElementById('claEmail')?.value||'').trim();
+  const err = document.getElementById('lockErr');
+  if(!email){ err.textContent = 'Şifre sıfırlama için önce e-posta adresinizi girin.'; shakeLockCard(); return; }
+  try{
+    await cloudAuth().sendPasswordResetEmail(email);
+    showToast('Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.');
+  }catch(e){
+    err.textContent = cloudAuthErrorMessage(e);
+    shakeLockCard();
+  }
+}
+
+// CRITICAL MİGRASYON NOTU: Bu kod, ESKİ (anonim-oturumlu) bulut sistemini zaten kullanan ve
+// filoPaneliData'da gerçek verisi olan bir müşteride ilk kez çalıştığında, henüz hiçbir
+// users/ dokümanı yoktur ve firebase.auth() kullanıcısı da yoktur (eski sessionStorage
+// "filoUnlocked" bayrağı artık bulut modunda hiç okunmuyor). onAuthStateChanged(null) ile
+// aşağıda doğrudan giriş ekranı gösterilir; "Yeni şirket kaydı oluştur" seçeneğiyle müşteri
+// kendi yönetici hesabını ve şirket kaydını, MEVCUT verisinin ÜZERİNE (verisine dokunmadan)
+// oluşturabilir. Bundan sonra tüm filoPaneliData okuma/yazmaları bu gerçek kullanıcı
+// kimliğiyle, sorunsuzca devam eder.
+// onAuthStateChanged fırlar: (a) bir kez, kayıt anında geçerli oturum durumuyla — bu
+// AÇILIŞTA OTURUM GERİ YÜKLEME senaryosudur (spesifikasyondaki istek budur), ve (b) her
+// giriş/kayıt/çıkışta TEKRAR — ama o geçişler zaten onCloudLoginSubmit/onCloudSignupSubmit/
+// menuLockNow tarafından kendi akışlarında ele alınıyor. İkisini AYNI mantıkla (fetchUserDoc +
+// bulunamazsa signOut) ele almak yarış durumuna yol açar: örn. kayıt akışı henüz users/{uid}
+// dokümanını yazmayı bitirmeden, createUserWithEmailAndPassword'un tetiklediği bu dinleyici
+// "doküman yok" sanıp yeni oluşturulan kullanıcıyı hemen tekrar çıkışa zorlayabilir. Bu yüzden
+// "doküman yoksa oturumu kapat" mantığı SADECE ilk (açılış) çağrıda çalışır; sonraki değişiklikler
+// yalnızca beklenmedik bir çıkışı (ör. jetonun elden geçersiz kılınması) yakalar.
+function initCloudAuth(){
+  let bootHandled = false;
+  cloudAuth().onAuthStateChanged(async (user)=>{
+    if(!bootHandled){
+      bootHandled = true;
+      if(user){
+        try{
+          const userDoc = await fetchUserDoc(user.uid);
+          if(!userDoc){
+            renderCloudAuth('login', {error:'Bu hesap bir şirkete bağlı değil, yöneticinizle iletişime geçin.'});
+            lockScreenShow();
+            await cloudAuth().signOut();
+            return;
+          }
+          await enterCloudSession(user, userDoc);
+        }catch(e){
+          renderCloudAuth('login', {error: cloudAuthErrorMessage(e)});
+          lockScreenShow();
+        }
+      }else{
+        window.currentUser = null;
+        window.currentUserDoc = null;
+        window.currentCompanyId = null;
+        renderCloudAuth('login');
+        lockScreenShow();
+      }
+      return;
+    }
+    // Açılıştan sonraki değişiklikler: yalnızca "hâlâ giriş yapmış sanıyorduk ama artık
+    // oturum yok" durumunu yakala (beklenmedik çıkış). Normal giriş/kayıt/çıkış akışları
+    // kendi arayüzlerini zaten güncelliyor, burada tekrar işlem yapmaya gerek yok.
+    if(!user && window.currentUser){
+      window.currentUser = null;
+      window.currentUserDoc = null;
+      window.currentCompanyId = null;
+      renderCloudAuth('login');
+      lockScreenShow();
+    }
+  });
+}
+
 async function initAuth(){
+  if(window.__cloudSyncActive){
+    // Bulut modu: eski yerel şifre-hash kilidi YOK — gerçek Firebase Authentication devrede.
+    initCloudAuth();
+    return;
+  }
   const stored = await storageAPI.get('authHash').catch(()=>null);
   const unlockedThisSession = sessionStorage.getItem('filoUnlocked')==='1';
   if(!stored || !stored.value){
@@ -8274,14 +8573,39 @@ document.addEventListener('click', (e)=>{
     menu.classList.remove('show');
   }
 });
-document.getElementById('menuLockNow').onclick = ()=>{
+document.getElementById('menuLockNow').onclick = async ()=>{
+  // FAZ2: bulut modunda "Kilitle" artık gerçek bir ÇIKIŞ (sign-out) — bkz. görev tanımındaki
+  // "logout'u bul, cloud modunda firebase.auth().signOut() de çağırsın" maddesi. Yerel modda
+  // davranış birebir eskisi gibi.
   document.getElementById('settingsMenu').classList.remove('show');
+  if(window.__cloudSyncActive){
+    try{ await cloudAuth().signOut(); }catch(e){}
+    window.currentUser = null;
+    window.currentUserDoc = null;
+    window.currentCompanyId = null;
+    renderCloudAuth('login');
+    lockScreenShow();
+    return;
+  }
   sessionStorage.removeItem('filoUnlocked');
   renderLock('login');
   lockScreenShow();
 };
-document.getElementById('menuChangePw').onclick = ()=>{
+document.getElementById('menuChangePw').onclick = async ()=>{
   document.getElementById('settingsMenu').classList.remove('show');
+  if(window.__cloudSyncActive){
+    // FAZ2: bulut modunda şifre, panelin kendi hash'i değil Firebase Authentication tarafından
+    // yönetiliyor; değiştirmenin yolu "Şifremi unuttum" akışıyla aynı — sıfırlama e-postası.
+    const email = window.currentUser && window.currentUser.email;
+    if(!email){ showToast('Şifre sıfırlamak için önce giriş yapmalısınız.', true); return; }
+    try{
+      await cloudAuth().sendPasswordResetEmail(email);
+      showToast('Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.');
+    }catch(e){
+      showToast('Şifre sıfırlama e-postası gönderilemedi: ' + cloudAuthErrorMessage(e), true);
+    }
+    return;
+  }
   renderLock('changepw');
   lockScreenShow();
 };
@@ -13521,10 +13845,10 @@ function renderAyarlarPage(){
       </div>
       <div class="settings-card">
         <h3><span class="settings-ic" style="background:#E1554E">${DASH_ICONS.shield}</span> Kilit &amp; Şifre</h3>
-        <p>Paneli açan herkesin doğru şifreyi bilmesi gerekir.</p>
+        <p>${window.__cloudSyncActive ? 'Bu hesap gerçek Firebase Authentication ile korunuyor. Bu cihazdan çıkış yapabilir ya da şifre sıfırlama e-postası isteyebilirsin.' : 'Paneli açan herkesin doğru şifreyi bilmesi gerekir.'}</p>
         <div class="row-btns">
-          <button class="settings-btn" id="apLock">Şimdi kilitle</button>
-          <button class="settings-btn" id="apChangePw">Yönetici şifresini değiştir</button>
+          <button class="settings-btn" id="apLock">${window.__cloudSyncActive ? 'Çıkış yap' : 'Şimdi kilitle'}</button>
+          <button class="settings-btn" id="apChangePw">${window.__cloudSyncActive ? 'Şifre sıfırlama e-postası gönder' : 'Yönetici şifresini değiştir'}</button>
         </div>
       </div>
       <div class="settings-card" id="staffPwCard">
