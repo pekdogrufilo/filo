@@ -2163,7 +2163,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-16.149</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-16.150</div>
     </div>
   </div>
 </div>
@@ -2281,6 +2281,16 @@
           <button class="sb-item" data-page="ayarlar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.04 1.56V21a2 2 0 0 1-4 0v-.09A1.7 1.7 0 0 0 9 19.36a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.64 15a1.7 1.7 0 0 0-1.56-1.04H3a2 2 0 0 1 0-4h.09A1.7 1.7 0 0 0 4.64 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.64a1.7 1.7 0 0 0 1.04-1.56V3a2 2 0 0 1 4 0v.09a1.7 1.7 0 0 0 1.04 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.36 9a1.7 1.7 0 0 0 1.56 1.04H21a2 2 0 0 1 0 4h-.09a1.7 1.7 0 0 0-1.56 1.04Z"/></svg>Ayarlar</button>
         </div>
       </div>
+
+      <!-- FAZ9: yalnızca users/{uid}.superAdmin===true olan gerçek Firestore kullanıcıları görür
+           (applyRoleVisibility() içindeki [data-superadmin-only] kuralı). Bu bayrak uygulama
+           içinden HİÇBİR yerden atanamaz — bkz. renderSuperAdminPage() üstündeki not. -->
+      <div class="sb-group" data-group="superadmin" data-superadmin-only>
+        <button class="sb-group-head" type="button">Süper Admin<svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+        <div class="sb-group-body">
+          <button class="sb-item" data-page="super-admin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>Süper Admin Paneli</button>
+        </div>
+      </div>
     </nav>
     <button class="sb-collapse-btn" id="sbCollapseBtn" title="Menüyü daralt">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
@@ -2298,7 +2308,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-16.149</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-16.150</div>
     </div>
   </aside>
 <script>
@@ -2523,6 +2533,7 @@
 <section class="page" data-page="excel" id="page-excel"></section>
 <section class="page" data-page="ayarlar" id="page-ayarlar"></section>
 <section class="page" data-page="ai" id="page-ai"></section>
+<section class="page" data-page="super-admin" id="page-super-admin"></section>
 
     </div>
   </div>
@@ -8466,6 +8477,17 @@ document.getElementById('saveBtn').onclick = async ()=>{
   const dup = vehicles.find(v=> v.id!==id && normPlaka(v.plaka)===plakaNorm);
   if(dup){ fieldErr('fPlaka', `Bu plaka zaten kayıtlı (${dup.plaka}).`); return; }
 
+  // FAZ9: yeni araç eklerken plan limiti kontrolü (düzenlemede değil — id varsa araç sayısı
+  // artmıyor). Bu İSTEMCİ TARAFLI bir kontroldür, bkz. aracEklemeLimitiKontrol() üstündeki
+  // dürüstlük notu — kesin uygulanabilirlik için sunucu tarafı doğrulama gerekir.
+  if(!id){
+    const limitKontrol = aracEklemeLimitiKontrol();
+    if(!limitKontrol.ok){
+      fieldErr('fPlaka', limitKontrol.mesaj);
+      return;
+    }
+  }
+
   const yilVal = document.getElementById('fYil').value.trim();
   if(yilVal){
     const yil = Number(yilVal);
@@ -8661,6 +8683,7 @@ window.currentRole = sessionStorage.getItem('filoRole') || 'admin';
 window.currentUser = null;       // FAZ2: Firebase Auth kullanıcı nesnesi (yalnızca bulut modu)
 window.currentCompanyId = null;  // FAZ2: giriş yapan kullanıcının bağlı olduğu companies/{id}
 window.currentUserDoc = null;    // FAZ2: users/{uid} dokümanının tamamı (adSoyad, email, roleId, ...)
+window.currentCompanyDoc = null; // FAZ9: companies/{currentCompanyId} dokümanının tamamı (unvan, plan, durum, ...) — enterCloudSession'da doldurulur
 
 function roleIdToCurrentRole(roleId){ return roleId==='admin' ? 'admin' : 'staff'; }
 
@@ -8673,12 +8696,26 @@ function requireAdmin(){
   return false;
 }
 
+// FAZ9: Süper Admin — bu SADECE bir UI gösterim kontrolüdür (menüyü göster/gizle, sayfaya
+// erişim). Gerçek yetkilendirme HER ZAMAN firestore.rules'taki isSuperAdmin() fonksiyonunda
+// yapılır — burada true dönmesi tek başına hiçbir yazma/okuma işlemini garanti etmez, sunucu
+// kuralları reddedebilir. window.currentUserDoc, fetchUserDoc() ile gerçek users/{uid}
+// Firestore dokümanından geldiği için (bkz. enterCloudSession), bu bayrak asla
+// sessionStorage/localStorage gibi istemci tarafı, kolayca değiştirilebilir bir yerde
+// TUTULMAZ — her kontrol doğrudan bu canlı doküman alanına bakar.
+function isSuperAdmin(){ return !!(window.currentUserDoc && window.currentUserDoc.superAdmin === true); }
+
 function applyRoleVisibility(){
   const role = window.currentRole;
   // Personel rolünde gizlenecek elementler
   const adminOnly = document.querySelectorAll('[data-admin-only]');
   adminOnly.forEach(el=>{
     el.style.display = role==='admin' ? '' : 'none';
+  });
+  // FAZ9: sadece süper adminlere görünen elementler (sidebar'daki "Süper Admin" grubu vb.)
+  const superAdminOnly = document.querySelectorAll('[data-superadmin-only]');
+  superAdminOnly.forEach(el=>{
+    el.style.display = isSuperAdmin() ? '' : 'none';
   });
   // Kullanıcı bilgisi güncelle
   const roleEl = document.getElementById('thUserRole');
@@ -8929,6 +8966,102 @@ async function fetchUserDoc(uid){
   return snap.exists ? snap.data() : null;
 }
 
+// FAZ9: companies/{id} dokümanının tamamını (plan, durum dahil) getirir — enterCloudSession
+// tarafından oturum açılışında bir kez okunup window.currentCompanyDoc'a yazılır.
+async function fetchCompanyDoc(companyId){
+  if(!window.__cloudDb || !companyId) return null;
+  const snap = await window.__cloudDb.collection('companies').doc(companyId).get();
+  return snap.exists ? snap.data() : null;
+}
+
+// =============================================================================
+// FAZ9 — Lisans / Abonelik Planı limitleri
+// =============================================================================
+// companies/{id}.plan alanına (Starter/Professional/Enterprise — FAZ2'den beri var olan
+// alan) karşılık gelen sabit limitler. maxArac: şirketin toplam kayıtlı araç sayısı üst
+// sınırı, maxKullanici: users/{uid} (companyId eşleşen) toplam kullanıcı sayısı üst sınırı.
+//
+// DÜRÜSTLÜK NOTU (ÖNEMLİ): Bu limitler yalnızca İSTEMCİ TARAFINDA (aşağıdaki
+// aracEkleForm submit akışında) kontrol edilir — UI'da erken uyarı/engelleme amaçlıdır.
+// KESİN/güvenilir bir uygulanabilirlik için SUNUCU TARAFINDA (Firestore rules'ta araç
+// sayısını sayabilecek bir yapı, ya da bir Cloud Function) AYRICA doğrulanması gerekir —
+// bu FAZ9 kapsamında YAPILMADI, çünkü araç verisi (vehicles) hâlâ eski filoPaneliData blob
+// deposunda ve firestore.rules bu koleksiyonu yalnızca isSignedIn() ile koruyor (bkz. dosya
+// başındaki FAZ2 notu) — kural motoru bu koleksiyondaki kayıt SAYISINI bugün göremiyor.
+// Yani teknik olarak bilgisi olan bir kullanıcı, tarayıcı konsolundan doğrudan storageAPI
+// çağırarak bu limiti bugün aşabilir. Bu, cross-tenant veri karışması DEĞİL (her şirket
+// yine sadece kendi verisini görür/düzenler — bkz. FAZ2 mimari notu), sadece "plan limitinin
+// sunucu tarafında da kesin uygulanmaması" riski.
+const PLAN_LIMITLERI = {
+  Starter:      { maxArac: 15, maxKullanici: 3 },
+  Professional: { maxArac: 75, maxKullanici: 15 },
+  Enterprise:   { maxArac: Infinity, maxKullanici: Infinity },
+};
+function currentPlanAdi(){
+  return (window.currentCompanyDoc && window.currentCompanyDoc.plan) || 'Starter';
+}
+function currentPlanLimitleri(){
+  return PLAN_LIMITLERI[currentPlanAdi()] || PLAN_LIMITLERI.Starter;
+}
+// Yeni araç eklenmeden önce çağrılır (düzenlemede değil — id varsa, yani mevcut bir araç
+// güncelleniyorsa limit kontrolüne gerek yok, araç sayısı artmıyor). Yalnızca bulut modunda
+// (companies/{id}.plan bilgisi olduğunda) anlamlıdır; yerel/bulutsuz modda hiç limit yok.
+function aracEklemeLimitiKontrol(){
+  if(!window.__cloudSyncActive || !window.currentCompanyDoc) return {ok:true};
+  const limitler = currentPlanLimitleri();
+  if(vehicles.length >= limitler.maxArac){
+    return {ok:false, mesaj:`Planınızın (${currentPlanAdi()}) araç limitine (${limitler.maxArac}) ulaştınız. Yükseltme için yöneticinizle görüşün.`};
+  }
+  return {ok:true};
+}
+
+// =============================================================================
+// FAZ9 — Süper Admin: değişmez (immutable) denetim günlüğü
+// =============================================================================
+// superAdminAuditLog/{autoId} koleksiyonuna yazar. firestore.rules'ta bu koleksiyon
+// SADECE create + read izinlidir (update/delete: false) — proje genelindeki "finansal
+// silmeler yerine iptal/ters kayıt" ve "denetim günlüğü değiştirilemez" ilkesiyle tutarlı.
+async function superAdminAuditLogYaz(action, companyId, detay){
+  if(!window.__cloudDb) return;
+  try{
+    await window.__cloudDb.collection('superAdminAuditLog').add({
+      ts: new Date().toISOString(),
+      superAdminUid: (window.currentUser && window.currentUser.uid) || null,
+      superAdminEmail: (window.currentUser && window.currentUser.email) || null,
+      companyId: companyId || null,
+      action: action || '',
+      detay: detay || '',
+    });
+  }catch(e){
+    console.error('Süper admin denetim günlüğü yazılamadı:', e);
+  }
+}
+
+async function superAdminPlanDegistir(companyId, yeniPlan, eskiPlan){
+  if(!isSuperAdmin()) return false;
+  try{
+    await window.__cloudDb.collection('companies').doc(companyId).update({plan: yeniPlan});
+    await superAdminAuditLogYaz('plan_degistir', companyId, `${eskiPlan||'—'} → ${yeniPlan}`);
+    showToast('Plan güncellendi: ' + yeniPlan);
+    return true;
+  }catch(e){
+    showToast('Plan güncellenemedi: ' + (e.message||'bilinmeyen hata'), true);
+    return false;
+  }
+}
+async function superAdminDurumDegistir(companyId, yeniDurum, eskiDurum){
+  if(!isSuperAdmin()) return false;
+  try{
+    await window.__cloudDb.collection('companies').doc(companyId).update({durum: yeniDurum});
+    await superAdminAuditLogYaz('durum_degistir', companyId, `${eskiDurum||'—'} → ${yeniDurum}`);
+    showToast('Durum güncellendi: ' + yeniDurum);
+    return true;
+  }catch(e){
+    showToast('Durum güncellenemedi: ' + (e.message||'bilinmeyen hata'), true);
+    return false;
+  }
+}
+
 async function createCompanyAndAdminUser(uid, email, unvan){
   const db = window.__cloudDb;
   const now = new Date().toISOString();
@@ -8970,6 +9103,10 @@ async function enterCloudSession(user, userDoc){
   window.currentUserDoc = userDoc;
   window.currentCompanyId = userDoc.companyId;
   window.currentRole = roleIdToCurrentRole(userDoc.roleId);
+  // FAZ9: plan/durum bilgisi (araç limiti kontrolü ve Süper Admin paneli için) — okuma
+  // başarısız olursa (ör. geçici ağ hatası) oturum açılışını ENGELLEMEZ, sadece plan limiti
+  // o oturumda uygulanmamış olur (currentPlanLimitleri() 'Starter' varsayımına düşer).
+  window.currentCompanyDoc = await fetchCompanyDoc(userDoc.companyId).catch(()=>null);
   lockScreenHide();
   if(!appLoaded){ appLoaded = true; await load(); }
   else { applyRoleVisibility(); }
@@ -9145,6 +9282,7 @@ function initCloudAuth(){
         window.currentUser = null;
         window.currentUserDoc = null;
         window.currentCompanyId = null;
+        window.currentCompanyDoc = null;
         renderCloudAuth('login');
         lockScreenShow();
       }
@@ -9157,6 +9295,7 @@ function initCloudAuth(){
       window.currentUser = null;
       window.currentUserDoc = null;
       window.currentCompanyId = null;
+      window.currentCompanyDoc = null;
       renderCloudAuth('login');
       lockScreenShow();
     }
@@ -9203,6 +9342,7 @@ document.getElementById('menuLockNow').onclick = async ()=>{
     window.currentUser = null;
     window.currentUserDoc = null;
     window.currentCompanyId = null;
+    window.currentCompanyDoc = null;
     renderCloudAuth('login');
     lockScreenShow();
     return;
@@ -9251,6 +9391,7 @@ const PAGE_META = {
   'docupload': {title:'Belge Yükleme', sub:'Poliçe, fiş ve raporları otomatik olarak araç kartına yükleyin'},
   'ai': {title:'AI Filo Asistanı', sub:'Filonuzu analiz edin, sorunları önceden görün'},
   'ayarlar': {title:'Ayarlar', sub:'Kilit, hatırlatma, bulut ve AI ayarları'},
+  'super-admin': {title:'Süper Admin', sub:'Şirketler, planlar ve kullanıcı özet bilgisi'},
 };
 
 // Alt tab çubuğunda doğrudan yer alan sayfalar — bunların dışındaki her
@@ -9259,6 +9400,13 @@ const BN_CORE_PAGES = ['genel-bakis','arac-yonetimi','kiralama','masraf'];
 
 function switchPage(key){
   if(!PAGE_META[key]) return;
+  // FAZ9: savunma amaçlı ikinci kontrol — sidebar'daki [data-superadmin-only] öğesi CSS ile
+  // gizlense bile, konsoldan doğrudan switchPage('super-admin') çağrılırsa burada da
+  // engellenir. Gerçek yetkilendirme yine firestore.rules'tadır; bu sadece UI erişimini keser.
+  if(key==='super-admin' && !isSuperAdmin()){
+    showToast('Bu sayfayı görüntüleme yetkiniz yok.', true);
+    return;
+  }
   // v.85: AI sayfasından ayrılırken mikrofon dinlemeye devam ediyordu (örn. kullanıcı mikrofonu
   // açık bırakıp başka bir sayfaya geçse bile arka planda dinlemeyi sürdürüyordu). Artık 'ai'
   // sayfasından çıkılırken otomatik durduruluyor.
@@ -9428,6 +9576,7 @@ function renderCurrentPage(){
   else if(key==='yakit') renderYakitPage();
   else if(key==='lastikler') renderLastiklerPage();
   else if(key==='hasarcezalar') renderHasarCezalarPage();
+  else if(key==='super-admin') renderSuperAdminPage();
 }
 
 // ---- Basit SVG grafik yardımcıları (dış kütüphaneye bağımlı değil) ----
@@ -18280,6 +18429,138 @@ function renderAyarlarPage(){
     updateShellChrome();
     renderAyarlarPage();
   };
+}
+
+// =============================================================================
+// FAZ9 — Süper Admin Paneli
+// =============================================================================
+// Bu sayfa SADECE company/plan/kullanıcı METADATA'sını gösterir (gerçek Firestore
+// companies/ ve users/ koleksiyonlarından). Şirketlerin araç/müşteri/finans gibi İŞ
+// VERİSİNİ (vehicles, expenses, ledger, invoices, ... — hâlâ tek bir paylaşımlı
+// filoPaneliData blob koleksiyonunda tutuluyor, bkz. dosya başındaki FAZ2 notu) burada
+// KASITLI olarak GÖRÜNTÜLEMİYORUZ: bu veri şirket bazlı ayrıştırılmış bir koleksiyonda
+// olmadığı için "başka bir şirketin verisini görüntüleme" özelliği mimari olarak
+// güvenilir şekilde mümkün değil ve yanlış bir izolasyon/gizlilik izlenimi verir.
+//
+// İlk süper admin'in atanması: bu bayrak uygulama içinden (ne bu sayfadan, ne başka
+// hiçbir yerden) ASLA atanamaz. Proje sahibi, kendi Firebase Console'undan:
+//   1) Firebase Console → Firestore Database → users koleksiyonu
+//   2) Süper admin yapılacak kişinin uid'sine sahip dokümanı bulun (Authentication →
+//      Users sekmesinden e-postayla eşleştirip uid'yi kopyalayabilirsiniz)
+//   3) O dokümana yeni bir alan ekleyin: superAdmin (boolean) = true
+//   4) Kaydedin — bir sonraki girişte (ya da sayfa yenilendiğinde) o kullanıcı
+//      sidebar'da "Süper Admin" menüsünü görür.
+// Bu, uygulamanın hiçbir ekranından yapılamaz; sadece Firebase Console'dan elle.
+function isSuperAdminPanelYetkiliYok(){
+  return !window.__cloudSyncActive || !window.__cloudDb;
+}
+async function renderSuperAdminPage(){
+  const page = document.getElementById('page-super-admin');
+  if(!page) return;
+  if(!isSuperAdmin()){
+    page.innerHTML = `<div class="dcard" style="padding:24px;text-align:center;color:var(--text-2);">Bu sayfayı görüntüleme yetkiniz yok.</div>`;
+    return;
+  }
+  if(isSuperAdminPanelYetkiliYok()){
+    page.innerHTML = `<div class="dcard" style="padding:24px;text-align:center;color:var(--text-2);">Süper Admin paneli yalnızca bulut (Firebase) senkronizasyonu aktifken kullanılabilir.</div>`;
+    return;
+  }
+  page.innerHTML = `<div class="dcard" style="padding:24px;text-align:center;color:var(--text-2);">Şirketler yükleniyor...</div>`;
+  superAdminAuditLogYaz('panel_ac', null, 'Süper admin paneli açıldı').catch(()=>{});
+  let companies = [];
+  try{
+    const snap = await window.__cloudDb.collection('companies').get();
+    companies = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    companies.sort((a,b)=>String(a.unvan||'').localeCompare(String(b.unvan||''),'tr'));
+    // Her şirket için gerçek kullanıcı sayısı (Firestore count, iş verisi DEĞİL)
+    await Promise.all(companies.map(async c=>{
+      try{
+        const usnap = await window.__cloudDb.collection('users').where('companyId','==',c.id).get();
+        c.__userCount = usnap.size;
+      }catch(e){ c.__userCount = null; }
+    }));
+  }catch(e){
+    page.innerHTML = `<div class="dcard" style="padding:24px;color:#E1554E;">Şirket listesi yüklenemedi: ${esc(e.message||'bilinmeyen hata')}</div>`;
+    return;
+  }
+  page.innerHTML = superAdminPageHtml(companies);
+  wireSuperAdminPage(companies);
+}
+function superAdminPageHtml(companies){
+  const planOptions = Object.keys(PLAN_LIMITLERI);
+  const selStyle = 'background:var(--surface);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:8px;font-size:12.5px;font-family:inherit;cursor:pointer;';
+  return `
+    <div class="dash-stats" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:16px;">
+      <div class="dstat" style="cursor:default;">
+        <div class="dstat-ic" style="background:rgba(100,116,139,.15);color:#7B7873;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg></div>
+        <div class="dstat-txt"><div class="l">Toplam Şirket</div><div class="n">${companies.length}</div></div>
+      </div>
+      <div class="dstat" style="cursor:default;">
+        <div class="dstat-ic" style="background:rgba(54,161,104,.15);color:#36A168;">${DASH_ICONS.check}</div>
+        <div class="dstat-txt"><div class="l">Aktif</div><div class="n" style="color:#36A168;">${companies.filter(c=>c.durum==='aktif').length}</div></div>
+      </div>
+      <div class="dstat" style="cursor:default;">
+        <div class="dstat-ic" style="background:rgba(225,85,78,.15);color:#E1554E;">${DASH_ICONS.warn}</div>
+        <div class="dstat-txt"><div class="l">Askıya Alınmış</div><div class="n" style="color:#E1554E;">${companies.filter(c=>c.durum!=='aktif').length}</div></div>
+      </div>
+    </div>
+
+    <div style="background:rgba(142,142,147,.08);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:var(--text-2);">
+      <b>Not:</b> İş verisi gizliliği gereği burada sadece plan/kullanıcı özet bilgisi gösterilir — şirketlerin araç, müşteri, finans gibi iş verisi bu panelden görüntülenemez (bkz. kaynak koddaki FAZ9 notu). Her plan/durum değişikliği, değiştiremeyen (yalnızca create+read) bir denetim günlüğüne (superAdminAuditLog) kaydedilir.
+    </div>
+
+    ${companies.length===0 ? `<div class="dcard"><div class="log-empty">Henüz kayıtlı şirket yok.</div></div>` : companies.map(c=>{
+      const durumRenk = c.durum==='aktif' ? '#36A168' : '#E1554E';
+      let olusturma = '—';
+      try{ if(c.olusturmaTarihi) olusturma = new Date(c.olusturmaTarihi).toLocaleDateString('tr-TR'); }catch(e){}
+      const limitler = PLAN_LIMITLERI[c.plan] || PLAN_LIMITLERI.Starter;
+      const limitTxt = `${limitler.maxArac===Infinity?'Sınırsız':limitler.maxArac} araç · ${limitler.maxKullanici===Infinity?'Sınırsız':limitler.maxKullanici} kullanıcı`;
+      return `
+      <div class="dcard" style="padding:14px 16px;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:180px;">
+            <div style="font-size:14px;font-weight:700;color:var(--text);">${esc(c.unvan||'(İsimsiz şirket)')}</div>
+            <div style="font-size:11.5px;color:var(--text-3);margin-top:2px;">Kayıt: ${olusturma} · ${c.__userCount==null?'kullanıcı sayısı alınamadı':c.__userCount+' kullanıcı'} · Limit: ${limitTxt}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <label style="font-size:11px;color:var(--text-3);">Plan</label>
+            <select data-sa-plan="${esc(c.id)}" style="${selStyle}">
+              ${planOptions.map(p=>`<option value="${esc(p)}" ${c.plan===p?'selected':''}>${esc(p)}</option>`).join('')}
+            </select>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <label style="font-size:11px;color:var(--text-3);">Durum</label>
+            <select data-sa-durum="${esc(c.id)}" style="${selStyle}color:${durumRenk};">
+              <option value="aktif" ${c.durum==='aktif'?'selected':''}>Aktif</option>
+              <option value="askıya alınmış" ${c.durum!=='aktif'?'selected':''}>Askıya Alınmış</option>
+            </select>
+          </div>
+        </div>
+      </div>`;
+    }).join('')}
+  `;
+}
+function wireSuperAdminPage(companies){
+  companies.forEach(c=>{
+    const planSel = document.querySelector(`[data-sa-plan="${CSS.escape(c.id)}"]`);
+    if(planSel) planSel.onchange = async ()=>{
+      const yeni = planSel.value;
+      const eski = c.plan;
+      planSel.disabled = true;
+      const ok = await superAdminPlanDegistir(c.id, yeni, eski);
+      planSel.disabled = false;
+      if(ok) c.plan = yeni; else planSel.value = eski;
+    };
+    const durumSel = document.querySelector(`[data-sa-durum="${CSS.escape(c.id)}"]`);
+    if(durumSel) durumSel.onchange = async ()=>{
+      const yeni = durumSel.value;
+      const eski = c.durum;
+      durumSel.disabled = true;
+      const ok = await superAdminDurumDegistir(c.id, yeni, eski);
+      durumSel.disabled = false;
+      if(ok) c.durum = yeni; else durumSel.value = eski;
+    };
+  });
 }
 
 // ===== Triomobil / N2 Mobil Km Raporu Yükleme =====
