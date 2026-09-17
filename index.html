@@ -2170,7 +2170,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-16.140</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-16.141</div>
     </div>
   </div>
 </div>
@@ -2300,7 +2300,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-16.140</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-16.141</div>
     </div>
   </aside>
 <script>
@@ -3834,16 +3834,6 @@ const SIRKET_COLORS = {
   'SÖZDEMİR A.Ş': '#3E6FD8',
   'ÖZDEMİR İTHALAT': '#36A168',
 };
-function sirketBadge(sirket){
-  if(!sirket) return '';
-  if(SIRKET_LOGOS[sirket]){
-    return `<span class="sirket-badge"><img src="${SIRKET_LOGOS[sirket]}" alt=""></span>`;
-  }
-  const color = SIRKET_COLORS[sirket] || '#6E6867';
-  const letter = sirket.trim().charAt(0);
-  return `<span class="sirket-badge letter" style="background:${color}">${esc(letter)}</span>`;
-}
-
 function buildSirketFilter(){
   const sel = document.getElementById('sirketFilter');
   const sirketler = [...new Set(vehicles.map(v=>v.sirket).filter(Boolean))].sort();
@@ -4783,45 +4773,6 @@ function generateQrDataUrl(text){
     }, 200);
   });
 }
-async function printEtiket(vehicleId){
-  const v = vehicles.find(x=>x.id===vehicleId); if(!v) return;
-  const baseUrl = location.origin + location.pathname;
-  const qrTarget = `${baseUrl}?plaka=${encodeURIComponent(v.plaka)}`;
-  const qrDataUrl = await generateQrDataUrl(qrTarget);
-  const aracAdi = [v.marka, v.model, v.versiyon].filter(Boolean).join(' ');
-
-  const html = `<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>Araç Etiketi - ${esc(v.plaka)}</title>
-  <style>
-    *{box-sizing:border-box;}
-    body{font-family:Arial,Helvetica,sans-serif;color:#15171A;margin:0;padding:0;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f2f2f2;}
-    .label{width:90mm;height:55mm;border:2px solid #15171A;border-radius:6px;background:#fff;display:flex;align-items:center;padding:6mm;gap:6mm;}
-    .qr{width:38mm;height:38mm;flex-shrink:0;}
-    .qr img{width:100%;height:100%;}
-    .info{flex:1;min-width:0;}
-    .plaka{font-family:'Courier New',monospace;font-weight:bold;font-size:22px;background:#15171A;color:#fff;padding:4px 10px;border-radius:4px;display:inline-block;letter-spacing:1px;}
-    .arac{font-size:13px;margin-top:8px;color:#444;}
-    .co{font-size:11.5px;margin-top:10px;color:#999;}
-    @media print{ body{background:#fff;} .label{border:2px solid #15171A;} }
-  </style></head>
-  <body>
-    <div class="label">
-      <div class="qr">${qrDataUrl ? `<img src="${qrDataUrl}" alt="QR">` : ''}</div>
-      <div class="info">
-        <div class="plaka">${esc(v.plaka)}</div>
-        <div class="arac">${esc(aracAdi||'—')}</div>
-        <div class="arac">${esc(v.sirket||'')}</div>
-        <div class="co">Filo Kontrol Paneli · QR ile araç kaydını aç</div>
-      </div>
-    </div>
-  </body></html>`;
-
-  const w = window.open('', '_blank');
-  w.document.open();
-  w.document.write(html);
-  w.document.close();
-  w.onload = ()=>{ w.focus(); w.print(); };
-}
-
 function exportExcel(){
   const rows = vehicles.map(v=>({
     'Plaka': v.plaka || '',
@@ -5148,15 +5099,6 @@ async function buildTeslimFotoFields(id){
     }
   }
   return fields;
-}
-
-function viewTeslimFoto(key, id, label){
-  const stored = storageAPI.get(key+'_'+id).then(r=>{
-    if(!r || !r.value){ showToast('Fotoğraf bulunamadı.', true); return; }
-    const w = window.open('','_blank');
-    w.document.write('<html><body style="margin:0;background:#000;display:flex;justify-content:center;align-items:center;min-height:100vh"><img src="'+r.value+'" style="max-width:100%;max-height:100vh;object-fit:contain" alt="'+esc(label)+'"></body></html>');
-    w.document.close();
-  }).catch(()=>showToast('Fotoğraf yüklenemedi.', true));
 }
 
 // ===== İade (dönüş) fotoğrafları — teslim fotoğrafı deseni ile aynı (2 adet) =====
@@ -8585,46 +8527,6 @@ function svgDonut(segments, size, thickness, centerValue, centerLabel){
     ${centerText}
   </svg>`;
 }
-function svgLineChart(values, labels, width, height, opts){
-  opts = opts || {};
-  const fmt = opts.fmt || (v=>String(Math.round(v)));
-  const id = 'lg'+(__chartIdCounter++);
-  const pad = {l:36,r:10,t:14,b:24};
-  const w = width - pad.l - pad.r;
-  const h = height - pad.t - pad.b;
-  const max = Math.max(...values, 1);
-  const stepX = values.length>1 ? w/(values.length-1) : 0;
-  const coords = values.map((v,i)=>{
-    const x = pad.l + i*stepX;
-    const y = pad.t + h - (v/max)*h;
-    return [x,y];
-  });
-  const linePath = smoothPath(coords);
-  const areaPath = linePath + ` L ${coords[coords.length-1][0].toFixed(1)} ${(pad.t+h).toFixed(1)} L ${coords[0][0].toFixed(1)} ${(pad.t+h).toFixed(1)} Z`;
-  const gridLines = [0,1/3,2/3,1].map(f=>{
-    const y = pad.t + h - f*h;
-    return `<line x1="${pad.l}" y1="${y.toFixed(1)}" x2="${width-pad.r}" y2="${y.toFixed(1)}" stroke="var(--line)" stroke-width="1" stroke-dasharray="${f===0?'0':'3 4'}"/>
-      <text x="${(pad.l-7).toFixed(1)}" y="${(y+3).toFixed(1)}" font-size="9.5" fill="var(--steel-500)" text-anchor="end">${esc(fmt(max*f))}</text>`;
-  }).join('');
-  const son = coords[coords.length-1];
-  const dots = coords.slice(0,-1).map(c=>`<circle cx="${c[0].toFixed(1)}" cy="${c[1].toFixed(1)}" r="3.6" fill="var(--surface)" stroke="var(--accent-blue)" stroke-width="2.2"/>`).join('');
-  const sonNokta = `<circle class="chart-dot-pulse" cx="${son[0].toFixed(1)}" cy="${son[1].toFixed(1)}" r="5" fill="var(--accent-blue)"/>
-    <circle cx="${son[0].toFixed(1)}" cy="${son[1].toFixed(1)}" r="4" fill="var(--accent-blue)" stroke="var(--surface)" stroke-width="2"/>`;
-  const labelEls = labels.map((lb,i)=>`<text x="${coords[i][0].toFixed(1)}" y="${height-5}" font-size="9.5" fill="var(--steel-500)" text-anchor="middle">${esc(lb)}</text>`).join('');
-  return `<svg width="100%" height="${height}" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" style="overflow:visible;display:block">
-    <defs>
-      <linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="var(--accent-blue)" stop-opacity="0.32"/>
-        <stop offset="100%" stop-color="var(--accent-blue)" stop-opacity="0"/>
-      </linearGradient>
-    </defs>
-    ${gridLines}
-    <path class="chart-area" d="${areaPath}" fill="url(#${id})"/>
-    <path class="chart-line-path" d="${linePath}" pathLength="1" fill="none" stroke="var(--accent-blue)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
-    ${dots}${sonNokta}
-    ${labelEls}
-  </svg>`;
-}
 function dashYedekUyarisiGoster(){
   const el = document.getElementById('dashYedekUyari');
   if(!el) return;
@@ -8799,26 +8701,6 @@ function svgBarChart(values, labels, width, height, color){
   </svg>`;
 }
 
-function computeUpcomingExpirySeries(){
-  const months = [];
-  const now = new Date();
-  for(let i=0;i<6;i++){
-    const d = new Date(now.getFullYear(), now.getMonth()+i, 1);
-    months.push({
-      key: `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`,
-      label: d.toLocaleDateString('tr-TR', {month:'short'})
-    });
-  }
-  const allDates = [];
-  vehicles.forEach(v=>{
-    [v.sigortaTarihi, v.muayeneTarihi, v.kiraBitis, v.sozlesmeBitis, v.kaskoBitis].forEach(d=>{
-      if(d) allDates.push(String(d).slice(0,7));
-    });
-  });
-  const values = months.map(m=> allDates.filter(d=>d===m.key).length);
-  return {values, labels: months.map(m=>m.label)};
-}
-
 function renderMasrafDonutHTML(donem){
   const kategori = computeMasrafKategoriData(donem);
   const toplam = kategori.reduce((s,k)=>s+k.value,0);
@@ -8910,78 +8792,6 @@ const ICO_PATHS = {
   mic:'<path d="M12 2a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3Z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><path d="M12 18v4M8 22h8"/>',
 };
 const ICO = (name, sz=14, sw=2)=>`<svg width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${ICO_PATHS[name]||''}</svg>`;
-
-function renderKritikUyarilarList(urgent){
-  if(!urgent.length) return '<div class="log-empty" style="padding:12px 0;">✓ Yaklaşan kritik durum yok.</div>';
-
-  const groups = {};
-  urgent.forEach(u=>{ (groups[u.tip] = groups[u.tip]||[]).push(u); });
-
-  const meta = {
-    'Muayene':       {emoji:'🔴', color:'#E1554E', bg:'rgba(225,85,78,.08)',  border:'rgba(225,85,78,.2)',  label:'Muayenesi yaklaşan araçlar'},
-    'Sigorta':       {emoji:'🟠', color:'var(--accent-blue)', bg:'rgba(232,69,58,.08)',  border:'rgba(232,69,58,.2)',  label:'Sigortası yaklaşan araçlar'},
-    'Kasko Bitişi':  {emoji:'🟠', color:'#E8A132', bg:'rgba(232,161,50,.08)', border:'rgba(232,161,50,.2)',  label:'Kaskosu yaklaşan araçlar'},
-    'Sözleşme Bitişi':{emoji:'🟡', color:'#D98E1B', bg:'rgba(232,161,50,.08)', border:'rgba(232,161,50,.2)',  label:'Sözleşmesi yaklaşan araçlar'},
-    'Kira Bitişi':   {emoji:'🔵', color:'var(--accent-blue)', bg:'rgba(232,69,58,.08)', border:'rgba(232,69,58,.2)',  label:'Kirası bitecek araçlar'},
-  };
-  const order = ['Muayene','Sigorta','Kasko Bitişi','Sözleşme Bitişi','Kira Bitişi'];
-
-  return order.filter(t=>groups[t]).map(t=>{
-    const list = groups[t];
-    const minDl = Math.min(...list.map(x=>x.dl));
-    const dtxt = minDl<0 ? `${Math.abs(minDl)} gün gecikti!` : (minDl===0 ? 'Bugün!' : `${minDl} gün içinde`);
-    const m = meta[t] || {emoji:'⚠️', color:'#7B7873', bg:'rgba(123,120,115,.08)', border:'rgba(123,120,115,.2)', label:t};
-    const gecikmis = minDl<0;
-    return `
-      <div class="alert-list-item" data-goto="bildirimler" style="background:${gecikmis?'rgba(225,85,78,.14)':m.bg};border:1px solid ${gecikmis?'rgba(225,85,78,.4)':m.border};border-left:4px solid ${m.color};border-radius:8px;padding:11px 12px;margin-bottom:7px;cursor:pointer;transition:opacity .12s ease;${gecikmis?'box-shadow:0 3px 10px rgba(225,85,78,.15);':''}">
-        <div style="font-size:18px;flex-shrink:0;line-height:1;">${m.emoji}</div>
-        <div class="atxt" style="flex:1;">
-          <div class="atitle" style="color:${m.color};font-weight:700;">${esc(m.label)}</div>
-          <div class="asub" style="margin-top:2px;${gecikmis?'color:#E1554E;font-weight:600;':''}">${list.length} araç · ${esc(dtxt)}</div>
-        </div>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${m.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-      </div>`;
-  }).join('');
-}
-function renderMiniVehicleTable(){
-  const list = vehicles.slice(0,5);
-  if(list.length===0) return '<div class="log-empty">Henüz araç eklenmedi.</div>';
-  const rows = list.map(v=>{
-    const badgeClass = v.durum==='Kirada'?'kirada':(v.durum==='Müsait'?'musait':v.durum==='Pert'?'pert':v.durum==='Satıldı'?'satis':'serviste');
-    const aracAdi = [v.marka, v.model].filter(Boolean).join(' ')||'—';
-    return `<tr>
-      <td><span class="mini-plaka">${esc(v.plaka)}</span></td>
-      <td>${esc(aracAdi)}</td>
-      <td>${esc(v.yer||v.kiraciAdi||'—')}</td>
-      <td><span class="mini-badge ${badgeClass}">${esc(v.durum)}</span></td>
-      <td>${v.kiraBitis?fmtTarih(v.kiraBitis):(v.sozlesmeBitis?fmtTarih(v.sozlesmeBitis):'—')}</td>
-    </tr>`;
-  }).join('');
-  return `<div class="table-scroll"><table class="mini-table"><thead><tr><th>Plaka</th><th>Araç</th><th>Çalıştığı Yer</th><th>Durum</th><th>Bitiş</th></tr></thead><tbody>${rows}</tbody></table></div>`;
-}
-function renderActivityListForDash(){
-  const list = activityLog.slice(0,8);
-  if(list.length===0) return '<div class="log-empty">Henüz etkinlik yok.</div>';
-  const icons = {
-    'add':    {ic:ICO('car',14), renk:'var(--accent-blue)', bg:'rgba(232,69,58,.1)'},
-    'edit':   {ic:ICO('pencil',14), renk:'#E8A132', bg:'rgba(232,161,50,.1)'},
-    'del':    {ic:ICO('trash',14), renk:'#E1554E', bg:'rgba(225,85,78,.1)'},
-    'doc':    {ic:ICO('filetext',14), renk:'#9B7ED8', bg:'rgba(124,58,237,.1)'},
-    'import': {ic:ICO('download',14), renk:'#36A168', bg:'rgba(54,161,104,.1)'},
-    'warn':   {ic:ICO('clock',14), renk:'#E8A132', bg:'rgba(232,161,50,.1)'},
-  };
-  return `<div style="display:flex;flex-direction:column;gap:0;">` + list.map((l,i)=>{
-    const m = icons[l.action] || {ic:ICO('pencil',14), renk:'var(--text-3)', bg:'var(--surface-2)'};
-    return `
-      <div style="display:flex;gap:10px;padding:8px 0;${i<list.length-1?'border-bottom:1px solid var(--border);':''}">
-        <div style="width:28px;height:28px;border-radius:8px;background:${m.bg};color:${m.renk};display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;">${m.ic}</div>
-        <div style="flex:1;min-width:0;">
-          <div style="font-size:13px;color:var(--text);line-height:1.4;">${l.detail}</div>
-          <div style="font-size:11px;color:var(--text-3);margin-top:2px;">${relTime(l.ts)}</div>
-        </div>
-      </div>`;
-  }).join('') + `</div>`;
-}
 
 // Pert / Satış durum olayı kayıt formu
 function durumOlayFormuAc(id, tip){
@@ -11630,28 +11440,6 @@ async function saveTeslimBilgisi(){
   showToast('Teslim bilgileri kaydedildi.');
 }
 
-// ===== Belge yükleme kısayolu =====
-// Soldaki "Belge Yükle" butonları: araç seçilmişse doğrudan o aracın
-// düzenleme penceresini Belgeler sekmesinde açar, seçilmemişse uyarır.
-function belgeYukleSecilen(){
-  const sel = document.getElementById('belgeYukleArac');
-  const id = sel ? sel.value : '';
-  if(!id){ showToast('Önce listeden araç seçin.'); if(sel) sel.focus(); return; }
-  openEdit(id);
-  setTimeout(()=>{
-    const tab = document.querySelector('.modal-tab[data-tab="tab-belgeler"]');
-    if(tab) tab.click();
-  }, 80);
-}
-// Belirli bir araca belge yüklemek için doğrudan arama (Belgeler sayfası kartından)
-function belgeYukleSecilenId(id){
-  if(!id){ showToast('Araç bulunamadı.', true); return; }
-  openEdit(id);
-  setTimeout(()=>{
-    const tab = document.querySelector('.modal-tab[data-tab="tab-belgeler"]');
-    if(tab) tab.click();
-  }, 80);
-}
 // ===== Otomatik belge yükleme =====
 // Kullanıcı poliçe/fiş/rapor dosyasını seçer; Gemini belgeden plaka + belge türü
 // okur, dosyayı doğru aracın kartına kaydeder ve sonucu uyarıyla bildirir.
