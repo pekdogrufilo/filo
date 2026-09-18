@@ -2420,7 +2420,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-18.156</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-18.157</div>
     </div>
   </aside>
 <script>
@@ -3746,7 +3746,11 @@ function urgentList(esikGun){
   const kmEsik = esik>7 ? 2000 : 500;
   const rows = [];
   vehicles.forEach(v=>{
-    [['Sigorta', v.sigortaTarihi], ['Muayene', v.muayeneTarihi], ['Kira Bitişi', v.kiraBitis], ['Sözleşme Bitişi', v.sozlesmeBitis], ['Kasko Bitişi', v.kaskoBitis]].forEach(([tip, tarih])=>{
+    // v.157: araç iade edilip "Müsait"e dönünce eski kiraBitis tarihi alanda kalabiliyor —
+    // artık kirada olmayan bir araç dashboard/bildirimlerde "kirası yaklaşan" diye görünmesin
+    // diye Kira Bitişi sadece durum==='Kirada' iken sayılıyor.
+    const kiradaMi = v.durum==='Kirada';
+    [['Sigorta', v.sigortaTarihi], ['Muayene', v.muayeneTarihi], ['Kira Bitişi', kiradaMi ? v.kiraBitis : null], ['Sözleşme Bitişi', v.sozlesmeBitis], ['Kasko Bitişi', v.kaskoBitis]].forEach(([tip, tarih])=>{
       if(!tarih) return;
       const dl = daysLeft(tarih);
       if(dl<=esik) rows.push({plaka:v.plaka, tip, dl});
@@ -4345,7 +4349,11 @@ const TIP_RENK = {'Sigorta':'var(--accent-blue)', 'Muayene':'#E8A132', 'Kira Bit
 function renderAlerts(){
   const rows = [];
   vehicles.forEach(v=>{
-    [['Muayene', v.muayeneTarihi], ['Sigorta', v.sigortaTarihi], ['Kira Bitişi', v.kiraBitis], ['Sözleşme Bitişi', v.sozlesmeBitis], ['Kasko Bitişi', v.kaskoBitis]].forEach(([tip, tarih])=>{
+    // v.157: araç iade edilip "Müsait" durumuna dönünce eski kiraBitis tarihi alanda kalabiliyor
+    // (temizlenmiyor) — bu yüzden artık kirada olmayan bir araç "Kirası yaklaşan" uyarısında
+    // yanlışlıkla görünmesin diye Kira Bitişi sadece durum==='Kirada' iken sayılıyor.
+    const kiradaMi = v.durum==='Kirada';
+    [['Muayene', v.muayeneTarihi], ['Sigorta', v.sigortaTarihi], ['Kira Bitişi', kiradaMi ? v.kiraBitis : null], ['Sözleşme Bitişi', v.sozlesmeBitis], ['Kasko Bitişi', v.kaskoBitis]].forEach(([tip, tarih])=>{
       if(!tarih) return;
       const dl = daysLeft(tarih);
       if(dl<=30) rows.push({plaka:v.plaka, yer:v.yer, tip, tarih, dl});
@@ -4388,7 +4396,9 @@ function render(){
     if(activeFilter!=='hepsi' && v.durum!==activeFilter) return false;
     if(activeSirket!=='hepsi' && v.sirket!==activeSirket) return false;
     if(belgeFilterType){
-      const dateField = belgeFilterType==='sigorta' ? v.sigortaTarihi : (belgeFilterType==='muayene' ? v.muayeneTarihi : v.kiraBitis);
+      // v.157: "Kirası yaklaşan" filtresi artık sadece hâlâ kirada olan araçları sayıyor —
+      // iade edilip Müsait'e dönen bir araçta eski kiraBitis tarihi kalmış olsa bile listeye girmesin.
+      const dateField = belgeFilterType==='sigorta' ? v.sigortaTarihi : (belgeFilterType==='muayene' ? v.muayeneTarihi : (v.durum==='Kirada' ? v.kiraBitis : null));
       const dl = daysLeft(dateField);
       if(dl===null || dl>30) return false;
     }
@@ -11158,7 +11168,7 @@ function renderDashboard(){
         const tipler=[['Sigorta','sigortaTarihi'],['Muayene','muayeneTarihi'],['Kasko','kaskoBitis'],['Sözleşme','sozlesmeBitis'],['Kira','kiraBitis']];
         const say={'Sigorta':0,'Muayene':0,'Kasko':0,'Sözleşme':0,'Kira':0};
         const yak=[];
-        vehicles.forEach(v=>{ tipler.forEach(([ad,alan])=>{ const t=v[alan]; if(!t) return; const dl=daysLeft(t); if(dl!==null && dl<=30){ say[ad]++; yak.push({p:v.plaka, ad, dl}); } }); });
+        vehicles.forEach(v=>{ tipler.forEach(([ad,alan])=>{ if(ad==='Kira' && v.durum!=='Kirada') return; const t=v[alan]; if(!t) return; const dl=daysLeft(t); if(dl!==null && dl<=30){ say[ad]++; yak.push({p:v.plaka, ad, dl}); } }); });
         yak.sort((a,b)=>a.dl-b.dl);
         const box=(ad,n,renk)=>`<div class="yp-box"><div class="yp-n" style="color:${n>0?renk:'var(--steel-300)'}">${n}</div><div class="yp-l">${ad}</div></div>`;
         const liste=yak.slice(0,6).map(r=>`<div class="yp-row"><span class="mini-plaka" style="font-size:11.5px;">${esc(r.p)}</span><span class="yp-tip">${r.ad}</span><span class="yp-gun" style="color:${r.dl<0?'#E1554E':'var(--accent-blue)'}">${r.dl<0?Math.abs(r.dl)+' gün geçti':r.dl+' gün'}</span></div>`).join('');
@@ -11267,7 +11277,7 @@ function renderFinansalAnalizPage(){
           const tipler=[['Sigorta','sigortaTarihi'],['Muayene','muayeneTarihi'],['Kasko','kaskoBitis'],['Sözleşme','sozlesmeBitis'],['Kira','kiraBitis']];
           const say={'Sigorta':0,'Muayene':0,'Kasko':0,'Sözleşme':0,'Kira':0};
           const yak=[];
-          vehicles.forEach(v=>{ tipler.forEach(([ad,alan])=>{ const t=v[alan]; if(!t) return; const dl=daysLeft(t); if(dl!==null && dl<=30){ say[ad]++; yak.push({p:v.plaka, ad, dl}); } }); });
+          vehicles.forEach(v=>{ tipler.forEach(([ad,alan])=>{ if(ad==='Kira' && v.durum!=='Kirada') return; const t=v[alan]; if(!t) return; const dl=daysLeft(t); if(dl!==null && dl<=30){ say[ad]++; yak.push({p:v.plaka, ad, dl}); } }); });
           yak.sort((a,b)=>a.dl-b.dl);
           const box=(ad,n,renk)=>`<div class="yp-box"><div class="yp-n" style="color:${n>0?renk:'var(--steel-300)'}">${n}</div><div class="yp-l">${ad}</div></div>`;
           const liste=yak.slice(0,5).map(r=>`<div class="yp-row"><span class="mini-plaka" style="font-size:11.5px;">${esc(r.p)}</span><span class="yp-tip">${r.ad}</span><span class="yp-gun" style="color:${r.dl<0?'#E1554E':'var(--accent-blue)'}">${r.dl<0?Math.abs(r.dl)+' gün geçti':r.dl+' gün'}</span></div>`).join('');
@@ -15829,7 +15839,9 @@ function bildirimUret(){
       const icerik = dl<0 ? `${v.plaka} — ${etiket} süresi ${Math.abs(dl)} gün geçti.` : `${v.plaka} — ${etiket} için ${dl} gün kaldı.`;
       if(bildirimEkleyeBil(tur, 'arac', v.id, icerik, dl)) eklendi = true;
     });
-    const kiraTarih = v.kiraBitis || v.sozlesmeBitis;
+    // v.157: kiraBitis sadece araç hâlâ kirada iken dikkate alınıyor — iade edilip Müsait'e
+    // dönen bir araçta eski kiraBitis tarihi kalmış olsa bile bildirim üretilmesin.
+    const kiraTarih = (v.durum==='Kirada' ? v.kiraBitis : null) || v.sozlesmeBitis;
     if(kiraTarih){
       const dl = daysLeft(kiraTarih);
       if(dl!==null && dl<=30){
