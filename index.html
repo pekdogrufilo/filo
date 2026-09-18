@@ -544,8 +544,15 @@
      yukarı sızarak .app-shell'i (ve dolayısıyla tüm sayfayı) mobilde 390px yerine ~860px+
      genişliğe zorluyordu — sonuç: sayfanın sağ tarafı görünmez şekilde kesiliyor, hayalet bir
      yatay kaydırma alanı oluşuyordu. .main-area'da zaten var olan min-width:0 deseniyle aynı,
-     tek satırlık ve düşük riskli bir düzeltme. */
-  .app-shell{display:flex;min-height:100vh;min-width:0;}
+     tek satırlık ve düşük riskli bir düzeltme.
+     v.153 düzeltmesi: yukarıdaki kural genişliği YUKARI doğru sınırlıyordu ama AŞAĞI doğru
+     hiç zorlamıyordu — .app-shell, body'nin (display:flex) tek flex öğesi olduğu için
+     flex-grow olmadan varsayılan olarak sadece İÇERİĞİ kadar genişliyordu. Sonuç: geniş
+     monitörlerde (ör. 1920px, 2560px) içerik sola yaslanıp kalıyor, sağda yüzlerce piksel
+     boş/beyaz şerit kalıyordu (kullanıcı geri bildirimi: "genel bakış sayfasının sağ tarafı
+     bomboş kaldı"). width:100% ile .app-shell artık her zaman body'nin tam genişliğini
+     kaplıyor; .main-area zaten flex:1 olduğu için kalan alanı doğru şekilde dolduruyor. */
+  .app-shell{display:flex;min-height:100vh;min-width:0;width:100%;}
   .sidebar{width:210px;flex-shrink:0;background:var(--sidebar-bg);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;transition:width .2s cubic-bezier(.22,1,.36,1);}
   .sidebar.collapsed{width:64px;}
   .sidebar.collapsed .sb-brand{justify-content:center;padding:20px 0 16px;}
@@ -2413,7 +2420,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-16.152</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-18.153</div>
     </div>
   </aside>
 <script>
