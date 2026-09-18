@@ -2556,7 +2556,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-18.181</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-18.182</div>
     </div>
   </aside>
 <script>
@@ -17316,18 +17316,28 @@ function musteriDetayAc(customerId){
         <button onclick="musteriSil('${c.id}')" style="background:rgba(225,85,78,.1);border:1px solid rgba(225,85,78,.25);color:#E1554E;padding:7px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Sil</button>
       </div>
       <div style="padding:16px 20px;flex:1;">
-        <div style="display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:16px;">
+        <div style="display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:16px;overflow-x:auto;">
           <button class="modal-tab active" data-md-tab="genel" onclick="musteriDetayTabGoster(this,'genel')">Genel</button>
           <button class="modal-tab" data-md-tab="cari" onclick="musteriDetayTabGoster(this,'cari')">Cari</button>
           <button class="modal-tab" data-md-tab="kiralamalar" onclick="musteriDetayTabGoster(this,'kiralamalar')">Kiralamalar</button>
+          <button class="modal-tab" data-md-tab="faturalar" onclick="musteriDetayTabGoster(this,'faturalar')">Faturalar</button>
+          <button class="modal-tab" data-md-tab="tahsilatlar" onclick="musteriDetayTabGoster(this,'tahsilatlar')">Tahsilatlar</button>
+          <button class="modal-tab" data-md-tab="hasarlar" onclick="musteriDetayTabGoster(this,'hasarlar')">Hasarlar</button>
+          <button class="modal-tab" data-md-tab="cezalar" onclick="musteriDetayTabGoster(this,'cezalar')">Cezalar</button>
           <button class="modal-tab" data-md-tab="notlar" onclick="musteriDetayTabGoster(this,'notlar')">Notlar</button>
           <button class="modal-tab" data-md-tab="belgeler" onclick="musteriDetayTabGoster(this,'belgeler')">Belgeler</button>
+          <button class="modal-tab" data-md-tab="kronoloji" onclick="musteriDetayTabGoster(this,'kronoloji')">Kronoloji</button>
         </div>
         <div class="md-tab-panel" data-md-panel="genel">${musteriDetayGenelHtml(c)}</div>
         <div class="md-tab-panel" data-md-panel="cari" style="display:none;">${musteriDetayCariHtml(c)}</div>
         <div class="md-tab-panel" data-md-panel="kiralamalar" style="display:none;">${musteriDetayKiralamalarHtml(c)}</div>
+        <div class="md-tab-panel" data-md-panel="faturalar" style="display:none;">${musteriDetayFaturalarHtml(c)}</div>
+        <div class="md-tab-panel" data-md-panel="tahsilatlar" style="display:none;">${musteriDetayTahsilatlarHtml(c)}</div>
+        <div class="md-tab-panel" data-md-panel="hasarlar" style="display:none;">${musteriDetayHasarlarHtml(c)}</div>
+        <div class="md-tab-panel" data-md-panel="cezalar" style="display:none;">${musteriDetayCezalarHtml(c)}</div>
         <div class="md-tab-panel" data-md-panel="notlar" style="display:none;">${musteriDetayNotlarHtml(c)}</div>
         <div class="md-tab-panel" data-md-panel="belgeler" style="display:none;">${musteriDetayBelgelerHtml(c)}</div>
+        <div class="md-tab-panel" data-md-panel="kronoloji" style="display:none;">${musteriDetayKronolojiHtml(c)}</div>
       </div>
     </div>`;
   document.body.appendChild(el);
@@ -17379,6 +17389,125 @@ function musteriDetayKiralamalarHtml(c){
 }
 function musteriDetayNotlarHtml(c){
   return `<div class="dcard"><div style="font-size:13px;color:var(--text-2);white-space:pre-wrap;">${c.notlar?esc(c.notlar):'<span style="color:var(--text-3);">Not girilmemiş. "Düzenle" ile notlar alanını doldurabilirsiniz.</span>'}</div></div>`;
+}
+
+// v.182: "Paneldeki eksiklikler" incelemesinde bulundu — müşteri detay ekranında Faturalar,
+// Tahsilatlar, Hasarlar, Cezalar ve Kronoloji için ayrı sekme yoktu (veri zaten invoices/
+// payments/rentals/trafficFines/vehicles.hasarlar içinde vardı, sadece bu müşteriye özel
+// filtrelenmiş bir görünüm eksikti). Aşağıdaki fonksiyonlar gerçek customerId eşlemesini
+// (rentals[].customerId üzerinden) kullanır — musteriDetayKiralamalarHtml'deki eski isim
+// bazlı eşleştirmeden FARKLIDIR ve FAZ3 sonrası oluşturulan (customerId'si düzgün atanmış)
+// kayıtlar için daha doğrudur.
+function musteriDetayCustomerRentalIds(c){
+  return rentals.filter(r=>r.customerId===c.id).map(r=>r.id);
+}
+function musteriDetayFaturalarHtml(c){
+  const liste = invoices.filter(f=>f.customerId===c.id).sort((a,b)=>(b.tarih||'').localeCompare(a.tarih||''));
+  if(!liste.length) return '<div class="log-empty">Bu müşteriye kesilmiş fatura yok.</div>';
+  const satirlar = liste.map(f=>{
+    const efektif = faturaEfektifDurum(f);
+    const renkler = faturaDurumRenk(efektif);
+    return `<div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border);">
+      <span style="font-family:monospace;font-weight:700;font-size:12px;white-space:nowrap;">${esc(f.faturaNo||'—')}</span>
+      <span style="font-size:11.5px;color:var(--text-3);white-space:nowrap;">${fmtTarih(f.tarih)}</span>
+      <span style="flex:1;"></span>
+      <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:${renkler.bg};color:${renkler.renk};white-space:nowrap;">${esc(FATURA_DURUM_ETIKET[efektif]||f.durum)}</span>
+      <span style="font-size:13px;font-weight:700;white-space:nowrap;min-width:90px;text-align:right;">${fmtTL2(f.genelToplam)}</span>
+      <button onclick="document.getElementById('musteriDetailOverlay').remove();faturaFormAc('${f.id}')" style="background:var(--surface-2);border:1px solid var(--line);color:var(--text);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;">Aç</button>
+    </div>`;
+  }).join('');
+  return `<div class="dcard" style="padding:0;overflow:hidden;">${satirlar}</div>`;
+}
+function musteriDetayTahsilatlarHtml(c){
+  const liste = payments.filter(p=>p.customerId===c.id).sort((a,b)=>(b.tarih||'').localeCompare(a.tarih||''));
+  if(!liste.length) return '<div class="log-empty">Bu müşteriden alınmış tahsilat yok.</div>';
+  const satirlar = liste.map(p=>{
+    const fat = p.invoiceId ? invoices.find(x=>x.id===p.invoiceId) : null;
+    return `<div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border);">
+      <span style="font-size:11.5px;color:var(--text-3);white-space:nowrap;">${fmtTarih(p.tarih)}</span>
+      <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--surface-2);color:var(--text-2);white-space:nowrap;">${esc(p.yontem||'—')}</span>
+      <span style="flex:1;min-width:0;font-size:12px;color:var(--text-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${fat?('Fatura: '+esc(fat.faturaNo)):esc(p.aciklama||'')}</span>
+      <span style="font-size:13px;font-weight:700;color:#36A168;white-space:nowrap;">${fmtTL2(p.tutar)}</span>
+    </div>`;
+  }).join('');
+  const toplam = liste.reduce((s,p)=>s+(Number(p.tutar)||0),0);
+  return `<div class="dcard" style="padding:0;overflow:hidden;">${satirlar}
+    <div style="display:flex;justify-content:space-between;padding:10px 14px;font-size:12.5px;font-weight:700;background:var(--surface-2);"><span>Toplam</span><span>${fmtTL2(toplam)}</span></div>
+  </div>`;
+}
+// Hasar kayıtları (vehicles[].hasarlar) hiçbir zaman customerId/rentalId taşımadı (bkz. hasarKaydet) —
+// bu yüzden burada EN İYİ ÇABA (best-effort) bir eşleşme yapılıyor: bu müşterinin kiraladığı
+// araçlardaki hasar kayıtları, hasarın tarihi o kiralamanın [başlangıç, bitiş-veya-bugün]
+// aralığına düşüyorsa listeleniyor. Kesin bir birebir ilişki DEĞİLDİR — dürüstçe belirtiliyor.
+function musteriDetayHasarlarHtml(c){
+  const musteriRentals = rentals.filter(r=>r.customerId===c.id);
+  if(!musteriRentals.length) return '<div class="log-empty">Bu müşteriye ait kiralama kaydı bulunamadığı için hasar eşleştirmesi yapılamıyor.</div>';
+  const bulunanlar = [];
+  musteriRentals.forEach(r=>{
+    const v = vehicles.find(x=>x.id===r.vehicleId);
+    if(!v || !Array.isArray(v.hasarlar)) return;
+    const bas = r.baslangic, bit = r.bitis || todayISO();
+    v.hasarlar.forEach(h=>{
+      if(h.tarih && bas && h.tarih>=bas && h.tarih<=bit) bulunanlar.push({...h, plaka:v.plaka});
+    });
+  });
+  if(!bulunanlar.length) return '<div class="log-empty">Bu müşterinin kiraladığı araçlarda, kiralama tarihleriyle örtüşen bir hasar kaydına rastlanmadı.</div>';
+  bulunanlar.sort((a,b)=>(b.tarih||'').localeCompare(a.tarih||''));
+  const satirlar = bulunanlar.map(h=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border);">
+      <span style="font-size:11.5px;color:var(--text-3);white-space:nowrap;">${fmtTarih(h.tarih)}</span>
+      <span class="mini-plaka" style="font-size:11px;white-space:nowrap;">${esc(h.plaka)}</span>
+      <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--surface-2);color:var(--text-2);white-space:nowrap;">${esc(HASAR_BOLGE_ETIKET[h.bolge]||h.bolge||'—')} · ${esc(HASAR_TUR_ETIKET[h.tur]||h.tur||'—')}</span>
+      <span style="flex:1;min-width:0;font-size:12px;color:var(--text-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(h.aciklama||'')}</span>
+      <span style="font-size:13px;font-weight:700;white-space:nowrap;color:${h.musteriyeYansitilanBedel?'#E1554E':'var(--text-3)'};">${h.musteriyeYansitilanBedel?fmtTL2(h.musteriyeYansitilanBedel):'—'}</span>
+    </div>`).join('');
+  return `<div style="font-size:11px;color:var(--text-3);margin-bottom:8px;">Not: eşleştirme kiralama tarihine göre yapılır, kesin bir bağ değildir.</div><div class="dcard" style="padding:0;overflow:hidden;">${satirlar}</div>`;
+}
+function musteriDetayCezalarHtml(c){
+  const rentalIds = new Set(musteriDetayCustomerRentalIds(c));
+  const liste = trafficFines.filter(f=>f.rentalId && rentalIds.has(f.rentalId)).sort((a,b)=>(b.tarih||'').localeCompare(a.tarih||''));
+  if(!liste.length) return '<div class="log-empty">Bu müşterinin kiralamalarına bağlı trafik cezası kaydı yok.</div>';
+  const satirlar = liste.map(f=>{
+    const v = vehicles.find(x=>x.id===f.vehicleId);
+    return `<div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border);">
+      <span style="font-size:11.5px;color:var(--text-3);white-space:nowrap;">${fmtTarih(f.tarih)}</span>
+      <span class="mini-plaka" style="font-size:11px;white-space:nowrap;">${esc(v?v.plaka:'—')}</span>
+      <span style="flex:1;min-width:0;font-size:12px;color:var(--text-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(f.surucu||'')}</span>
+      <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:${f.odendi?'rgba(54,161,104,.12)':'rgba(225,85,78,.12)'};color:${f.odendi?'#36A168':'#E1554E'};white-space:nowrap;">${f.odendi?'Ödendi':'Ödenmedi'}</span>
+      <span style="font-size:13px;font-weight:700;white-space:nowrap;">${fmtTL2(f.tutar)}</span>
+    </div>`;
+  }).join('');
+  return `<div class="dcard" style="padding:0;overflow:hidden;">${satirlar}</div>`;
+}
+// Tüm sekmelerden (kiralama, fatura, tahsilat, ceza) tarihe göre birleştirilmiş tek akış.
+// Hasarlar kesin customerId taşımadığı için (yukarıdaki not) kronolojiye dahil edilmedi —
+// yanlış bir hasar kaydını bu müşteriye mal etmemek için bilinçli bir tercih.
+function musteriDetayKronolojiHtml(c){
+  const musteriRentals = rentals.filter(r=>r.customerId===c.id);
+  const rentalIds = new Set(musteriRentals.map(r=>r.id));
+  const olaylar = [];
+  musteriRentals.forEach(r=>{
+    const v = vehicles.find(x=>x.id===r.vehicleId);
+    if(r.baslangic) olaylar.push({tarih:r.baslangic, renk:'var(--accent-blue)', etiket:'Kiralama', metin:`${v?v.plaka:'Araç'} — ${YK_DURUM_ETIKET[r.durum]||r.durum}`});
+  });
+  invoices.filter(f=>f.customerId===c.id).forEach(f=>{
+    olaylar.push({tarih:f.tarih, renk:'#E8A132', etiket:'Fatura', metin:`${f.faturaNo||''} — ${fmtTL2(f.genelToplam)}`});
+  });
+  payments.filter(p=>p.customerId===c.id).forEach(p=>{
+    olaylar.push({tarih:p.tarih, renk:'#36A168', etiket:'Tahsilat', metin:`${esc(p.yontem||'')} — ${fmtTL2(p.tutar)}`});
+  });
+  trafficFines.filter(f=>f.rentalId && rentalIds.has(f.rentalId)).forEach(f=>{
+    olaylar.push({tarih:f.tarih, renk:'#E1554E', etiket:'Ceza', metin:fmtTL2(f.tutar)});
+  });
+  if(!olaylar.length) return '<div class="log-empty">Bu müşteriye ait kronolojik bir kayıt yok.</div>';
+  olaylar.sort((a,b)=>(b.tarih||'').localeCompare(a.tarih||''));
+  const satirlar = olaylar.map(o=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border);">
+      <span style="font-size:11.5px;color:var(--text-3);white-space:nowrap;">${fmtTarih(o.tarih)}</span>
+      <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--surface-2);color:${o.renk};white-space:nowrap;">${esc(o.etiket)}</span>
+      <span style="flex:1;min-width:0;font-size:12px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${o.metin}</span>
+    </div>`).join('');
+  return `<div class="dcard" style="padding:0;overflow:hidden;">${satirlar}</div>`;
 }
 // FAZ6: Müşteriye bağlı belgeler (Kimlik, Ehliyet fotoğrafı, Diğer) — merkezi `documents`
 // dizisinden bu müşterinin kayıtları. Yükleme + versiyon geçmişi burada, görüntüleme
