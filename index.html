@@ -2437,7 +2437,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-18.159</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-18.161</div>
     </div>
   </aside>
 <script>
@@ -6897,15 +6897,28 @@ function openAracKirala(vehicleId){
         </button>
       </div>
       <div class="iade-body" style="max-height:64vh;overflow-y:auto;">
+        <!-- v.160: kullanıcı isteğiyle tek-scroll form 4 adımlı sihirbaza dönüştürüldü. Hiçbir
+             alan id'si, hiçbir doğrulama/kaydetme mantığı (kirayaVerVeSozlesme) DEĞİŞMEDİ —
+             sadece aynı alanlar adım adım gösteriliyor. krGoStep() adımlar arası geçişi ve
+             adım-bazlı ön-doğrulamayı yönetir (bkz. aşağıdaki fonksiyonlar). -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--line);">
+          <div style="display:flex;gap:6px;">
+            ${[1,2,3,4].map(n=>`<span class="kr-stepdot" data-step="${n}" style="width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:700;background:var(--surface-2);color:var(--text-3);border:1px solid var(--border);transition:all .15s;">${n}</span>`).join('')}
+          </div>
+          <div id="krStepTitle" style="font-size:13px;font-weight:700;color:var(--text);">Araç(lar)ı Seç</div>
+        </div>
+        <div id="krWizardErr" style="display:none;color:#E1554E;font-size:12.5px;padding:8px 10px;background:rgba(225,85,78,.08);border:1px solid rgba(225,85,78,.25);border-radius:8px;margin-bottom:10px;"></div>
+
+        <div class="kr-step" data-step="1">
         <div class="iade-row">
           <div class="iade-field" style="grid-column:1/-1;">
-            <label>1 — Araç(lar)ı seç <span id="krSecimSayisi" style="color:var(--accent-blue);font-weight:700;"></span></label>
+            <label>Araç(lar)ı seç <span id="krSecimSayisi" style="color:var(--accent-blue);font-weight:700;"></span></label>
             <input type="text" id="krAra" placeholder="Plaka veya model ara..." oninput="krListeFiltrele()" style="margin-bottom:6px;">
             <div id="krListe" style="max-height:170px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;">
               ${vehicles.map(v=>{
                 const st = v.durum==='Kirada'?'🔴':(v.durum==='Serviste'?'🟡':v.durum==='Pert'?'⚫':v.durum==='Satıldı'?'🔵':'🟢');
                 return `<label class="kr-item" data-ara="${esc((v.plaka+' '+(v.marka||'')+' '+(v.model||'')).toLocaleLowerCase('tr-TR'))}" style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-bottom:1px solid var(--line);cursor:pointer;font-size:13px;">
-                  <input type="checkbox" class="krCheck" value="${v.id}" onchange="krSecimGuncelle()" style="width:16px;height:16px;accent-color:var(--accent-blue);">
+                  <input type="checkbox" class="krCheck" value="${v.id}" data-durum="${esc(v.durum||'')}" onchange="krSecimGuncelle()" style="width:16px;height:16px;accent-color:var(--accent-blue);">
                   <span class="mini-plaka" style="font-size:12px;">${esc(v.plaka)}</span>
                   <span style="color:var(--text-2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc([v.marka,v.model].filter(Boolean).join(' ')||'Araç')}</span>
                   <span title="${v.durum}">${st}</span>
@@ -6915,7 +6928,10 @@ function openAracKirala(vehicleId){
           </div>
         </div>
         <div id="krSecilenAraclar"></div>
-        <div class="iade-section" style="font-weight:600;font-size:13px;color:var(--text);margin-bottom:8px;">2 — Kiracı bilgileri</div>
+        <div id="krCakismaUyari" style="display:none;color:#E1554E;font-size:12px;padding:8px 10px;background:rgba(225,85,78,.08);border:1px solid rgba(225,85,78,.25);border-radius:8px;margin-top:4px;"></div>
+        </div>
+
+        <div class="kr-step" data-step="2" style="display:none;">
         <div class="iade-row">
           <div class="iade-field">
             <label>Kiracı / Kurum adı *</label>
@@ -6950,7 +6966,9 @@ function openAracKirala(vehicleId){
             <input type="text" id="krKefilTC" placeholder="11 haneli TC" maxlength="11">
           </div>
         </div>
-        <div class="iade-section" style="font-weight:600;font-size:13px;color:var(--text);margin:10px 0 8px;">3 — Kira koşulları</div>
+        </div>
+
+        <div class="kr-step" data-step="3" style="display:none;">
         <div class="iade-row">
           <div class="iade-field">
             <label>Başlangıç *</label>
@@ -7006,6 +7024,9 @@ function openAracKirala(vehicleId){
           <label>Özel şartlar / notlar</label>
           <input type="text" id="krNotlar" placeholder="Varsa özel koşullar...">
         </div>
+        </div>
+
+        <div class="kr-step" data-step="4" style="display:none;">
         <!-- FAZ4: Teslim kontrol listesi — opsiyonel; boş bırakılırsa (varsayılan hepsi "İyi")
              yine de rentals kaydına teslimKontrol olarak yazılır, ki İade Al sırasında otomatik
              hasar tespiti (Part B.5) çalışabilsin. Doldurulmaması mevcut hızlı akışı bozmaz. -->
@@ -7032,17 +7053,62 @@ function openAracKirala(vehicleId){
         <div style="background:rgba(22,160,134,.08);border:1px solid rgba(22,160,134,.25);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--text-2);margin-top:4px;">
           <b>Not:</b> Kaydet'te araç otomatik <b>"Kirada"</b> olur, kiracı bilgileri araç kartına işlenir ve 23 maddelik kapsamlı sözleşme (Ekler dahil) hazırlanır.
         </div>
+        </div>
       </div>
-      <div class="iade-foot">
-        <button class="iade-btn-cancel" onclick="document.getElementById('kiralaModal').remove()">İptal</button>
-        <button class="iade-btn-save" onclick="kirayaVerVeSozlesme('docx')">Kiraya Ver &amp; Word</button>
-        <button class="iade-btn-save" style="background:var(--accent-blue);" onclick="kirayaVerVeSozlesme('pdf')">Kiraya Ver &amp; PDF</button>
-      </div>
+      <div class="iade-foot" id="krWizardFoot"></div>
     </div>
   `;
   el.addEventListener('click', e=>{ if(e.target===el) el.remove(); });
   document.body.appendChild(el);
+  window.__krStep = 1;
+  krGoStep(1);
   if(secili){ const cb=document.querySelector(`.krCheck[value="${secili}"]`); if(cb) cb.checked=true; krSecimGuncelle(); }
+}
+
+// v.160: Kiralama Sihirbazı — adım geçişleri, adım-bazlı ön-doğrulama ve adım göstergesi.
+// kirayaVerVeSozlesme() kendi doğrulamasını AYNEN korur (son güvenlik ağı) — bunlar sadece
+// kullanıcıyı erkenden uyarıp yanlış adımda ilerlemesini engelleyen ön-kontrollerdir.
+const KR_ADIM_BASLIK = {1:'Araç(lar)ı Seç', 2:'Kiracı Bilgileri', 3:'Kira Koşulları', 4:'Teslim &amp; Onay'};
+function krWizardValidate(step){
+  if(step===1){
+    if(!document.querySelectorAll('.krCheck:checked').length) return 'Lütfen en az bir araç seçin.';
+  }else if(step===2){
+    if(!(document.getElementById('krKiraci')?.value||'').trim()) return 'Kiracı / Kurum adı zorunludur.';
+  }else if(step===3){
+    const bas = document.getElementById('krBas')?.value, bitis = document.getElementById('krBitis')?.value;
+    if(!bas || !bitis) return 'Lütfen başlangıç ve bitiş tarihini girin.';
+    if(bitis<=bas) return 'Bitiş tarihi başlangıçtan sonra olmalı.';
+  }
+  return null;
+}
+function krGoStep(n){
+  const cur = window.__krStep || 1;
+  const errEl = document.getElementById('krWizardErr');
+  if(n>cur){
+    const hata = krWizardValidate(cur);
+    if(hata){ if(errEl){ errEl.textContent = hata; errEl.style.display='block'; } return; }
+  }
+  if(errEl) errEl.style.display='none';
+  window.__krStep = n;
+  document.querySelectorAll('#kiralaModal .kr-step').forEach(s=>{ s.style.display = (Number(s.dataset.step)===n) ? '' : 'none'; });
+  document.querySelectorAll('#kiralaModal .kr-stepdot').forEach(d=>{
+    const ds = Number(d.dataset.step);
+    d.style.background = ds===n ? 'var(--accent-blue)' : (ds<n ? '#36A168' : 'var(--surface-2)');
+    d.style.color = ds<=n ? '#fff' : 'var(--text-3)';
+    d.style.borderColor = ds<=n ? 'transparent' : 'var(--border)';
+  });
+  const titleEl = document.getElementById('krStepTitle');
+  if(titleEl) titleEl.innerHTML = KR_ADIM_BASLIK[n] || '';
+  const foot = document.getElementById('krWizardFoot');
+  if(foot){
+    foot.innerHTML = `
+      <button class="iade-btn-cancel" onclick="document.getElementById('kiralaModal').remove()">İptal</button>
+      ${n>1?`<button class="iade-btn-cancel" onclick="krGoStep(${n-1})">← Geri</button>`:''}
+      ${n<4?`<button class="iade-btn-save" style="background:var(--accent-blue);" onclick="krGoStep(${n+1})">İleri →</button>`
+        :`<button class="iade-btn-save" onclick="kirayaVerVeSozlesme('docx')">Kiraya Ver &amp; Word</button>
+          <button class="iade-btn-save" style="background:var(--accent-blue);" onclick="kirayaVerVeSozlesme('pdf')">Kiraya Ver &amp; PDF</button>`}
+    `;
+  }
 }
 
 function krListeFiltrele(){
@@ -7056,6 +7122,22 @@ function krSecimGuncelle(){
   const ids = [...document.querySelectorAll('.krCheck:checked')].map(c=>c.value);
   const sayiEl = document.getElementById('krSecimSayisi');
   if(sayiEl) sayiEl.textContent = ids.length ? `(${ids.length} araç)` : '';
+  // v.160: master talimatın 63. maddesi ("kiralama çakışması") — tam tarih-aralığı çakışma
+  // hesabı yerine, bu ekranda zaten görünen 🔴/🟡 durum bilgisine dayanan basit ve güvenli bir
+  // uyarı: seçilen araç zaten "Kirada" ya da "Serviste" ise bloklamadan açıkça bildiriyoruz,
+  // böylece kullanıcı bilerek devam eder ya da seçimini düzeltir.
+  const cakismaEl = document.getElementById('krCakismaUyari');
+  if(cakismaEl){
+    const sorunlu = [...document.querySelectorAll('.krCheck:checked')]
+      .map(c=>({plaka:(vehicles.find(v=>v.id===c.value)||{}).plaka, durum:c.dataset.durum}))
+      .filter(x=>x.durum==='Kirada'||x.durum==='Serviste');
+    if(sorunlu.length){
+      cakismaEl.style.display = 'block';
+      cakismaEl.textContent = '⚠ '+sorunlu.map(x=>`${x.plaka} zaten "${x.durum}" görünüyor`).join(', ')+' — yine de devam edebilirsiniz, ancak önce araç durumunu kontrol etmenizi öneririz.';
+    }else{
+      cakismaEl.style.display = 'none';
+    }
+  }
   const kutu = document.getElementById('krSecilenAraclar');
   if(!kutu) return;
   if(!ids.length){ kutu.innerHTML=''; return; }
@@ -9064,11 +9146,15 @@ document.getElementById('saveBtn').onclick = async ()=>{
           // numarasıyla) eklenir — sabit yuvanın kendisi (üzerine yazma) hiç değişmedi.
           const merkeziTur = {sozlesme:'Sözleşme', police:'Sigorta', muayene:'Muayene', kasko:'Kasko', ruhsat:'Ruhsat'}[d.key];
           const merkeziTarihField = {sozlesme:'fSozlesmeBitis', police:'fSigorta', muayene:'fMuayene', kasko:'fKaskoBitis', ruhsat:null}[d.key];
+          // v.161: her belge türünün zaten formda topladığı belge/poliçe/seri numarası alanı —
+          // Belge Merkezi listesinde "Belge No" sütununda görünsün diye merkezi kayda eklendi.
+          const merkeziNoField = {sozlesme:null, police:'fSigortaNo', muayene:'fMuayeneSeri', kasko:'fKaskoNo', ruhsat:'fRuhsatSeri'}[d.key];
           if(merkeziTur){
             try{
               const verKey = await belgeDosyaSakla('arac_'+vehicleId+'_'+d.key, st.file.data);
               const sonGecerlilik = merkeziTarihField ? (document.getElementById(merkeziTarihField).value||null) : null;
-              await belgeMerkeziKaydet({ilgiliTip:'arac', ilgiliId:vehicleId, tur:merkeziTur, tarih:todayISO(), sonGecerlilik, dosyaRef:verKey});
+              const belgeNo = merkeziNoField ? (document.getElementById(merkeziNoField)?.value?.trim()||null) : null;
+              await belgeMerkeziKaydet({ilgiliTip:'arac', ilgiliId:vehicleId, tur:merkeziTur, tarih:todayISO(), sonGecerlilik, dosyaRef:verKey, belgeNo});
             }catch(e){ console.error('Merkezi belge kaydı hatası:', e); }
           }
         }catch(e){
@@ -13749,7 +13835,10 @@ async function otoBelgeSec(file, statusEl){
         try{
           const verKey = await belgeDosyaSakla('arac_'+v.id+'_'+tur, onceden.dataUrl);
           const sonGecerlilik = std.tarihF ? (v[std.tarihF]||null) : null;
-          await belgeMerkeziKaydet({ilgiliTip:'arac', ilgiliId:v.id, tur:merkeziTur, tarih: okunanTarih||todayISO(), sonGecerlilik, dosyaRef:verKey});
+          // v.161: AI zaten "belgeNo" alanını okuyordu (bkz. OTO_BELGE_SYSTEM) ama hiçbir yere
+          // kaydedilmiyordu — artık Belge Merkezi'nde görünsün diye merkezi kayda ekleniyor.
+          const belgeNo = bilgi && bilgi.belgeNo ? String(bilgi.belgeNo).trim() : null;
+          await belgeMerkeziKaydet({ilgiliTip:'arac', ilgiliId:v.id, tur:merkeziTur, tarih: okunanTarih||todayISO(), sonGecerlilik, dosyaRef:verKey, belgeNo});
         }catch(e){ console.error('Merkezi belge kaydı hatası:', e); }
       }
     }else{
@@ -14000,7 +14089,8 @@ async function belgeTopluTek(file, fallbackId){
         try{
           const verKey = await belgeDosyaSakla('arac_'+v.id+'_'+tur, onceden.dataUrl);
           const sonGecerlilik = std.tarihF ? (v[std.tarihF]||null) : null;
-          await belgeMerkeziKaydet({ilgiliTip:'arac', ilgiliId:v.id, tur:merkeziTur, tarih: okunanTarih||todayISO(), sonGecerlilik, dosyaRef:verKey});
+          const belgeNo = bilgi && bilgi.belgeNo ? String(bilgi.belgeNo).trim() : null;
+          await belgeMerkeziKaydet({ilgiliTip:'arac', ilgiliId:v.id, tur:merkeziTur, tarih: okunanTarih||todayISO(), sonGecerlilik, dosyaRef:verKey, belgeNo});
         }catch(e){ console.error('Merkezi belge kaydı hatası:', e); }
       }
     }else{
@@ -14269,11 +14359,12 @@ function belgeMerkeziBolumuHtml(){
 function belgeMerkeziListesiHtml(rows, durumEtiket, durumRenk){
   if(!rows.length) return '<div class="log-empty">Bu filtrede belge bulunamadı.</div>';
   return `<div class="table-scroll"><table class="mini-table">
-    <thead><tr><th>Kayıt</th><th>Tür</th><th>Versiyon</th><th>Geçerlilik</th><th>Durum</th><th></th></tr></thead>
+    <thead><tr><th>Kayıt</th><th>Tür</th><th>Belge No</th><th>Versiyon</th><th>Geçerlilik</th><th>Durum</th><th></th></tr></thead>
     <tbody>
       ${rows.map(r=>`<tr>
         <td><span style="font-weight:600;">${esc(r.ad)}</span> <span style="font-size:10px;color:var(--text-3);">(${r.ilgiliTip==='arac'?'Araç':'Müşteri'})</span></td>
         <td>${esc(r.tur)}</td>
+        <td>${r.belgeNo?`<span style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace;font-size:12px;">${esc(r.belgeNo)}</span>`:'<span style="color:var(--text-3);">—</span>'}</td>
         <td>v${r.versiyon||1}${r.eskiSayisi?` <button onclick="belgeMerkeziGecmisGoster('${r.ilgiliTip}','${r.ilgiliId}','${esc(r.tur)}')" style="background:none;border:1px solid var(--border);color:var(--text-2);padding:1px 7px;border-radius:6px;font-size:10.5px;cursor:pointer;">+${r.eskiSayisi} geçmiş</button>`:''}</td>
         <td>${r.sonGecerlilik?fmtTarih(r.sonGecerlilik):'—'}</td>
         <td><span style="font-weight:700;color:${durumRenk[r.durumAnahtari]};">${durumEtiket[r.durumAnahtari]}</span></td>
@@ -15771,7 +15862,7 @@ async function belgeDosyaSakla(etiket, dataUrl){
 
 // Aynı ilgiliTip+ilgiliId+tur için önceki AKTİF kayıt(lar) SİLİNMEZ — aktif:false yapılarak
 // "geçmiş sürüm" olarak saklanır; yeni kayıt bir üst versiyon numarasıyla aktif eklenir.
-async function belgeMerkeziKaydet({ilgiliTip, ilgiliId, tur, tarih, sonGecerlilik, dosyaRef}){
+async function belgeMerkeziKaydet({ilgiliTip, ilgiliId, tur, tarih, sonGecerlilik, dosyaRef, belgeNo}){
   const ayniGrup = documents.filter(d=>d.ilgiliTip===ilgiliTip && d.ilgiliId===ilgiliId && d.tur===tur);
   const maxVersiyon = ayniGrup.reduce((m,d)=>Math.max(m, Number(d.versiyon)||0), 0);
   ayniGrup.forEach(d=>{ d.aktif = false; });
@@ -15779,6 +15870,10 @@ async function belgeMerkeziKaydet({ilgiliTip, ilgiliId, tur, tarih, sonGecerlili
     id: yeniId('doc'), ilgiliTip, ilgiliId, tur,
     tarih: tarih || todayISO(),
     sonGecerlilik: sonGecerlilik || null,
+    // v.161: "belge merkezi sayfası" geliştirmesi — poliçe/kasko no, muayene/ruhsat seri no gibi
+    // zaten toplanan belge numaraları artık merkezi kayda da yazılıyor (önceden sadece araç
+    // formundaki alanda kalıyor, Belge Merkezi listesinde hiç görünmüyordu).
+    belgeNo: belgeNo || null,
     dosyaRef, versiyon: maxVersiyon+1, aktif: true,
     yuklemeTarihi: new Date().toISOString(),
   };
