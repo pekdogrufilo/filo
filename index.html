@@ -727,6 +727,9 @@
   /* Araç listesi modal */
   .vehicle-quick-modal{position:fixed;inset:0;z-index:300;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.55);animation:fadeIn .2s ease;}
   .iade-modal{position:fixed;inset:0;z-index:400;display:flex;align-items:center;justify-content:center;padding:max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));background:rgba(0,0,0,.6);animation:fadeIn .2s ease;}
+  /* v.179: küçültülmüş sözleşme sihirbazı — DOM/state korunur, sadece görünmez ve
+     .iade-modal sınıfından çıkarılır (body:has(.iade-modal) kuralları devre dışı kalsın). */
+  .iade-modal-min{display:none;}
   .iade-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;animation:popIn .25s var(--ease);}
   .iade-head{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--line);}
   .iade-head h3{font-family:var(--font-ui);font-size:15px;font-weight:600;margin:0;display:flex;align-items:center;gap:9px;}
@@ -2553,7 +2556,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-18.178</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-18.180</div>
     </div>
   </aside>
 <script>
@@ -4996,6 +4999,95 @@ function showToast(msg, isErr){
   setTimeout(()=>t.remove(), 5500);
 }
 
+// v.179: "sözleşme yaparken panelde bir bilgi ihtiyacı oldu (örn. fiyata bakmak istedim)
+// o sözleşme ekranı kapanmasın" — sözleşme sihirbazlarını (Araç Kirala / Yeni Kiralama)
+// kapatıp veriyi kaybetmek yerine KÜÇÜLTME imkanı. Modal .remove() edilmez; sadece
+// display:none ile gizlenir ve 'iade-modal' sınıfı geçici olarak kaldırılır (böylece
+// body:has(.iade-modal) kuralı devre dışı kalır ve alttaki Kaydet FAB'ı / mobil menü
+// tekrar kullanılabilir olur). Tüm form alanları, girilmiş değerler ve iç JS state
+// (ör. ykSihirbazState, __krImza) olduğu gibi DOM'da/hafızada kalır; kullanıcı geri
+// döndüğünde sihirbaz kaldığı yerden aynen devam eder.
+window.__minimizedModals = [];
+function modalKucult(modalId, baslik){
+  const el = document.getElementById(modalId);
+  if(!el) return;
+  el.classList.remove('iade-modal');
+  el.classList.add('iade-modal-min');
+  el.style.display = 'none';
+  if(!window.__minimizedModals.find(m=>m.id===modalId)){
+    window.__minimizedModals.push({id:modalId, baslik: baslik || 'Sözleşme'});
+  }
+  minimizedBarRender();
+  showToast((baslik||'Sözleşme')+' küçültüldü — devam etmek için alttaki düğmeye dokunun.');
+}
+function modalGeriGetir(modalId){
+  const el = document.getElementById(modalId);
+  if(!el) return;
+  el.classList.remove('iade-modal-min');
+  el.classList.add('iade-modal');
+  el.style.display = '';
+  window.__minimizedModals = window.__minimizedModals.filter(m=>m.id!==modalId);
+  minimizedBarRender();
+}
+function minimizedBarRender(){
+  // Kendi kendini onaran liste: modal başka bir akışla (ör. kaydet sonrası .remove()) zaten
+  // DOM'dan kaldırılmışsa, "devam et" düğmesi ölü bir referans olarak kalmasın.
+  window.__minimizedModals = window.__minimizedModals.filter(m=>{
+    const el = document.getElementById(m.id);
+    return el && el.classList.contains('iade-modal-min');
+  });
+  let bar = document.getElementById('minimizedModalsBar');
+  if(!window.__minimizedModals.length){ if(bar) bar.remove(); return; }
+  if(!bar){
+    bar = document.createElement('div');
+    bar.id = 'minimizedModalsBar';
+    bar.style.cssText = 'position:fixed;left:16px;right:16px;bottom:calc(78px + env(safe-area-inset-bottom));z-index:390;display:flex;flex-direction:column;align-items:flex-start;gap:8px;pointer-events:none;';
+    document.body.appendChild(bar);
+  }
+  bar.innerHTML = window.__minimizedModals.map(m=>`
+    <button onclick="modalGeriGetir('${m.id}')" style="pointer-events:auto;display:flex;align-items:center;gap:8px;background:#E8A132;color:#231600;border:none;border-radius:999px;padding:11px 18px;font-size:13px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.35);cursor:pointer;max-width:100%;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(m.baslik)} devam ediyor — devam et</span>
+    </button>
+  `).join('');
+}
+
+// v.179: "toplu pdf fiş vs yüklerken beklemek yerine başka ekrandayken çalışsın" — toplu belge
+// yükleme zaten sayfa değiştirilse de arka planda tamamlanıyordu (aşağıdaki not); eksik olan
+// tek şey kullanıcının HERHANGİ bir sayfadan bunu görebilmesiydi. Bu küçük, sabit-konumlu
+// gösterge sadece bunu sağlıyor — belgeTopluIsle'ın kendi mantığında hiçbir değişiklik yok.
+function topluYuklemeBarGoster(bitti, toplam){
+  let bar = document.getElementById('topluYuklemeBar');
+  if(!bar){
+    bar = document.createElement('div');
+    bar.id = 'topluYuklemeBar';
+    bar.style.cssText = 'position:fixed;right:16px;bottom:calc(78px + env(safe-area-inset-bottom));z-index:390;display:flex;align-items:center;gap:10px;background:var(--surface,#1c2430);color:var(--paper,#fff);border:1px solid var(--border-2,rgba(255,255,255,.15));border-radius:12px;padding:10px 14px;font-size:12.5px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.35);pointer-events:none;';
+    document.body.appendChild(bar);
+  }
+  const yuzde = toplam ? Math.round((bitti/toplam)*100) : 0;
+  bar.innerHTML = `
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#E8A132" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;animation:spin 1s linear infinite;"><path d="M21 12a9 9 0 1 1-9-9"/></svg>
+    <span>Toplu yükleme devam ediyor: ${bitti}/${toplam} (%${yuzde}) — sayfadan çıkabilirsin, arka planda sürüyor.</span>
+  `;
+  if(!document.getElementById('topluYuklemeBarSpin')){
+    const st = document.createElement('style');
+    st.id = 'topluYuklemeBarSpin';
+    st.textContent = '@keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}';
+    document.head.appendChild(st);
+  }
+}
+function topluYuklemeBarGizle(ok, toplam){
+  const bar = document.getElementById('topluYuklemeBar');
+  if(!bar) return;
+  if(ok!==undefined){
+    bar.innerHTML = `
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#36A168" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M20 6 9 17l-5-5"/></svg>
+      <span>Toplu yükleme tamamlandı: ${ok}/${toplam} belge kaydedildi.</span>
+    `;
+  }
+  setTimeout(()=>bar.remove(), 2500);
+}
+
 function excelCellDate(v){
   const toLocalISO = (d)=>{
     const y = d.getFullYear();
@@ -6504,9 +6596,14 @@ function openIadeForm(id){
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E8A132" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2v-6l-3-5H4l-3 5v6h2"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="16.5" cy="17.5" r="2.5"/></svg>
           Kiradan İade Al — <span class="mini-plaka" style="font-size:13px;">${esc(v.plaka)}</span>
         </h3>
-        <button class="vqm-close" onclick="document.getElementById('iadeModal').remove()">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-        </button>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <button class="vqm-close" title="Küçült — panelde gezinirken kaybolmaz" onclick="modalKucult('iadeModal','İade Al — ${esc(v.plaka)}')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 19h12"/></svg>
+          </button>
+          <button class="vqm-close" onclick="document.getElementById('iadeModal').remove()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
       </div>
       <div class="iade-body">
         <!-- v.86: Mobilde bu form 3 adımlık bir akışa ayrılır (Tarih/Km → Fotoğraf/Durum → Not/Onay);
@@ -7002,9 +7099,14 @@ function openUzatForm(id){
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E8A132" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
           Sözleşme Uzat — <span class="mini-plaka" style="font-size:13px;">${esc(v.plaka)}</span>
         </h3>
-        <button class="vqm-close" onclick="document.getElementById('uzatModal').remove()">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-        </button>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <button class="vqm-close" title="Küçült — panelde gezinirken kaybolmaz" onclick="modalKucult('uzatModal','Sözleşme Uzat — ${esc(v.plaka)}')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 19h12"/></svg>
+          </button>
+          <button class="vqm-close" onclick="document.getElementById('uzatModal').remove()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
       </div>
       <div class="iade-body">
         ${eski?`<div class="iade-section">Mevcut bitiş: ${fmtTarih(eski)} · ${dlTxt}</div>`:''}
@@ -7081,9 +7183,14 @@ function openAracKirala(vehicleId){
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E8A132" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8v8h6l4 4V4L9 8H3Z"/></svg>
           Araç Kirala — Otomatik Sözleşme
         </h3>
-        <button class="vqm-close" onclick="document.getElementById('kiralaModal').remove()">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-        </button>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <button class="vqm-close" title="Küçült — panelde gezinirken sözleşme kaybolmaz" onclick="modalKucult('kiralaModal','Araç Kirala Sözleşmesi')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 19h12"/></svg>
+          </button>
+          <button class="vqm-close" onclick="document.getElementById('kiralaModal').remove()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
       </div>
       <div class="iade-body" style="max-height:64vh;overflow-y:auto;">
         <!-- v.160: kullanıcı isteğiyle tek-scroll form 4 adımlı sihirbaza dönüştürüldü. Hiçbir
@@ -12557,9 +12664,14 @@ function openStaffPwModal(){
     <div class="iade-card">
       <div class="iade-head">
         <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg> Personel Şifresi</h3>
-        <button class="vqm-close" onclick="document.getElementById('staffPwModal').remove()">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-        </button>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <button class="vqm-close" title="Küçült — panelde gezinirken kaybolmaz" onclick="modalKucult('staffPwModal','Personel Şifresi')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 19h12"/></svg>
+          </button>
+          <button class="vqm-close" onclick="document.getElementById('staffPwModal').remove()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
       </div>
       <div class="iade-body">
         <p style="font-size:13px;color:var(--steel-100);line-height:1.6;margin:0 0 16px;">Personel bu şifreyle giriş yapınca kira tutarları, gelir ve masraf rakamları gizlenir. Araç bilgileri ve belgeler görünür kalır.</p>
@@ -12604,9 +12716,14 @@ function openServisPlanla(vehicleId){
     <div class="iade-card">
       <div class="iade-head">
         <h3>${DASH_ICONS.wrench} Servis Planla</h3>
-        <button class="vqm-close" onclick="document.getElementById('servisModal').remove()">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-        </button>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <button class="vqm-close" title="Küçült — panelde gezinirken kaybolmaz" onclick="modalKucult('servisModal','Servis Planla')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 19h12"/></svg>
+          </button>
+          <button class="vqm-close" onclick="document.getElementById('servisModal').remove()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
       </div>
       <div class="iade-body">
         <div class="iade-field"><label>Araç</label><select id="spArac"><option value="">Seçin...</option>${vehicleOptions}</select></div>
@@ -13404,9 +13521,14 @@ function ykSihirbaziHtml(){
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#36A168" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8v8h6l4 4V4L9 8H3Z"/></svg>
           Yeni Kiralama — Adım Adım ${durum?`<span class="mini-plaka" style="font-size:11px;">${esc(YK_DURUM_ETIKET[durum]||durum)}</span>`:''}
         </h3>
-        <button class="vqm-close" onclick="document.getElementById('ykModal').remove()">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-        </button>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <button class="vqm-close" title="Küçült — panelde gezinirken sözleşme kaybolmaz" onclick="modalKucult('ykModal','Yeni Kiralama Sihirbazı')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 19h12"/></svg>
+          </button>
+          <button class="vqm-close" onclick="document.getElementById('ykModal').remove()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
       </div>
       <div class="iade-body" style="max-height:70vh;overflow-y:auto;">
         <div class="iade-section">1 — Müşteri</div>
@@ -14654,6 +14776,11 @@ async function belgeTopluIsle(files, status){
   const celiskiler = []; // v.159: mevcut tarihle çakışıp değiştirilmeyen belgeler burada toplanır
   const toplam = files.length;
   const kuyruk = files.slice();
+  // v.179: "toplu pdf/fiş yüklerken beklemek yerine başka ekrandayken çalışsın" — bu işlem zaten
+  // sayfa değiştirilse de arka planda çalışmaya devam ediyordu (switchPage DOM'u/JS state'i
+  // yok etmiyor); eksik olan, kullanıcının başka bir sayfadayken de "hâlâ devam ediyor, sayfadan
+  // çıkman güvenli" diye görebileceği bir gösterge idi. topluYuklemeBarGoster/Gizle bunu sağlar.
+  topluYuklemeBarGoster(bitti, toplam);
   const isle = async (file)=>{
     const r = await belgeTopluTek(file, fallbackId);
     bitti++;
@@ -14664,6 +14791,7 @@ async function belgeTopluIsle(files, status){
     }
     else hata++;
     status.textContent = `${bitti}/${toplam} işlendi · ${ok} kaydedildi${hata?` · ${hata} hata`:''}\nSon: ${file.name} — ${r.durum==='ok'?('✓ '+r.plaka+' ('+r.etiket+')'):('✗ '+r.mesaj)}`;
+    topluYuklemeBarGoster(bitti, toplam);
   };
   const isci = async ()=>{ let f; while((f=kuyruk.shift())!==undefined){ await isle(f); } };
   await Promise.all(Array.from({length: Math.min(3, toplam)}, isci));
@@ -14671,6 +14799,7 @@ async function belgeTopluIsle(files, status){
   status.textContent = `Tamamlandı: ${ok}/${toplam} belge kaydedildi${kurtarilan?` (${kurtarilan} plaka okunamayıp seçili araca kaydedildi)`:''}${hata?`, ${hata} dosya yüklenemedi`:''}.${celiskiler.length?`\n⚠ ${celiskiler.length} belgede tarih çelişkisi bulundu, mevcut kayıt korundu — elle kontrol edin:\n${celiskiler.join('\n')}`:''}${genelNot}`;
   showToast(`${ok} belge kaydedildi${hata?`, ${hata} başarısız`:''}${celiskiler.length?`, ${celiskiler.length} tarih çelişkisi (kontrol edin)`:''}${genel?`, ${genel} genel belge (cari/masraf kaydı oluşturmadı)`:''}.`, celiskiler.length>0 && ok===0);
   setTimeout(()=>{ status.style.display='none'; }, 8000);
+  topluYuklemeBarGizle(ok, toplam);
   renderDocUploadPage();
 }
 
