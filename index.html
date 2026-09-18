@@ -2471,7 +2471,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-18.169</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-18.170</div>
     </div>
   </aside>
 <script>
@@ -10385,10 +10385,25 @@ function openSidebarDrawer(){
   document.getElementById('sbOverlay')?.classList.toggle('show');
 }
 document.querySelectorAll('.sb-item').forEach(b=>{ b.onclick = ()=>switchPage(b.dataset.page); });
-document.querySelectorAll('.bn-item[data-page]').forEach(b=>{ b.onclick = ()=>switchPage(b.dataset.page); });
 function openMoreSheet(){ document.getElementById('bnMoreOverlay')?.classList.add('show'); }
 function closeMoreSheet(){ document.getElementById('bnMoreOverlay')?.classList.remove('show'); }
-if(document.getElementById('bnMoreBtn')) document.getElementById('bnMoreBtn').onclick = openMoreSheet;
+// v.170: "Mobildeki alt menü çalışmıyor" — #bottomNav (.bn-item / #bnMoreBtn) HTML'i bu dev
+// <script> bloğunun KAPANDIĞI yerden SONRA (dosyanın en sonlarına yakın) yer alıyor. Bu satırlar
+// script parser tarafından SENKRON çalıştırıldığı için, buraya geldiğinde tarayıcı henüz o kısmı
+// hiç PARSE ETMEMİŞTİ — yani querySelectorAll('.bn-item[data-page]') ve getElementById('bnMoreBtn')
+// o an DOM'da bulamıyor, hiçbir şeye onclick atanamıyordu (butonlar görünüyordu ama tıklama hiçbir
+// şey yapmıyordu). Diğer geç-tanımlanan öğeler için dosyanın başka bir yerinde zaten kullanılan
+// aynı güvenli desenle (bkz. ~satır 20536, "filoKaydetBtn" ekleme kodu), bu iki wiring'i DOM tümüyle
+// hazır olana kadar erteliyoruz.
+(function(){
+  function bnWireUp(){
+    document.querySelectorAll('.bn-item[data-page]').forEach(b=>{ b.onclick = ()=>switchPage(b.dataset.page); });
+    const bnMore = document.getElementById('bnMoreBtn');
+    if(bnMore) bnMore.onclick = openMoreSheet;
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', bnWireUp);
+  else bnWireUp();
+})();
 if(document.getElementById('sbToggleBtn')) document.getElementById('sbToggleBtn').onclick = openSidebarDrawer;
 if(document.getElementById('sbOverlay')) document.getElementById('sbOverlay').onclick = ()=>{
   document.getElementById('sidebar')?.classList.remove('show');
