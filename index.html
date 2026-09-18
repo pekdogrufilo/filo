@@ -22,12 +22,16 @@
   :root{--font-ui:'Manrope',-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;}
 
   /* v.92: Sabit Kaydet düğmesi */
-  #filoKaydetBtn{position:fixed;right:22px;bottom:22px;z-index:900;display:flex;align-items:center;gap:7px;background:var(--accent-blue);color:#fff;border:none;border-radius:999px;padding:12px 22px;font-family:var(--font-ui);font-size:13.5px;font-weight:700;cursor:pointer;box-shadow:0 8px 24px rgba(22,160,134,.35);transition:transform .15s ease, box-shadow .15s ease;}
+  /* v.174: "Ekran çentikleri hesap etmiyorsun" — bu sağ-alt köşeye sabitlenmiş düğme, cihazın
+     gerçek güvenli-alan payını (ör. yatay moddaki yan çentik, veya alt "home indicator" çubuğu)
+     hiç hesaba katmıyordu; sabit piksel değerleri ile env(safe-area-inset-*) payının BÜYÜK
+     olanını kullanacak şekilde güncellendi (notch'suz cihaz/masaüstünde davranış aynı kalır). */
+  #filoKaydetBtn{position:fixed;right:max(22px, env(safe-area-inset-right));bottom:max(22px, env(safe-area-inset-bottom));z-index:900;display:flex;align-items:center;gap:7px;background:var(--accent-blue);color:#fff;border:none;border-radius:999px;padding:12px 22px;font-family:var(--font-ui);font-size:13.5px;font-weight:700;cursor:pointer;box-shadow:0 8px 24px rgba(22,160,134,.35);transition:transform .15s ease, box-shadow .15s ease;}
   #filoKaydetBtn:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(22,160,134,.45);}
   #filoKaydetBtn:active{transform:translateY(0);}
-  @media (max-width:900px){#filoKaydetBtn{right:14px;bottom:76px;padding:11px 18px;}}
+  @media (max-width:900px){#filoKaydetBtn{right:max(14px, env(safe-area-inset-right));bottom:calc(76px + env(safe-area-inset-bottom, 0px));padding:11px 18px;}}
   /* v.93: Otomatik kaydet rozeti */
-  #filoOtkRozet{position:fixed;left:22px;bottom:22px;z-index:899;background:rgba(54,161,104,.95);color:#fff;font-family:var(--font-ui);font-size:12.5px;font-weight:600;padding:8px 16px;border-radius:999px;box-shadow:0 6px 18px rgba(54,161,104,.35);opacity:0;transform:translateY(8px);transition:opacity .25s ease, transform .25s ease;pointer-events:none;}
+  #filoOtkRozet{position:fixed;left:max(22px, env(safe-area-inset-left));bottom:max(22px, env(safe-area-inset-bottom));z-index:899;background:rgba(54,161,104,.95);color:#fff;font-family:var(--font-ui);font-size:12.5px;font-weight:600;padding:8px 16px;border-radius:999px;box-shadow:0 6px 18px rgba(54,161,104,.35);opacity:0;transform:translateY(8px);transition:opacity .25s ease, transform .25s ease;pointer-events:none;}
   #filoOtkRozet.show{opacity:1;transform:translateY(0);}
   /* v.93: Koyu temada teslim/poliçe fotoğrafları koyu görünmesin — beyaz karneye al */
   html[data-theme="dark"] img[src^="data:"]{background:#fff;border-radius:8px;padding:4px;box-shadow:0 2px 8px rgba(0,0,0,.4);}
@@ -324,7 +328,17 @@
   .alert-more:hover{color:var(--paper);}
   @media (max-width:640px){.alert-row{grid-template-columns:90px 66px 1fr 80px;font-size:13px;}}
 
-  .overlay{position:fixed;inset:0;background:rgba(10,12,15,.72);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;z-index:50;padding:20px;}
+  /* v.174: "Ekran çentikleri hesap etmiyorsun" — panelin onlarca modali bu .overlay temel
+     sınıfını paylaşıyor (bkz. arşiv, durum olayı, servis girişi, karşılaştırma, vb.). Sabit
+     20px dolgu, notch'lu/Dynamic Island'lı telefonlarda YATAY modda (ekranın yan tarafındaki
+     çentik/köşe yuvarlaması) ya da alt "home indicator" çubuğunun bulunduğu bölgede içeriğin
+     o güvenli-alan şeridinin ALTINDA/ARKASINDA kalmasına yol açabiliyordu. viewport-fit=cover
+     zaten <meta> ile açık (bkz. <head>); burada da her yöne, sabit 20px İLE cihazın gerçek
+     güvenli-alan payından (env(safe-area-inset-*)) BÜYÜK OLANINI kullanıyoruz — notch'suz
+     eski cihazlarda/masaüstünde davranış birebir aynı kalıyor (env() değeri 0 olduğunda
+     max() sabit 20px'i seçer).
+  */
+  .overlay{position:fixed;inset:0;background:rgba(10,12,15,.72);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;z-index:50;padding:max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));}
   .overlay.show{display:flex;}
   .modal{background:var(--surface);border:1px solid var(--line);border-radius:16px;width:100%;max-width:560px;max-height:92vh;display:flex;flex-direction:column;box-shadow:var(--shadow-lg);animation:popIn .22s var(--ease);}
   .modal-head{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--line);flex-shrink:0;}
@@ -484,7 +498,9 @@
   /* ===== Etkinlik geçmişi çekmecesi ===== */
   .log-overlay{position:fixed;inset:0;background:rgba(10,12,15,.55);z-index:110;display:none;}
   .log-overlay.show{display:block;}
-  .log-drawer{position:fixed;top:0;right:0;height:100vh;width:380px;max-width:92vw;background:linear-gradient(165deg,var(--asphalt-800),var(--asphalt-700));border-left:1px solid var(--line);box-shadow:var(--shadow-lg);z-index:120;transform:translateX(100%);transition:transform .28s var(--ease);display:flex;flex-direction:column;}
+  /* v.174: sağ kenara tam yaslı bu çekmece de aynı şekilde güvenli-alan payı alıyor (sağ kenar
+     çentiği/köşesi ve üst/alt kenarlar). */
+  .log-drawer{position:fixed;top:0;right:0;height:100vh;width:380px;max-width:92vw;background:linear-gradient(165deg,var(--asphalt-800),var(--asphalt-700));border-left:1px solid var(--line);box-shadow:var(--shadow-lg);z-index:120;transform:translateX(100%);transition:transform .28s var(--ease);display:flex;flex-direction:column;padding-right:env(safe-area-inset-right,0);padding-top:env(safe-area-inset-top,0);padding-bottom:env(safe-area-inset-bottom,0);}
   .log-drawer.show{transform:translateX(0);}
   .log-drawer-head{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--line);flex-shrink:0;}
   .log-drawer-head h3{font-family:var(--font-ui);font-size:15px;margin:0;}
@@ -578,7 +594,7 @@
   .empty-state-desc{font-size:13px;color:var(--text-2);max-width:360px;line-height:1.55;}
   .empty-state-cta{margin-top:14px;background:var(--accent-blue);color:#fff;border:none;padding:9px 18px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-ui);}
 
-  .bn-sheet{background:var(--surface);width:100%;border-radius:20px 20px 0 0;padding:10px 8px calc(22px + env(safe-area-inset-bottom,0px));max-height:80vh;overflow-y:auto;}
+  .bn-sheet{background:var(--surface);width:100%;border-radius:20px 20px 0 0;padding:10px max(8px, env(safe-area-inset-right)) calc(22px + env(safe-area-inset-bottom,0px)) max(8px, env(safe-area-inset-left));max-height:80vh;overflow-y:auto;}
   .bn-sheet-handle{width:36px;height:4px;background:var(--border-2);border-radius:3px;margin:4px auto 14px;}
   .bn-sheet-title{font-family:var(--font-ui);font-weight:700;font-size:15px;color:var(--paper);padding:0 10px 14px;}
   .bn-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px 2px;}
@@ -710,7 +726,7 @@
 
   /* Araç listesi modal */
   .vehicle-quick-modal{position:fixed;inset:0;z-index:300;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.55);animation:fadeIn .2s ease;}
-  .iade-modal{position:fixed;inset:0;z-index:400;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.6);animation:fadeIn .2s ease;}
+  .iade-modal{position:fixed;inset:0;z-index:400;display:flex;align-items:center;justify-content:center;padding:max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));background:rgba(0,0,0,.6);animation:fadeIn .2s ease;}
   .iade-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;animation:popIn .25s var(--ease);}
   .iade-head{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--line);}
   .iade-head h3{font-family:var(--font-ui);font-size:15px;font-weight:600;margin:0;display:flex;align-items:center;gap:9px;}
@@ -991,7 +1007,7 @@
   }
   .mobil-fab{display:none;}
   @media (max-width:900px){
-    .mobil-fab{position:fixed;right:18px;bottom:calc(74px + env(safe-area-inset-bottom,0px));width:52px;height:52px;border-radius:50%;background:var(--accent-blue);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(22,160,134,.35);z-index:90;cursor:pointer;}
+    .mobil-fab{position:fixed;right:max(18px, env(safe-area-inset-right));bottom:calc(74px + env(safe-area-inset-bottom,0px));width:52px;height:52px;border-radius:50%;background:var(--accent-blue);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(22,160,134,.35);z-index:90;cursor:pointer;}
   }
 
   /* v.86: Mobil Araç Detayı — sekme çubuğu sadece mobilde görünür; masaüstünde tüm bölümler
@@ -1042,6 +1058,13 @@
       width:250px;max-width:82vw;height:auto;overflow-y:auto;
       box-shadow:0 0 40px rgba(0,0,0,.25);
       animation:sbDrawerIn .22s var(--ease);
+      /* v.174: sol kenara tam yaslı bu çekmece, yatay modda telefonun sol/sağ kenarındaki
+         çentik/köşe alanına ve dikeyde üst durum çubuğu/alt home çubuğuna girebiliyordu —
+         iç dolguya güvenli-alan payı ekleniyor (notch'suz cihazda 0 olduğu için görünüş
+         değişmez). */
+      padding-left:env(safe-area-inset-left,0);
+      padding-top:env(safe-area-inset-top,0);
+      padding-bottom:env(safe-area-inset-bottom,0);
     }
     .sb-overlay.show{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:63;backdrop-filter:blur(2px);}
   }
@@ -1143,8 +1166,13 @@
     .iade-field input,.iade-field select,.iade-field textarea,
     .masraf-add-row select,.masraf-add-row input{font-size:16px;}
     .field input,.field select{padding:11px 12px;}
-    /* iPhone alt güvenlik alanı — alt navigasyon home çubuğunun altına girmesin */
-    .bottom-nav{padding-bottom:env(safety-area-inset-bottom,0);padding-bottom:env(safe-area-inset-bottom,0);}
+    /* iPhone alt güvenlik alanı — alt navigasyon home çubuğunun altına girmesin (alt boşluk
+       zaten temel .bottom-nav kuralında env(safe-area-inset-bottom) ile veriliyor; burada
+       önceden geçersiz bir özellik adı — "safety-area-inset-bottom" — yazılmıştı, o satır hiç
+       çalışmıyordu, kaldırıldı). v.174: yatay modda ekranın yan tarafındaki çentik/köşe
+       yuvarlamasının en soldaki/sağdaki kısayolları kapatmaması için sol/sağ güvenli-alan payı
+       da eklendi. */
+    .bottom-nav{padding-left:env(safe-area-inset-left,0);padding-right:env(safe-area-inset-right,0);}
     .dcard,.card{border-radius:14px;}
     /* Araç kartı aksiyon butonları parmakla rahat basılır olsun */
     .v-actions button{min-height:42px;}
@@ -2525,7 +2553,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-18.173</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-18.174</div>
     </div>
   </aside>
 <script>
