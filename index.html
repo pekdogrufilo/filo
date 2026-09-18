@@ -553,7 +553,14 @@
      bomboş kaldı"). width:100% ile .app-shell artık her zaman body'nin tam genişliğini
      kaplıyor; .main-area zaten flex:1 olduğu için kalan alanı doğru şekilde dolduruyor. */
   .app-shell{display:flex;min-height:100vh;min-width:0;width:100%;}
-  .sidebar{width:210px;flex-shrink:0;background:var(--sidebar-bg);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;transition:width .2s cubic-bezier(.22,1,.36,1);}
+  .sidebar{width:210px;flex-shrink:0;background:var(--sidebar-bg);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;transition:width .2s cubic-bezier(.22,1,.36,1);scrollbar-width:auto;scrollbar-color:rgba(255,255,255,.4) transparent;}
+  /* v.165: kullanıcı isteği üzerine — sol menünün kaydırma çubuğu genel (ince/soluk) kaydırma
+     çubuğu stilinden AYRI, daha KALIN ve BELİRGİN yapıldı; sadece .sidebar'a özel, diğer
+     kaydırılabilir alanları (tablolar, modallar vb.) etkilemez. */
+  .sidebar::-webkit-scrollbar{width:10px;}
+  .sidebar::-webkit-scrollbar-track{background:rgba(255,255,255,.05);}
+  .sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.35);border-radius:10px;border:2px solid transparent;background-clip:content-box;}
+  .sidebar::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.55);background-clip:content-box;}
   .sidebar.collapsed{width:64px;}
   .sidebar.collapsed .sb-brand{justify-content:center;padding:20px 0 16px;}
   .sidebar.collapsed .sb-brand-text,.sidebar.collapsed .sb-brand-sub,.sidebar.collapsed .sb-section,
@@ -1008,10 +1015,17 @@
 <style id="polish-layer">
   /* ===== Apple tasarım dili ===== */
   ::selection{background:rgba(22,160,134,.3);color:var(--text);}
-  ::-webkit-scrollbar{width:8px;height:8px;}
-  ::-webkit-scrollbar-track{background:transparent;}
-  ::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:8px;border:2px solid transparent;background-clip:content-box;}
-  html{scrollbar-width:thin;scrollbar-color:var(--border-2) transparent;}
+  /* v.166: kullanıcı bildirimi üzerine — genel (site geneli, ör. Araç Yönetimi gibi uzun
+     sayfaların ana kaydırma çubuğu) kaydırma çubuğu önceden %14-18 saydamlıkta (var(--border-2))
+     ve saydam iz üzerindeydi, bu da neredeyse görünmez oluyordu. Artık sol menüyle (v.165)
+     tutarlı şekilde daha kalın ve belirgin. Daha önce ayrı stil tanımlanmış alanlar
+     (.table-scroll, .bottom-nav-items, .filter-chips, .sidebar vb.) kendi kurallarını
+     korur, bu değişiklik yalnızca onlar dışındaki genel kaydırılabilir alanları etkiler. -->
+  ::-webkit-scrollbar{width:11px;height:11px;}
+  ::-webkit-scrollbar-track{background:rgba(128,128,128,.08);}
+  ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.35);border-radius:8px;border:2px solid transparent;background-clip:content-box;}
+  ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.5);background-clip:content-box;}
+  html{scrollbar-width:auto;scrollbar-color:rgba(255,255,255,.35) rgba(128,128,128,.08);}
   body{letter-spacing:-.01em;}
   h1,h2,h3,.dcard h3{font-weight:650;letter-spacing:-.02em;}
   /* Kartlar: köşeler daha yumuşak, ayrım gölge + zemin farkıyla */
@@ -1195,8 +1209,18 @@
   /* Toast: beyaz */
   html[data-theme="light"] .toast{background:#FFFFFF;color:#1C1A16;box-shadow:0 8px 30px rgba(0,0,0,.16);}
   html[data-theme="light"] .toast .tclose{color:rgba(60,60,67,.65);}
-  /* Kaydırma çubuğu */
-  html[data-theme="light"] ::-webkit-scrollbar-thumb{background:rgba(0,0,0,.18);border-radius:8px;border:2px solid transparent;background-clip:content-box;}
+  /* Kaydırma çubuğu — v.166: daha belirgin hâle getirildi, bkz. yukarısındaki genel kural notu. */
+  html[data-theme="light"] ::-webkit-scrollbar-track{background:rgba(0,0,0,.05);}
+  html[data-theme="light"] ::-webkit-scrollbar-thumb{background:rgba(0,0,0,.3);border-radius:8px;border:2px solid transparent;background-clip:content-box;}
+  html[data-theme="light"] ::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.45);background-clip:content-box;}
+  html[data-theme="light"]{scrollbar-color:rgba(0,0,0,.3) rgba(0,0,0,.05);}
+  /* v.165: açık temada sol menünün arka planı da açık renge döndüğü için, menünün kendine özel
+     (koyu temada beyaz tonlu) kaydırma çubuğu burada AÇIKÇA koyu tona çevriliyor — rastgele
+     kademe (cascade) sırasına güvenmemek için ayrı, isim bazlı kural olarak eklendi. */
+  html[data-theme="light"] .sidebar{scrollbar-color:rgba(0,0,0,.3) transparent;}
+  html[data-theme="light"] .sidebar::-webkit-scrollbar-track{background:rgba(0,0,0,.04);}
+  html[data-theme="light"] .sidebar::-webkit-scrollbar-thumb{background:rgba(0,0,0,.3);border-radius:10px;border:2px solid transparent;background-clip:content-box;}
+  html[data-theme="light"] .sidebar::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.45);background-clip:content-box;}
   /* Kart ve panel cilası: yumuşak hover kaldırma */
   html[data-theme="light"] .card,
   html[data-theme="light"] .dstat{transition:transform .18s ease, box-shadow .18s ease;}
@@ -2367,6 +2391,7 @@
         <button class="sb-group-head" type="button">Filo<svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
         <div class="sb-group-body">
           <button class="sb-item" data-page="arac-yonetimi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2v-6l-3-5H4l-3 5v6h2"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="16.5" cy="17.5" r="2.5"/></svg>Araç Yönetimi</button>
+          <button class="sb-item" data-page="km-takibi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg>Km Takibi</button>
           <button class="sb-item" data-page="belgeler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>Belge Arşivi<span class="sb-badge" id="sbBelgelerBadge" style="display:none;background:var(--amber);">0</span></button>
           <button class="sb-item" id="sbBelgeYukle" data-page="docupload"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg>Belge Yükleme</button>
         </div>
@@ -2437,7 +2462,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-18.161</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-18.166</div>
     </div>
   </aside>
 <script>
@@ -2667,6 +2692,7 @@
 <section class="page" data-page="musteriler" id="page-musteriler"></section>
 <section class="page" data-page="cari" id="page-cari"></section>
 <section class="page" data-page="faturalar" id="page-faturalar"></section>
+<section class="page" data-page="km-takibi" id="page-km-takibi"></section>
 <section class="page" data-page="yakit" id="page-yakit"></section>
 <section class="page" data-page="lastikler" id="page-lastikler"></section>
 <section class="page" data-page="hasarcezalar" id="page-hasarcezalar"></section>
@@ -7593,21 +7619,8 @@ function openVehicleDetail(id){
   // dağılmış durumdaydı; bu bölüm var olan tüm bu alanları TEK bakışta, tek yerde topluyor
   // (veri taşımıyor, sadece bir araya getiriyor) + km aşımı durumunu (v.75'teki aynı formülle) gösteriyor.
   const kiralamaBilgisiVar = !!(v.kiraciAdi || v.teslimTarih || v.kmLimiti || v.sozlesmeBitis || v.kiraBitis || v.durum==='Kirada' || v.durum==='Serviste');
-  const kmDurum = (()=>{
-    const mevcutKm = Math.max(Number(v.sonKm)||0, Number(v.teslimKm)||0, ...(v.kmGecmisi||[]).map(k=>Number(k.bitKm)||0));
-    const teslimKmNum = Number(v.teslimKm)||0;
-    if(!v.kmLimiti || !v.teslimTarih || !mevcutKm || mevcutKm<=teslimKmNum) return {mevcutKm, mesaj:''};
-    const ay = monthsBetweenDates(v.teslimTarih, todayISO());
-    if(ay<=0) return {mevcutKm, mesaj:''};
-    const hak = Math.round(v.kmLimiti*ay);
-    const kullanilan = mevcutKm - teslimKmNum;
-    const asim = kullanilan - hak;
-    const asimTutar = (asim>0 && v.kmAsimFiyat) ? asim*Number(v.kmAsimFiyat) : null;
-    const mesaj = asim>0
-      ? `${asim.toLocaleString('tr-TR')} km aşım — ${kullanilan.toLocaleString('tr-TR')} km yapılmış, ${hak.toLocaleString('tr-TR')} km hakkı vardı (${ay.toLocaleString('tr-TR',{maximumFractionDigits:1})} ay × ${Number(v.kmLimiti).toLocaleString('tr-TR')} km)${asimTutar!=null?` — tahmini <b>${fmtTL2(asimTutar)}</b> aşım bedeli (${asim.toLocaleString('tr-TR')} km × ${fmtTL2(v.kmAsimFiyat)})`:''}`
-      : `${Math.abs(asim).toLocaleString('tr-TR')} km hakkı kaldı — ${kullanilan.toLocaleString('tr-TR')} km yapılmış, ${hak.toLocaleString('tr-TR')} km hakkı var`;
-    return {mevcutKm, asim, asimTutar, mesaj};
-  })();
+  // v.162: bu hesap artık hesaplaKmDurum(v) ortak fonksiyonunda (formül AYNEN korunur) — bkz. yukarısı.
+  const kmDurum = hesaplaKmDurum(v);
 
   const el = document.createElement('div');
   el.className = 'overlay show';
@@ -7760,11 +7773,41 @@ function openVehicleDetail(id){
             <div style="font-size:12px;font-weight:700;color:var(--paper);">${ICO('car',13)} Km Geçmişi</div>
             ${isAdmin() ? `<button onclick="kmFotoModalAc('${id}')" style="background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.2);color:var(--accent-blue);padding:5px 12px;border-radius:7px;font-size:11.5px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">${ICO('camera',12)} Fotoğrafla Km Ekle</button>` : ''}
           </div>
+
+          ${isAdmin() ? `
+          <!-- v.162: hızlı manuel km girişi — önceki/yeni/fark canlı hesaplanır; yeni km eski
+               km'den düşükse (fotoğraf akışındaki aynı desenle) önce uyarı gösterir, ikinci
+               tıklamada onaylanmış sayıp kaydeder. -->
+          <div style="background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:12px;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+              <div>
+                <label style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;">Yeni Km</label>
+                <input type="number" id="kmManuelDeger" placeholder="Örn. ${kmDurum.mevcutKm||0}" oninput="kmManuelFarkGuncelle('${id}')" onwheel="this.blur()" style="width:100%;margin-top:4px;padding:8px 10px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--paper);font-size:13px;font-weight:600;box-sizing:border-box;">
+              </div>
+              <div>
+                <label style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;">Kaynak</label>
+                <select id="kmManuelKaynak" style="width:100%;margin-top:4px;padding:8px 10px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--paper);font-size:12.5px;box-sizing:border-box;">
+                  <option value="Manuel">Manuel</option>
+                  <option value="Servis">Servis</option>
+                  <option value="Muayene">Muayene</option>
+                  <option value="Teslim">Teslim</option>
+                  <option value="İade">İade</option>
+                  <option value="Diğer">Diğer</option>
+                </select>
+              </div>
+            </div>
+            <div id="kmManuelFark" style="font-size:11.5px;color:var(--steel-300);min-height:15px;margin-bottom:4px;">Önceki: ${kmDurum.mevcutKm?kmDurum.mevcutKm.toLocaleString('tr-TR'):'—'} km</div>
+            <div id="kmManuelUyari" style="font-size:11.5px;min-height:15px;margin-bottom:4px;"></div>
+            <button onclick="kmManuelKaydet('${id}')" style="width:100%;padding:8px;border-radius:7px;border:none;background:var(--accent-blue);color:#fff;font-size:12.5px;font-weight:700;cursor:pointer;">Km Kaydet</button>
+          </div>` : ''}
+
+          ${kmGecmisi.length>=2 ? `<div style="margin-bottom:12px;">${svgBarChart(kmGecmisi.slice(-6).map(k=>Number(k.toplamKm)||0), kmGecmisi.slice(-6).map(k=>(k.donem||'—').split(' ')[0].slice(0,3)), 320, 130, 'var(--accent-blue)')}</div>` : ''}
+
           ${kmGecmisi.length ? `
           <div style="display:flex;flex-direction:column;gap:6px;">
             ${kmGecmisi.slice().reverse().map(k=>`
               <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line);">
-                <span style="font-size:12px;color:var(--steel-300);">${esc(k.donem||'—')}${k.kaynak==='Fotoğraf (yapay zeka okuma)'?` <span title="Fotoğraftan okundu">${ICO('camera',10)}</span>`:''}</span>
+                <span style="font-size:12px;color:var(--steel-300);">${esc(k.donem||'—')} <span style="color:var(--steel-500);">· ${esc(k.kaynak||'—')}</span>${k.kaynak==='Fotoğraf (yapay zeka okuma)'?` <span title="Fotoğraftan okundu">${ICO('camera',10)}</span>`:''}</span>
                 <div>
                   <span style="font-size:13px;font-weight:600;color:var(--accent-blue);">${(k.toplamKm||0).toLocaleString('tr-TR')} km</span>
                   ${k.bitKm ? `<span style="font-size:11px;color:var(--steel-500);margin-left:8px;">Son: ${k.bitKm.toLocaleString('tr-TR')} km</span>` : ''}
@@ -8329,6 +8372,90 @@ function loadTesseractScript(){
     document.head.appendChild(s);
   });
   return window.__tesseractLoading;
+}
+
+// ===== KM Merkezi ortak yardımcılar (v.162) =====
+// Aracın bilinen en güncel km'sini tek yerden hesaplar. NOT: dosyanın başka yerlerinde
+// (bakimTahminiHesapla, render(), vb.) AYNI formülün satır-içi kopyaları hâlâ duruyor —
+// var olan çalışan kodu bozmamak için onlara dokunulmadı, sadece BU YENİ (v.162) kod
+// (openVehicleDetail'deki kmDurum ve KM Takibi sayfası) bu ortak fonksiyonu kullanıyor.
+function mevcutKmHesapla(v){
+  return Math.max(Number(v.sonKm)||0, Number(v.teslimKm)||0, ...(v.kmGecmisi||[]).map(k=>Number(k.bitKm)||0));
+}
+// Kiralama dönemi km aşımı hesabı — openVehicleDetail içindeki kmDurum IIFE'sinin (v.75)
+// AYNEN dışa çıkarılmış hali; formül hiç değiştirilmedi, sadece tek yerden çağrılabilir oldu.
+function hesaplaKmDurum(v){
+  const mevcutKm = mevcutKmHesapla(v);
+  const teslimKmNum = Number(v.teslimKm)||0;
+  if(!v.kmLimiti || !v.teslimTarih || !mevcutKm || mevcutKm<=teslimKmNum) return {mevcutKm, mesaj:''};
+  const ay = monthsBetweenDates(v.teslimTarih, todayISO());
+  if(ay<=0) return {mevcutKm, mesaj:''};
+  const hak = Math.round(v.kmLimiti*ay);
+  const kullanilan = mevcutKm - teslimKmNum;
+  const asim = kullanilan - hak;
+  const asimTutar = (asim>0 && v.kmAsimFiyat) ? asim*Number(v.kmAsimFiyat) : null;
+  const mesaj = asim>0
+    ? `${asim.toLocaleString('tr-TR')} km aşım — ${kullanilan.toLocaleString('tr-TR')} km yapılmış, ${hak.toLocaleString('tr-TR')} km hakkı vardı (${ay.toLocaleString('tr-TR',{maximumFractionDigits:1})} ay × ${Number(v.kmLimiti).toLocaleString('tr-TR')} km)${asimTutar!=null?` — tahmini <b>${fmtTL2(asimTutar)}</b> aşım bedeli (${asim.toLocaleString('tr-TR')} km × ${fmtTL2(v.kmAsimFiyat)})`:''}`
+    : `${Math.abs(asim).toLocaleString('tr-TR')} km hakkı kaldı — ${kullanilan.toLocaleString('tr-TR')} km yapılmış, ${hak.toLocaleString('tr-TR')} km hakkı var`;
+  return {mevcutKm, hak, kullanilan, asim, asimTutar, mesaj};
+}
+// Yeni km girişinde canlı önceki→yeni→fark gösterimi (araç detay Bakım sekmesindeki hızlı giriş kartı).
+function kmManuelFarkGuncelle(id){
+  const v = vehicles.find(x=>x.id===id); if(!v) return;
+  const inp = document.getElementById('kmManuelDeger');
+  const farkEl = document.getElementById('kmManuelFark');
+  const uyari = document.getElementById('kmManuelUyari');
+  if(!inp || !farkEl) return;
+  if(uyari){ uyari.textContent=''; uyari.dataset.confirmed=''; }
+  const mevcutKm = mevcutKmHesapla(v);
+  const yeni = Number(inp.value);
+  if(!yeni){ farkEl.textContent = `Önceki: ${mevcutKm?mevcutKm.toLocaleString('tr-TR'):'—'} km`; return; }
+  const fark = yeni - mevcutKm;
+  farkEl.innerHTML = `Önceki: <b>${mevcutKm.toLocaleString('tr-TR')}</b> km → Yeni: <b>${yeni.toLocaleString('tr-TR')}</b> km &nbsp;·&nbsp; Fark: <b style="color:${fark<0?'#E1554E':'#36A168'}">${fark>=0?'+':''}${fark.toLocaleString('tr-TR')} km</b>`;
+}
+// Hızlı giriş kartından manuel km kaydı — kmFotoKaydet ile aynı veri yapısına
+// (kmGecmisi: {donem, basKm, bitKm, toplamKm, kaynak}) tek bir yeni/güncellenen kayıt ekler.
+async function kmManuelKaydet(id){
+  if(!requireAdmin()) return;
+  const v = vehicles.find(x=>x.id===id); if(!v) return;
+  const inp = document.getElementById('kmManuelDeger');
+  const kaynakSel = document.getElementById('kmManuelKaynak');
+  const uyari = document.getElementById('kmManuelUyari');
+  if(!inp) return;
+  const km = Number(inp.value);
+  if(!km || km<=0){ showToast('Geçerli bir km değeri girin.', true); return; }
+  const mevcutKm = mevcutKmHesapla(v);
+  if(mevcutKm && km < mevcutKm && uyari && !uyari.dataset.confirmed){
+    uyari.style.color = '#E1554E';
+    uyari.textContent = `Bu değer, kayıtlı en son km'den (${mevcutKm.toLocaleString('tr-TR')} km) düşük. Yine de kaydetmek için tekrar "Km Kaydet"e basın.`;
+    uyari.dataset.confirmed = '1';
+    return;
+  }
+  const now = new Date();
+  const aylar = ['','Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+  const donem = `${aylar[now.getMonth()+1]} ${now.getFullYear()}`;
+  const kmGecmisi = v.kmGecmisi || [];
+  const mevcutIdx = kmGecmisi.findIndex(k=>k.donem===donem);
+  const yeniKayit = {
+    donem,
+    basKm: mevcutKm || 0,
+    bitKm: Math.round(km),
+    toplamKm: Math.max(0, Math.round(km - (mevcutKm||0))),
+    kaynak: (kaynakSel && kaynakSel.value) || 'Manuel',
+    tarih: todayISO()
+  };
+  if(mevcutIdx>=0) kmGecmisi[mevcutIdx] = yeniKayit;
+  else kmGecmisi.push(yeniKayit);
+  const idx = vehicles.findIndex(x=>x.id===id);
+  vehicles[idx] = {...v, kmGecmisi, sonKm: Math.round(km), aykm: yeniKayit.toplamKm};
+  await persist();
+  logActivity('Km güncellendi (manuel)', `${v.plaka} — ${Math.round(km).toLocaleString('tr-TR')} km (${yeniKayit.kaynak})`).catch(()=>{});
+  showToast('Km güncellendi.');
+  if(document.getElementById('vehicleDetailOverlay')){
+    document.getElementById('vehicleDetailOverlay').remove();
+    openVehicleDetail(id);
+  }
+  if(window.__currentPage==='km-takibi' && typeof renderKmTakibiPage==='function') renderKmTakibiPage();
 }
 
 function kmFotoModalAc(id){
@@ -9985,6 +10112,7 @@ document.getElementById('menuChangePw').onclick = async ()=>{
 const PAGE_META = {
   'genel-bakis': {title:'Genel Bakış', sub:'Filo performansını anlık olarak takip edin'},
   'arac-yonetimi': {title:'Araç Yönetimi', sub:'Tüm araçları görüntüle, ekle ve düzenle'},
+  'km-takibi': {title:'Km Takibi', sub:'Filo genelinde kilometre, kira km aşımı ve bakım-km uyarıları'},
   'kiralama': {title:'Kiralama İşlemleri', sub:'Kiradaki araçlar ve kiracı bilgileri'},
   'musteriler': {title:'Müşteriler', sub:'Kiracı ve kurumlar: araçlar, kira toplamı ve geçmiş'},
   'cari': {title:'Cari & Tahsilat', sub:'Müşteri bazlı cari bakiye, tahsilat ve ekstre'},
@@ -10056,6 +10184,21 @@ if(document.getElementById('sbOverlay')) document.getElementById('sbOverlay').on
 if(document.getElementById('sbHelpBtn')) document.getElementById('sbHelpBtn').onclick = ()=>{
   showToast('Destek için: bu paneli senin adına kuran kişiyle iletişime geç.');
 };
+
+// v.163: bazı tarayıcı/işletim sistemi kombinasyonlarında position:sticky + overflow-y:auto
+// birlikte kullanılan sol menüde fare tekerleği ile aşağı kaydırma güvenilir çalışmayabiliyor
+// (tarayıcıya özgü bilinen bir tutarsızlık — kullanıcı bildirimi üzerine eklendi). Bu, tarayıcının
+// varsayılan kaydırmasını DEĞİŞTİRMEZ; sadece menünün kendi içinde kaydırılacak içeriği varken
+// (scrollHeight > clientHeight) tekerlek olayını yakalayıp scrollTop'u elle ilerleterek garanti altına alır.
+(function(){
+  const sb = document.getElementById('sidebar');
+  if(!sb) return;
+  sb.addEventListener('wheel', function(e){
+    if(sb.scrollHeight <= sb.clientHeight) return; // kaydıracak bir şey yoksa dokunma
+    sb.scrollTop += e.deltaY;
+    e.preventDefault();
+  }, {passive:false});
+})();
 
 // ===== Sol menü daraltma (ikon-only mod) — tercih localStorage'da saklanır =====
 (function(){
@@ -10170,6 +10313,7 @@ function renderCurrentPage(){
   const key = window.__currentPage || 'genel-bakis';
   if(key==='genel-bakis') renderDashboard();
   else if(key==='arac-yonetimi') render();
+  else if(key==='km-takibi') renderKmTakibiPage();
   else if(key==='masraf') renderMasrafPage();
   else if(key==='finansal-analiz') renderFinansalAnalizPage();
   else if(key==='bakim') renderBakimPage();
@@ -11671,11 +11815,23 @@ function bakimTahminiHesapla(v){
 function renderBakimPage(){
   const page = document.getElementById('page-bakim');
   const serviste = vehicles.filter(v=>v.durum==='Serviste');
-  const planliServis = vehicles.filter(v=>v.sonrakiServisTarihi || v.sonrakiServisKm).sort((a,b)=>{
-    const da = daysLeft(a.sonrakiServisTarihi)||9999;
-    const db = daysLeft(b.sonrakiServisTarihi)||9999;
-    return da-db;
-  });
+  // v.164: "tarihe VEYA km'ye göre, hangisi önce gelirse" — önceden bu liste yalnızca
+  // sonrakiServisTarihi'ne göre sıralanıyordu, sonrakiServisKm alanı tabloda GÖSTERİLİYOR
+  // ama aciliyet/sıralamaya hiç katılmıyordu. Artık her iki gösterge de hesaplanıp en acil
+  // olan (gecikti > yakın > normal) öne alınıyor; iki gösterge arasında ne zaman VEYA ne
+  // km ile ilgili hiçbir mevcut veri alanı/yapısı değişmedi, sadece yorumlanış biçimi eklendi.
+  const planliServisAciliyet = v=>{
+    const dl = v.sonrakiServisTarihi ? daysLeft(v.sonrakiServisTarihi) : null;
+    const mevcutKm = v.sonrakiServisKm ? mevcutKmHesapla(v) : null;
+    const kmKalan = (v.sonrakiServisKm && mevcutKm!=null) ? (Number(v.sonrakiServisKm)-mevcutKm) : null;
+    const dlGecti = dl!==null && dl<0, kmGecti = kmKalan!==null && kmKalan<0;
+    const dlYakin = dl!==null && dl>=0 && dl<=7, kmYakin = kmKalan!==null && kmKalan>=0 && kmKalan<=500;
+    const skor = (dlGecti||kmGecti) ? 0 : (dlYakin||kmYakin) ? 1 : (dl!==null||kmKalan!==null) ? 2 : 3;
+    return {dl, kmKalan, dlGecti, kmGecti, dlYakin, kmYakin, skor};
+  };
+  const planliServis = vehicles.filter(v=>v.sonrakiServisTarihi || v.sonrakiServisKm)
+    .map(v=>({v, a: planliServisAciliyet(v)}))
+    .sort((x,y)=> x.a.skor-y.a.skor || (x.a.dl??9999)-(y.a.dl??9999) || (x.a.kmKalan??9e9)-(y.a.kmKalan??9e9));
   const bakimTahminleri = vehicles
     .map(v=>({v, t:bakimTahminiHesapla(v)}))
     .filter(x=>x.t)
@@ -11739,11 +11895,13 @@ function renderBakimPage(){
     <div class="dcard" style="margin-bottom:16px;">
       <h3>Servis Planlaması <a onclick="openServisPlanla()" style="font-size:13px;color:var(--accent-blue);cursor:pointer;">+ Servis Planla</a></h3>
       ${planliServis.length ? `<div class="table-scroll"><table class="mini-table">
-        <thead><tr><th>Plaka</th><th>Araç</th><th>Planlı Tarih</th><th>Planlı km</th><th>Servis Türü</th><th>Durum</th></tr></thead>
-        <tbody>${planliServis.map(v=>{
-          const dl = v.sonrakiServisTarihi ? daysLeft(v.sonrakiServisTarihi) : null;
-          const durumRenk = dl===null?'var(--steel-100)':dl<0?'var(--safety)':dl<=7?'var(--accent-blue)':'#36A168';
-          const durumTxt = dl===null?'—':dl<0?`${Math.abs(dl)} gün geçti`:dl===0?'Bugün':`${dl} gün kaldı`;
+        <thead><tr><th>Plaka</th><th>Araç</th><th>Planlı Tarih</th><th>Planlı km</th><th>Servis Türü</th><th title="Tarih VEYA km, hangisi önce gelirse ona göre">Durum</th></tr></thead>
+        <tbody>${planliServis.map(({v,a})=>{
+          const durumRenk = a.skor===0?'var(--safety)':a.skor===1?'var(--accent-blue)':a.skor===2?'#36A168':'var(--steel-100)';
+          const parcalar = [];
+          if(a.dl!==null) parcalar.push(a.dlGecti?`${Math.abs(a.dl)} gün geçti`:a.dl===0?'bugün':`${a.dl} gün kaldı`);
+          if(a.kmKalan!==null) parcalar.push(a.kmGecti?`${Math.abs(a.kmKalan).toLocaleString('tr-TR')} km geçti`:`${a.kmKalan.toLocaleString('tr-TR')} km kaldı`);
+          const durumTxt = parcalar.length ? parcalar.join(' · ') : '—';
           return `<tr>
             <td><span class="mini-plaka">${esc(v.plaka)}</span></td>
             <td>${esc([v.marka,v.model].filter(Boolean).join(' ')||'—')}</td>
@@ -14568,7 +14726,14 @@ function renderRaporlarPage(){
     const gelirBilgisi = gelirFnTablo(v);
     const aylikGelir = gelirBilgisi.gelir;
     const aylikKar = aylikGelir - aylikMasrafTahmini;
-    return { v, aylikGelir, toplamMasraf, masrafSayisi, aylikMasrafTahmini, aylikMasrafTahminiHam, amortisman, aylikKar, gider, gelirBilgisi };
+    // v.164: km başına maliyet — spec'in istediği "toplam masraf / toplam km" metriği.
+    // Sıfıra bölme koruması vardır (km yoksa veya masraf yoksa null döner, "—" gösterilir).
+    // Bu, aracın YAŞAM BOYU masraf kayıtları (toplamMasraf, yukarıda zaten hesaplanıyor —
+    // aylık tahmin değil) ile bilinen güncel km'sinin oranıdır; mevcutKmHesapla ortak
+    // fonksiyonu (v.162'de eklendi) kullanılır, hiçbir mevcut hesap değiştirilmez.
+    const mevcutKmToplam = mevcutKmHesapla(v);
+    const kmBasiMaliyetGenel = (mevcutKmToplam>0 && toplamMasraf>0) ? (toplamMasraf/mevcutKmToplam) : null;
+    return { v, aylikGelir, toplamMasraf, masrafSayisi, aylikMasrafTahmini, aylikMasrafTahminiHam, amortisman, aylikKar, gider, gelirBilgisi, kmBasiMaliyetGenel };
   }).filter(x=>x.aylikGelir>0 || x.toplamMasraf>0)
     .sort((a,b)=>b.aylikKar-a.aylikKar);
 
@@ -14609,8 +14774,8 @@ function renderRaporlarPage(){
         </div>
       </div>
       ${karlilik.length ? `<div class="table-scroll"><table class="mini-table">
-        <thead><tr><th>Plaka</th><th>Araç</th><th>Durum</th><th style="text-align:right">Aylık Kira</th><th style="text-align:right">Toplam Masraf</th><th style="text-align:right">Tahmini Aylık Kar</th><th>Karlılık</th><th>Gider Detayı</th></tr></thead>
-        <tbody>${karlilik.map(({v,aylikGelir,toplamMasraf,aylikMasrafTahmini,amortisman,aylikKar,gider,gelirBilgisi})=>{
+        <thead><tr><th>Plaka</th><th>Araç</th><th>Durum</th><th style="text-align:right">Aylık Kira</th><th style="text-align:right">Toplam Masraf</th><th style="text-align:right" title="Toplam masraf kaydı ÷ bilinen güncel km — sıfır km veya sıfır masrafta gösterilmez">₺/Km</th><th style="text-align:right">Tahmini Aylık Kar</th><th>Karlılık</th><th>Gider Detayı</th></tr></thead>
+        <tbody>${karlilik.map(({v,aylikGelir,toplamMasraf,aylikMasrafTahmini,amortisman,aylikKar,gider,gelirBilgisi,kmBasiMaliyetGenel})=>{
           const karRenk = aylikKar>=0?'#4CC480':'#EC8E85';
           const barPct = Math.min(100, Math.max(0, aylikGelir>0?(aylikKar/aylikGelir*100+50):0));
           const durumBadge = v.durum==='Kirada'?'kirada':v.durum==='Müsait'?'musait':v.durum==='Pert'?'pert':v.durum==='Satıldı'?'satis':'serviste';
@@ -14620,6 +14785,7 @@ function renderRaporlarPage(){
             <td><span class="mini-badge ${durumBadge}">${esc(v.durum)}</span></td>
             <td style="text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${fmtTL2_role(aylikGelir)}${gelirBilgisi.kaynak==='fatura'?` <span title="Bu tutar kayıtlı kira alanı yerine, bu ayki gerçek fatura(lar)dan alınmıştır (tahsil edilen: ${fmtTL2(gelirBilgisi.tahsilatToplam)})." style="cursor:help;font-size:10px;font-weight:700;color:#36A168;border:1px solid var(--line);border-radius:8px;padding:1px 5px;margin-left:4px;">F</span>`:''}</td>
             <td style="text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,monospace;color:var(--steel-100)">${fmtTL2(toplamMasraf)}</td>
+            <td style="text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,monospace;color:var(--steel-300)">${kmBasiMaliyetGenel!=null?kmBasiMaliyetGenel.toLocaleString('tr-TR',{maximumFractionDigits:2})+' ₺/km':'—'}</td>
             <td style="text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,monospace;color:${karRenk};font-weight:600">${fmtTL2_role(aylikKar)}${amortisman>0?` <span title="Aylık masrafa ${fmtTL2(amortisman)} amortisman gideri dahil edildi (alış fiyatı üzerinden düz-oranlı hesap)." style="cursor:help;font-size:10px;font-weight:700;color:var(--steel-300);border:1px solid var(--line);border-radius:8px;padding:1px 5px;margin-left:4px;">A</span>`:''}</td>
             <td style="min-width:80px;">
               <div style="background:var(--surface-2);border-radius:4px;height:8px;overflow:hidden;">
@@ -14795,6 +14961,14 @@ function raporTarihAraligiModalAc(baslik, varsayilanBas, varsayilanBit, onYazdir
     <div style="background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px;width:min(92vw,380px);">
       <h3 style="margin:0 0 4px;font-size:15px;color:var(--paper);">${esc(baslik)}</h3>
       <p style="margin:0 0 14px;font-size:12px;color:var(--text-3);">Rapor için tarih aralığı seçin.</p>
+      <!-- v.164: hızlı tarih aralığı ön ayarları — spec'te istenen bugün/bu hafta/bu ay/geçen
+           ay/son 3 ay/son 6 ay/bu yıl seçenekleri; sadece #rtaBas/#rtaBit alanlarını dolduruyor,
+           mevcut elle-tarih-seçme akışına hiç dokunmuyor. -->
+      <div id="rtaPresetler" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+        ${[['bugun','Bugün'],['buhafta','Bu Hafta'],['buay','Bu Ay'],['gecenay','Geçen Ay'],['son3ay','Son 3 Ay'],['son6ay','Son 6 Ay'],['buyil','Bu Yıl']].map(([k,l])=>
+          `<button type="button" onclick="raporTarihPresetUygula('${k}')" style="background:var(--surface-2);border:1px solid var(--line);color:var(--text-2);padding:5px 10px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">${l}</button>`
+        ).join('')}
+      </div>
       <div style="display:flex;gap:10px;">
         <label style="flex:1;font-size:12px;color:var(--text-2);">Başlangıç<input type="date" id="rtaBas" value="${esc(varsayilanBas)}" style="width:100%;margin-top:4px;background:var(--surface-2);border:1px solid var(--line);color:var(--paper);padding:8px 10px;border-radius:8px;font-size:13px;font-family:inherit;"></label>
         <label style="flex:1;font-size:12px;color:var(--text-2);">Bitiş<input type="date" id="rtaBit" value="${esc(varsayilanBit)}" style="width:100%;margin-top:4px;background:var(--surface-2);border:1px solid var(--line);color:var(--paper);padding:8px 10px;border-radius:8px;font-size:13px;font-family:inherit;"></label>
@@ -14822,6 +14996,34 @@ function raporTarihAraligiModalAc(baslik, varsayilanBas, varsayilanBit, onYazdir
     const r = oku(); if(!r) return;
     el.remove(); onExcel(r[0], r[1]);
   };
+}
+// v.164: raporTarihAraligiModalAc üzerindeki hızlı ön ayar butonları için tarih aralığı hesaplar
+// ve doğrudan #rtaBas/#rtaBit alanlarına yazar — kullanıcı isterse yine elle düzeltebilir.
+function raporTarihPresetUygula(key){
+  const iso = d => d.toISOString().slice(0,10);
+  const now = new Date();
+  let bas, bit;
+  if(key==='bugun'){
+    bas = bit = todayISO();
+  } else if(key==='buhafta'){
+    const gun = (now.getDay()+6)%7; // Pazartesi=0 olacak şekilde
+    const pzt = new Date(now); pzt.setDate(now.getDate()-gun);
+    bas = iso(pzt); bit = todayISO();
+  } else if(key==='buay'){
+    bas = iso(new Date(now.getFullYear(), now.getMonth(), 1)); bit = todayISO();
+  } else if(key==='gecenay'){
+    bas = iso(new Date(now.getFullYear(), now.getMonth()-1, 1));
+    bit = iso(new Date(now.getFullYear(), now.getMonth(), 0));
+  } else if(key==='son3ay'){
+    bas = iso(new Date(now.getFullYear(), now.getMonth()-2, 1)); bit = todayISO();
+  } else if(key==='son6ay'){
+    bas = iso(new Date(now.getFullYear(), now.getMonth()-5, 1)); bit = todayISO();
+  } else if(key==='buyil'){
+    bas = iso(new Date(now.getFullYear(), 0, 1)); bit = todayISO();
+  } else return;
+  const basEl = document.getElementById('rtaBas'), bitEl = document.getElementById('rtaBit');
+  if(basEl) basEl.value = bas;
+  if(bitEl) bitEl.value = bit;
 }
 
 // Ortak, hafif ("liste tipi") yazdırma şablonu — cariEkstreYazdir ile BİREBİR AYNI CSS/yapı
@@ -17453,6 +17655,125 @@ function yakitAylikTuketim(vehicleId){
     gruplar[ay] = (gruplar[ay]||0) + (Number(f.litre)||0);
   });
   return gruplar;
+}
+// ===== KM Takibi — filo genelinde kilometre merkezi (v.162) =====
+// Tekil araç detayındaki Km Geçmişi kartının filo-geneli görünümü. Hiçbir veri taşımaz/değiştirmez,
+// sadece vehicles[].kmGecmisi + hesaplaKmDurum(v) (kira km aşımı) + bakimTahminiHesapla(v) (bakım-km
+// tahmini, zaten var olan fonksiyon) üzerinden salt-okunur bir özet üretir.
+function kmTakibiAylikSeriHesapla(){
+  const aylar = ['','Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+  const now = new Date();
+  const months = [];
+  for(let i=5;i>=0;i--){
+    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    months.push({donem:`${aylar[d.getMonth()+1]} ${d.getFullYear()}`, label:d.toLocaleDateString('tr-TR',{month:'short'})});
+  }
+  const values = months.map(m=> vehicles.reduce((s,v)=>{
+    const kayit = (v.kmGecmisi||[]).find(k=>k.donem===m.donem);
+    return s + (kayit ? (Number(kayit.toplamKm)||0) : 0);
+  }, 0));
+  return {values, labels: months.map(m=>m.label), buAyDonem: months[months.length-1].donem};
+}
+function renderKmTakibiPage(){
+  const page = document.getElementById('page-km-takibi');
+  if(!page) return;
+
+  const veriler = vehicles.map(v=>({v, mevcutKm: mevcutKmHesapla(v), kmDurum: hesaplaKmDurum(v)}));
+  const toplamFiloKm = veriler.reduce((s,r)=>s+r.mevcutKm,0);
+  const seri = kmTakibiAylikSeriHesapla();
+  const buAyToplam = vehicles.reduce((s,v)=>{
+    const kayit = (v.kmGecmisi||[]).find(k=>k.donem===seri.buAyDonem);
+    return s + (kayit ? (Number(kayit.toplamKm)||0) : 0);
+  }, 0);
+  const asimliList = veriler.filter(r=>r.kmDurum.asim>0).sort((a,b)=>b.kmDurum.asim-a.kmDurum.asim);
+  const enYuksek = veriler.slice().sort((a,b)=>b.mevcutKm-a.mevcutKm)[0];
+
+  // Bakım-km tahmini: zaten var olan bakimTahminiHesapla(v) fonksiyonu (Bakım & Servis sayfasında
+  // kullanılıyor) burada da AYNEN çağrılıyor — km bazlı bakımı yaklaşan/geçmiş araçları listeler.
+  const bakimYaklasan = vehicles.map(v=>{
+    const t = (typeof bakimTahminiHesapla==='function') ? bakimTahminiHesapla(v) : null;
+    return t ? {v, ...t} : null;
+  }).filter(Boolean).sort((a,b)=>(a.kalanKm??1e12)-(b.kalanKm??1e12));
+
+  page.innerHTML = `
+    <div class="dash-stats" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:16px;">
+      <div class="dstat" style="cursor:default;"><div class="dstat-ic" style="background:rgba(22,160,134,.12);color:var(--accent-blue);">${DASH_ICONS.car}</div><div class="dstat-txt"><div class="l">Toplam Filo Km</div><div class="n">${toplamFiloKm.toLocaleString('tr-TR')} km</div></div></div>
+      <div class="dstat" style="cursor:default;"><div class="dstat-ic" style="background:rgba(54,161,104,.15);color:#36A168;">${DASH_ICONS.trend}</div><div class="dstat-txt"><div class="l">Bu Ay Kaydedilen Km</div><div class="n">${buAyToplam.toLocaleString('tr-TR')} km</div></div></div>
+      <div class="dstat" style="cursor:default;--accent-c:${asimliList.length?'#E1554E':'#36A168'};"><div class="dstat-ic" style="background:${asimliList.length?'rgba(225,85,78,.12)':'rgba(54,161,104,.12)'};color:${asimliList.length?'#E1554E':'#36A168'};">${DASH_ICONS.warn}</div><div class="dstat-txt"><div class="l">Km Aşımı Olan Araç</div><div class="n" style="color:${asimliList.length?'#E1554E':'#36A168'}">${asimliList.length}</div></div></div>
+      <div class="dstat" style="cursor:default;"><div class="dstat-ic" style="background:rgba(155,126,216,.15);color:#9B7ED8;">${DASH_ICONS.trend}</div><div class="dstat-txt"><div class="l">En Yüksek Km</div><div class="n" style="font-size:15px;">${enYuksek&&enYuksek.mevcutKm?esc(enYuksek.v.plaka):'—'}</div><div class="d">${enYuksek&&enYuksek.mevcutKm?enYuksek.mevcutKm.toLocaleString('tr-TR')+' km':'kayıt yok'}</div></div></div>
+    </div>
+
+    <div class="dash-grid dg-3" style="grid-template-columns:1fr 1fr;margin-bottom:16px;">
+      <div class="dcard">
+        <h3>Filo Geneli Aylık Km (Son 6 Ay)</h3>
+        ${seri.values.some(x=>x>0) ? svgBarChart(seri.values, seri.labels, 320, 180, 'var(--accent-blue)') : '<div class="log-empty">Henüz km kaydı yok. Araç detayından veya Fotoğrafla Km Ekle ile kayıt girin.</div>'}
+      </div>
+      <div class="dcard">
+        <h3>Kira Km Aşımı Olan Araçlar <a data-goto="arac-yonetimi" style="font-size:11px;font-weight:400;color:var(--accent-blue);text-decoration:none;">Tümü →</a></h3>
+        ${asimliList.length ? `<div style="display:flex;flex-direction:column;gap:8px;">
+          ${asimliList.slice(0,8).map(r=>`
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);">
+              <div>
+                <span class="mini-plaka" style="font-size:11.5px;">${esc(r.v.plaka)}</span>
+                <span style="font-size:11.5px;color:var(--steel-300);margin-left:6px;">${esc(r.v.kiraciAdi||r.v.yer||'')}</span>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-size:12.5px;font-weight:700;color:#E1554E;">${r.kmDurum.asim.toLocaleString('tr-TR')} km aşım</div>
+                ${isAdmin() && r.kmDurum.asimTutar!=null ? `<div style="font-size:11px;color:var(--steel-500);">${fmtTL2(r.kmDurum.asimTutar)}</div>` : ''}
+              </div>
+            </div>`).join('')}
+        </div>` : '<div class="log-empty">Km aşımı olan araç yok.</div>'}
+      </div>
+    </div>
+
+    ${bakimYaklasan.length ? `
+    <div class="dcard" style="margin-bottom:16px;">
+      <h3>Bakım Yaklaşan Araçlar (Km Bazlı) <a data-goto="bakim" style="font-size:11px;font-weight:400;color:var(--accent-blue);text-decoration:none;">Bakım &amp; Servis'e git →</a></h3>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        ${bakimYaklasan.slice(0,6).map(r=>{
+          const gec = r.kalanKm!=null && r.kalanKm<0;
+          const yakin = r.kalanKm!=null && r.kalanKm>=0 && r.kalanKm<=1000;
+          const renk = gec?'#E1554E':yakin?'#E8A132':'#36A168';
+          return `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);">
+            <span class="mini-plaka" style="font-size:11.5px;">${esc(r.v.plaka)}</span>
+            <span style="font-size:12.5px;font-weight:700;color:${renk};">${r.kalanKm!=null ? (gec?`${Math.abs(r.kalanKm).toLocaleString('tr-TR')} km geçti`:`${r.kalanKm.toLocaleString('tr-TR')} km kaldı`) : '—'}</span>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>` : ''}
+
+    <div class="dcard" style="padding:0;overflow-x:auto;">
+      ${veriler.length===0 ? `
+        <div class="empty-state">
+          <div class="empty-state-title">Araç kaydı yok</div>
+          <div class="empty-state-desc">Önce Araç Yönetimi sayfasından araç ekleyin.</div>
+        </div>` : `
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead><tr style="text-align:left;border-bottom:1px solid var(--border);">
+          <th style="padding:10px 14px;">Araç</th><th style="padding:10px 14px;text-align:right;">Güncel Km</th>
+          <th style="padding:10px 14px;">Son Kayıt</th><th style="padding:10px 14px;text-align:right;">Bu Dönem</th>
+          <th style="padding:10px 14px;">Durum</th><th style="padding:10px 14px;"></th>
+        </tr></thead>
+        <tbody>${veriler.slice().sort((a,b)=>b.mevcutKm-a.mevcutKm).map(r=>{
+          const v = r.v;
+          const sonKayit = (v.kmGecmisi||[]).slice(-1)[0];
+          const durumTxt = r.kmDurum.asim>0 ? `${r.kmDurum.asim.toLocaleString('tr-TR')} km aşım` : (r.mevcutKm ? 'Normal' : 'Kayıt yok');
+          const durumRenk = r.kmDurum.asim>0 ? '#E1554E' : (r.mevcutKm ? '#36A168' : 'var(--steel-500)');
+          return `<tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:10px 14px;"><span class="mini-plaka">${esc(v.plaka)}</span> <span style="color:var(--steel-500);font-size:11.5px;">${esc([v.marka,v.model].filter(Boolean).join(' ')||'')}</span></td>
+            <td style="padding:10px 14px;text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${r.mevcutKm?r.mevcutKm.toLocaleString('tr-TR'):'—'}</td>
+            <td style="padding:10px 14px;">${sonKayit?esc(sonKayit.donem||'—'):'—'}</td>
+            <td style="padding:10px 14px;text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${sonKayit&&sonKayit.toplamKm?Number(sonKayit.toplamKm).toLocaleString('tr-TR')+' km':'—'}</td>
+            <td style="padding:10px 14px;"><span style="font-size:11.5px;font-weight:700;color:${durumRenk};">${durumTxt}</span></td>
+            <td style="padding:10px 14px;text-align:right;white-space:nowrap;">
+              <button onclick="openVehicleDetail('${v.id}')" style="background:var(--surface-2);border:1px solid var(--line);color:var(--text);padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;">Detay</button>
+            </td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>`}
+    </div>
+  `;
+  page.querySelectorAll('[data-goto]').forEach(a=>{ a.onclick = (e)=>{ e.preventDefault(); switchPage(a.dataset.goto); }; });
 }
 function renderYakitPage(){
   const page = document.getElementById('page-yakit');
