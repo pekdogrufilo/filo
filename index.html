@@ -2556,7 +2556,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-18.180</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-18.181</div>
     </div>
   </aside>
 <script>
@@ -20583,10 +20583,21 @@ function sonYedekMetni(k){
   const renk = gunFarki<=7 ? '#36A168' : (gunFarki<=30 ? '#E8A132' : 'var(--red)');
   return `Son yedek: <b style="color:var(--text-2);">${d.toLocaleDateString('tr-TR')} ${d.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})}</b> · <b style="color:${renk};">${esc(k.kullanici)}</b> aldı${gunFarki>7?` <span style="color:${renk};">(${gunFarki} gün önce)</span>`:''}`;
 }
+// v.181: "Panelde eksik ne var" incelemesinde bulundu — bu yedekleme fonksiyonu FAZ3-FAZ8'de
+// eklenen customers/rentals/invoices/payments/ledger/suppliers/serviceParts/tires/
+// fuelRecords/tolls/trafficFines/documents/notifications/automationRules/kvkkTalepleri
+// koleksiyonlarının HİÇBİRİNİ yedeklemiyordu — sadece vehicles/expenses/activityLog/
+// sozlesmeler/arsiv vardı (muhtemelen bu fonksiyon o FAZ'lardan önce yazıldığı için hiç
+// güncellenmemiş). Kullanıcı "yedek aldım" diyip bu yedekten geri yüklediğinde müşteri,
+// kiralama, fatura, cari, servis, lastik, yakıt, ceza, belge ve bildirim verilerinin TAMAMI
+// sessizce kayboluyordu. Şimdi tüm koleksiyonlar dahil ediliyor.
 function backupToJson(){
   const backup = {
     olusturmaTarihi: new Date().toISOString(),
     vehicles, expenses, activityLog, sozlesmeler, arsiv,
+    customers, rentals, invoices, payments, ledger,
+    suppliers, serviceParts, tires, fuelRecords, tolls, trafficFines,
+    documents, notifications, automationRules, kvkkTalepleri,
   };
   const blob = new Blob([JSON.stringify(backup, null, 2)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
@@ -20596,7 +20607,7 @@ function backupToJson(){
   a.click();
   setTimeout(()=>URL.revokeObjectURL(url), 5000);
   sonYedekKaydet();
-  logActivity('backup', `Yedek alındı (JSON indirildi — ${vehicles.length} araç, ${expenses.length} masraf, ${(sozlesmeler||[]).length} sözleşme).`).catch(()=>{});
+  logActivity('backup', `Yedek alındı (JSON indirildi — ${vehicles.length} araç, ${customers.length} müşteri, ${rentals.length} kiralama, ${invoices.length} fatura, ${expenses.length} masraf, ${(sozlesmeler||[]).length} sözleşme).`).catch(()=>{});
   const info = document.getElementById('sonYedekInfo');
   if(info) info.innerHTML = sonYedekMetni(window.__sonYedek);
   showToast('Yedek dosyası indirildi.');
@@ -20610,17 +20621,51 @@ document.getElementById('restoreJsonInput')?.addEventListener('change', async (e
     const data = JSON.parse(text);
     if(!Array.isArray(data.vehicles)) throw new Error('Bu dosya geçerli bir yedek dosyası gibi görünmüyor.');
     const sozSayi = Array.isArray(data.sozlesmeler) ? data.sozlesmeler.length : 0;
-    if(!confirm(`Bu yedek ${data.vehicles.length} araç${sozSayi ? ' ve '+sozSayi+' kayıtlı sözleşme' : ''} içeriyor. Mevcut verinin YERİNE geçecek, geri alınamaz. Devam edilsin mi?`)) { e.target.value=''; return; }
+    // v.181: eski (v.180 ve öncesi) yedek dosyalarında bu alanlar hiç yoktu — eksikse boş
+    // dizi olarak başlatılır, yani eski bir yedeği geri yüklemek hata vermez, sadece o
+    // koleksiyonlar boşalmış olur (zaten önceden de kalıcı olarak yedeklenmiyorlardı).
+    const musteriSayi = Array.isArray(data.customers) ? data.customers.length : 0;
+    if(!confirm(`Bu yedek ${data.vehicles.length} araç${musteriSayi?', '+musteriSayi+' müşteri':''}${sozSayi ? ' ve '+sozSayi+' kayıtlı sözleşme' : ''} içeriyor. Mevcut verinin YERİNE geçecek, geri alınamaz. Devam edilsin mi?`)) { e.target.value=''; return; }
     vehicles = data.vehicles;
     expenses = Array.isArray(data.expenses) ? data.expenses : [];
     activityLog = Array.isArray(data.activityLog) ? data.activityLog : [];
     sozlesmeler = Array.isArray(data.sozlesmeler) ? data.sozlesmeler : [];
     arsiv = Array.isArray(data.arsiv) ? data.arsiv : [];
+    customers = Array.isArray(data.customers) ? data.customers : [];
+    rentals = Array.isArray(data.rentals) ? data.rentals : [];
+    invoices = Array.isArray(data.invoices) ? data.invoices : [];
+    payments = Array.isArray(data.payments) ? data.payments : [];
+    ledger = Array.isArray(data.ledger) ? data.ledger : [];
+    suppliers = Array.isArray(data.suppliers) ? data.suppliers : [];
+    serviceParts = Array.isArray(data.serviceParts) ? data.serviceParts : [];
+    tires = Array.isArray(data.tires) ? data.tires : [];
+    fuelRecords = Array.isArray(data.fuelRecords) ? data.fuelRecords : [];
+    tolls = Array.isArray(data.tolls) ? data.tolls : [];
+    trafficFines = Array.isArray(data.trafficFines) ? data.trafficFines : [];
+    documents = Array.isArray(data.documents) ? data.documents : [];
+    notifications = Array.isArray(data.notifications) ? data.notifications : [];
+    automationRules = Array.isArray(data.automationRules) ? data.automationRules : [];
+    kvkkTalepleri = Array.isArray(data.kvkkTalepleri) ? data.kvkkTalepleri : [];
     await persist();
     await persistExpenses();
     await storageAPI.set('activityLog', JSON.stringify(activityLog)).catch(()=>{});
     await persistSozlesmeler();
     await persistArsiv();
+    await persistCustomers();
+    await persistRentals();
+    await persistInvoices();
+    await persistPayments();
+    await persistLedger();
+    await persistSuppliers();
+    await persistServiceParts();
+    await persistTires();
+    await persistFuelRecords();
+    await persistTolls();
+    await persistTrafficFines();
+    await persistDocuments();
+    await persistNotifications();
+    await persistAutomationRules();
+    await persistKvkkTalepleri();
     updateArsivSayi();
     buildSirketFilter();
     render();
