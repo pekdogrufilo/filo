@@ -2462,7 +2462,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-18.167</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-18.168</div>
     </div>
   </aside>
 <script>
@@ -4689,13 +4689,27 @@ function render(){
 }
 function esc(s){const d=document.createElement('div');d.textContent=s==null?'':s;return d.innerHTML;}
 
+// v.168: Arama kutularında her tuş vuruşunda tüm listeyi yeniden çizmek (özellikle
+// büyük filolarda) belirgin bir gecikme/takılma hissi yaratıyordu (yazarken donuyormuş
+// gibi). Bu, o ağır render fonksiyonunu son tuş vuruşundan kısa bir süre sonra bir kez
+// çalıştıracak şekilde geciktiren basit bir debounce yardımcısı — arama SONUCU görünene
+// kadar ~180ms gecikir ama kullanıcının kendi yazdığı metin (input'un değeri) native
+// olarak anında güncellenir, yani yazarken hiçbir şey donmuş hissettirmez.
+function debounce(fn, ms){
+  let t = null;
+  return function(...args){
+    clearTimeout(t);
+    t = setTimeout(()=>fn.apply(this, args), ms);
+  };
+}
+
 document.querySelectorAll('.chip').forEach(c=>{
   c.onclick=()=>{
     document.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));
     c.classList.add('active'); activeFilter=c.dataset.f; render();
   };
 });
-document.getElementById('search').oninput = render;
+document.getElementById('search').oninput = debounce(render, 180);
 document.getElementById('sirketFilter').onchange = e=>{ activeSirket = e.target.value; render(); };
 if(document.getElementById('sortSelect')) document.getElementById('sortSelect').onchange = ()=>render();
 const belgeChips = {sigorta:'chipSigorta', muayene:'chipMuayene', kira:'chipKira'};
@@ -11861,7 +11875,7 @@ function renderMasrafPage(){
       <div id="masrafTableWrap" class="table-scroll">${sorted.length ? `<table class="mini-table"><thead><tr><th>Plaka</th><th>Tip</th><th>Tarih</th><th>Not</th><th style="text-align:right">Tutar</th><th></th></tr></thead><tbody id="masrafTableBody">${rows}</tbody></table>` : `${window.__masrafArama ? '<div class="log-empty">Aramanla eşleşen masraf bulunamadı.</div>' : '<div class="empty-state"><div class="empty-state-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div class="empty-state-title">Henüz masraf kaydedilmedi</div><div class="empty-state-desc">Yakıt, tamir, bakım, lastik gibi araç masraflarını yukarıdaki formdan ekleyerek takibe başlayın.</div></div>'}`}</div>
     </div>
   `;
-  document.getElementById('mArama').oninput = (e)=>{ window.__masrafArama = e.target.value; renderMasrafTable(); };
+  document.getElementById('mArama').oninput = debounce((e)=>{ window.__masrafArama = e.target.value; renderMasrafTable(); }, 180);
   wireMasrafDeleteButtons();
   document.getElementById('mpTarih').value = todayISO();
   // Plaka otomatik tamamlama
