@@ -2462,7 +2462,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-18.166</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-18.167</div>
     </div>
   </aside>
 <script>
@@ -2614,6 +2614,12 @@
       <button class="export-btn" id="kiralaBtn" style="background:var(--accent-blue);color:#fff;border-color:var(--accent-blue);">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8v8h6l4 4V4L9 8H3Z"/></svg>
         Araç Kirala
+      </button>
+      <!-- v.167: master spec'in istediği "future-ready araç karşılaştırma görünümü" — plaka
+           seçerek 2-4 aracı yan yana karşılaştıran bir seçim penceresi açar (aracKarsilastirAc). -->
+      <button class="export-btn" id="karsilastirBtn">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg>
+        Karşılaştır
       </button>
     </div>
   </div>
@@ -4783,6 +4789,7 @@ document.getElementById('alertHead').onclick = ()=>{
 const overlay = document.getElementById('overlay');
 document.getElementById('openAdd').onclick = ()=>openAdd();
 document.getElementById('kiralaBtn').onclick = ()=>openAracKirala();
+if(document.getElementById('karsilastirBtn')) document.getElementById('karsilastirBtn').onclick = ()=>aracKarsilastirAc();
 document.getElementById('exportBtn').onclick = ()=>exportExcel();
 document.getElementById('updateBtn').onclick = ()=>document.getElementById('excelInput').click();
 document.getElementById('reportBtn').onclick = (e)=>{
@@ -8384,6 +8391,138 @@ function mevcutKmHesapla(v){
 }
 // Kiralama dönemi km aşımı hesabı — openVehicleDetail içindeki kmDurum IIFE'sinin (v.75)
 // AYNEN dışa çıkarılmış hali; formül hiç değiştirilmedi, sadece tek yerden çağrılabilir oldu.
+// ===== Araç Karşılaştırma (v.167) — master spec'teki "future-ready araç karşılaştırma
+// görünümü". Var olan hiçbir veri yapısını/fonksiyonu değiştirmez; sadece 2-4 aracı seçtirip
+// aynı ekranda yan yana özetler. Belirli bir GPS/entegrasyon sağlayıcısına bağlı DEĞİLDİR.
+function aracKarsilastirMetrikleri(v){
+  const mevcutKm = mevcutKmHesapla(v);
+  const vMasraflar = expensesForVehicle(v);
+  const toplamMasraf = vMasraflar.reduce((s,e)=>s+(Number(e.tutar)||0),0);
+  const kmBasiMaliyet = (mevcutKm>0 && toplamMasraf>0) ? (toplamMasraf/mevcutKm) : null;
+  const kmDurum = hesaplaKmDurum(v);
+  const belgeler = [
+    {ad:'Sigorta', dl:daysLeft(v.sigortaTarihi)},
+    {ad:'Kasko', dl:daysLeft(v.kaskoBitis)},
+    {ad:'Muayene', dl:daysLeft(v.muayeneTarihi)},
+  ];
+  return {v, mevcutKm, toplamMasraf, kmBasiMaliyet, kmDurum, belgeler};
+}
+function aracKarsilastirAc(){
+  const eski = document.getElementById('karsilastirOverlay'); if(eski) eski.remove();
+  const el = document.createElement('div');
+  el.className = 'overlay show';
+  el.id = 'karsilastirOverlay';
+  el.style.cssText = 'z-index:85;';
+  el.innerHTML = `
+    <div style="background:var(--surface);border:1px solid var(--line);border-radius:14px;width:min(94vw,560px);max-height:88vh;overflow-y:auto;display:flex;flex-direction:column;">
+      <div style="padding:18px 20px 10px;border-bottom:1px solid var(--line);">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <h3 style="margin:0;font-size:15px;color:var(--paper);">Araç Karşılaştır</h3>
+          <button onclick="document.getElementById('karsilastirOverlay').remove()" style="background:none;border:none;color:var(--steel-300);cursor:pointer;padding:4px;display:flex;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+        </div>
+        <p style="margin:6px 0 10px;font-size:12px;color:var(--text-3);">2-4 araç seç, yan yana karşılaştır.</p>
+        <input type="text" id="kaAramaInput" placeholder="Plaka, marka veya model ara..." oninput="kaListeRender()" style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);color:var(--paper);font-size:13px;box-sizing:border-box;">
+      </div>
+      <div id="kaListeAlan" style="padding:8px 12px;flex:1;overflow-y:auto;min-height:120px;"></div>
+      <div style="padding:14px 20px;border-top:1px solid var(--line);display:flex;gap:8px;align-items:center;">
+        <span id="kaSecimSayisi" style="font-size:11.5px;color:var(--text-3);flex:1;">0 araç seçildi</span>
+        <button onclick="document.getElementById('karsilastirOverlay').remove()" style="background:var(--surface-2);border:1px solid var(--line);color:var(--text-2);padding:9px 16px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;">Vazgeç</button>
+        <button id="kaKarsilastirBtn" onclick="aracKarsilastirGoster()" disabled style="background:var(--accent-blue);border:none;color:#fff;padding:9px 18px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;opacity:.5;">Karşılaştır</button>
+      </div>
+    </div>`;
+  el.onclick = e=>{ if(e.target===el) el.remove(); };
+  document.body.appendChild(el);
+  window.__kaSecili = [];
+  kaListeRender();
+}
+function kaListeRender(){
+  const alan = document.getElementById('kaListeAlan');
+  if(!alan) return;
+  const q = (document.getElementById('kaAramaInput')?.value||'').toLocaleLowerCase('tr-TR').trim();
+  const secili = window.__kaSecili||[];
+  let liste = vehicles.slice();
+  if(q){
+    const qPlaka = normPlaka(q);
+    liste = liste.filter(v=>{
+      const ad = [v.marka,v.model,v.versiyon].filter(Boolean).join(' ').toLocaleLowerCase('tr-TR');
+      return (qPlaka && normPlaka(v.plaka||'').includes(qPlaka)) || ad.includes(q);
+    });
+  }
+  liste = liste.slice(0,60); // performans: aşırı uzun listede DOM'u şişirme
+  alan.innerHTML = liste.length ? liste.map(v=>{
+    const checked = secili.includes(v.id);
+    const disabled = !checked && secili.length>=4;
+    return `<label style="display:flex;align-items:center;gap:10px;padding:8px 6px;border-radius:8px;cursor:${disabled?'not-allowed':'pointer'};opacity:${disabled?.45:1};" onmouseover="this.style.background='var(--surface-2)'" onmouseout="this.style.background='none'">
+      <input type="checkbox" value="${v.id}" ${checked?'checked':''} ${disabled?'disabled':''} onchange="kaSecimDegisti(this)" style="width:16px;height:16px;">
+      <span class="mini-plaka" style="font-size:11.5px;">${esc(v.plaka)}</span>
+      <span style="font-size:12.5px;color:var(--steel-300);flex:1;">${esc([v.marka,v.model].filter(Boolean).join(' ')||'—')}</span>
+      <span style="font-size:11px;color:var(--steel-500);">${esc(v.durum||'')}</span>
+    </label>`;
+  }).join('') : '<div class="log-empty">Eşleşen araç yok.</div>';
+}
+function kaSecimDegisti(inp){
+  window.__kaSecili = window.__kaSecili||[];
+  if(inp.checked){ if(!window.__kaSecili.includes(inp.value) && window.__kaSecili.length<4) window.__kaSecili.push(inp.value); }
+  else { window.__kaSecili = window.__kaSecili.filter(id=>id!==inp.value); }
+  const n = window.__kaSecili.length;
+  const sayi = document.getElementById('kaSecimSayisi'); if(sayi) sayi.textContent = `${n} araç seçildi${n>=4?' (en fazla 4)':''}`;
+  const btn = document.getElementById('kaKarsilastirBtn');
+  if(btn){ btn.disabled = n<2; btn.style.opacity = n<2?'.5':'1'; }
+  kaListeRender();
+}
+function aracKarsilastirGoster(){
+  const secili = window.__kaSecili||[];
+  if(secili.length<2) return;
+  const veriler = secili.map(id=>vehicles.find(v=>v.id===id)).filter(Boolean).map(aracKarsilastirMetrikleri);
+  const modal = document.querySelector('#karsilastirOverlay > div');
+  if(!modal) return;
+  const satir = (etiket, renderFn) => `<tr>
+    <td style="padding:8px 10px;font-size:11.5px;color:var(--text-3);text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;border-bottom:1px solid var(--line);">${esc(etiket)}</td>
+    ${veriler.map(d=>`<td style="padding:8px 10px;font-size:13px;color:var(--paper);border-bottom:1px solid var(--line);text-align:center;">${renderFn(d)}</td>`).join('')}
+  </tr>`;
+  modal.innerHTML = `
+    <div style="padding:16px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:8px;">
+      <h3 style="margin:0;font-size:15px;color:var(--paper);">Araç Karşılaştırma</h3>
+      <div style="display:flex;gap:8px;">
+        <button onclick="aracKarsilastirAc()" style="background:var(--surface-2);border:1px solid var(--line);color:var(--text-2);padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">← Seçimi Değiştir</button>
+        <button onclick="document.getElementById('karsilastirOverlay').remove()" style="background:none;border:none;color:var(--steel-300);cursor:pointer;padding:4px;display:flex;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </div>
+    </div>
+    <div style="padding:12px 16px;overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;min-width:${280+veriler.length*160}px;">
+        <thead><tr>
+          <td></td>
+          ${veriler.map(d=>`<th style="padding:8px 10px;text-align:center;border-bottom:2px solid var(--line);"><span class="mini-plaka">${esc(d.v.plaka)}</span></th>`).join('')}
+        </tr></thead>
+        <tbody>
+          ${satir('Araç', d=>esc([d.v.marka,d.v.model,d.v.modelYili].filter(Boolean).join(' ')||'—'))}
+          ${satir('Durum', d=>esc(d.v.durum||'—'))}
+          ${satir('Güncel Km', d=>d.mevcutKm?d.mevcutKm.toLocaleString('tr-TR')+' km':'—')}
+          ${satir('Aylık Kira', d=>d.v.durum==='Kirada'?fmtTL2_role(d.v.kira||0):'—')}
+          ${satir('Toplam Masraf (kayıtlı)', d=>fmtTL2(d.toplamMasraf))}
+          ${satir('₺/Km Maliyet', d=>d.kmBasiMaliyet!=null?d.kmBasiMaliyet.toLocaleString('tr-TR',{maximumFractionDigits:2})+' ₺/km':'—')}
+          ${satir('Kira Km Durumu', d=>d.kmDurum.mesaj ? `<span style="color:${d.kmDurum.asim>0?'#E1554E':'#36A168'};font-weight:600;font-size:11.5px;">${d.kmDurum.asim>0?Math.abs(d.kmDurum.asim).toLocaleString('tr-TR')+' km aşım':Math.abs(d.kmDurum.asim||0).toLocaleString('tr-TR')+' km hakkı var'}</span>` : '<span style="color:var(--steel-500);">—</span>')}
+          ${d3belge('Sigorta',veriler)}
+          ${d3belge('Kasko',veriler)}
+          ${d3belge('Muayene',veriler)}
+        </tbody>
+      </table>
+    </div>
+    <div style="padding:12px 20px 18px;font-size:11px;color:var(--steel-500);">₺/Km, kayıtlı masraf toplamının bilinen güncel km'ye bölünmesiyle hesaplanır (bkz. Raporlar &gt; Araç Bazlı Karlılık ile aynı formül).</div>
+  `;
+  function d3belge(ad, veriler){
+    return `<tr>
+      <td style="padding:8px 10px;font-size:11.5px;color:var(--text-3);text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;border-bottom:1px solid var(--line);">${esc(ad)}</td>
+      ${veriler.map(d=>{
+        const b = d.belgeler.find(x=>x.ad===ad);
+        const dl = b?b.dl:null;
+        const renk = dl===null?'var(--steel-500)':dl<0?'#E1554E':dl<=30?'#E8A132':'#36A168';
+        const txt = dl===null?'—':dl<0?`${Math.abs(dl)} gün geçti`:`${dl} gün kaldı`;
+        return `<td style="padding:8px 10px;font-size:12px;color:${renk};font-weight:600;border-bottom:1px solid var(--line);text-align:center;">${txt}</td>`;
+      }).join('')}
+    </tr>`;
+  }
+}
 function hesaplaKmDurum(v){
   const mevcutKm = mevcutKmHesapla(v);
   const teslimKmNum = Number(v.teslimKm)||0;
