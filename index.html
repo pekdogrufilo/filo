@@ -2420,7 +2420,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-18.155</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-18.156</div>
     </div>
   </aside>
 <script>
@@ -4661,7 +4661,7 @@ function belgeFilterListesi(){
     if(!tarih) return;
     const dl = daysLeft(tarih);
     if(dl===null || dl>30) return;
-    rows.push({plaka:v.plaka||'—', sirket:v.sirket||'', tarih, dl});
+    rows.push({plaka:v.plaka||'—', sirket:v.sirket||'', ruhsat:v.ruhsatSeriNo||'', tarih, dl});
   });
   rows.sort((a,b)=>a.dl-b.dl);
   return rows;
@@ -4671,7 +4671,8 @@ function buildBelgeGonderMetni(rows){
   let metin = `${baslik} — ${new Date().toLocaleDateString('tr-TR')}\n\n`;
   rows.forEach(r=>{
     const dtxt = r.dl<0 ? `${Math.abs(r.dl)} gün geçti` : (r.dl===0?'bugün bitiyor':`${r.dl} gün kaldı`);
-    metin += `${r.plaka} — ${fmtTarih(r.tarih)} (${dtxt})\n`;
+    // v.156: sigortacı/muayene istasyonu için şirket adı ve ruhsat seri no da eklendi.
+    metin += `${r.plaka} — ${fmtTarih(r.tarih)} (${dtxt})${r.sirket?`\n  Şirket: ${r.sirket}`:''}${r.ruhsat?`\n  Ruhsat No: ${r.ruhsat}`:''}\n`;
   });
   return metin;
 }
@@ -4710,11 +4711,12 @@ document.getElementById('belgeGonderExcel').onclick = ()=>{
   const dataRows = rows.map(r=>({
     'Plaka': r.plaka,
     'Bağlı Şirket': r.sirket,
+    'Ruhsat Seri No': r.ruhsat,
     [etiket]: fmtTarih(r.tarih),
     'Durum': r.dl<0 ? `${Math.abs(r.dl)} gün geçti` : (r.dl===0?'Bugün bitiyor':`${r.dl} gün kaldı`),
   }));
   const ws = XLSX.utils.json_to_sheet(dataRows);
-  ws['!cols'] = [{wch:12},{wch:20},{wch:18},{wch:16}];
+  ws['!cols'] = [{wch:12},{wch:20},{wch:16},{wch:18},{wch:16}];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, belgeFilterType==='sigorta' ? 'Sigorta' : 'Muayene');
   XLSX.writeFile(wb, `${belgeFilterType}-yaklasan-${todayISO()}.xlsx`);
