@@ -661,7 +661,18 @@
   .sb-user-role{font-size:10px;color:rgba(255,255,255,.6);margin-top:1px;}
 
   /* Mobil alt tab bar */
-  .bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(11,12,14,.97);border-top:1px solid var(--border);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);z-index:100;padding:6px 0 env(safe-area-inset-bottom,6px);}
+  /* v.173: "Daha Fazla modülü arka ekranla karışıyor" — #bottomNav'ın z-index:100'ü, panelin
+     onlarca yerinde açılan tam-ekran modal/overlay'lerin (.overlay tabanlılar 50-97 arası,
+     ör. Daha Fazla sayfası z-index:50, Karşılaştırma z-index:85, vb.) NEREDEYSE HEPSİNDEN
+     yüksekti — yani alt gezinme çubuğu (Genel/Araçlar/Kira/Masraf/Daha Fazla), üstüne açılan
+     bu modallerin ÜZERİNDE görünüyor, özellikle mobilde ekranın en altındaki içerikle görsel
+     olarak üst üste biniyordu (bkz. "Daha Fazla" sayfasındaki son satır kısayolları). Alt
+     gezinme çubuğunun tek görevi normal sayfa içeriğinin (kartlar, listeler — hepsi z-index:0
+     civarı) üzerinde sabit kalmak; bir modal açıldığında onun ALTINDA kalması gerekiyor. Bu
+     yüzden z-index'i, sayfanın en yüksek "sıradan" öğesinden (.top-header, 40) hemen sonraya
+     ama TÜM modal/overlay katmanlarının (en düşüğü 50) altına çekiyoruz.
+  */
+  .bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(11,12,14,.97);border-top:1px solid var(--border);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);z-index:45;padding:6px 0 env(safe-area-inset-bottom,6px);}
   .bottom-nav-items{display:flex;align-items:stretch;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
   .bottom-nav-items::-webkit-scrollbar{display:none;}
   .bn-item{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:6px 2px;border:none;background:none;color:rgba(255,255,255,.6);font-size:10px;font-family:var(--font-ui);font-weight:500;cursor:pointer;position:relative;transition:color .15s ease;}
@@ -2514,7 +2525,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-18.172</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-18.173</div>
     </div>
   </aside>
 <script>
