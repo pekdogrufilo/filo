@@ -2553,7 +2553,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-18.175</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-18.176</div>
     </div>
   </aside>
 <script>
@@ -14268,22 +14268,30 @@ async function otoBelgeSec(file, statusEl){
     }
     if(!v && fallbackId) v = vehicles.find(x=>x.id===fallbackId);
     if(!v){
-      // v.175: "cari olarak kaydetmesi lazım ama araç alışı için kaydedildi diyor, nereye
-      // kaydetti bilmiyorum" — bu ekran SADECE bir aracın belgesini o aracın kartına dosya
-      // olarak ekler; hiçbir zaman masraf/cari/tedarikçi borcu kaydı OLUŞTURMAZ, ve plaka hiç
-      // okunamayan bir belge (ör. tek bir araca değil filoya/tedarikçiye ait toplu bir fatura)
-      // "Kaydedilmedi" ile tamamen reddedilir. Önceki mesaj bunu net anlatmıyordu ("plaka
-      // okundu (?) ama araç yok" bilgi.plaka null olduğunda anlamsızdı) — artık iki durum
-      // ayrı ayrı, ne olduğu ve şu an elle ne yapılabileceği açıkça belirtilerek anlatılıyor.
-      const msg = bilgi && bilgi.plaka
-        ? `Kaydedilmedi: Belgedeki plaka okundu (${esc(bilgi.plaka)}) ama filoda böyle bir araç yok. Soldan araç seçip tekrar deneyebilirsin.`
-        : `Kaydedilmedi: Belgede bir araç plakası bulunamadı (ör. bir araca değil tedarikçiye/filoya ait toplu bir fatura olabilir). Bu ekran belgeleri sadece TEK bir aracın kartına dosya olarak ekler — herhangi bir masraf ya da cari/tedarikçi bakiye kaydı oluşturmaz. Tek bir araca aitse soldan o aracı seçip tekrar dene; değilse bu panelde şu an tedarikçi faturalarını otomatik işleyen bir modül yok — tutarı Masraf Yönetimi'nden elle girebilirsin.`;
-      showToast(msg, true);
+      // v.176: "bana nereye kaydettiğini bilemezse nereye kaydetmesi gerektiğini sormalı" —
+      // önceden bu durumda (plaka okunamadı/eşleşmedi ve sol taraftan önceden araç seçilmemişti)
+      // yükleme tamamen reddediliyor, kullanıcı soldan araç seçip dosyayı BAŞTAN yeniden
+      // yüklemek zorunda kalıyordu. Artık dosya/okuma zaten elde — bir modal açıp hangi araca
+      // ait olduğunu soruyoruz; kullanıcı seçince dosyayı tekrar yüklemeden direkt kaydediyoruz.
       setBusy('Belge Yükle');
+      otoBelgeAracSorAc(file, onceden, bilgi, tur, statusEl);
       return;
     }
 
-    // 3) Doğru kart yuvasına kaydet
+    await otoBelgeKaydetVeBildir(v, tur, bilgi, onceden, file, statusEl);
+  }catch(e){
+    console.error(e);
+    showToast('Kaydedilmedi: ' + (e.message==='depolama kaydı başarısız' ? 'Depolama alanı dolu olabilir, eski belgeleri temizleyin.' : (e.message||'Bilinmeyen hata')), true);
+    setBusy('Belge Yükle');
+  }
+}
+// v.175/176: "Belge Yükle" (tek dosya) akışının asıl kayıt adımı — hem otomatik plaka
+// eşleşmesinde hem de otoBelgeAracSorAc modalinden kullanıcı bir araç seçtiğinde çağrılır.
+async function otoBelgeKaydetVeBildir(v, tur, bilgi, onceden, file, statusEl){
+  const setBusy = t=>{ [statusEl, document.getElementById('otoBelgeBtnText')].filter(Boolean).forEach(el=>{ el.textContent = t; }); };
+  try{
+    const okunanTarih = bilgi ? normalizeExtractedDate(bilgi.tarih||'') : '';
+    // Doğru kart yuvasına kaydet
     const std = OTO_BELGE_TURLERI[tur];
     // v.159: "AI'nın okuduğu veriler onaylanmadan mevcut kaydın üzerine sessizce yazılmasın"
     // — artık bir tarih zaten kayıtlıysa ve belgeden okunan ondan farklıysa DEĞİŞTİRİLMİYOR,
@@ -14343,6 +14351,55 @@ async function otoBelgeSec(file, statusEl){
     showToast('Kaydedilmedi: ' + (e.message==='depolama kaydı başarısız' ? 'Depolama alanı dolu olabilir, eski belgeleri temizleyin.' : (e.message||'Bilinmeyen hata')), true);
   }
   setBusy('Belge Yükle');
+}
+// v.176: "bana nereye kaydettiğini bilemezse nereye kaydetmesi gerektiğini sormalı" — belgeden
+// plaka okunamadığında ya da filodaki hiçbir araçla eşleşmediğinde, kullanıcıyı soldaki seçime
+// gönderip dosyayı yeniden yüklemeye zorlamak yerine, doğrudan burada hangi araca ait olduğunu
+// soran küçük bir modal açılır; seçim yapılırsa dosya YENİDEN yüklenmeden aynı okunan veriyle
+// kaydedilir (bkz. otoBelgeKaydetVeBildir). Diğer akışların da (AI sohbeti "doğru plakayı yaz",
+// toplu yükleme sayfasındaki "okunamayan belgeler bu araca kaydedilsin" seçimi) zaten kendi
+// "sor" mekanizmaları var — burası eksik olan tek nokta.
+function otoBelgeAracSorAc(file, onceden, bilgi, tur, statusEl){
+  const eski = document.getElementById('otoBelgeAracSorOverlay'); if(eski) eski.remove();
+  const el = document.createElement('div');
+  el.className = 'overlay show';
+  el.id = 'otoBelgeAracSorOverlay';
+  el.style.cssText = 'z-index:85;';
+  const std = OTO_BELGE_TURLERI[tur];
+  const turEtiket = std ? std.label : ({masraf:'Masraf fişi', servis:'Servis kaydı', vize:'Vize belgesi', diger:'Diğer belge'}[tur] || esc(tur));
+  const aciklama = bilgi && bilgi.plaka
+    ? `Belgedeki plaka (<b>${esc(bilgi.plaka)}</b>) okundu ama filoda eşleşen bir araç bulunamadı.`
+    : `Belgede bir araç plakası okunamadı (tedarikçiye/filoya ait toplu bir fatura olabilir).`;
+  el.innerHTML = `
+    <div style="background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px;width:min(92vw,380px);">
+      <h3 style="margin:0 0 4px;font-size:15px;color:var(--paper);">Bu belge hangi araca ait?</h3>
+      <p style="margin:0 0 14px;font-size:12.5px;color:var(--text-3);line-height:1.5;">${aciklama} Tahmin edilen tür: <b>${esc(turEtiket)}</b> (<i>${esc(file.name)}</i>). Bir araç seçersen dosyayı yeniden yüklemene gerek kalmadan o aracın kartına kaydederim; hiçbirine ait değilse "Vazgeç" — bu ekran zaten sadece tek bir aracın belgesini kaydeder, masraf ya da cari/tedarikçi bakiye kaydı oluşturmaz.</p>
+      <select id="obaSecim" style="width:100%;background:var(--surface-2);border:1px solid var(--line);color:var(--paper);padding:9px 10px;border-radius:9px;font-size:13px;font-family:inherit;">
+        <option value="">Araç seç…</option>
+        ${vehicles.map(v=>`<option value="${v.id}">${esc(v.plaka)}${v.marka?' — '+esc(v.marka)+' '+esc(v.model||''):''}</option>`).join('')}
+      </select>
+      <div style="display:flex;gap:8px;margin-top:16px;">
+        <button id="obaKaydetBtn" style="flex:1;background:var(--accent-blue);border:none;color:#fff;padding:10px 0;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-ui);">Bu Araca Kaydet</button>
+        <button id="obaVazgecBtn" style="background:var(--surface-2);border:1px solid var(--line);color:var(--text-2);padding:10px 16px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-ui);">Vazgeç</button>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+  const kapat = ()=>{ el.remove(); };
+  el.onclick = e=>{ if(e.target===el) kapat(); };
+  document.getElementById('obaVazgecBtn').onclick = ()=>{
+    kapat();
+    const msg = bilgi && bilgi.plaka
+      ? `Kaydedilmedi: Belgedeki plaka okundu (${esc(bilgi.plaka)}) ama filoda böyle bir araç yok.`
+      : `Kaydedilmedi: Belgede bir araç plakası bulunamadı. Bu ekran belgeleri sadece TEK bir aracın kartına dosya olarak ekler — herhangi bir masraf ya da cari/tedarikçi bakiye kaydı oluşturmaz. Bu panelde şu an tedarikçi faturalarını otomatik işleyen bir modül yok — tutarı Masraf Yönetimi'nden elle girebilirsin.`;
+    showToast(msg, true);
+  };
+  document.getElementById('obaKaydetBtn').onclick = async ()=>{
+    const id = document.getElementById('obaSecim').value;
+    if(!id){ showToast('Lütfen bir araç seçin.', true); return; }
+    const v = vehicles.find(x=>x.id===id);
+    kapat();
+    await otoBelgeKaydetVeBildir(v, tur, bilgi, onceden, file, statusEl);
+  };
 }
 // Standart yuvası olmayan belgeler (masraf fişi, servis, vize, diğer) araca ek liste olarak kaydedilir
 async function belgeAracaEkle(v, tur, adi, tip, dataUrl, tarih){
