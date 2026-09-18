@@ -2553,7 +2553,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-18.176</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-18.177</div>
     </div>
   </aside>
 <script>
@@ -16783,7 +16783,12 @@ function imzaWidgetAc(baslik, onSave){
   const el = document.createElement('div');
   el.className = 'overlay show';
   el.id = 'imzaWidgetOverlay';
-  el.style.cssText = 'z-index:90;';
+  // v.177: "imzaya tıkladığımda birşey açılmadı, arka siyahlaştı" — bu widget her iki çağıran
+  // yerden de (İade Al / Araç Kirala sihirbazı) zaten açık olan bir .iade-modal (z-index:400)
+  // İÇİNDEN açılıyor; z-index:90 onun ALTINDA kaldığı için görünmüyordu, sadece kendi karartma
+  // katmanı iade-modal'ın arkasında sızıp ekranı biraz daha koyulaştırıyordu. iade-modal'ın
+  // üzerine çıkacak şekilde yükseltildi.
+  el.style.cssText = 'z-index:410;';
   el.innerHTML = `
     <div style="background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;width:min(92vw,440px);">
       <h3 style="margin:0 0 4px;font-size:15px;color:var(--paper);">${esc(baslik||'Dijital İmza Yakalama')}</h3>
