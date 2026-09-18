@@ -1,8 +1,12 @@
 // PEKDOĞRU Filo — Otomatik hatırlatma betiği (GitHub Actions sürümü)
 // Netlify Scheduled Function yerine GitHub Actions ile günlük çalışır; mantık birebir aynıdır.
 // Gereken GitHub Secrets (Repo > Settings > Secrets and variables > Actions > New repository secret):
-//   FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY,
-//   RESEND_API_KEY, HATIRLATMA_EMAIL (opsiyonel), HATIRLATMA_GONDEREN (opsiyonel),
+//   Yöntem A (önerilen, tek parça): FIREBASE_SERVICE_ACCOUNT_JSON — Firebase Console'dan indirilen
+//     servis hesabı .json dosyasının TAMAMI, olduğu gibi (dosyayı açıp tümünü seçip kopyalayın).
+//     Elle alan alan kopyalamanın yol açtığı satır sonu/tırnak kaybı hatalarını önler.
+//   Yöntem B (eski, 3 ayrı secret): FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY
+//     — FIREBASE_SERVICE_ACCOUNT_JSON tanımlı değilse buna geri düşülür.
+//   Ayrıca: RESEND_API_KEY, HATIRLATMA_EMAIL (opsiyonel), HATIRLATMA_GONDEREN (opsiyonel),
 //   FIREBASE_COLLECTION (opsiyonel)
 // Ayrıntılı kurulum: KURULUM-BULUT.md (Bölüm 3)
 
@@ -14,14 +18,27 @@ async function main(){
   try{
     const admin = require('firebase-admin');
     if(!admin.apps.length){
-      admin.initializeApp({
-        credential: admin.credential.cert({
+      let credentialConfig;
+      if(process.env.FIREBASE_SERVICE_ACCOUNT_JSON){
+        // v2: tüm servis hesabı JSON'unu TEK secret olarak kabul et — elle alan alan
+        // kopyalamanın (kayıp satır sonu/tırnak) yol açtığı "DECODER routines::unsupported"
+        // gibi hatalardan kaçınmak için. JSON içindeki \n zaten geçerli kaçış dizisidir,
+        // JSON.parse bunu otomatik olarak gerçek satır sonuna çevirir.
+        const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+        credentialConfig = {
+          projectId: sa.project_id,
+          clientEmail: sa.client_email,
+          privateKey: sa.private_key,
+        };
+      } else {
+        credentialConfig = {
           projectId: process.env.FIREBASE_PROJECT_ID,
           clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
           // GitHub Secrets'ta \n kaybolur; geri düzelt
           privateKey: (process.env.FIREBASE_PRIVATE_KEY||'').replace(/\\n/g, '\n'),
-        }),
-      });
+        };
+      }
+      admin.initializeApp({ credential: admin.credential.cert(credentialConfig) });
     }
     const db = admin.firestore();
     const col = db.collection(process.env.FIREBASE_COLLECTION || 'filoPaneliData');
@@ -100,7 +117,7 @@ async function main(){
       ozet.ok = false; ozet.mesaj = 'E-posta gönderilemedi: '+hata.slice(0,200);
       return bitir(ozet);
     }
-
+    
     for(const s of yeni) log[s.key] = new Date().toISOString();
     await logRef.set({gonderilen: log}, {merge:true});
 
