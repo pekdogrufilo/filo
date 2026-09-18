@@ -879,6 +879,14 @@
     .asub{font-size:12px;}
     .iade-card{padding:18px 15px;}
     .iade-row{grid-template-columns:1fr;}
+    /* v.171: "Kiralama yaparkenki menü zor" — kiralama sihirbazının son adımında (İptal,
+       Geri, "Kiraya Ver & Word", "Kiraya Ver & PDF" — 4 buton) tüm butonlar dar ekranda tek
+       satıra sıkıştığı için metinleri 3 satıra bölünüyor, dokunma alanları daralıyordu.
+       Butonları sarmalı (2'li) bir düzene alıyoruz — her biri satırın yarısını kaplıyor,
+       gerekirse ikinci bir satıra geçiyor; metin artık tek satırda sığıyor ve dokunma alanı
+       genişliyor. */
+    .iade-foot{flex-wrap:wrap;}
+    .iade-foot button{flex:1 1 calc(50% - 5px);text-align:center;padding-left:8px;padding-right:8px;}
 
   /* v.115: Dar ekran ek ayarları */
   .top-header{margin:-32px -8px 16px;padding:24px 8px 10px;}
@@ -1990,6 +1998,25 @@
     }
   }
 
+  /* v.171: "Kiralama yaparkenki menü zor" — aynı kökten bir sorun: mobilde sağ altta sabit
+     duran #filoKaydetBtn, .iade-modal (Araç Kirala sihirbazı, İade Al, vb.) veya genel
+     .overlay.show penceresi açıkken o pencerenin kendi altındaki eylem butonlarının (ör.
+     kiralama sihirbazının 4. adımındaki "Kiraya Ver & PDF"/"Kiraya Ver & Word") TAM
+     ÜSTÜNE biniyordu — ikisi de aynı sağ-alt köşede sabit konumlandığı için kullanıcı doğru
+     butona basmakta zorlanıyor, bu yüzden bazen daha geniş görüş açısı için telefonu yan
+     çevirmek zorunda kalıyordu. AI sayfası için zaten yapılan aynı düzeltmeyi (yukarıdaki
+     blok) buradaki tüm tam-ekran modallere de genişletiyoruz — bir modal açıkken zaten o
+     modalin kendi butonlarından kaydedilir/onaylanır, bu yüzden arkadaki genel Kaydet
+     FAB'ının o an görünür ya da tıklanabilir olmasına hiç gerek yok. */
+  @media (max-width:900px){
+    body:has(.iade-modal) #filoKaydetBtn,
+    body:has(.overlay.show) #filoKaydetBtn,
+    body:has(.iade-modal) .mobil-fab,
+    body:has(.overlay.show) .mobil-fab{
+      display:none !important;
+    }
+  }
+
   /* v.125: "Aynı kaliteyi tüm panele yay" — dashboard'daki (.add-btn/#filoKaydetBtn) glow+hover
      efektini, modallerde/detay panellerinde/AI sohbetinde onlarca yerde inline stille yazılmış
      "background:var(--accent-blue)" birincil aksiyon butonlarına da tek noktadan yayıyoruz.
@@ -2471,7 +2498,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-18.170</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-18.171</div>
     </div>
   </aside>
 <script>
