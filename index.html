@@ -2420,7 +2420,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-18.153</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-18.154</div>
     </div>
   </aside>
 <script>
@@ -2616,6 +2616,25 @@
       <div class="chip" id="chipKira">🟣 Kirası yaklaşan</div>
     </div>
   </div>
+
+  <!-- v.154: Sigortası/Muayenesi yaklaşan filtre çipi seçiliyken görünen, o listeyi tek
+       tıkla sigorta şirketine/muayene istasyonuna göndermeye yarayan bar — kullanıcının
+       "sigortacıya araçları tek tek gönderirken zorlanıyorum" geri bildirimine karşılık.
+       render()'daki belgeFilterType filtresiyle BİREBİR aynı satırları kullanır (bkz.
+       belgeFilterListesi()) ki ekranda görünen liste ile gönderilen liste hep aynı olsun. -->
+  <div class="belge-gonder-bar" id="belgeGonderBar" style="display:none;align-items:center;gap:10px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:11px 15px;margin:-6px 0 16px;">
+    <span id="belgeGonderTxt" style="font-size:13px;font-weight:650;color:var(--paper);"></span>
+    <button id="belgeGonderWa" style="background:rgba(37,211,102,.14);border:1px solid rgba(37,211,102,.35);color:#128C7E;padding:8px 13px;border-radius:8px;font-family:inherit;font-weight:600;font-size:12.5px;cursor:pointer;display:flex;align-items:center;gap:6px;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.29-1.39a9.9 9.9 0 0 0 4.75 1.21h.01c5.46 0 9.9-4.45 9.9-9.91C21.96 6.45 17.51 2 12.04 2Zm0 18.05h-.01a8.14 8.14 0 0 1-4.15-1.14l-.3-.18-3.14.82.84-3.06-.19-.31a8.13 8.13 0 0 1-1.25-4.35c0-4.5 3.66-8.16 8.16-8.16 2.18 0 4.23.85 5.77 2.39a8.1 8.1 0 0 1 2.39 5.78c0 4.5-3.67 8.15-8.17 8.15Z"/></svg>
+      WhatsApp'ta Gönder
+    </button>
+    <button id="belgeGonderExcel" class="export-btn" style="padding:8px 13px;font-size:12.5px;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 19h16"/></svg>
+      Excel'e Aktar
+    </button>
+    <button id="belgeGonderKopyala" style="background:var(--surface-2);border:1px solid var(--border-2);color:var(--text);padding:8px 13px;border-radius:8px;font-family:inherit;font-weight:600;font-size:12.5px;cursor:pointer;">Metni Kopyala</button>
+  </div>
+
   <div class="result-count" id="resultCount"></div>
 
   <div class="grid" id="grid"></div>
@@ -4361,6 +4380,7 @@ function renderAlerts(){
 
 function render(){
   renderAlerts();
+  if(typeof updateBelgeGonderBar==='function') updateBelgeGonderBar();
   const grid = document.getElementById('grid');
   const q = document.getElementById('search').value.trim().toLowerCase();
 
@@ -4626,6 +4646,77 @@ Object.entries(belgeChips).forEach(([type, id])=>{
     render();
   };
 });
+
+// v.154: "Sigortası yaklaşan"/"Muayenesi yaklaşan" çipi seçiliyken üstte beliren bar —
+// listeyi tek tıkla WhatsApp'tan gönderme / Excel'e aktarma / kopyalama imkânı verir.
+// belgeFilterListesi(), render()'daki grid filtresiyle (bkz. yukarıdaki belgeFilterType
+// bloğu) BİREBİR aynı 30 günlük eşiği kullanır — ekranda görünenle gönderilen hep eşleşir.
+function belgeFilterListesi(){
+  if(belgeFilterType!=='sigorta' && belgeFilterType!=='muayene') return [];
+  const rows = [];
+  vehicles.forEach(v=>{
+    const tarih = belgeFilterType==='sigorta' ? v.sigortaTarihi : v.muayeneTarihi;
+    if(!tarih) return;
+    const dl = daysLeft(tarih);
+    if(dl===null || dl>30) return;
+    rows.push({plaka:v.plaka||'—', sirket:v.sirket||'', tarih, dl});
+  });
+  rows.sort((a,b)=>a.dl-b.dl);
+  return rows;
+}
+function buildBelgeGonderMetni(rows){
+  const baslik = belgeFilterType==='sigorta' ? 'Sigorta poliçesi yaklaşan/geçmiş araçlar' : 'Muayenesi yaklaşan/geçmiş araçlar';
+  let metin = `${baslik} — ${new Date().toLocaleDateString('tr-TR')}\n\n`;
+  rows.forEach(r=>{
+    const dtxt = r.dl<0 ? `${Math.abs(r.dl)} gün geçti` : (r.dl===0?'bugün bitiyor':`${r.dl} gün kaldı`);
+    metin += `${r.plaka} — ${fmtTarih(r.tarih)} (${dtxt})\n`;
+  });
+  return metin;
+}
+function updateBelgeGonderBar(){
+  const bar = document.getElementById('belgeGonderBar');
+  if(!bar) return;
+  if(belgeFilterType!=='sigorta' && belgeFilterType!=='muayene'){ bar.style.display='none'; return; }
+  const rows = belgeFilterListesi();
+  const etiket = belgeFilterType==='sigorta' ? 'sigorta' : 'muayene';
+  document.getElementById('belgeGonderTxt').textContent = rows.length
+    ? `${rows.length} araç — ${etiket} bitişi yaklaşan/geçmiş`
+    : `Şu an ${etiket} bitişi yaklaşan/geçmiş araç yok`;
+  bar.style.display = rows.length ? 'flex' : 'none';
+}
+document.getElementById('belgeGonderWa').onclick = ()=>{
+  const rows = belgeFilterListesi();
+  if(!rows.length) return;
+  const url = `https://wa.me/?text=${encodeURIComponent(buildBelgeGonderMetni(rows))}`;
+  window.open(url, '_blank');
+};
+document.getElementById('belgeGonderKopyala').onclick = async ()=>{
+  const rows = belgeFilterListesi();
+  if(!rows.length) return;
+  const metin = buildBelgeGonderMetni(rows);
+  try{
+    await navigator.clipboard.writeText(metin);
+    showToast('Liste panoya kopyalandı.');
+  }catch(e){
+    showToast('Kopyalanamadı — tarayıcı izni gerekebilir, listeyi elle seçip kopyalayabilirsin.', true);
+  }
+};
+document.getElementById('belgeGonderExcel').onclick = ()=>{
+  const rows = belgeFilterListesi();
+  if(!rows.length) return;
+  const etiket = belgeFilterType==='sigorta' ? 'Sigorta Bitiş Tarihi' : 'Muayene Bitiş Tarihi';
+  const dataRows = rows.map(r=>({
+    'Plaka': r.plaka,
+    'Bağlı Şirket': r.sirket,
+    [etiket]: fmtTarih(r.tarih),
+    'Durum': r.dl<0 ? `${Math.abs(r.dl)} gün geçti` : (r.dl===0?'Bugün bitiyor':`${r.dl} gün kaldı`),
+  }));
+  const ws = XLSX.utils.json_to_sheet(dataRows);
+  ws['!cols'] = [{wch:12},{wch:20},{wch:18},{wch:16}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, belgeFilterType==='sigorta' ? 'Sigorta' : 'Muayene');
+  XLSX.writeFile(wb, `${belgeFilterType}-yaklasan-${todayISO()}.xlsx`);
+};
 document.getElementById('alertHead').onclick = ()=>{
   alertOpen = !alertOpen;
   document.getElementById('alertToggleTxt').textContent = alertOpen ? 'gizle' : 'göster';
