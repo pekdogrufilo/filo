@@ -2246,9 +2246,18 @@
      alanı — art arda sıkışık kutular yerine daha net ayrım. */
   .page.active > .dcard, .page.active > .dash-widget{margin-bottom:20px;}
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<!-- v.169: Bu 3 CDN kütüphanesi (jszip/xlsx/qrcode) sadece kullanıcı Excel dışa/içe aktarma ya
+     da QR kod oluşturma gibi bir işlem TETİKLEDİĞİNDE (bkz. XLSX./JSZip/QRCode çağrıları —
+     hepsi fonksiyon içinde, sayfa yüklenirken hiçbiri hemen çalıştırılmıyor) kullanılıyor. Eskiden
+     <head> içinde defer'sız (render-blocking) olarak yüklendikleri için tarayıcı, kilit ekranını
+     (lockScreen) bile göstermeden önce bu ~1MB'lık kütüphaneleri indirip çalıştırmayı bekliyordu
+     — "panel çok geç açılıyor" şikayetinin bir parçası buydu. defer ile tarayıcı sayfanın geri
+     kalanını (kilit ekranı dahil) hemen ayrıştırıp gösterebiliyor, bu kütüphaneler arka planda
+     indirilip DOMContentLoaded'dan hemen önce (kullanıcı daha ilk tıklamasını yapmadan çok önce)
+     hazır oluyor. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
 <script>/* vd-inspect-guard: preview proxy inspector yeri burasi */</script>
 </head>
 <body>
@@ -2462,7 +2471,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-18.168</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-18.169</div>
     </div>
   </aside>
 <script>
@@ -3436,100 +3445,151 @@ async function load(){
   if(window.__cloudSyncActive){
     document.getElementById('cloudBadge').style.display = 'inline-flex';
   }
-  try{
-    const vr = await storageAPI.get('vehicles').catch(()=>null);
-    if(vr && vr.value){
-      vehicles = JSON.parse(vr.value);
-    }else{
-      // hafızada kayıtlı veri yoksa (ilk açılış) Excel'den aktarılan veriyle başla
-      vehicles = IMPORTED_DATA.map(v=>({...v}));
-      await persist();
-    }
-  }catch(e){ vehicles = IMPORTED_DATA.map(v=>({...v})); }
-  try{
-    const lr = await storageAPI.get('activityLog').catch(()=>null);
-    activityLog = (lr && lr.value) ? JSON.parse(lr.value) : [];
-  }catch(e){ activityLog = []; }
-  try{
-    const er = await storageAPI.get('expenses').catch(()=>null);
-    expenses = (er && er.value) ? JSON.parse(er.value) : [];
-  }catch(e){ expenses = []; }
-  try{
-    const sr = await storageAPI.get('sozlesmeler').catch(()=>null);
-    sozlesmeler = (sr && sr.value) ? JSON.parse(sr.value) : [];
-  }catch(e){ sozlesmeler = []; }
-  try{
-    const ar = await storageAPI.get('arsiv').catch(()=>null);
-    arsiv = (ar && ar.value) ? JSON.parse(ar.value) : [];
-  }catch(e){ arsiv = []; }
-  try{
-    const cr = await storageAPI.get('customers').catch(()=>null);
-    customers = (cr && cr.value) ? JSON.parse(cr.value) : [];
-  }catch(e){ customers = []; }
-  try{
-    const lgr = await storageAPI.get('ledger').catch(()=>null);
-    ledger = (lgr && lgr.value) ? JSON.parse(lgr.value) : [];
-  }catch(e){ ledger = []; }
-  try{
-    const ir = await storageAPI.get('invoices').catch(()=>null);
-    invoices = (ir && ir.value) ? JSON.parse(ir.value) : [];
-  }catch(e){ invoices = []; }
-  try{
-    const pr = await storageAPI.get('payments').catch(()=>null);
-    payments = (pr && pr.value) ? JSON.parse(pr.value) : [];
-  }catch(e){ payments = []; }
-  try{
-    const rtr = await storageAPI.get('rentals').catch(()=>null);
-    rentals = (rtr && rtr.value) ? JSON.parse(rtr.value) : [];
-  }catch(e){ rentals = []; }
-  try{
-    const spr = await storageAPI.get('suppliers').catch(()=>null);
-    suppliers = (spr && spr.value) ? JSON.parse(spr.value) : [];
-  }catch(e){ suppliers = []; }
-  try{
-    const scpr = await storageAPI.get('serviceParts').catch(()=>null);
-    serviceParts = (scpr && scpr.value) ? JSON.parse(scpr.value) : [];
-  }catch(e){ serviceParts = []; }
-  try{
-    const tr2 = await storageAPI.get('tires').catch(()=>null);
-    tires = (tr2 && tr2.value) ? JSON.parse(tr2.value) : [];
-  }catch(e){ tires = []; }
-  try{
-    const fr = await storageAPI.get('fuelRecords').catch(()=>null);
-    fuelRecords = (fr && fr.value) ? JSON.parse(fr.value) : [];
-  }catch(e){ fuelRecords = []; }
-  try{
-    const tor = await storageAPI.get('tolls').catch(()=>null);
-    tolls = (tor && tor.value) ? JSON.parse(tor.value) : [];
-  }catch(e){ tolls = []; }
-  try{
-    const tfr = await storageAPI.get('trafficFines').catch(()=>null);
-    trafficFines = (tfr && tfr.value) ? JSON.parse(tfr.value) : [];
-  }catch(e){ trafficFines = []; }
-  try{
-    const dr = await storageAPI.get('documents').catch(()=>null);
-    documents = (dr && dr.value) ? JSON.parse(dr.value) : [];
-  }catch(e){ documents = []; }
-  try{
-    const nr = await storageAPI.get('notifications').catch(()=>null);
-    notifications = (nr && nr.value) ? JSON.parse(nr.value) : [];
-  }catch(e){ notifications = []; }
-  // FAZ8: automationRules — storageAPI'de kayıt HİÇ yoksa (ilk açılış, vehicles/IMPORTED_DATA
-  // ile AYNI ilke) örnek/varsayılan kurallarla başlar; kullanıcı hepsini silmişse (kayıt var
-  // ama boş dizi) o tercihe saygı gösterilir, yeniden seed EDİLMEZ.
-  try{
-    const arr = await storageAPI.get('automationRules').catch(()=>null);
-    if(arr && arr.value){
-      automationRules = JSON.parse(arr.value);
-    }else{
-      automationRules = OTOMASYON_VARSAYILAN_KURALLAR.map(r=>({...r, id: yeniId('rule'), sonCalismaTarihi: null}));
-      await persistAutomationRules();
-    }
-  }catch(e){ automationRules = []; }
-  try{
-    const kvr = await storageAPI.get('kvkkTalepleri').catch(()=>null);
-    kvkkTalepleri = (kvr && kvr.value) ? JSON.parse(kvr.value) : [];
-  }catch(e){ kvkkTalepleri = []; }
+  // v.169: Bu ~20 anahtar birbirinden BAĞIMSIZ (biri diğerinin sonucuna ihtiyaç duymuyor) ama
+  // önceden SIRAYLA okunuyordu — her biri ayrı bir Firestore ağ isteği olduğu için (bkz.
+  // makeFirestoreAdapter().get, her çağrı kendi round-trip'i), bu "panel çok geç açılıyor,
+  // donuyor" şikayetinin asıl kaynağıydı: 20 istek sırayla gidip gelince (her biri tek başına
+  // hızlı olsa bile) açılış kolayca birkaç saniyeyi buluyordu. Aşağıda hepsi PARALEL olarak
+  // (Promise.all ile) başlatılıyor; her birinin kendi try/catch'i, kendi varsayılan (boş dizi)
+  // değeri ve "vehicles" özelindeki ilk-açılış/persist mantığı AYNEN korunuyor — tek fark artık
+  // birbirlerini beklememeleri: toplam süre en YAVAŞ tek isteğin süresi kadar oluyor, 20
+  // isteğin TOPLAMI kadar değil.
+  await Promise.all([
+    (async()=>{
+      try{
+        const vr = await storageAPI.get('vehicles').catch(()=>null);
+        if(vr && vr.value){
+          vehicles = JSON.parse(vr.value);
+        }else{
+          // hafızada kayıtlı veri yoksa (ilk açılış) Excel'den aktarılan veriyle başla
+          vehicles = IMPORTED_DATA.map(v=>({...v}));
+          await persist();
+        }
+      }catch(e){ vehicles = IMPORTED_DATA.map(v=>({...v})); }
+    })(),
+    (async()=>{
+      try{
+        const lr = await storageAPI.get('activityLog').catch(()=>null);
+        activityLog = (lr && lr.value) ? JSON.parse(lr.value) : [];
+      }catch(e){ activityLog = []; }
+    })(),
+    (async()=>{
+      try{
+        const er = await storageAPI.get('expenses').catch(()=>null);
+        expenses = (er && er.value) ? JSON.parse(er.value) : [];
+      }catch(e){ expenses = []; }
+    })(),
+    (async()=>{
+      try{
+        const sr = await storageAPI.get('sozlesmeler').catch(()=>null);
+        sozlesmeler = (sr && sr.value) ? JSON.parse(sr.value) : [];
+      }catch(e){ sozlesmeler = []; }
+    })(),
+    (async()=>{
+      try{
+        const ar = await storageAPI.get('arsiv').catch(()=>null);
+        arsiv = (ar && ar.value) ? JSON.parse(ar.value) : [];
+      }catch(e){ arsiv = []; }
+    })(),
+    (async()=>{
+      try{
+        const cr = await storageAPI.get('customers').catch(()=>null);
+        customers = (cr && cr.value) ? JSON.parse(cr.value) : [];
+      }catch(e){ customers = []; }
+    })(),
+    (async()=>{
+      try{
+        const lgr = await storageAPI.get('ledger').catch(()=>null);
+        ledger = (lgr && lgr.value) ? JSON.parse(lgr.value) : [];
+      }catch(e){ ledger = []; }
+    })(),
+    (async()=>{
+      try{
+        const ir = await storageAPI.get('invoices').catch(()=>null);
+        invoices = (ir && ir.value) ? JSON.parse(ir.value) : [];
+      }catch(e){ invoices = []; }
+    })(),
+    (async()=>{
+      try{
+        const pr = await storageAPI.get('payments').catch(()=>null);
+        payments = (pr && pr.value) ? JSON.parse(pr.value) : [];
+      }catch(e){ payments = []; }
+    })(),
+    (async()=>{
+      try{
+        const rtr = await storageAPI.get('rentals').catch(()=>null);
+        rentals = (rtr && rtr.value) ? JSON.parse(rtr.value) : [];
+      }catch(e){ rentals = []; }
+    })(),
+    (async()=>{
+      try{
+        const spr = await storageAPI.get('suppliers').catch(()=>null);
+        suppliers = (spr && spr.value) ? JSON.parse(spr.value) : [];
+      }catch(e){ suppliers = []; }
+    })(),
+    (async()=>{
+      try{
+        const scpr = await storageAPI.get('serviceParts').catch(()=>null);
+        serviceParts = (scpr && scpr.value) ? JSON.parse(scpr.value) : [];
+      }catch(e){ serviceParts = []; }
+    })(),
+    (async()=>{
+      try{
+        const tr2 = await storageAPI.get('tires').catch(()=>null);
+        tires = (tr2 && tr2.value) ? JSON.parse(tr2.value) : [];
+      }catch(e){ tires = []; }
+    })(),
+    (async()=>{
+      try{
+        const fr = await storageAPI.get('fuelRecords').catch(()=>null);
+        fuelRecords = (fr && fr.value) ? JSON.parse(fr.value) : [];
+      }catch(e){ fuelRecords = []; }
+    })(),
+    (async()=>{
+      try{
+        const tor = await storageAPI.get('tolls').catch(()=>null);
+        tolls = (tor && tor.value) ? JSON.parse(tor.value) : [];
+      }catch(e){ tolls = []; }
+    })(),
+    (async()=>{
+      try{
+        const tfr = await storageAPI.get('trafficFines').catch(()=>null);
+        trafficFines = (tfr && tfr.value) ? JSON.parse(tfr.value) : [];
+      }catch(e){ trafficFines = []; }
+    })(),
+    (async()=>{
+      try{
+        const dr = await storageAPI.get('documents').catch(()=>null);
+        documents = (dr && dr.value) ? JSON.parse(dr.value) : [];
+      }catch(e){ documents = []; }
+    })(),
+    (async()=>{
+      try{
+        const nr = await storageAPI.get('notifications').catch(()=>null);
+        notifications = (nr && nr.value) ? JSON.parse(nr.value) : [];
+      }catch(e){ notifications = []; }
+    })(),
+    // FAZ8: automationRules — storageAPI'de kayıt HİÇ yoksa (ilk açılış, vehicles/IMPORTED_DATA
+    // ile AYNI ilke) örnek/varsayılan kurallarla başlar; kullanıcı hepsini silmişse (kayıt var
+    // ama boş dizi) o tercihe saygı gösterilir, yeniden seed EDİLMEZ.
+    (async()=>{
+      try{
+        const arr = await storageAPI.get('automationRules').catch(()=>null);
+        if(arr && arr.value){
+          automationRules = JSON.parse(arr.value);
+        }else{
+          automationRules = OTOMASYON_VARSAYILAN_KURALLAR.map(r=>({...r, id: yeniId('rule'), sonCalismaTarihi: null}));
+          await persistAutomationRules();
+        }
+      }catch(e){ automationRules = []; }
+    })(),
+    (async()=>{
+      try{
+        const kvr = await storageAPI.get('kvkkTalepleri').catch(()=>null);
+        kvkkTalepleri = (kvr && kvr.value) ? JSON.parse(kvr.value) : [];
+      }catch(e){ kvkkTalepleri = []; }
+    })(),
+  ]);
   // FAZ6: bildirim kayıtlarını (dedupe'lu) üret — sayfa her açıldığında değil, sadece burada,
   // uygulama yüklenirken bir kez çalışır. Yeni kayıt eklendiyse kalıcı olarak saklanır.
   try{
