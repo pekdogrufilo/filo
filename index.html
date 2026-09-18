@@ -2356,40 +2356,57 @@
         <span>Ara...</span>
         <span class="sb-kbd">⌘K</span>
       </button>
+      <!-- v.158: sol menü kullanıcı talebiyle mantıksal gruplara ayrıldı — GENEL / FİLO / KİRALAMA /
+           FİNANS / SERVİS / RAPORLAR / SİSTEM. TÜM data-page değerleri, buton id'leri (sbBelgeYukle),
+           rozet id'leri (sbBakimBadge/sbLastikBadge/sbBelgelerBadge/sbBildirimBadge) ve ikonlar AYNEN
+           korunur — sadece hangi grup altında göründükleri değişti, hiçbir sayfa/işlev kaldırılmadı. -->
       <button class="sb-item active" data-page="genel-bakis"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M9 22V12h6v10"/></svg>Genel Bakış</button>
-      <button class="sb-item" data-page="arac-yonetimi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2v-6l-3-5H4l-3 5v6h2"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="16.5" cy="17.5" r="2.5"/></svg>Araç Yönetimi</button>
-      <button class="sb-item" data-page="kiralama"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Kiralama İşlemleri</button>
-      <button class="sb-item" data-page="musteriler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Müşteriler</button>
-      <button class="sb-item" data-page="cari"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/><path d="M21 12a9 9 0 1 1-18 0"/></svg>Cari &amp; Tahsilat</button>
-      <button class="sb-item" data-page="faturalar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>Faturalar</button>
+      <button class="sb-item" data-page="bildirimler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>Bildirimler<span class="sb-badge" id="sbBildirimBadge" style="display:none">0</span></button>
 
-      <div class="sb-group" data-group="yonetim">
-        <button class="sb-group-head" type="button">Yönetim<svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+      <div class="sb-group" data-group="filo">
+        <button class="sb-group-head" type="button">Filo<svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+        <div class="sb-group-body">
+          <button class="sb-item" data-page="arac-yonetimi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2v-6l-3-5H4l-3 5v6h2"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="16.5" cy="17.5" r="2.5"/></svg>Araç Yönetimi</button>
+          <button class="sb-item" data-page="belgeler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>Belge Arşivi<span class="sb-badge" id="sbBelgelerBadge" style="display:none;background:var(--amber);">0</span></button>
+          <button class="sb-item" id="sbBelgeYukle" data-page="docupload"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg>Belge Yükleme</button>
+        </div>
+      </div>
+
+      <div class="sb-group" data-group="kiralama">
+        <button class="sb-group-head" type="button">Kiralama<svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+        <div class="sb-group-body">
+          <button class="sb-item" data-page="kiralama"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Kiralama İşlemleri</button>
+          <button class="sb-item" data-page="musteriler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Müşteriler</button>
+          <button class="sb-item" data-page="hasarcezalar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Hasar &amp; Cezalar</button>
+        </div>
+      </div>
+
+      <div class="sb-group" data-group="finans">
+        <button class="sb-group-head" type="button">Finans &amp; Ödeme<svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+        <div class="sb-group-body">
+          <button class="sb-item" data-page="cari"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/><path d="M21 12a9 9 0 1 1-18 0"/></svg>Cari &amp; Tahsilat</button>
+          <button class="sb-item" data-page="faturalar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>Faturalar</button>
+          <button class="sb-item" data-page="finansal-analiz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/><path d="M21 12a9 9 0 1 1-18 0"/></svg>Finans</button>
+          <button class="sb-item" data-page="masraf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Masraf Yönetimi</button>
+        </div>
+      </div>
+
+      <div class="sb-group" data-group="servis">
+        <button class="sb-group-head" type="button">Servis<svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
         <div class="sb-group-body">
           <button class="sb-item" data-page="bakim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14.7 6.3-6.4 6.4a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l6.4-6.4a4 4 0 1 0-3-3Z"/><path d="M8 12 4 16l4 4 4-4"/></svg>Bakım &amp; Servis<span class="sb-badge" id="sbBakimBadge" style="display:none;background:var(--amber);">0</span></button>
           <button class="sb-item" data-page="yakit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22h12"/><path d="M4 9h8V4a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1Z"/><path d="M4 22V9"/><path d="M12 22V9"/><path d="M16 8h1a2 2 0 0 1 2 2v1a2 2 0 0 0 2 2v6.5a1.5 1.5 0 0 1-3 0V15a1 1 0 0 0-1-1h-1"/></svg>Yakıt</button>
           <button class="sb-item" data-page="lastikler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg>Lastikler<span class="sb-badge" id="sbLastikBadge" style="display:none;background:var(--amber);">0</span></button>
-          <button class="sb-item" data-page="hasarcezalar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Hasar &amp; Cezalar</button>
-          <button class="sb-item" data-page="finansal-analiz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/><path d="M21 12a9 9 0 1 1-18 0"/></svg>Finans</button>
-          <button class="sb-item" data-page="masraf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Masraf Yönetimi</button>
-          <button class="sb-item" data-page="raporlar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg>Raporlar</button>
         </div>
       </div>
 
-      <div class="sb-group" data-group="belgeler">
-        <button class="sb-group-head" type="button">Belgeler<svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
-        <div class="sb-group-body">
-          <button class="sb-item" data-page="belgeler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>Belge Arşivi<span class="sb-badge" id="sbBelgelerBadge" style="display:none;background:var(--amber);">0</span></button>
-          <button class="sb-item" id="sbBelgeYukle" data-page="docupload"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg>Belge Yükleme</button>
-          <button class="sb-item" data-page="excel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="m8 13 2.5 5"/><path d="m13.5 13-2.5 5"/></svg>Veri Aktarımı</button>
-        </div>
-      </div>
+      <button class="sb-item" data-page="raporlar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg>Raporlar</button>
 
       <div class="sb-group" data-group="sistem">
         <button class="sb-group-head" type="button">Sistem<svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
         <div class="sb-group-body">
-          <button class="sb-item" data-page="bildirimler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>Bildirimler<span class="sb-badge" id="sbBildirimBadge" style="display:none">0</span></button>
           <button class="sb-item" data-page="ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a4 4 0 0 1 4 4v1h1a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3v-8a3 3 0 0 1 3-3h1V6a4 4 0 0 1 4-4z"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17c1 1 5 1 6 0"/></svg>AI Filo Asistanı</button>
+          <button class="sb-item" data-page="excel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="m8 13 2.5 5"/><path d="m13.5 13-2.5 5"/></svg>Veri Aktarımı</button>
           <button class="sb-item" data-page="ayarlar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.04 1.56V21a2 2 0 0 1-4 0v-.09A1.7 1.7 0 0 0 9 19.36a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.64 15a1.7 1.7 0 0 0-1.56-1.04H3a2 2 0 0 1 0-4h.09A1.7 1.7 0 0 0 4.64 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.64a1.7 1.7 0 0 0 1.04-1.56V3a2 2 0 0 1 4 0v.09a1.7 1.7 0 0 0 1.04 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.36 9a1.7 1.7 0 0 0 1.56 1.04H21a2 2 0 0 1 0 4h-.09a1.7 1.7 0 0 0-1.56 1.04Z"/></svg>Ayarlar</button>
         </div>
       </div>
@@ -2420,7 +2437,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-18.157</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-18.159</div>
     </div>
   </aside>
 <script>
@@ -13704,12 +13721,22 @@ async function otoBelgeSec(file, statusEl){
 
     // 3) Doğru kart yuvasına kaydet
     const std = OTO_BELGE_TURLERI[tur];
+    // v.159: "AI'nın okuduğu veriler onaylanmadan mevcut kaydın üzerine sessizce yazılmasın"
+    // — artık bir tarih zaten kayıtlıysa ve belgeden okunan ondan farklıysa DEĞİŞTİRİLMİYOR,
+    // sadece alan boşsa dolduruluyor; çelişki varsa toast'ta ayrıca bildiriliyor (sözleşmedeki
+    // teslimTarihi/teslimKm için zaten kullanılan "boşsa doldur, doluysa bildir" deseniyle aynı).
+    let tarihGuncellendi = false, tarihCeliski = '';
     if(std){
       const res = await storageAPI.set(std.prefix+v.id, onceden.dataUrl);
       if(!res) throw new Error('depolama kaydı başarısız');
       v[std.adiF] = file.name;
       v[std.tipF] = onceden.mime;
-      if(std.tarihF && okunanTarih) v[std.tarihF] = okunanTarih;
+      if(std.tarihF && okunanTarih){
+        if(!v[std.tarihF]){ v[std.tarihF] = okunanTarih; tarihGuncellendi = true; }
+        else if(v[std.tarihF] !== okunanTarih){
+          tarihCeliski = ` Not: ${std.label} tarihi kayıtta ${fmtTarih(v[std.tarihF])} olarak duruyor, belgede ${fmtTarih(okunanTarih)} okundu — yanlış okuma olabileceği için değiştirmedim, gerekiyorsa elle güncelleyin.`;
+        }
+      }
       // v.133: "yüklüyorum ama göremiyorum" — standart yuvalı belgeler (sigorta/kasko/
       // muayene/ruhsat/sözleşme) "Belge Yükleme" sayfasının "Son yüklenenler" listesine hiç
       // girmiyordu çünkü o liste sadece v.otoBelgeler dizisini okuyor, standart alanları değil.
@@ -13732,9 +13759,9 @@ async function otoBelgeSec(file, statusEl){
     const sozSonuc = tur==='sozlesme' ? sozlesmeAlanlariUygula(v, bilgi) : null;
     await persist();
     logActivity('Belge yüklendi', `${v.plaka} — ${std?std.label:(tur==='diger'?'Belge':tur)} (${file.name})`).catch(()=>{});
-    const tarihMsg = okunanTarih && std && std.tarihF ? `, tarih ${fmtTarih(okunanTarih)} olarak güncellendi` : (ruhsatM ? `, muayene tarihi ${fmtTarih(okunanTarih)} olarak işlendi` : '');
+    const tarihMsg = tarihGuncellendi ? `, tarih ${fmtTarih(okunanTarih)} olarak kaydedildi` : (ruhsatM ? `, muayene tarihi ${fmtTarih(okunanTarih)} olarak işlendi` : '');
     const sozMsg = sozlesmeMesajOlustur(sozSonuc);
-    showToast(`Kaydedildi: ${esc(v.plaka)} — ${std?std.label:esc(tur)} "${esc(file.name)}"${tarihMsg}.${sozMsg}`);
+    showToast(`Kaydedildi: ${esc(v.plaka)} — ${std?std.label:esc(tur)} "${esc(file.name)}"${tarihMsg}.${sozMsg}${tarihCeliski}`);
     renderBelgelerPage();
   }catch(e){
     console.error(e);
@@ -13950,13 +13977,21 @@ async function belgeTopluTek(file, fallbackId){
     }
     if(!v && fallbackId) v = vehicles.find(x=>x.id===fallbackId);
     if(!v) return {durum:'hata', mesaj: okunanPlaka ? `plaka ${okunanPlaka} okundu ama filoda yok` : 'plaka okunamadı ve araç seçilmedi'};
+    let tarihGuncellendi = false, tarihCeliski = '';
     const std = OTO_BELGE_TURLERI[tur];
     if(std){
       const res = await storageAPI.set(std.prefix+v.id, onceden.dataUrl);
       if(!res) throw new Error('Depolama alanı dolu');
       v[std.adiF] = file.name;
       v[std.tipF] = onceden.mime;
-      if(std.tarihF && okunanTarih) v[std.tarihF] = okunanTarih;
+      // v.159: bkz. otoBelgeSec'teki aynı desen — mevcut bir tarih varsa ve belgeden okunan
+      // ondan farklıysa sessizce üzerine yazılmıyor, sadece boşsa dolduruluyor.
+      if(std.tarihF && okunanTarih){
+        if(!v[std.tarihF]){ v[std.tarihF] = okunanTarih; tarihGuncellendi = true; }
+        else if(v[std.tarihF] !== okunanTarih){
+          tarihCeliski = `${std.label} tarihi kayıtta ${fmtTarih(v[std.tarihF])} var, belgede ${fmtTarih(okunanTarih)} okundu — değiştirilmedi`;
+        }
+      }
       if(!v.belgeYuklemeZamanlari) v.belgeYuklemeZamanlari = {};
       v.belgeYuklemeZamanlari[tur] = new Date().toISOString();
       // FAZ6: merkezi Belgeler kaydı (bkz. otoBelgeSec'teki aynı desen)
@@ -13974,26 +14009,27 @@ async function belgeTopluTek(file, fallbackId){
     if(tur==='sozlesme') sozlesmeAlanlariUygula(v, bilgi);
     await persist();
     logActivity('Belge yüklendi', `${v.plaka} — ${std?std.label:tur} (${file.name})`).catch(()=>{});
-    return {durum:'ok', plaka:v.plaka, etiket: std?std.label:(tur==='diger'?'Genel belge':tur), tarih: okunanTarih};
+    return {durum:'ok', plaka:v.plaka, etiket: std?std.label:(tur==='diger'?'Genel belge':tur), tarih: okunanTarih, celiski: tarihCeliski};
   }catch(e){ return {durum:'hata', mesaj: e.message||'bilinmeyen hata'}; }
 }
 async function belgeTopluIsle(files, status){
   const fallbackId = otoBelgeFallbackId();
   status.style.display='block';
   let bitti=0, ok=0, kurtarilan=0, hata=0;
+  const celiskiler = []; // v.159: mevcut tarihle çakışıp değiştirilmeyen belgeler burada toplanır
   const toplam = files.length;
   const kuyruk = files.slice();
   const isle = async (file)=>{
     const r = await belgeTopluTek(file, fallbackId);
     bitti++;
-    if(r.durum==='ok'){ ok++; if(r.etiket==='Genel belge') kurtarilan++; }
+    if(r.durum==='ok'){ ok++; if(r.etiket==='Genel belge') kurtarilan++; if(r.celiski) celiskiler.push(`${r.plaka}: ${r.celiski}`); }
     else hata++;
     status.textContent = `${bitti}/${toplam} işlendi · ${ok} kaydedildi${hata?` · ${hata} hata`:''}\nSon: ${file.name} — ${r.durum==='ok'?('✓ '+r.plaka+' ('+r.etiket+')'):('✗ '+r.mesaj)}`;
   };
   const isci = async ()=>{ let f; while((f=kuyruk.shift())!==undefined){ await isle(f); } };
   await Promise.all(Array.from({length: Math.min(3, toplam)}, isci));
-  status.textContent = `Tamamlandı: ${ok}/${toplam} belge kaydedildi${kurtarilan?` (${kurtarilan} plaka okunamayıp seçili araca kaydedildi)`:''}${hata?`, ${hata} dosya yüklenemedi`:''}.`;
-  showToast(`${ok} belge kaydedildi${hata?`, ${hata} başarısız`:''}.`);
+  status.textContent = `Tamamlandı: ${ok}/${toplam} belge kaydedildi${kurtarilan?` (${kurtarilan} plaka okunamayıp seçili araca kaydedildi)`:''}${hata?`, ${hata} dosya yüklenemedi`:''}.${celiskiler.length?`\n⚠ ${celiskiler.length} belgede tarih çelişkisi bulundu, mevcut kayıt korundu — elle kontrol edin:\n${celiskiler.join('\n')}`:''}`;
+  showToast(`${ok} belge kaydedildi${hata?`, ${hata} başarısız`:''}${celiskiler.length?`, ${celiskiler.length} tarih çelişkisi (kontrol edin)`:''}.`, celiskiler.length>0 && ok===0);
   setTimeout(()=>{ status.style.display='none'; }, 8000);
   renderDocUploadPage();
 }
