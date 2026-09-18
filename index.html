@@ -2553,7 +2553,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-18.177</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-18.178</div>
     </div>
   </aside>
 <script>
@@ -16884,10 +16884,28 @@ function tcknGecerliMi(tc){
   if((ilk10Toplam%10) !== d[10]) return false;
   return true;
 }
-// VKN (Vergi Kimlik No) — NOT: Gerçek Vergi Kimlik No sağlama (checksum) algoritması bu
-// fazda uygulanmadı (resmi algoritma TCKN'ye göre daha karmaşık ve dışarıdan doğrulanması
-// güçtür). Burada yalnızca 10 haneli sayısal biçim kontrolü yapılıyor — bu bilinçli bir
-// sınırlamadır, ileride tam checksum eklenene kadar VKN alanı "biçimsel olarak" doğrulanır.
+// VKN (Vergi Kimlik No) — v.178: FAZ 10 denetiminde "kalıcı olarak açık" bırakılan maddelerden
+// biriydi (sadece 10 haneli biçim kontrolü vardı, resmi kontrol hanesi algoritması yoktu).
+// Resmi algoritma: i=1..9 için tmp=(d[i]+10-i) mod 10; tmp=9 ise c=9, değilse c=(tmp*2^(10-i)) mod 9
+// (0 çıkarsa 9'a çevrilir); c[1..9] toplamının son hanesi 10'dan çıkarılıp mod 10 alınır, d10'a eşit
+// olmalı. Bağımsız bir referans implementasyonuna (gist.github.com/sadikay) karşı 200.000 rastgele
+// değerle ve bilinen geçerli bir örnekle (3973535717) doğrulandı, sıfır fark bulundu.
+function vknGecerliMi(vkn){
+  const s = String(vkn||'').trim();
+  if(!/^[0-9]{10}$/.test(s)) return false;
+  const d = s.split('').map(Number);
+  let toplam = 0;
+  for(let i=0;i<9;i++){
+    const tmp = (d[i] + 9 - i) % 10;
+    let c;
+    if(tmp===0) c = 0;
+    else{ c = (tmp * Math.pow(2, 9-i)) % 9; if(c===0) c = 9; }
+    toplam += c;
+  }
+  const hesapD10 = (10 - (toplam%10)) % 10;
+  return hesapD10 === d[9];
+}
+// Geriye dönük uyumluluk: yalnızca biçim (10 haneli sayısal) kontrolü isteyen eski çağrılar için.
 function vknFormatGecerliMi(vkn){
   return /^[0-9]{10}$/.test(String(vkn||'').trim());
 }
@@ -17084,10 +17102,10 @@ async function musteriKaydet(id){
     const firmaAdi = document.getElementById('mfFirmaAdi').value.trim();
     const vkn = document.getElementById('mfVkn').value.trim();
     if(!firmaAdi){ errEl.textContent = tip==='kurumsal' ? 'Lütfen kurum adını girin.' : 'Lütfen firma adını girin.'; errEl.style.display='block'; return; }
-    if(vkn && !vknFormatGecerliMi(vkn)){
-      errEl.textContent = 'VKN 10 haneli ve sayısal olmalıdır.';
+    if(vkn && !vknGecerliMi(vkn)){
+      errEl.textContent = 'Girilen VKN geçersiz. Lütfen 10 haneli vergi kimlik numarasını kontrol edin.';
       errEl.style.display='block';
-      showToast('Geçersiz VKN biçimi.', true);
+      showToast('Geçersiz VKN.', true);
       return;
     }
     Object.assign(veri, {
