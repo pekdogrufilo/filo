@@ -2578,7 +2578,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-19.189</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-19.190</div>
     </div>
   </aside>
 <script>
@@ -19726,6 +19726,22 @@ async function aiBelgeYukle(file){
       v[std.adiF] = file.name;
       v[std.tipF] = onceden.mime;
       if(std.tarihF && okunanTarih) v[std.tarihF] = okunanTarih;
+      // v.190: "AI Filo Asistanı çok geride" → bu yoldan (Evrak Gönder) yüklenen sigorta/kasko/
+      // muayene/ruhsat/sözleşme belgeleri, "Belge Yükleme" sayfasındaki (otoBelgeKaydetVeBildir)
+      // ile aynı iki adımı ATLIYORDU: merkezi Belgeler kaydı (documents[]) hiç oluşmuyordu, bu
+      // yüzden Belge Merkezi listesinde görünmüyor ve 'belge' türü bildirimleri hiç üretilmiyordu;
+      // ayrıca "Son yüklenenler" zaman damgası da tutulmuyordu. Aynı iki adım buraya da eklendi.
+      if(!v.belgeYuklemeZamanlari) v.belgeYuklemeZamanlari = {};
+      v.belgeYuklemeZamanlari[tur] = new Date().toISOString();
+      const merkeziTur = {sigorta:'Sigorta', kasko:'Kasko', muayene:'Muayene', ruhsat:'Ruhsat', sozlesme:'Sözleşme'}[tur];
+      if(merkeziTur){
+        try{
+          const verKey = await belgeDosyaSakla('arac_'+v.id+'_'+tur, onceden.dataUrl);
+          const sonGecerlilik = std.tarihF ? (v[std.tarihF]||null) : null;
+          const belgeNo = bilgi && bilgi.belgeNo ? String(bilgi.belgeNo).trim() : null;
+          await belgeMerkeziKaydet({ilgiliTip:'arac', ilgiliId:v.id, tur:merkeziTur, tarih: okunanTarih||todayISO(), sonGecerlilik, dosyaRef:verKey, belgeNo});
+        }catch(e){ console.error('Merkezi belge kaydı hatası:', e); }
+      }
     }else{
       await belgeAracaEkle(v, tur, file.name, onceden.mime, onceden.dataUrl, okunanTarih);
     }
