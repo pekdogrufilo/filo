@@ -2578,7 +2578,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-19.191</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-19.192</div>
     </div>
   </aside>
 <script>
@@ -9502,6 +9502,19 @@ async function delVehicle(id){
   const sebep = v.durum==='Satıldı' ? 'Satıldı (arşive alınıyor)' : v.durum==='Pert' ? 'Pert (arşive alınıyor)' : 'Arşive alınacak';
   if(!confirm(v.plaka+' plakalı araç silinecek ve arşive atanacak.\n('+sebep+')\n\nKayıtları korunur; Arşiv\'den geri yüklenebilir. Devam edilsin mi?')) return;
   vehicles = vehicles.filter(v=>v.id!==id);
+  // v.192: "silinen araç olduğunda kaydı mutlaka olsun" — bu araç bir Sözleşme Grubu'nun
+  // (havuz km) üyesiyse, silinince sessizce hesaptan düşmesin: gruptan da çıkarılıp bu, grubun
+  // kendi geçmişine kaydedilsin (bkz. grup formundaki aynı desen, sozGrubuKaydetForm).
+  let grupDegisti = false;
+  sozlesmeGruplari.forEach(g=>{
+    if((g.araclar||[]).includes(id)){
+      g.araclar = g.araclar.filter(x=>x!==id);
+      if(!g.gecmis) g.gecmis = [];
+      g.gecmis.push({tarih: new Date().toISOString(), olay: `${v.plaka} filodan silindiği için gruptan otomatik çıkarıldı`});
+      grupDegisti = true;
+    }
+  });
+  if(grupDegisti) await persistSozlesmeGruplari();
   // Arşive kaydet — belgeler ve masraflar korunur
   arsiv.push({...v, arşivlenme: new Date().toISOString().slice(0,10), arşivNot: v.durum==='Satıldı' ? 'Satıldı' : v.durum==='Pert' ? 'Pert (kaza)' : ''});
   await persist(); await persistArsiv(); updateArsivSayi();
@@ -14266,15 +14279,37 @@ async function sozGrubuKaydetForm(){
   if(bas && bitis && bitis<=bas){ showToast('Bitiş tarihi başlangıçtan sonra olmalı.', true); return; }
 
   const eski = editId ? sozlesmeGruplari.find(g=>g.id===editId) : null;
+  const yeniKmAsim = kmAsim!=='' && kmAsim!=null && !isNaN(Number(kmAsim)) ? Number(kmAsim) : null;
   const rec = {
     id: editId || ('sg'+Math.random().toString(36).slice(2,10)),
     ad, kiraci: kiraci||'',
     araclar,
     kmLimitToplam: Number(kmLimit),
-    kmAsimFiyat: kmAsim!=='' && kmAsim!=null && !isNaN(Number(kmAsim)) ? Number(kmAsim) : null,
+    kmAsimFiyat: yeniKmAsim,
     baslangic: bas||'', bitis: bitis||'',
     olusturma: eski ? eski.olusturma : new Date().toISOString(),
   };
+  // v.192: "silinen veya havuz km değişen araç olduğunda kaydı mutlaka olsun" — grubun kendi
+  // değişiklik geçmişi burada oluşturuluyor (araç eklendi/çıkarıldı, limit/ücret değişti).
+  // Silinen bir aracın gruptan OTOMATİK çıkarılması + kaydı ise delVehicle() içinde yapılıyor
+  // (bkz. v.192 notu orada) — burası sadece bu formdan yapılan MANUEL değişiklikleri kaydediyor.
+  const plakaOf = vid => vehicles.find(x=>x.id===vid)?.plaka || vid;
+  const simdi = new Date().toISOString();
+  const olaylar = [];
+  if(!eski){
+    olaylar.push({tarih: simdi, olay: `Grup oluşturuldu — ${araclar.length} araç (${araclar.map(plakaOf).join(', ')}), toplam ${Number(kmLimit).toLocaleString('tr-TR')} km`});
+  }else{
+    const eskiAraclar = eski.araclar||[];
+    araclar.filter(vid=>!eskiAraclar.includes(vid)).forEach(vid=>olaylar.push({tarih: simdi, olay: `${plakaOf(vid)} gruba eklendi`}));
+    eskiAraclar.filter(vid=>!araclar.includes(vid)).forEach(vid=>olaylar.push({tarih: simdi, olay: `${plakaOf(vid)} gruptan çıkarıldı`}));
+    if(Number(eski.kmLimitToplam)!==Number(kmLimit)){
+      olaylar.push({tarih: simdi, olay: `Toplam km limiti ${Number(eski.kmLimitToplam||0).toLocaleString('tr-TR')} km'den ${Number(kmLimit).toLocaleString('tr-TR')} km'ye güncellendi`});
+    }
+    if((eski.kmAsimFiyat||null)!==(yeniKmAsim||null)){
+      olaylar.push({tarih: simdi, olay: `Km aşım ücreti ${eski.kmAsimFiyat!=null?fmtTL2(eski.kmAsimFiyat):'—'}'den ${yeniKmAsim!=null?fmtTL2(yeniKmAsim):'—'}'ye güncellendi`});
+    }
+  }
+  rec.gecmis = [...(eski?.gecmis||[]), ...olaylar];
   if(editId){
     const idx = sozlesmeGruplari.findIndex(g=>g.id===editId);
     if(idx>-1) sozlesmeGruplari[idx] = rec; else sozlesmeGruplari.push(rec);
@@ -14398,6 +14433,15 @@ function sozGruplariHTML(){
             <div><div style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;">${asimVar?'Aşım':'Kalan Hak'}</div><div style="font-size:14px;font-weight:700;color:${asimVar?'#E1554E':'#36A168'};">${Math.abs(d.asim).toLocaleString('tr-TR')} km</div></div>
             ${d.asimTutar!=null?`<div><div style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;">Tahmini Aşım Bedeli</div><div style="font-size:14px;font-weight:700;color:#E1554E;">${fmtTL2(d.asimTutar)}</div></div>`:''}
           </div>` : '<div class="log-empty" style="margin-top:8px;">Gruba tanımlı araç kalmadı (silinmiş olabilir).</div>'}
+          <details style="margin-top:10px;">
+            <summary style="cursor:pointer;list-style:none;font-size:12px;font-weight:600;color:var(--text-3);">Geçmiş (${(g.gecmis||[]).length})</summary>
+            <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px;">
+              ${(g.gecmis||[]).length ? (g.gecmis||[]).slice().reverse().map(e=>`
+                <div style="font-size:12px;color:var(--text-2);padding:6px 10px;background:var(--surface-2);border-radius:6px;">
+                  <span style="color:var(--text-3);font-size:11px;">${fmtTarih((e.tarih||'').slice(0,10))} ${e.tarih?new Date(e.tarih).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'}):''}</span> — ${esc(e.olay)}
+                </div>`).join('') : '<div class="log-empty">Henüz bir değişiklik kaydı yok.</div>'}
+            </div>
+          </details>
         </div>`;
       }).join('')}
     </div>
