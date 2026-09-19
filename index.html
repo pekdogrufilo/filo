@@ -2565,7 +2565,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-19.184</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-19.185</div>
     </div>
   </aside>
 <script>
@@ -18993,7 +18993,7 @@ function renderAiPage(){
           </div>
           <div>
             <h1 style="font-size:18px;font-weight:700;color:var(--paper);margin:0;">AI Filo Asistanı</h1>
-            <div style="font-size:12px;color:var(--steel-300);">Filonuzu analiz edin, sorunları önceden görün, hızlı kararlar alın</div>
+            <div style="font-size:12px;color:var(--steel-300);">Filonu birlikte analiz edelim, sorunları önceden görelim, hızlı karar almana yardım edeyim</div>
           </div>
           ${aiSesOkumaDestekleniyorMu() ? `<button onclick="aiSesliYanitToggle()" title="${aiSesliYanitAcMi()?'Sesli yanıtı kapat':'Asistan cevapları sesli okusun'}" style="margin-left:auto;background:${aiSesliYanitAcMi()?'rgba(22,160,134,.12)':'none'};border:1px solid ${aiSesliYanitAcMi()?'rgba(22,160,134,.3)':'var(--line)'};color:${aiSesliYanitAcMi()?'var(--accent-blue)':'var(--steel-300)'};padding:5px 10px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;">${ICO('volume',13)} Sesli Yanıt: ${aiSesliYanitAcMi()?'Açık':'Kapalı'}</button>` : ''}
           <button onclick="aiMessages=[];__aiSonSesliOkunanIndex=-1;window.__aiAkis=null;window.__aiPendingBelge=null;window.__aiIadeBeklenenPlaka=false;renderAiPage()" style="${aiSesOkumaDestekleniyorMu()?'':'margin-left:auto;'}background:none;border:1px solid var(--line);color:var(--steel-300);padding:5px 10px;border-radius:7px;font-size:12px;cursor:pointer;">Sıfırla</button>
@@ -19060,8 +19060,8 @@ function renderAiPage(){
         ${aiMessages.length===0 ? `
         <div style="text-align:center;padding:40px 20px;color:var(--steel-300);">
           <div style="font-size:32px;margin-bottom:8px;">🤖</div>
-          <div style="font-size:15px;font-weight:600;color:var(--paper);margin-bottom:4px;">Size nasıl yardımcı olabilirim?</div>
-          <div style="font-size:13px;">Filo verinizi analiz etmek, belge durumlarını sorgulamak veya masraf raporları için bir şey sorun.</div>
+          <div style="font-size:15px;font-weight:600;color:var(--paper);margin-bottom:4px;">Merhaba, nasıl yardımcı olabilirim?</div>
+          <div style="font-size:13px;">Filonu analiz edebilir, belge durumlarını kontrol edebilir ya da masraf raporu çıkarabilirim — aşağıdan hızlı bir komut seç, ya da doğrudan bana yaz.</div>
         </div>` : aiMessages.map((m,idx)=>renderAiMessage(m,idx)).join('')}
       </div>
 
@@ -19076,7 +19076,7 @@ function renderAiPage(){
             <button type="button" onclick="document.getElementById('aiBelgeInput').click();aiAttachMenuToggle(false)">${ICO('camera',13)} Evrak gönder</button>
           </div>
         </div>
-        <textarea id="aiInput" placeholder="Filo verileriniz hakkında soru sorun..." rows="1"
+        <textarea id="aiInput" placeholder="Filonla ilgili bir şey sor..." rows="1"
           style="flex:1;background:none;border:none;color:var(--paper);font-family:inherit;font-size:14px;resize:none;outline:none;line-height:1.5;max-height:120px;"
           onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();aiSendFromInput();}"
           oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
@@ -19147,7 +19147,7 @@ function aiSendFromInput(){
     window.__aiIadeBeklenenPlaka = false;
     if(iadeNiyet.vehicle){ aiIadeAkisiBaslat(iadeNiyet.vehicle, txt); return; }
     aiMessages.push({role:'user', content: txt});
-    aiMessages.push({role:'assistant', content: 'İade almak istediğin aracın plakasını yazar mısın?'});
+    aiMessages.push({role:'assistant', content: 'Tabii, hangi aracın iadesini alacağız? Plakasını yazar mısın?'});
     window.__aiIadeBeklenenPlaka = true;
     renderAiPage();
     return;
@@ -19158,7 +19158,7 @@ function aiSendFromInput(){
     const v = vehicles.find(x=>x.plaka && norm.includes(plakaNormalize(x.plaka)));
     if(v){ aiIadeAkisiBaslat(v, txt); return; }
     aiMessages.push({role:'user', content: txt});
-    aiMessages.push({role:'assistant', content: 'Bu plakayla eşleşen bir araç bulamadım — tekrar dener misin? (ör: 42 AKU 776)'});
+    aiMessages.push({role:'assistant', content: 'Bu plakayla eşleşen bir araç bulamadım, bir daha yazar mısın? (ör: 42 AKU 776)'});
     window.__aiIadeBeklenenPlaka = true;
     renderAiPage();
     return;
@@ -19322,7 +19322,7 @@ function aiIadeAkisiBaslat(v, txt){
     return;
   }
   window.__aiAkis = {tur:'iade', vehicleId:v.id, adim:0, veri:{}};
-  aiMessages.push({role:'assistant', content: `<b>${esc(v.plaka)}</b> için iade sürecini birlikte hazırlayalım. Birkaç şey soracağım, sonunda "İade Al" formunu bu bilgilerle dolu açacağım — fotoğrafları eklemek ve son onayı vermek sende kalacak. (İstediğin an "iptal" yazarak vazgeçebilirsin.)<br><br>İade tarihi ne zaman? ("bugün" yazabilirsin ya da gg.aa.yyyy)`});
+  aiMessages.push({role:'assistant', content: `Tamam, <b>${esc(v.plaka)}</b> için iade sürecini birlikte hazırlayalım. Birkaç şey soracağım, sonunda "İade Al" formunu bu bilgilerle dolu açacağım — fotoğrafları eklemek ve son onayı vermek sende kalacak. (İstediğin an "iptal" yazarak vazgeçebilirsin.)<br><br>İade tarihi ne zaman? ("bugün" yazabilirsin ya da gg.aa.yyyy)`});
   renderAiPage();
 }
 async function aiAkisYanitla(txt){
@@ -19334,7 +19334,7 @@ async function aiAkisYanitla(txt){
   aiMessages.push({role:'user', content: txt});
   if(['iptal','vazgeç','vazgec','dur','boşver','bosver'].includes(lower)){
     window.__aiAkis = null;
-    aiMessages.push({role:'assistant', content: 'İade süreci iptal edildi, formu açmadım.'});
+    aiMessages.push({role:'assistant', content: 'Tamam, iade sürecini iptal ettim, formu açmadım.'});
     renderAiPage();
     return;
   }
@@ -19388,7 +19388,7 @@ async function aiAkisYanitla(txt){
       }
       akis.veri.iadeTarihi = tarih;
       akis.adim = 1;
-      aiMessages.push({role:'assistant', content: `İade tarihi: <b>${fmtTarih(tarih)}</b>. Şimdi iade km'sini (göstergedeki güncel km) yazar mısın?`});
+      aiMessages.push({role:'assistant', content: `Not ettim, iade tarihi: <b>${fmtTarih(tarih)}</b>. Şimdi iade km'sini (göstergedeki güncel km) yazar mısın?`});
     }else if(akis.adim===1){
       // v.85: eskiden metindeki TÜM rakamlar çekilip birleştiriliyordu — "bilmiyorum ama 2 gün
       // önce 500 kadar gitmişti" gibi alakasız bir cümleden bile "2500" gibi bir km üretebiliyordu.
@@ -19404,7 +19404,7 @@ async function aiAkisYanitla(txt){
       }
       akis.veri.kmBitis = km;
       akis.adim = 2;
-      aiMessages.push({role:'assistant', content: `İade km: <b>${km.toLocaleString('tr-TR')} km</b>. Yakıt durumu nasıl — Dolu, 3/4, Yarım, 1/4 yoksa Boş mu?`});
+      aiMessages.push({role:'assistant', content: `Tamam, iade km: <b>${km.toLocaleString('tr-TR')} km</b>. Yakıt durumu nasıl — Dolu, 3/4, Yarım, 1/4 yoksa Boş mu?`});
     }else if(akis.adim===2){
       const eslesme = {dolu:'Dolu','3/4':'3/4','3 4':'3/4',yarim:'Yarım','yarım':'Yarım','1/4':'1/4','1 4':'1/4',bos:'Boş','boş':'Boş'};
       const key = lower.replace(/\s+/g,' ').trim();
@@ -19412,7 +19412,7 @@ async function aiAkisYanitla(txt){
       if(!yakit){ aiMessages.push({role:'assistant', content:'Şunlardan birini yazar mısın: Dolu, 3/4, Yarım, 1/4, Boş'}); renderAiPage(); return; }
       akis.veri.yakit = yakit;
       akis.adim = 3;
-      aiMessages.push({role:'assistant', content: `Yakıt: <b>${yakit}</b>. Araçta hasar var mı — Hasarsız, Minör hasar yoksa Büyük hasar mı?`});
+      aiMessages.push({role:'assistant', content: `Peki, yakıt: <b>${yakit}</b>. Araçta hasar var mı — Hasarsız, Minör hasar yoksa Büyük hasar mı?`});
     }else if(akis.adim===3){
       let hasar = null;
       if(/hasarsız|hasarsiz|^yok$|^hayır$|^hayir$/.test(lower)) hasar='Hasarsız';
@@ -19511,7 +19511,7 @@ async function aiSendSartname(){
       };
     });
 
-    const sartnameSystem = `Sen ${FIRMA_ADI} şirketinin ihale uzmanı AI asistanısın.
+    const sartnameSystem = `Sen ${FIRMA_ADI} şirketinin ihale uzmanı AI asistanısın. Kullanıcıya SEN diye hitap et, net ve samimi bir dille yaz — resmi rapor kalıplarından ("aşağıda sunulmuştur" gibi) kaçın, aşağıdaki başlıklar altında kısa ve anlaşılır cümlelerle anlat.
 
 GÖREV:
 1. Yüklenen teknik şartnameyi oku
@@ -20021,15 +20021,16 @@ BUGÜNÜN TARİHİ: ${bugun} (tarih hesaplarını bu güne göre yap)
 - Web: www.pekdogru.com
 
 TEMEL KURALLAR:
-- Türkçe konuş; üslubun samimi ve doğal olsun, bir meslektaşla konuşur gibi — gereksiz resmi/rapor dili kullanma ("aşağıda... sunulmuştur", "belirtilen hususlar" gibi kalıplardan kaçın), ama net ve öz kal
+- Türkçe konuş, kullanıcıya SEN diye hitap et (senli, samimi bir dil — "sizin filonuz" değil "senin filon", "bakayım", "hemen kontrol ediyorum" gibi doğal konuşma kalıpları kullanabilirsin). Aynı odada oturan, filoyu senin kadar iyi bilen bir ekip arkadaşıyla konuşuyormuş gibi davran — gereksiz resmi/rapor dili kullanma ("aşağıda... sunulmuştur", "belirtilen hususlar", "değerli kullanıcımız" gibi kalıplardan tamamen kaçın)
+- Basit/tek cevaplı bir soruda (ör. "X aracı müsait mi", "kaç araç var") doğrudan tek bir doğal cümleyle cevap ver — gereksiz yere tablo/liste/başlık üretme. Birden fazla kalemi karşılaştırman gerektiğinde (ör. "müsait araçları listele") kısa bir liste kullan, ama listeden önce/sonra ne demek istediğini bir cümleyle de söyle; asistan hiçbir zaman soğuk, salt veri döken bir rapor gibi hissettirmemeli
 - SADECE aşağıdaki FİLO VERİSİNE dayanarak cevap ver
-- Veride olmayan bir aracı, tutarı veya tarihi ASLA uydurma — emin olmadığın bilgiyi verme
+- Veride olmayan bir aracı, tutarı veya tarihi ASLA uydurma — emin olmadığın bilgiyi verme (bunu da doğal söyle: "elimdeki veride bu yok" gibi, "sistemde kayıt bulunmamaktadır" gibi değil)
 - Sayıları verideki haliyle aynen kullan, yuvarlama, kendinden toplama/çıkarma yapma
 - Listeleri sorulan şartlara uyan TÜM araçlarla eksiksiz ver, atlama
 - Belge tarihi eksik (belgeEksik:true) araçları "uygun" SAYMA — "sigorta/muayene tarihi girilmemiş" olarak ayrı belirt
 - Para birimini ₺ olarak göster (1.234,56 ₺ formatında)
-- Tablolar, listeler ve özetler kullan — düz paragraf yazma
-- Veri yoksa "Bu konuda yeterli veri bulunmuyor" de
+- Birden fazla kalem varsa okunaklı olsun diye liste/tablo kullanabilirsin, ama her cevabı zorla listeye/tabloya çevirme
+- Veri yoksa "Bu konuda elimde yeterli veri yok" gibi doğal bir cümleyle söyle
 
 TAKİP SORULARI VE SOHBET SÜREKLİLİĞİ:
 - Bir soruyu cevaplamak için gereken bilgi eksik veya belirsizse (ör. hangi araç/plaka olduğu, hangi tarih aralığı, "bu ay" derken hangi ay) tahmin yürütüp yanlış cevap vermek yerine KISA bir takip sorusu sor
