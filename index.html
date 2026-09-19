@@ -2565,7 +2565,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-19.183</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-19.184</div>
     </div>
   </aside>
 <script>
@@ -3870,6 +3870,12 @@ function updateShellChrome(){
     if(okunmamisBildirim>0){ badge.textContent = okunmamisBildirim; badge.style.display='inline-block'; }
     else{ badge.style.display='none'; }
   }
+  // v.184 fix: üstteki zil ikonundaki kırmızı nokta (bellDot) bu fonksiyonda GÜNCELLENMİYORDU —
+  // sadece uygulama ilk açıldığında initNotifications() içinde bir kere ayarlanıyordu. Bu yüzden
+  // bir bildirim "okundu" işaretlense bile zil üzerindeki kırmızı nokta kaybolmuyordu. Artık her
+  // updateShellChrome() çağrısında (bildirim okundu işaretlenince de) gerçek sayıya göre güncelleniyor.
+  const bellDotEl = document.getElementById('bellDot');
+  if(bellDotEl) bellDotEl.classList.toggle('show', okunmamisBildirim>0);
   // Mobilde alt çubuktaki "Daha Fazla" sekmesi, Bildirimler artık çubukta
   // doğrudan görünmediği için okunmamış bildirim sayısını rozet olarak gösterir
   const bnBadge = document.getElementById('bnMoreBadge');
@@ -5249,7 +5255,9 @@ function updateFromExcel(file){
       buildSirketFilter();
       render();
       showToast(`Excel'den güncellendi: ${updated.size} araç yenilendi${added?`, ${added} yeni araç eklendi`:''}. Dosyada olmayan alanlara dokunulmadı.`);
-      document.getElementById('bellDot').classList.toggle('show', urgentList().length>0);
+      // v.184: bellDot zaten render()->updateShellChrome() içinde gerçek okunmamış bildirim
+      // sayısına göre güncelleniyor; buradaki eski satır urgentList() kullanıyordu (tutarsız
+      // bir ölçüt) ve artıktı — kaldırıldı.
     }catch(err){
       showToast('Dosya okunamadı: ' + err.message, true);
     }
