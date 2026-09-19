@@ -2578,7 +2578,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-19.190</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-19.191</div>
     </div>
   </aside>
 <script>
@@ -3500,6 +3500,11 @@ let arsiv = [];
 let activityLog = [];
 let expenses = [];
 let sozlesmeler = [];
+// v.191: birden fazla aracın (aynı sözleşme kapsamında) ortak bir km havuzunu paylaşmasını
+// tutan hafif kayıt — sozlesmeler'e (belge/PDF üretimi) hiç dokunmadan, sadece hangi araçların
+// hangi ortak limiti paylaştığını tutar. Araç kayıtlarına HİÇBİR yeni alan eklenmedi — üyelik
+// sadece bu dizideki araclar[] listesiyle tutuluyor.
+let sozlesmeGruplari = [];
 // FAZ3: Müşteri CRM — vehicles/expenses/sozlesmeler ile birebir aynı depolama deseni
 // (tek JSON blob, storageAPI üzerinden). Ayrı Firestore koleksiyonlarına taşımak
 // sonraki büyük veri katmanı fazının kapsamındadır.
@@ -3591,6 +3596,12 @@ async function load(){
         const sr = await storageAPI.get('sozlesmeler').catch(()=>null);
         sozlesmeler = (sr && sr.value) ? JSON.parse(sr.value) : [];
       }catch(e){ sozlesmeler = []; }
+    })(),
+    (async()=>{
+      try{
+        const sgr = await storageAPI.get('sozlesmeGruplari').catch(()=>null);
+        sozlesmeGruplari = (sgr && sgr.value) ? JSON.parse(sgr.value) : [];
+      }catch(e){ sozlesmeGruplari = []; }
     })(),
     (async()=>{
       try{
@@ -4480,6 +4491,9 @@ async function arsivdenKaliciSil(idx){
 // ===== Kayıtlı Sözleşmeler =====
 async function persistSozlesmeler(){
   await storageAPI.set('sozlesmeler', JSON.stringify(sozlesmeler)).catch(()=>showToast('Sözleşme kaydedilemedi.', true));
+}
+async function persistSozlesmeGruplari(){
+  await storageAPI.set('sozlesmeGruplari', JSON.stringify(sozlesmeGruplari)).catch(()=>showToast('Sözleşme grubu kaydedilemedi.', true));
 }
 // Sözleşmeyi sisteme kaydeder; aynı kiracı+tarihler+araç seti daha önce kaydedildiyse
 // aynı kaydı günceller (PDF + Word ayrı kayıt açmaz) ve orijinal sözleşme nosunu korur.
@@ -8002,6 +8016,7 @@ function openVehicleDetail(id){
           </div>
           ${kmDurum.mesaj ? `<div style="margin-top:12px;padding:9px 12px;border-radius:8px;background:${kmDurum.asim>0?'rgba(225,85,78,.1)':'rgba(54,161,104,.1)'};border:1px solid ${kmDurum.asim>0?'rgba(225,85,78,.25)':'rgba(54,161,104,.25)'};font-size:12.5px;color:${kmDurum.asim>0?'#E1554E':'#36A168'};font-weight:600;">${kmDurum.mesaj}</div>` : ''}
           ${(!v.teslimTarih || !v.kmLimiti) && (v.durum==='Kirada'||v.durum==='Serviste') ? `<div style="margin-top:10px;font-size:12px;color:#E8A132;">Km aşımı takibi için teslim tarihi ve aylık km limitinin "Kiralama İşlemlerine Git" üzerinden girilmesi gerekiyor.</div>` : ''}
+          ${(()=>{ const g = sozlesmeGruplari.find(x=>(x.araclar||[]).includes(v.id)); return g ? `<div style="margin-top:10px;padding:9px 12px;border-radius:8px;background:rgba(0,169,157,.08);border:1px solid rgba(0,169,157,.2);font-size:12px;color:var(--text-2);">Bu araç, <b>${esc(g.ad)}</b> sözleşme grubunun (ortak km havuzu) bir parçası — grubun toplam km durumunu <a href="javascript:void(0)" onclick="document.getElementById('vehicleDetailOverlay')?.remove();switchPage('kiralama');setTimeout(()=>krTabSet('sozlesme'),50);" style="color:var(--accent-blue);font-weight:600;">Kiralama İşlemleri &gt; Sözleşmeler</a> sekmesinden görebilirsin.</div>` : ''; })()}
         </div>` : ''}
         </div><!-- /vd-tab-panel genel -->
 
@@ -8836,6 +8851,28 @@ function hesaplaKmDurum(v){
     ? `${asim.toLocaleString('tr-TR')} km aşım — ${kullanilan.toLocaleString('tr-TR')} km yapılmış, ${hak.toLocaleString('tr-TR')} km hakkı vardı (${ay.toLocaleString('tr-TR',{maximumFractionDigits:1})} ay × ${Number(v.kmLimiti).toLocaleString('tr-TR')} km)${asimTutar!=null?` — tahmini <b>${fmtTL2(asimTutar)}</b> aşım bedeli (${asim.toLocaleString('tr-TR')} km × ${fmtTL2(v.kmAsimFiyat)})`:''}`
     : `${Math.abs(asim).toLocaleString('tr-TR')} km hakkı kaldı — ${kullanilan.toLocaleString('tr-TR')} km yapılmış, ${hak.toLocaleString('tr-TR')} km hakkı var`;
   return {mevcutKm, hak, kullanilan, asim, asimTutar, mesaj};
+}
+// v.191: "havuz/toplu km limiti" — bir sözleşme grubundaki TÜM araçların (teslim km'den bugüne)
+// km kullanımını toplayıp, o grup için tanımlanmış SABİT tek bir toplam limitle (sözleşme süresi
+// boyunca, aylara bölünmeden) karşılaştırır. hesaplaKmDurum'daki araç-bazlı formülden BİLİNÇLİ
+// olarak farklı: gruplar aylık değil, sözleşme süresi boyunca sabit bir toplam km hakkı üzerinden
+// tanımlanıyor (kullanıcı tercihi). Grup yoksa/araç bulunamazsa null döner.
+function grupKmDurumu(grupId){
+  const g = sozlesmeGruplari.find(x=>x.id===grupId);
+  if(!g) return null;
+  const araclar = (g.araclar||[]).map(vid=>{
+    const v = vehicles.find(x=>x.id===vid);
+    if(!v) return null;
+    const mevcutKm = mevcutKmHesapla(v);
+    const teslimKmNum = Number(v.teslimKm)||0;
+    const kullanilan = Math.max(0, mevcutKm - teslimKmNum);
+    return {id:v.id, plaka:v.plaka, kullanilan};
+  }).filter(Boolean);
+  const kullanilanToplam = araclar.reduce((t,a)=>t+a.kullanilan, 0);
+  const hak = Number(g.kmLimitToplam)||0;
+  const asim = kullanilanToplam - hak;
+  const asimTutar = (asim>0 && g.kmAsimFiyat) ? asim*Number(g.kmAsimFiyat) : null;
+  return {araclar, kullanilanToplam, hak, asim, asimTutar};
 }
 // Yeni km girişinde canlı önceki→yeni→fark gösterimi (araç detay Bakım sekmesindeki hızlı giriş kartı).
 function kmManuelFarkGuncelle(id){
@@ -13764,6 +13801,11 @@ async function ykTeslimEt(){
 
 function renderKiralamaPage(){
   const page = document.getElementById('page-kiralama');
+  // v.191: sözleşme grubu ekle/düzenle/sil gibi işlemler sonrasında sayfa yeniden çizilirken
+  // "Sözleşmeler" sekmesinde kalınabilsin diye (önceden krTabSet ayrıca çağrılmadığı sürece her
+  // render hep "İşlemler" sekmesine dönüyordu — ör. sozFiltreSet'te de aynı eski davranış vardı)
+  // aktif sekme artık hatırlanıyor.
+  const krAktif = window.__krTabAktif || 'islem';
   const kirada = vehicles.filter(v=>v.durum==='Kirada');
   const withHistory = vehicles.filter(v=>(v.kiraGecmisi||[]).length>0);
 
@@ -13797,12 +13839,12 @@ function renderKiralamaPage(){
   page.innerHTML = `
     <!-- v.95: Sayfa üç sekmeye bölündü: İşlemler / Sözleşmeler / Geçmiş -->
     <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;" id="krTabBar">
-      <button onclick="krTabSet('islem')" data-kr="islem" style="padding:9px 20px;border-radius:999px;font-size:13px;font-weight:700;cursor:pointer;border:1px solid var(--accent-blue);background:var(--accent-blue);color:#fff;">① İşlemler</button>
-      <button onclick="krTabSet('sozlesme')" data-kr="sozlesme" style="padding:9px 20px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--border-2);background:var(--surface);color:var(--text-2);">② Sözleşmeler</button>
-      <button onclick="krTabSet('gecmis')" data-kr="gecmis" style="padding:9px 20px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--border-2);background:var(--surface);color:var(--text-2);">③ Geçmiş</button>
+      <button onclick="krTabSet('islem')" data-kr="islem" style="padding:9px 20px;border-radius:999px;font-size:13px;font-weight:${krAktif==='islem'?700:600};cursor:pointer;border:1px solid ${krAktif==='islem'?'var(--accent-blue)':'var(--border-2)'};background:${krAktif==='islem'?'var(--accent-blue)':'var(--surface)'};color:${krAktif==='islem'?'#fff':'var(--text-2)'};">① İşlemler</button>
+      <button onclick="krTabSet('sozlesme')" data-kr="sozlesme" style="padding:9px 20px;border-radius:999px;font-size:13px;font-weight:${krAktif==='sozlesme'?700:600};cursor:pointer;border:1px solid ${krAktif==='sozlesme'?'var(--accent-blue)':'var(--border-2)'};background:${krAktif==='sozlesme'?'var(--accent-blue)':'var(--surface)'};color:${krAktif==='sozlesme'?'#fff':'var(--text-2)'};">② Sözleşmeler</button>
+      <button onclick="krTabSet('gecmis')" data-kr="gecmis" style="padding:9px 20px;border-radius:999px;font-size:13px;font-weight:${krAktif==='gecmis'?700:600};cursor:pointer;border:1px solid ${krAktif==='gecmis'?'var(--accent-blue)':'var(--border-2)'};background:${krAktif==='gecmis'?'var(--accent-blue)':'var(--surface)'};color:${krAktif==='gecmis'?'#fff':'var(--text-2)'};">③ Geçmiş</button>
       <button onclick="openYeniKiralamaSihirbazi()" style="margin-left:auto;padding:9px 16px;border-radius:999px;font-size:12.5px;font-weight:700;cursor:pointer;border:1px solid rgba(54,161,104,.35);background:rgba(54,161,104,.12);color:#36A168;">+ Yeni Kiralama (Adım Adım)</button>
     </div>
-    <div class="kr-pane" data-kr="islem">
+    <div class="kr-pane" data-kr="islem" style="${krAktif==='islem'?'':'display:none;'}">
     <div class="dcard" style="margin-bottom:16px;">
       <h3 style="margin-bottom:2px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8v8h6l4 4V4L9 8H3Z"/></svg>Kira İşlemleri</h3>
       <p style="font-size:13px;color:var(--text-2);margin:2px 0 14px;">Bir araç seçip kiralama, teslim veya iade işlemini buradan yönetin. Bu, personelin en sık kullandığı hızlı akıştır — hiçbir alanı/etiketi değişmedi. Müşteri kaydına bağlı, teklif/sözleşme/teslim adımlarını tek tek izleyen bir akış isterseniz sağ üstteki "Yeni Kiralama (Adım Adım)" butonunu kullanın.</p>
@@ -13989,7 +14031,7 @@ function renderKiralamaPage(){
     </div>
 
     </div>
-    <div class="kr-pane" data-kr="sozlesme" style="display:none;">
+    <div class="kr-pane" data-kr="sozlesme" style="${krAktif==='sozlesme'?'':'display:none;'}">
     <details style="margin-bottom:16px;">
       <summary class="dcard" style="cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg>
@@ -14154,8 +14196,9 @@ function renderKiralamaPage(){
       })()}
     </div>
 
+    ${sozGruplariHTML()}
     </div>
-    <div class="kr-pane" data-kr="gecmis" style="display:none;">
+    <div class="kr-pane" data-kr="gecmis" style="${krAktif==='gecmis'?'':'display:none;'}">
     <div class="dcard" style="margin-bottom:16px;">
       <h3>Kira Geçmişi <span style="font-weight:400;font-size:13px;color:var(--steel-100)">${toplamKiraSayisi} kayıt — ${withHistory.length} araç</span></h3>
       ${(()=>{
@@ -14193,6 +14236,7 @@ function renderKiralamaPage(){
 }
 // v.95: Kiralama iç sekmeleri
 window.krTabSet = function(t){
+  window.__krTabAktif = t;
   document.querySelectorAll('.kr-pane').forEach(p=>p.style.display = p.dataset.kr===t ? '' : 'none');
   document.querySelectorAll('#krTabBar button').forEach(b=>{
     const on = b.dataset.kr===t;
@@ -14202,6 +14246,163 @@ window.krTabSet = function(t){
     b.style.borderColor = on ? 'var(--accent-blue)' : 'var(--border-2)';
   });
 };
+
+// ===== v.191: Sözleşme Grupları (Havuz Km) — Kiralama İşlemleri > Sözleşmeler sekmesi =====
+async function sozGrubuKaydetForm(){
+  if(!requireAdmin()) return;
+  const ad = document.getElementById('sgAd')?.value?.trim();
+  const kiraci = document.getElementById('sgKiraci')?.value?.trim();
+  const araclarSel = document.getElementById('sgAraclar');
+  const araclar = araclarSel ? Array.from(araclarSel.selectedOptions).map(o=>o.value) : [];
+  const kmLimit = document.getElementById('sgKmLimit')?.value;
+  const kmAsim = document.getElementById('sgKmAsim')?.value;
+  const bas = document.getElementById('sgBaslangic')?.value;
+  const bitis = document.getElementById('sgBitis')?.value;
+  const editId = window.__sgDuzenleId;
+
+  if(!ad){ showToast('Lütfen grup/sözleşme adı girin.', true); return; }
+  if(araclar.length<2){ showToast('En az 2 araç seçin — tek araç için aracın kendi "Aylık Km Limiti" alanı yeterli.', true); return; }
+  if(!kmLimit || isNaN(Number(kmLimit)) || Number(kmLimit)<=0){ showToast('Lütfen geçerli bir toplam km limiti girin.', true); return; }
+  if(bas && bitis && bitis<=bas){ showToast('Bitiş tarihi başlangıçtan sonra olmalı.', true); return; }
+
+  const eski = editId ? sozlesmeGruplari.find(g=>g.id===editId) : null;
+  const rec = {
+    id: editId || ('sg'+Math.random().toString(36).slice(2,10)),
+    ad, kiraci: kiraci||'',
+    araclar,
+    kmLimitToplam: Number(kmLimit),
+    kmAsimFiyat: kmAsim!=='' && kmAsim!=null && !isNaN(Number(kmAsim)) ? Number(kmAsim) : null,
+    baslangic: bas||'', bitis: bitis||'',
+    olusturma: eski ? eski.olusturma : new Date().toISOString(),
+  };
+  if(editId){
+    const idx = sozlesmeGruplari.findIndex(g=>g.id===editId);
+    if(idx>-1) sozlesmeGruplari[idx] = rec; else sozlesmeGruplari.push(rec);
+  }else{
+    sozlesmeGruplari.push(rec);
+  }
+  window.__sgDuzenleId = null;
+  await persistSozlesmeGruplari();
+  logActivity('edit', `Sözleşme grubu ${editId?'güncellendi':'oluşturuldu'}: <b>${esc(ad)}</b> (${araclar.length} araç, toplam ${Number(kmLimit).toLocaleString('tr-TR')} km)`).catch(()=>{});
+  showToast(editId ? 'Grup güncellendi.' : 'Grup oluşturuldu.');
+  window.__krTabAktif = 'sozlesme';
+  renderKiralamaPage();
+}
+function sozGrubuDuzenleAc(id){
+  const g = sozlesmeGruplari.find(x=>x.id===id);
+  if(!g) return;
+  window.__sgDuzenleId = id;
+  window.__krTabAktif = 'sozlesme';
+  renderKiralamaPage();
+  setTimeout(()=>{
+    document.getElementById('sgFormDetails')?.setAttribute('open','');
+    const set = (elId, val)=>{ const el = document.getElementById(elId); if(el) el.value = val; };
+    set('sgAd', g.ad||''); set('sgKiraci', g.kiraci||'');
+    const sel = document.getElementById('sgAraclar');
+    if(sel) Array.from(sel.options).forEach(o=>{ o.selected = (g.araclar||[]).includes(o.value); });
+    set('sgKmLimit', g.kmLimitToplam!=null?g.kmLimitToplam:'');
+    set('sgKmAsim', g.kmAsimFiyat!=null?g.kmAsimFiyat:'');
+    set('sgBaslangic', g.baslangic||''); set('sgBitis', g.bitis||'');
+    document.getElementById('sgFormDetails')?.scrollIntoView({behavior:'smooth', block:'start'});
+  }, 30);
+}
+function sozGrubuDuzenleIptal(){
+  window.__sgDuzenleId = null;
+  window.__krTabAktif = 'sozlesme';
+  renderKiralamaPage();
+}
+async function sozGrubuSil(id){
+  if(!requireAdmin()) return;
+  const g = sozlesmeGruplari.find(x=>x.id===id);
+  if(!g) return;
+  if(!confirm(`"${g.ad}" sözleşme grubu silinsin mi? (Araçların kendi kayıtları etkilenmez, sadece ortak km havuzu tanımı kaldırılır.)`)) return;
+  sozlesmeGruplari = sozlesmeGruplari.filter(x=>x.id!==id);
+  await persistSozlesmeGruplari();
+  logActivity('delete', `Sözleşme grubu silindi: <b>${esc(g.ad)}</b>`).catch(()=>{});
+  showToast('Grup silindi.');
+  window.__krTabAktif = 'sozlesme';
+  renderKiralamaPage();
+}
+// Sözleşme grupları bölümünün HTML'i — renderKiralamaPage'in "sozlesme" sekmesinden çağrılır.
+function sozGruplariHTML(){
+  const duzenleId = window.__sgDuzenleId;
+  const duzenlenen = duzenleId ? sozlesmeGruplari.find(g=>g.id===duzenleId) : null;
+  return `
+    <details id="sgFormDetails" style="margin-bottom:16px;" ${duzenlenen?'open':''}>
+      <summary class="dcard" style="cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 10v6M4.2 4.2l4.2 4.2m7.2 7.2 4.2 4.2M1 12h6m10 0h6M4.2 19.8l4.2-4.2m7.2-7.2 4.2-4.2"/></svg>
+        ${duzenlenen ? 'Sözleşme Grubunu Düzenle (Havuz Km)' : 'Sözleşme Grubu Oluştur (Havuz Km)'}
+        <span style="margin-left:auto;font-size:12px;font-weight:500;color:var(--text-3);">aç / kapat</span>
+      </summary>
+      <div class="dcard" style="margin-top:8px;">
+        <p style="font-size:13px;color:var(--text-2);margin-bottom:14px;">Tek bir sözleşme kapsamındaki BİRDEN FAZLA aracın km hakkını ortak bir havuzda toplar (ör. 6 araçlık bir sözleşmede toplam 216.000 km gibi) — her aracın kendi "Aylık Km Limiti" alanından bağımsız, ek bir kontrol katmanıdır. Tek araç kiralıyorsan buna gerek yok, aracın kendi km limiti alanı yeterli.</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+          <div class="field">
+            <label>Grup / Sözleşme Adı</label>
+            <input type="text" id="sgAd" placeholder="Örn: Anadolu İtriyat - 6 Araç" value="${esc(duzenlenen?.ad||'')}">
+          </div>
+          <div class="field">
+            <label>Kiracı / Kurum Adı (opsiyonel)</label>
+            <input type="text" id="sgKiraci" placeholder="Kiracı veya kurum adı" value="${esc(duzenlenen?.kiraci||'')}">
+          </div>
+          <div class="field" style="grid-column:1/-1;">
+            <label>Gruba Dahil Araçlar (Ctrl/Cmd tuşuyla birden fazla seçin, en az 2)</label>
+            <select id="sgAraclar" multiple size="6" style="height:auto;">
+              ${vehicles.map(v=>`<option value="${v.id}" ${duzenlenen&&(duzenlenen.araclar||[]).includes(v.id)?'selected':''}>${esc(v.plaka)} — ${esc([v.marka,v.model].filter(Boolean).join(' '))}</option>`).join('')}
+            </select>
+          </div>
+          <div class="field">
+            <label>Toplam Km Limiti (sözleşme süresi boyunca)</label>
+            <input type="number" id="sgKmLimit" min="0" placeholder="Örn: 216000" value="${duzenlenen&&duzenlenen.kmLimitToplam!=null?duzenlenen.kmLimitToplam:''}">
+          </div>
+          <div class="field">
+            <label>Km Aşım Ücreti (₺/km, opsiyonel)</label>
+            <input type="number" id="sgKmAsim" step="0.50" min="0" placeholder="9.00" value="${duzenlenen&&duzenlenen.kmAsimFiyat!=null?duzenlenen.kmAsimFiyat:''}">
+          </div>
+          <div class="field">
+            <label>Sözleşme Başlangıcı (opsiyonel, bilgi amaçlı)</label>
+            <input type="date" id="sgBaslangic" value="${duzenlenen?.baslangic||''}">
+          </div>
+          <div class="field">
+            <label>Sözleşme Bitişi (opsiyonel, bilgi amaçlı)</label>
+            <input type="date" id="sgBitis" value="${duzenlenen?.bitis||''}">
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="add-btn" onclick="sozGrubuKaydetForm()">${duzenlenen ? 'Grubu Güncelle' : 'Grubu Oluştur'}</button>
+          ${duzenlenen ? `<button class="settings-btn" onclick="sozGrubuDuzenleIptal()">İptal</button>` : ''}
+        </div>
+      </div>
+    </details>
+    <div class="dcard" style="margin-bottom:16px;">
+      <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 10v6M4.2 4.2l4.2 4.2m7.2 7.2 4.2 4.2M1 12h6m10 0h6M4.2 19.8l4.2-4.2m7.2-7.2 4.2-4.2"/></svg>Sözleşme Grupları (Havuz Km) <span style="font-weight:400;font-size:13px;color:var(--steel-100)">${sozlesmeGruplari.length} grup</span></h3>
+      <p style="font-size:13px;color:var(--text-2);margin-bottom:12px;">Bir gruptaki toplam km kullanımı, gruba dahil TÜM araçların (teslim km'den bugüne) km'lerinin toplamıdır; sözleşme süresi boyunca sabit tek bir toplam limitle karşılaştırılır.</p>
+      ${!sozlesmeGruplari.length ? `<div class="log-empty">Henüz tanımlı bir sözleşme grubu yok. Yukarıdaki formdan, aynı sözleşmeye bağlı birden fazla aracın km hakkını ortak bir havuzda toplayabilirsin.</div>` : sozlesmeGruplari.map(g=>{
+        const d = grupKmDurumu(g.id);
+        const asimVar = !!(d && d.asim>0);
+        return `<div class="dcard" style="margin-bottom:10px;box-shadow:inset 3px 0 0 ${d?(asimVar?'#E1554E':'#36A168'):'#8CA29E'};">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
+            <div>
+              <div style="font-weight:700;font-size:14px;color:var(--paper);">${esc(g.ad)}</div>
+              ${g.kiraci?`<div style="font-size:12px;color:var(--text-3);">${esc(g.kiraci)}</div>`:''}
+              <div style="font-size:12px;color:var(--text-3);margin-top:2px;">${d&&d.araclar.length ? d.araclar.map(a=>esc(a.plaka)).join(', ') : '—'}</div>
+            </div>
+            <div style="display:flex;gap:6px;">
+              <button onclick="sozGrubuDuzenleAc('${g.id}')" style="background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.2);color:var(--accent-blue);padding:5px 12px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;">Düzenle</button>
+              <button onclick="sozGrubuSil('${g.id}')" style="background:rgba(225,85,78,.1);border:1px solid rgba(225,85,78,.2);color:#E1554E;padding:5px 12px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;">Sil</button>
+            </div>
+          </div>
+          ${d ? `<div style="margin-top:10px;display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;">
+            <div><div style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;">Toplam Hak</div><div style="font-size:14px;font-weight:700;color:var(--paper);">${d.hak.toLocaleString('tr-TR')} km</div></div>
+            <div><div style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;">Kullanılan (toplam)</div><div style="font-size:14px;font-weight:700;color:var(--paper);">${d.kullanilanToplam.toLocaleString('tr-TR')} km</div></div>
+            <div><div style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;">${asimVar?'Aşım':'Kalan Hak'}</div><div style="font-size:14px;font-weight:700;color:${asimVar?'#E1554E':'#36A168'};">${Math.abs(d.asim).toLocaleString('tr-TR')} km</div></div>
+            ${d.asimTutar!=null?`<div><div style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;">Tahmini Aşım Bedeli</div><div style="font-size:14px;font-weight:700;color:#E1554E;">${fmtTL2(d.asimTutar)}</div></div>`:''}
+          </div>` : '<div class="log-empty" style="margin-top:8px;">Gruba tanımlı araç kalmadı (silinmiş olabilir).</div>'}
+        </div>`;
+      }).join('')}
+    </div>
+  `;
+}
 
 // ===== Kira İşlemleri sayfası: araç seç + Kiralama/Teslim/İade sekmeleri =====
 let kiOpSelectedId = null;
