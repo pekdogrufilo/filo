@@ -47,7 +47,7 @@
   html[data-theme="dark"] img[src^="blob:"]{background:#fff;border-radius:8px;padding:4px;box-shadow:0 2px 8px rgba(0,0,0,.4);}
 </style>
 <link rel="manifest" href="./manifest.json">
-<meta name="theme-color" content="#F6F5F2" id="themeColorMeta">
+<meta name="theme-color" content="#F5F8F7" id="themeColorMeta">
 <script>
   // Sayfa çizilmeden önce (flaş olmadan) kayıtlı tema tercihini uygula — varsayılan: Sonoma açık
   try{
@@ -58,7 +58,7 @@
     // koyu temayı kaydetmiş biri sayfayı her açtığında bir an için açık
     // renkli bir durum çubuğu görür (native bir uygulamada olmayan bir "flaş").
     const _m = document.getElementById('themeColorMeta');
-    if(_m) _m.setAttribute('content', _t === 'dark' ? '#0B0C0E' : '#F4F2ED');
+    if(_m) _m.setAttribute('content', _t === 'dark' ? '#0B0C0E' : '#F5F8F7');
   }catch(e){
     document.documentElement.setAttribute('data-theme','light');
   }
@@ -130,50 +130,51 @@
     --fixed-dark:#1A1C1F;
   }
     html[data-theme="light"]{
-    /* Onyx Light — warm paper, copper accent */
-    --bg:#F4F2ED;
+    /* v.186 — Petrol Yeşili & Turkuaz kimliği (kullanıcının gönderdiği mockup/palet referansı):
+       ana renk koyu petrol yeşili, vurgu canlı turkuaz, altın sadece ince detaylarda. */
+    --bg:#F5F8F7;
     --surface:#FFFFFF;
-    --surface-2:#FAF8F5;
-    --surface-3:#F0EDE7;
-    --border:rgba(20,20,24,.07);
-    --border-2:rgba(20,20,24,.16);
-    --text:#1C1A16;
-    --text-2:#5E5A52;
-    --text-3:#8E897F;
-    --blue:#0E7D68;
-    --blue-dim:rgba(14,125,104,.10);
-    --green:#36A168;
-    --green-dim:rgba(54,161,104,.10);
-    --amber:#E8A132;
-    --amber-dim:rgba(232,161,50,.10);
-    --red:#E1554E;
-    --red-dim:rgba(225,85,78,.10);
-    --sidebar-bg:#ECEDF1;
+    --surface-2:#EAF3F1;
+    --surface-3:#DCEBE8;
+    --border:rgba(0,59,53,.10);
+    --border-2:rgba(0,59,53,.18);
+    --text:#123B38;
+    --text-2:#667A77;
+    --text-3:#8CA29E;
+    --blue:#00A99D;
+    --blue-dim:rgba(0,169,157,.12);
+    --green:#1F9D5B;
+    --green-dim:rgba(31,157,91,.12);
+    --amber:#C9861F;
+    --amber-dim:rgba(201,134,31,.12);
+    --red:#C0392B;
+    --red-dim:rgba(192,57,43,.10);
+    --sidebar-bg:#003E3A;
     --radius:20px;
     --radius-sm:12px;
     --radius-lg:26px;
-    --asphalt-900:#F4F2ED;
+    --asphalt-900:#F5F8F7;
     --asphalt-800:#FFFFFF;
-    --asphalt-700:#FAF8F5;
-    --steel-600:#F0EDE7;
-    --steel-500:#8E897F;
-    --steel-300:#5E5A52;
-    --steel-100:#1C1A16;
-    --paper:#1C1A16;
-    --line:rgba(20,20,24,.07);
-    --shadow-sm:0 1px 2px rgba(0,0,0,.04),0 0 0 1px rgba(0,0,0,.03);
-    --shadow-md:0 8px 24px rgba(0,0,0,.08);
-    --shadow-lg:0 18px 54px rgba(0,0,0,.13);
-    --safety-dim:rgba(225,85,78,.10);
-    --teal-dim:rgba(54,161,104,.10);
-    --coral-dim:rgba(225,85,78,.10);
-    --gold:#E8A132;
-    --gold-dim:rgba(232,161,50,.10);
-    --accent-blue:#0E7D68;
-    --glow:rgba(14,125,104,.06);
-    --surface-glass:rgba(255,255,255,.82);
+    --asphalt-700:#EAF3F1;
+    --steel-600:#DCEBE8;
+    --steel-500:#8CA29E;
+    --steel-300:#667A77;
+    --steel-100:#123B38;
+    --paper:#123B38;
+    --line:rgba(0,59,53,.10);
+    --shadow-sm:0 1px 2px rgba(0,59,53,.05),0 0 0 1px rgba(0,59,53,.04);
+    --shadow-md:0 8px 24px rgba(0,59,53,.10);
+    --shadow-lg:0 18px 54px rgba(0,59,53,.16);
+    --safety-dim:rgba(192,57,43,.10);
+    --teal-dim:rgba(31,157,91,.10);
+    --coral-dim:rgba(192,57,43,.10);
+    --gold:#C9A227;
+    --gold-dim:rgba(201,162,39,.14);
+    --accent-blue:#00A99D;
+    --glow:rgba(0,169,157,.14);
+    --surface-glass:rgba(255,255,255,.84);
     --edge-hl:transparent;
-    --fixed-light:#F5F5F7;
+    --fixed-light:#F5F8F7;
     --fixed-dark:#1A1C1F;
   }
   *{box-sizing:border-box;}
@@ -652,9 +653,9 @@
   .sb-kbd{font-family:var(--font-mono);font-size:10px;background:rgba(255,255,255,.1);padding:1px 5px;border-radius:4px;flex-shrink:0;}
   .sidebar.collapsed .sb-search-trigger{justify-content:center;padding:8px 0;}
   .sidebar.collapsed .sb-search-trigger span{display:none;}
-  html[data-theme="light"] .sb-search-trigger{border-color:rgba(0,0,0,.09);background:rgba(0,0,0,.04);color:rgba(60,60,67,.65);}
-  html[data-theme="light"] .sb-search-trigger:hover{background:rgba(0,0,0,.07);color:#1C1A16;}
-  html[data-theme="light"] .sb-kbd{background:rgba(0,0,0,.08);}
+  html[data-theme="light"] .sb-search-trigger{border-color:rgba(245,248,247,.16);background:rgba(245,248,247,.07);color:rgba(245,248,247,.65);}
+  html[data-theme="light"] .sb-search-trigger:hover{background:rgba(245,248,247,.12);color:#FFFFFF;}
+  html[data-theme="light"] .sb-kbd{background:rgba(245,248,247,.14);}
   .sb-collapse-btn{display:flex;align-items:center;gap:9px;width:calc(100% - 16px);margin:6px 8px 0;padding:8px 10px;border-radius:7px;border:none;background:none;color:rgba(255,255,255,.65);font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font-ui);}
   .sb-collapse-btn:hover{background:rgba(255,255,255,.08);color:#fff;}
   .sb-collapse-btn svg{flex-shrink:0;width:15px;height:15px;transition:transform .2s ease;}
@@ -1202,7 +1203,7 @@
      hiç etkilemeyen sade bir opaklık geçişi kullanılıyor. */
   .bn-item:active{opacity:.55;}
   .sb-item:active{background:rgba(255,255,255,.06);}
-  html[data-theme="light"] .sb-item:active{background:rgba(0,0,0,.06);}
+  html[data-theme="light"] .sb-item:active{background:rgba(245,248,247,.10);}
   /* Çentikli/Dynamic Island'lı telefonlarda üst çubuk durum çubuğunun altında kalmasın. */
   .top-header{padding-top:calc(12px + env(safe-area-inset-top,0px));}
   @media (max-width:900px){ .top-header{padding-top:calc(12px + env(safe-area-inset-top,0px));} }
@@ -1210,6 +1211,11 @@
 </style>
 <style id="sonoma-light">
   /* ===== A1 — macOS Sonoma açık tema ===== */
+  /* v.186 notu: Bu bloktaki .sidebar/.sb-* renk kuralları artık satır ~2200 civarındaki
+     ".sidebar ..." önekli, !important'lı v.152/v.186 kuralları tarafından EZİLİYOR (aynı
+     özgüllük + o kural daha "sonra" geliyor + !important taşıyor) — burada canlı kalan
+     TEK istisna .sb-user-sub (v.186'da ayrıca güncellendi). Geri kalanı kasıtlı olarak
+     dokunulmadan bırakıldı (görsel etkisi yok), ama kafa karıştırmasın diye not düşüldü. */
   /* Kenar çubuğu: macOS Sistem Ayarları — buzlu açık gri, yuvarlak mavi seçim */
   html[data-theme="light"] .sidebar{
     background:rgba(240,238,234,.88);
@@ -1235,7 +1241,7 @@
   html[data-theme="light"] .sb-user:hover{background:rgba(0,0,0,.045);}
   html[data-theme="light"] .sb-user-name{color:#1C1A16;}
   html[data-theme="light"] .sb-user-role{color:rgba(60,60,67,.65);}
-  html[data-theme="light"] .sb-user-sub{color:rgba(60,60,67,.7);}
+  html[data-theme="light"] .sb-user-sub{color:rgba(245,248,247,.65) !important;}
   html[data-theme="light"] .sb-overlay{background:rgba(0,0,0,.25);}
   /* Kartlar: ATLAS değişkenlerine bağlı (v.121 — eskiden #FFFFFF/18px sabit
      kodlanmıştı, tema değişkenlerini yok sayıyordu) */
@@ -1271,16 +1277,16 @@
   /* Butonlar: Pekdoğru kurumsal kırmızısı */
   html[data-theme="light"] .add-btn{background:var(--accent-blue);box-shadow:0 4px 14px rgba(22,160,134,.25);}
   /* Splash: açık zeminde koyu metin */
-  html[data-theme="light"] .splash{background:#F4F2ED;}
-  html[data-theme="light"] .splash h2{color:#1C1A16;}
-  html[data-theme="light"] .splash .sd{color:rgba(60,60,67,.7);}
-  html[data-theme="light"] .splash-stat{background:rgba(0,0,0,.035);border-color:rgba(0,0,0,.07);}
-  html[data-theme="light"] .splash-stat .n{color:#1C1A16;}
-  html[data-theme="light"] .splash-stat .l{color:rgba(60,60,67,.65);}
+  html[data-theme="light"] .splash{background:#F5F8F7;}
+  html[data-theme="light"] .splash h2{color:#123B38;}
+  html[data-theme="light"] .splash .sd{color:rgba(102,122,119,.9);}
+  html[data-theme="light"] .splash-stat{background:rgba(0,59,53,.035);border-color:rgba(0,59,53,.08);}
+  html[data-theme="light"] .splash-stat .n{color:#123B38;}
+  html[data-theme="light"] .splash-stat .l{color:rgba(102,122,119,.85);}
   html[data-theme="light"] .splash-grid-bg{opacity:.35;}
   html[data-theme="light"] .splash-bar{background:rgba(0,0,0,.1);}
   html[data-theme="light"] .splash-bar::after{background:var(--accent-blue);}
-  html[data-theme="light"] .splash-glow{background:radial-gradient(closest-side, rgba(22,160,134,.10), transparent 70%);}
+  html[data-theme="light"] .splash-glow{background:radial-gradient(closest-side, rgba(0,169,157,.10), transparent 70%);}
   /* Toast: beyaz */
   html[data-theme="light"] .toast{background:#FFFFFF;color:#1C1A16;box-shadow:0 8px 30px rgba(0,0,0,.16);}
   html[data-theme="light"] .toast .tclose{color:rgba(60,60,67,.65);}
@@ -1303,7 +1309,7 @@
   html[data-theme="light"] .dstat:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(0,0,0,.09);}
   html[data-theme="light"] .topbar{border-bottom:1px solid rgba(0,0,0,.05);}
   html[data-theme="light"] .card-actions{transition:background .15s ease;}
-  html[data-theme="light"] .card:hover .card-actions{background:#F5F5F9;}
+  html[data-theme="light"] .card:hover .card-actions{background:#EAF3F1;}
   /* Plaka biraz daha belirgin */
   .ptr-no{font-size:15px;letter-spacing:1px;}
   .plaka-tr{box-shadow:0 2px 5px rgba(0,0,0,.12);}
@@ -1428,7 +1434,7 @@
      kalsın (cüzdan kartı hissi), ama gövde/segment/alt bar sayfanın açık yüzeyine dönsün. */
   html[data-theme="light"] .vk-seg-row,
   html[data-theme="light"] .vk-body-pad{background:#fff;}
-  html[data-theme="light"] .vk-foot{background:#FAF8F5;border-top-color:var(--line);}
+  html[data-theme="light"] .vk-foot{background:#EAF3F1;border-top-color:var(--line);}
   html[data-theme="light"] .vk-seg .bar{background:rgba(0,0,0,.07);}
   html[data-theme="light"] .vk-seg .lbl{color:var(--text-3);}
   html[data-theme="light"] .vk-seg .gun{color:var(--text-3);}
@@ -1439,7 +1445,7 @@
   html[data-theme="light"] .vk-acts button.vk-det{background:var(--accent-blue);color:#fff;}
   html[data-theme="light"] .vk-acts button.vk-sil:hover{color:var(--red);}
   html[data-theme="light"] .vk-chip.red{background:var(--red-dim);color:var(--red);}
-  html[data-theme="light"] .vk-chip.amber{background:var(--amber-dim);color:#B5730A;}
+  html[data-theme="light"] .vk-chip.amber{background:var(--amber-dim);color:#8F5F13;}
   html[data-theme="light"] .vk-body-pad .seri-chip{background:var(--surface-2);color:var(--text-2);}
   html[data-theme="light"] .vk-body-pad .seri-chip .sc-v{color:var(--text);}
   html[data-theme="light"] .vk-body-pad .seri-copy{background:rgba(22,160,134,.12);color:var(--accent-blue);}
@@ -1447,7 +1453,7 @@
   /* Aksiyon çubuğu: hairline ayırıcılar */
   .card-actions button{border-right:none;}
   .card-actions button:not(:first-child){border-left:1px solid var(--line);}
-  html[data-theme="light"] .card-actions{background:#FAF8F5;}
+  html[data-theme="light"] .card-actions{background:#EAF3F1;}
   html[data-theme="light"] .card-actions button{color:var(--accent-blue);font-weight:600;}
   html[data-theme="light"] .card-actions .del{color:var(--text-3);}
 </style>
@@ -1572,7 +1578,7 @@
 
   /* v.105 — Görsel tutarlılık: tek palet + kontrast */
   :root{--gold:#E8A132;--gold-dim:rgba(232,161,50,.12);}
-  html[data-theme="light"]{--gold:#B87A28;--gold-dim:rgba(232,161,50,.10);}
+  html[data-theme="light"]{--gold:#C9A227;--gold-dim:rgba(201,162,39,.14);}
   /* Birincil eylem = marka rengi (bakir); kirmizi yalniz tehlike */
   .modal-actions .save{background:linear-gradient(135deg,#CE4A38,#A93A2B);box-shadow:0 4px 16px rgba(22,160,134,.30);}
   .modal-actions .save:hover{box-shadow:0 6px 22px rgba(22,160,134,.42);}
@@ -1603,9 +1609,9 @@
   html:not([data-theme="light"]) .splash .sd{color:rgba(246,245,243,.78) !important;}
   html:not([data-theme="light"]) .splash-stat .l{color:rgba(246,245,243,.6) !important;}
   html[data-theme="light"] .splash h2,
-  html[data-theme="light"] .splash-stat .n{color:#17181B !important;}
-  html[data-theme="light"] .splash .sd{color:#585D66 !important;}
-  html[data-theme="light"] .splash-stat .l{color:#8B9098 !important;}
+  html[data-theme="light"] .splash-stat .n{color:#123B38 !important;}
+  html[data-theme="light"] .splash .sd{color:#667A77 !important;}
+  html[data-theme="light"] .splash-stat .l{color:#8CA29E !important;}
   html[data-theme="light"] .splash-logo{background:#FFFFFF !important;box-shadow:0 4px 18px rgba(20,20,25,.14) !important;}
 </style>
 <style id="meridian-redesign">
@@ -1648,33 +1654,35 @@
     --shadow-lg:0 28px 70px rgba(0,0,0,.6);
   }
   html[data-theme="light"]{
-    --bg:#F6F7F8;
+    /* v.186: bu blok data-theme="light" için EN SONUNCU (dolayısıyla kazanan) tanım —
+       yukarıdaki "Petrol Yeşili & Turkuaz" paletiyle birebir aynı değerler kullanılıyor. */
+    --bg:#F5F8F7;
     --surface:#FFFFFF;
-    --surface-2:#F7F8F9;
-    --surface-3:#EDEEF0;
-    --border:rgba(20,20,24,.09);
-    --border-2:rgba(20,20,24,.17);
-    --text:#16181A;
-    --text-2:#585B5F;
-    --text-3:#898D91;
-    --sidebar-bg:#ECEDF1;
-    --surface-glass:rgba(255,255,255,.92);
-    --blue:#0E7D68;
-    --blue-dim:rgba(14,125,104,.10);
-    --accent-blue:#0E7D68;
-    --glow:rgba(14,125,104,.08);
+    --surface-2:#EAF3F1;
+    --surface-3:#DCEBE8;
+    --border:rgba(0,59,53,.10);
+    --border-2:rgba(0,59,53,.18);
+    --text:#123B38;
+    --text-2:#667A77;
+    --text-3:#8CA29E;
+    --sidebar-bg:#003E3A;
+    --surface-glass:rgba(255,255,255,.90);
+    --blue:#00A99D;
+    --blue-dim:rgba(0,169,157,.12);
+    --accent-blue:#00A99D;
+    --glow:rgba(0,169,157,.14);
     --green:#1F9D5B;
-    --green-dim:rgba(31,157,91,.10);
-    --amber:#B87415;
-    --amber-dim:rgba(184,116,21,.11);
-    --red:#C4342A;
-    --red-dim:rgba(196,52,42,.09);
-    --gold:#B87415;--gold-dim:rgba(184,116,21,.11);
-    --paper:#16181A;--steel-100:#16181A;--steel-300:#585B5F;--steel-500:#898D91;--steel-600:#EDEEF0;
-    --line:rgba(20,20,24,.09);
-    --shadow-sm:0 1px 3px rgba(20,20,24,.06);
-    --shadow-md:0 8px 26px rgba(20,20,24,.10);
-    --shadow-lg:0 18px 50px rgba(20,20,24,.15);
+    --green-dim:rgba(31,157,91,.12);
+    --amber:#C9861F;
+    --amber-dim:rgba(201,134,31,.12);
+    --red:#C0392B;
+    --red-dim:rgba(192,57,43,.10);
+    --gold:#C9A227;--gold-dim:rgba(201,162,39,.14);
+    --paper:#123B38;--steel-100:#123B38;--steel-300:#667A77;--steel-500:#8CA29E;--steel-600:#DCEBE8;
+    --line:rgba(0,59,53,.10);
+    --shadow-sm:0 1px 3px rgba(0,59,53,.07);
+    --shadow-md:0 8px 26px rgba(0,59,53,.11);
+    --shadow-lg:0 18px 50px rgba(0,59,53,.16);
   }
   /* ---- Zeminler ---- */
   body{background:var(--bg) !important;color:var(--text) !important;}
@@ -1765,12 +1773,12 @@
   .lock-forgot:hover{color:#F2F3F4 !important;}
   .lock-logo-wrap,.splash-logo{background:#FFFFFF !important;}
   /* Splash temaya uyar */
-  html[data-theme="light"] .splash{background:#F6F5F2 !important;}
-  html[data-theme="light"] .splash h2{color:#1B1D21 !important;}
-  html[data-theme="light"] .splash .sd{color:#555A62 !important;}
+  html[data-theme="light"] .splash{background:#F5F8F7 !important;}
+  html[data-theme="light"] .splash h2{color:#123B38 !important;}
+  html[data-theme="light"] .splash .sd{color:#667A77 !important;}
   html[data-theme="light"] .splash-stat{background:#FFFFFF !important;border-color:var(--border) !important;}
-  html[data-theme="light"] .splash-stat .n{color:#1B1D21 !important;}
-  html[data-theme="light"] .splash-stat .l{color:#83888F !important;}
+  html[data-theme="light"] .splash-stat .n{color:#123B38 !important;}
+  html[data-theme="light"] .splash-stat .l{color:#8CA29E !important;}
   html:not([data-theme="light"]) .splash{background:#0E1013 !important;}
   html:not([data-theme="light"]) .splash h2{color:#F2F3F4 !important;}
   html:not([data-theme="light"]) .splash .sd{color:#AEB3BA !important;}
@@ -2195,56 +2203,57 @@
   .sidebar .sb-user-name{color:#F6F5F3 !important;}
   .sidebar .sb-user-role{color:rgba(246,243,238,.6) !important;}
 
-  /* Açık tema: Kuveyt Türk kimliğine uygun AÇIK panel + koyu antrasit metin.
-     Aynı özgüllük nedeniyle burada da ".sidebar " öneki kullanılıyor. */
+  /* v.186: Petrol Yeşili kimliği — kullanıcının gönderdiği mockup'ta açık temada bile kenar
+     çubuğu KOYU petrol yeşili (#003E3A) kalıyor, ana içerik alanı açık zeminde; bu yüzden
+     aşağıdaki kurallar artık "açık panel + koyu metin" yerine "koyu yeşil panel + açık metin"
+     üretiyor. Aynı özgüllük nedeniyle burada da ".sidebar " öneki kullanılıyor. */
   html[data-theme="light"] .sidebar{
-    background:#FFFFFF !important;
+    background:var(--sidebar-bg) !important;
     backdrop-filter:none !important;
     -webkit-backdrop-filter:none !important;
-    border-right:1px solid rgba(20,20,24,.09) !important;
+    border-right:1px solid rgba(0,0,0,.12) !important;
     box-shadow:none !important;
   }
   html[data-theme="light"] .sidebar .sb-item{
-    color:#1C1A16 !important;
+    color:rgba(245,248,247,.86) !important;
     border-radius:0 9px 9px 0 !important;
   }
-  html[data-theme="light"] .sidebar .sb-item svg{color:#5E5A52 !important;}
+  html[data-theme="light"] .sidebar .sb-item svg{color:rgba(245,248,247,.68) !important;}
   html[data-theme="light"] .sidebar .sb-item:hover{
-    background:rgba(14,125,104,.08) !important;
-    color:#0E7D68 !important;
+    background:rgba(0,169,157,.18) !important;
+    color:#5FE6DA !important;
   }
-  html[data-theme="light"] .sidebar .sb-item:hover svg{color:#0E7D68 !important;}
-  html[data-theme="light"] .sidebar .sb-section{color:#6E6A62 !important;}
-  html[data-theme="light"] .sidebar .sb-group-head{color:#6E6A62 !important;}
-  html[data-theme="light"] .sidebar .sb-group-head:hover{color:#1C1A16 !important;}
-  html[data-theme="light"] .sidebar .sb-divider{background:rgba(20,20,24,.10) !important;}
-  html[data-theme="light"] .sidebar .sb-collapse-btn{color:#5E5A52 !important;}
-  html[data-theme="light"] .sidebar .sb-collapse-btn:hover{background:rgba(20,20,24,.05) !important;color:#1C1A16 !important;}
-  html[data-theme="light"] #sbToggleBtn{color:#1C1A16;}
+  html[data-theme="light"] .sidebar .sb-item:hover svg{color:#5FE6DA !important;}
+  html[data-theme="light"] .sidebar .sb-section{color:rgba(245,248,247,.55) !important;}
+  html[data-theme="light"] .sidebar .sb-group-head{color:rgba(245,248,247,.55) !important;}
+  html[data-theme="light"] .sidebar .sb-group-head:hover{color:#FFFFFF !important;}
+  html[data-theme="light"] .sidebar .sb-divider{background:rgba(245,248,247,.14) !important;}
+  html[data-theme="light"] .sidebar .sb-collapse-btn{color:rgba(245,248,247,.6) !important;}
+  html[data-theme="light"] .sidebar .sb-collapse-btn:hover{background:rgba(245,248,247,.08) !important;color:#FFFFFF !important;}
+  html[data-theme="light"] #sbToggleBtn{color:#FFFFFF;}
   html[data-theme="light"] .sidebar .sb-brand-mark{
-    background:var(--fixed-light) !important;
-    border:1px solid rgba(14,125,104,.30);
+    background:rgba(255,255,255,.06) !important;
+    border:1px solid rgba(201,162,39,.45);
     box-shadow:none;
   }
-  html[data-theme="light"] .sidebar .sb-brand-text{color:#0E7D68 !important;font-family:var(--font-luxe) !important;font-weight:700 !important;}
-  html[data-theme="light"] .sidebar .sb-brand-sub{color:#5E5A52 !important;}
+  html[data-theme="light"] .sidebar .sb-brand-text{color:#FFFFFF !important;font-family:var(--font-luxe) !important;font-weight:700 !important;}
+  html[data-theme="light"] .sidebar .sb-brand-sub{color:rgba(245,248,247,.65) !important;}
   html[data-theme="light"] .sidebar .sb-foot{
     background:transparent !important;
     border:none !important;
-    border-top:1px solid rgba(20,20,24,.08) !important;
+    border-top:1px solid rgba(245,248,247,.14) !important;
   }
-  html[data-theme="light"] .sidebar .sb-foot-tag{color:#5E5A52 !important;}
-  html[data-theme="light"] .sidebar .sb-foot-brand{color:#1C1A16 !important;}
-  html[data-theme="light"] .sidebar .sb-version{color:#6E6A62 !important;}
-  html[data-theme="light"] .sidebar .sb-user{border-top:1px solid rgba(20,20,24,.08) !important;}
-  html[data-theme="light"] .sidebar .sb-user-name{color:#1C1A16 !important;}
-  html[data-theme="light"] .sidebar .sb-user-role{color:#5E5A52 !important;}
+  html[data-theme="light"] .sidebar .sb-foot-tag{color:rgba(245,248,247,.6) !important;}
+  html[data-theme="light"] .sidebar .sb-foot-brand{color:rgba(245,248,247,.85) !important;}
+  html[data-theme="light"] .sidebar .sb-version{color:rgba(245,248,247,.55) !important;}
+  html[data-theme="light"] .sidebar .sb-user{border-top:1px solid rgba(245,248,247,.14) !important;}
+  html[data-theme="light"] .sidebar .sb-user-name{color:#FFFFFF !important;}
+  html[data-theme="light"] .sidebar .sb-user-role{color:rgba(245,248,247,.62) !important;}
 
-  /* Aktif menü öğesi: HER iki temada da dolgun teal + beyaz metin — net kontrast.
-     Not: beyaz metin düz --lux-accent (#16A086) üzerinde yalnızca ~3.3:1 kontrast
-     veriyordu (WCAG AA 4.5:1'in altında) — bu yüzden koyu temada daha derin bir
-     teal (--lux-deep) kullanılıyor; açık temada zaten --accent-blue (#0E7D68)
-     yeterli kontrastı (~5:1) sağlıyor. Seçiciler ".sidebar .sb-item.active" ile
+  /* Aktif menü öğesi: HER iki temada da dolgun/kontrastlı bir vurgu + beyaz metin.
+     Not: beyaz metin düz turkuaz (--accent-blue #00A99D) üzerinde WCAG AA için yetersiz
+     kontrast verir — bu yüzden hem koyu hem açık temada daha derin bir petrol/teal tonu
+     (--lux-deep / #00877D) kullanılıyor. Seçiciler ".sidebar .sb-item.active" ile
      eşleşecek şekilde yükseltildi (satır ~1603/1754'teki eski kural aksi halde
      eşit/daha yüksek özgüllükte kazanabiliyordu). */
   .sidebar .sb-item.active{
@@ -2252,12 +2261,12 @@
     color:#FFFFFF !important;
     box-shadow:none !important;
   }
-  html[data-theme="light"] .sidebar .sb-item.active{background:#0E7D68 !important;color:#FFFFFF !important;}
+  html[data-theme="light"] .sidebar .sb-item.active{background:#00877D !important;color:#FFFFFF !important;}
   .sidebar .sb-item.active svg{color:#FFFFFF !important;}
   html[data-theme="light"] .sidebar .sb-item.active svg{color:#FFFFFF !important;}
 
   .sb-user:hover{background:rgba(22,160,134,.06) !important;}
-  html[data-theme="light"] .sb-user:hover{background:rgba(14,125,104,.07) !important;}
+  html[data-theme="light"] .sb-user:hover{background:rgba(245,248,247,.08) !important;}
   .sb-user-avatar{background:linear-gradient(145deg,var(--lux-bright),var(--lux-accent) 60%,#0B6F5C) !important;color:#0E1512 !important;}
 
   /* --- Tipografi: Fraunces ile editoryal/lüks bir üst kimlik --- */
@@ -2565,7 +2574,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-19.185</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-19.186</div>
     </div>
   </aside>
 <script>
@@ -3928,7 +3937,7 @@ function setTheme(theme){
   document.documentElement.setAttribute('data-theme', theme === 'light' ? 'light' : 'dark');
   try{ localStorage.setItem('filoPaneli_theme', theme); }catch(e){}
   const metaEl = document.getElementById('themeColorMeta');
-  if(metaEl) metaEl.setAttribute('content', theme === 'light' ? '#F4F2ED' : '#0B0C0E');
+  if(metaEl) metaEl.setAttribute('content', theme === 'light' ? '#F5F8F7' : '#0B0C0E');
   updateThemeToggleUI();
 }
 function toggleTheme(){
