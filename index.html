@@ -2578,7 +2578,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-19.187</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-19.188</div>
     </div>
   </aside>
 <script>
@@ -3871,6 +3871,12 @@ function updateShellChrome(){
   if(cloudEl && statusEl){
     cloudEl.classList.toggle('on', !!window.__cloudSyncActive);
     statusEl.textContent = window.__cloudSyncActive ? 'Aktif' : 'Kapalı';
+  }
+  // v.188: her chrome güncellemesinde, koşulu artık geçerli olmayan eski bildirimler
+  // (belge yenilendi, ceza ödendi, araç iade edildi vb.) sessizce temizlenir — böylece
+  // rozetler/Bildirimler sayfası her zaman güncel veriyi yansıtır, sayfa yenilemeyi beklemez.
+  if(typeof bildirimleriTemizle==='function' && bildirimleriTemizle()){
+    persistNotifications().catch(()=>{});
   }
   const urgent = urgentList();
   // FAZ6: bell/"Bildirimler" rozetleri artık gerçek kalıcı notifications kaydındaki OKUNMAMIŞ
@@ -16783,6 +16789,75 @@ function bildirimUret(){
   });
   return eklendi;
 }
+// v.188 — "belge güncellendi ama bildirim aynı kalıyor" hatası: bildirimUret() sadece YENİ
+// bildirim EKLİYORDU, koşulu artık geçerli olmayan (ör. sigortası yenilenmiş, cezası ödenmiş)
+// eski bildirimleri hiç SİLMİYORDU/GÜNCELLEMİYORDU — bu yüzden bir aracın belgesini
+// güncelledikten sonra bile eski "15 gün kaldı" bildirimi ekranda öylece kalıyordu.
+// bildirimGecerliMi(n): bildirimUret()'teki AYNI koşulları güncel veriyle yeniden hesaplar;
+// koşul artık sağlanmıyorsa (belge yenilendi, ceza ödendi, araç iade edildi vb.) false döner.
+// Otomasyon kurallarından (tur 'otomasyon...') gelen bildirimler burada değerlendirilmiyor —
+// onlar ayrı bir döngüyle (kural bazlı, haftalık) yönetiliyor, kapsam dışı bırakıldı.
+function bildirimGecerliMi(n){
+  const BILINEN = ['sigorta','kasko','muayene','kiraBitis','gecikenKira','servis','tahsilat','fatura','hgs','ceza','belge'];
+  if(!BILINEN.includes(n.tur)) return true;
+  if(n.tur==='sigorta' || n.tur==='kasko' || n.tur==='muayene'){
+    const v = vehicles.find(x=>x.id===n.ilgiliId);
+    if(!v) return false;
+    const tarih = n.tur==='sigorta' ? v.sigortaTarihi : n.tur==='kasko' ? v.kaskoBitis : v.muayeneTarihi;
+    if(!tarih) return false;
+    const dl = daysLeft(tarih);
+    return dl!==null && dl<=30;
+  }
+  if(n.tur==='kiraBitis' || n.tur==='gecikenKira'){
+    const v = vehicles.find(x=>x.id===n.ilgiliId);
+    if(!v) return false;
+    const kiraTarih = (v.durum==='Kirada' ? v.kiraBitis : null) || v.sozlesmeBitis;
+    if(!kiraTarih) return false;
+    const dl = daysLeft(kiraTarih);
+    if(dl===null) return false;
+    return n.tur==='gecikenKira' ? dl<0 : (dl>=0 && dl<=30);
+  }
+  if(n.tur==='servis'){
+    const v = vehicles.find(x=>x.id===n.ilgiliId);
+    if(!v || !v.sonBakimKm || !v.bakimPeriyotKm) return false;
+    const mevcutKm = Math.max(Number(v.sonKm)||0, Number(v.teslimKm)||0, ...(v.kmGecmisi||[]).map(k=>Number(k.bitKm)||0));
+    const kalan = Math.round(v.sonBakimKm + v.bakimPeriyotKm - mevcutKm);
+    return kalan<=2000;
+  }
+  if(n.tur==='tahsilat'){
+    const c = customers.find(x=>x.id===n.ilgiliId);
+    if(!c) return false;
+    return customerCariOzet(c.id).vadesiGecen>0;
+  }
+  if(n.tur==='fatura'){
+    const f = invoices.find(x=>x.id===n._anahtar);
+    if(!f || !f.vade || f.durum==='Odendi' || f.durum==='Iptal' || faturaKalan(f)<=0) return false;
+    const dl = daysLeft(f.vade);
+    return dl!==null && dl<=7;
+  }
+  if(n.tur==='hgs'){
+    const t = tolls.find(x=>x.id===n._anahtar);
+    return !!t && !t.odendi;
+  }
+  if(n.tur==='ceza'){
+    const f = trafficFines.find(x=>x.id===n._anahtar);
+    if(!f || f.odendi || !f.sonOdemeTarihi) return false;
+    const dl = daysLeft(f.sonOdemeTarihi);
+    return dl!==null && dl<=7;
+  }
+  if(n.tur==='belge'){
+    const d = documents.find(x=>x.id===n._anahtar);
+    if(!d || d.aktif===false || !d.sonGecerlilik) return false;
+    const dl = daysLeft(d.sonGecerlilik);
+    return dl!==null && dl<=30;
+  }
+  return true;
+}
+function bildirimleriTemizle(){
+  const once = notifications.length;
+  notifications = notifications.filter(bildirimGecerliMi);
+  return notifications.length !== once;
+}
 function notifOkunmamisSayisi(){
   return notifications.filter(n=>!n.okunduMu).length;
 }
@@ -18913,6 +18988,10 @@ function renderBildirimlerPage(){
   // load()'da bir kez (bildirimUret()) üretilip storageAPI'ye yazılıyor; burada sadece okunuyor
   // ve görüntüleme alanlarına çevriliyor. "okundu" durumu artık gerçek bir kayıt alanı
   // (okunduMu) — eski okunanBildirimler localStorage hack'i kaldırıldı.
+  // v.188: bu sayfa açılırken de (updateShellChrome'a ek olarak) koşulu artık geçerli olmayan
+  // eski bildirimler temizlensin — kullanıcı belgeyi güncelleyip doğrudan bu sayfaya geldiğinde
+  // bile eski/güncel-olmayan bildirimi görmemeli.
+  if(bildirimleriTemizle()) persistNotifications().catch(()=>{});
   const list = notifications.map(bildirimGoruntuSatiri).sort((a,b)=>(a.dl??9999)-(b.dl??9999));
   const filter = window.__bildirimFilter || 'hepsi';
 
