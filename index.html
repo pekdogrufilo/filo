@@ -2578,7 +2578,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-19.188</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-19.189</div>
     </div>
   </aside>
 <script>
@@ -14345,9 +14345,13 @@ function dogrulaBelgeTuru(tur, bilgi){
 // varsa ve aracın muayeneTarihi alanı BOŞSA doldurur; dolu bir değerin üzerine asla yazmaz.
 // Dönen değer true ise mesaj metinlerinde "muayene tarihi işlendi" bilgisi gösterilir.
 function ruhsatMuayeneUygula(v, tur, tarih){
-  if(tur!=='ruhsat' || !tarih || v.muayeneTarihi) return false;
-  v.muayeneTarihi = tarih;
-  return true;
+  if(tur!=='ruhsat' || !tarih) return false;
+  // v.189: sigorta/kasko/muayene'deki aynı "yenileme" düzeltmesi burada da uygulanıyor — ruhsat
+  // üzerinden okunan muayene tarihi boşsa doldurulur; doluysa ve okunan tarih İLERİDEYSE (gerçek
+  // bir muayene yenilemesi) güncellenir, geriye doğruysa dokunulmaz.
+  if(!v.muayeneTarihi){ v.muayeneTarihi = tarih; return true; }
+  if(tarih > v.muayeneTarihi){ v.muayeneTarihi = tarih; return true; }
+  return false;
 }
 function sozlesmeAlanlariUygula(v, bilgi){
   const sonuc = {degisti:false, doldurulan:[], celiski:[]};
@@ -14452,9 +14456,16 @@ async function otoBelgeKaydetVeBildir(v, tur, bilgi, onceden, file, statusEl){
     // Doğru kart yuvasına kaydet
     const std = OTO_BELGE_TURLERI[tur];
     // v.159: "AI'nın okuduğu veriler onaylanmadan mevcut kaydın üzerine sessizce yazılmasın"
-    // — artık bir tarih zaten kayıtlıysa ve belgeden okunan ondan farklıysa DEĞİŞTİRİLMİYOR,
-    // sadece alan boşsa dolduruluyor; çelişki varsa toast'ta ayrıca bildiriliyor (sözleşmedeki
-    // teslimTarihi/teslimKm için zaten kullanılan "boşsa doldur, doluysa bildir" deseniyle aynı).
+    // — bir tarih zaten kayıtlıysa ve belgeden okunan ondan farklıysa DEĞİŞTİRİLMİYORDU, sadece
+    // alan boşsa dolduruluyordu; çelişki varsa toast'ta ayrıca bildiriliyordu.
+    // v.189: "34GSM917 güncel belge yüklü hala bildirimlerde" — bu korumanın kendisi bir bug'a
+    // dönüşmüştü: gerçekten yenilenmiş bir poliçe/muayene tekrar yüklendiğinde de tarih hiç
+    // güncellenmiyor, sadece kolayca gözden kaçan bir toast notu düşüyordu — bildirim de haklı
+    // olarak temizlenmiyordu (eski tarih hâlâ yaklaştığı için). Artık okunan tarih eskisinden
+    // İLERİDEYSE (poliçe/muayene süresi hep ileri tarihe yenilenir, bu gerçek bir yenileme
+    // paternidir) otomatik güncelleniyor. Sadece GERİYE doğru ya da anlaşılmaz bir tarih
+    // geldiğinde eskisi gibi değiştirilmeden sadece uyarı veriliyor (yanlış okuma riskine karşı
+    // v.159'daki korumanın özü aynen korunuyor).
     let tarihGuncellendi = false, tarihCeliski = '';
     if(std){
       const res = await storageAPI.set(std.prefix+v.id, onceden.dataUrl);
@@ -14464,7 +14475,14 @@ async function otoBelgeKaydetVeBildir(v, tur, bilgi, onceden, file, statusEl){
       if(std.tarihF && okunanTarih){
         if(!v[std.tarihF]){ v[std.tarihF] = okunanTarih; tarihGuncellendi = true; }
         else if(v[std.tarihF] !== okunanTarih){
-          tarihCeliski = ` Not: ${std.label} tarihi kayıtta ${fmtTarih(v[std.tarihF])} olarak duruyor, belgede ${fmtTarih(okunanTarih)} okundu — yanlış okuma olabileceği için değiştirmedim, gerekiyorsa elle güncelleyin.`;
+          if(okunanTarih > v[std.tarihF]){
+            const eskiTarih = v[std.tarihF];
+            v[std.tarihF] = okunanTarih;
+            tarihGuncellendi = true;
+            tarihCeliski = ` (Önceki tarih ${fmtTarih(eskiTarih)} idi, yenileme olarak algılanıp güncellendi.)`;
+          }else{
+            tarihCeliski = ` Not: ${std.label} tarihi kayıtta ${fmtTarih(v[std.tarihF])} olarak duruyor, belgede ${fmtTarih(okunanTarih)} okundu — geriye doğru bir tarih olduğu için değiştirmedim, gerekiyorsa elle güncelleyin.`;
+          }
         }
       }
       // v.133: "yüklüyorum ama göremiyorum" — standart yuvalı belgeler (sigorta/kasko/
