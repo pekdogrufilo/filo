@@ -3930,6 +3930,12 @@ function updateShellChrome(){
     if(belgeUyari>0){ belgeBadge.textContent = belgeUyari; belgeBadge.style.display='inline-block'; }
     else{ belgeBadge.style.display='none'; }
   }
+  const lastikBadge = document.getElementById('sbLastikBadge');
+  const lastikUyari = tires.filter(lastikDisDusukMu).length;
+  if(lastikBadge){
+    if(lastikUyari>0){ lastikBadge.textContent = lastikUyari; lastikBadge.style.display='inline-block'; }
+    else{ lastikBadge.style.display='none'; }
+  }
 
   // Mobil "Daha Fazla" ızgarasındaki döşemelerde de aynı rozetler görünsün
   const tileBakim = document.getElementById('bnTileBakimBadge');
@@ -3946,6 +3952,11 @@ function updateShellChrome(){
   if(tileBildirim){
     if(okunmamisBildirim>0){ tileBildirim.textContent = okunmamisBildirim; tileBildirim.style.display='flex'; }
     else{ tileBildirim.style.display='none'; }
+  }
+  const tileLastik = document.getElementById('bnTileLastikBadge');
+  if(tileLastik){
+    if(lastikUyari>0){ tileLastik.textContent = lastikUyari; tileLastik.style.display='flex'; }
+    else{ tileLastik.style.display='none'; }
   }
 }
 window.addEventListener('resize', ()=>{ const b=document.getElementById('sbToggleBtn'); if(b) b.style.display = window.innerWidth<=900 ? 'flex' : 'none'; });
@@ -10233,11 +10244,9 @@ function currentPlanLimitleri(){
 // güncelleniyorsa limit kontrolüne gerek yok, araç sayısı artmıyor). Yalnızca bulut modunda
 // (companies/{id}.plan bilgisi olduğunda) anlamlıdır; yerel/bulutsuz modda hiç limit yok.
 function aracEklemeLimitiKontrol(){
-  if(!window.__cloudSyncActive || !window.currentCompanyDoc) return {ok:true};
-  const limitler = currentPlanLimitleri();
-  if(vehicles.length >= limitler.maxArac){
-    return {ok:false, mesaj:`Planınızın (${currentPlanAdi()}) araç limitine (${limitler.maxArac}) ulaştınız. Yükseltme için yöneticinizle görüşün.`};
-  }
+  // Araç ekleme limiti kaldırıldı.
+  // Plan/kullanıcı limitleri başka alanlarda kullanılabilir; ancak araç kaydı
+  // hiçbir şekilde Starter/Professional araç sayısı nedeniyle engellenmez.
   return {ok:true};
 }
 
