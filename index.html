@@ -2415,7 +2415,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-23.202</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-23.203</div>
     </div>
   </div>
 </div>
@@ -2581,7 +2581,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-23.202</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-23.203</div>
     </div>
   </aside>
 <script>
@@ -14081,6 +14081,19 @@ function ykSihirbaziHtml(){
         ${durum && durum!=='teslimEdildi' ? `
         <div class="iade-section">4 — Sözleşme</div>
         ${durum==='teklif' ? `<p style="font-size:12.5px;color:var(--text-2);margin:0 0 10px;">Teklif oluşturuldu. Devam etmek için mevcut sözleşme şablonuyla (23 madde + Ekler) sözleşmeyi hazırlayın.</p>
+          <div class="iade-row">
+            <div class="iade-field"><label>Kefil (opsiyonel)</label><input type="text" id="ykKefil" placeholder="Kefil Ad Soyad"></div>
+            <div class="iade-field"><label>Kefil TC No</label><input type="text" id="ykKefilTC" placeholder="11 haneli TC" maxlength="11"></div>
+          </div>
+          <div class="iade-row">
+            <div class="iade-field">
+              <label>Teslim yakıt seviyesi</label>
+              <select id="ykSozYakit">
+                <option>Dolu</option><option>3/4</option><option>Yarım</option><option>1/4</option><option>Boş</option>
+              </select>
+            </div>
+            <div class="iade-field"><label>Teslim yeri</label><input type="text" id="ykTeslimYer" placeholder="Konya merkez (varsayılan)"></div>
+          </div>
           <button class="add-btn" onclick="ykSozlesmeyeIlerle()">Sözleşmeye ilerle</button>` : ''}
         ` : ''}
         ${durum==='sozlesmeHazir' ? `
@@ -14091,7 +14104,7 @@ function ykSihirbaziHtml(){
           <div class="iade-field">
             <label>Teslim yakıt seviyesi</label>
             <select id="ykTeslimYakit">
-              <option>Dolu</option><option>3/4</option><option>Yarım</option><option>1/4</option><option>Boş</option>
+              ${['Dolu','3/4','Yarım','1/4','Boş'].map(o=>`<option ${(ykSihirbazState&&ykSihirbazState.sozData&&ykSihirbazState.sozData.yakit)===o?'selected':''}>${o}</option>`).join('')}
             </select>
           </div>
         </div>
@@ -14149,6 +14162,14 @@ async function ykSozlesmeyeIlerle(){
   const r = rentals.find(x=>x.id===(ykSihirbazState&&ykSihirbazState.rentalId)); if(!r) return;
   if(!r.customerId){ showToast('Sözleşme oluşturmak için önce bir müşteri seçin.', true); return; }
   const v = vehicles.find(x=>x.id===r.vehicleId); if(!v) return;
+  // v.203: bu alanlar önceden sozData içine hiç okunmadan sabit ('' / 'Dolu') yazılıyordu —
+  // "ÇOK EKSİKLER VAR" bildirimi üzerine, az önce hızlı sihirbazda (kirayaVerVeSozlesme)
+  // düzeltilen yakıt/kefil/teslim yeri hatasının bu ADIM ADIM sihirbazdaki karşılığı bulundu.
+  // Şimdi 4. adıma eklenen alanlardan okunuyor (DOM henüz kaldırılmadan, fonksiyon başında).
+  const ykKefilAd = (document.getElementById('ykKefil')?.value||'').trim();
+  const ykKefilTCNo = (document.getElementById('ykKefilTC')?.value||'').trim();
+  const ykSozYakitDeger = document.getElementById('ykSozYakit')?.value||'Dolu';
+  const ykTeslimYerDeger = (document.getElementById('ykTeslimYer')?.value||'').trim();
   const musteri = customers.find(c=>c.id===r.customerId);
   const kiraci = musteriGoruntuAdi(musteri)||'—';
   const basTxt = (r.baslangic||'').split('-').reverse().join('.');
@@ -14163,8 +14184,8 @@ async function ykSozlesmeyeIlerle(){
     firmaEposta: localStorage.getItem('filoPaneli_firmaEposta')||'',
     sozlesmeTip: 'Operasyonel Kiralama',
     kiraci, kiraciVergi: (musteri&&(musteri.vkn||musteri.tc))||'', kiraciAdres: (musteri&&musteri.adres)||'', kiraciTel: (musteri&&musteri.telefon)||'', kiraciEhliyet: (musteri&&musteri.ehliyetNo)||'', kiraciVKN: (musteri&&(musteri.vkn||musteri.tc))||'',
-    kefil: '', kefilTC: '',
-    yakit: 'Dolu', teslimYer: '',
+    kefil: ykKefilAd, kefilTC: ykKefilTCNo,
+    yakit: ykSozYakitDeger, teslimYer: ykTeslimYerDeger,
     bas: basTxt, bitis: bitisTxt,
     plaka: v.plaka, marka: v.marka||'', model: v.model||'',
     versiyon: v.versiyon||'', aracCinsi: v.aracCinsi||'',
