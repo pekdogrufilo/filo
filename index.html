@@ -2415,7 +2415,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-23.197</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-23.198</div>
     </div>
   </div>
 </div>
@@ -2581,7 +2581,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-23.197</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-23.198</div>
     </div>
   </aside>
 <script>
@@ -10420,9 +10420,13 @@ async function fetchCompanyDoc(companyId){
 // çağırarak bu limiti bugün aşabilir. Bu, cross-tenant veri karışması DEĞİL (her şirket
 // yine sadece kendi verisini görür/düzenler — bkz. FAZ2 mimari notu), sadece "plan limitinin
 // sunucu tarafında da kesin uygulanmaması" riski.
+// v.198: kullanıcı isteğiyle tüm planlarda araç/kullanıcı sayısı sınırsız yapıldı (zaten
+// aracEklemeLimitiKontrol() bu sayıları FİİLEN uygulamıyordu — bkz. üstündeki not — ama
+// Süper Admin panelindeki "bu şirketin planı X araç/Y kullanıcı" bilgi metni hâlâ eski
+// 15/75 rakamlarını gösteriyordu, kafa karıştırıcıydı. Artık üç plan da sınırsız gösteriliyor.
 const PLAN_LIMITLERI = {
-  Starter:      { maxArac: 15, maxKullanici: 3 },
-  Professional: { maxArac: 75, maxKullanici: 15 },
+  Starter:      { maxArac: Infinity, maxKullanici: Infinity },
+  Professional: { maxArac: Infinity, maxKullanici: Infinity },
   Enterprise:   { maxArac: Infinity, maxKullanici: Infinity },
 };
 function currentPlanAdi(){
