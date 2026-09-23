@@ -2415,7 +2415,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-23.199</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-23.200</div>
     </div>
   </div>
 </div>
@@ -2581,7 +2581,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-23.199</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-23.200</div>
     </div>
   </aside>
 <script>
@@ -15365,6 +15365,96 @@ async function belgeAnalizEt(onceden){
   }
   return null;
 }
+// ===== v.200: Müşteri kimlik/vergi belgesinden otomatik doldurma =====
+// Kullanıcı "Yeni Müşteri" formunda kimlik, ehliyet ya da vergi levhası fotoğrafı/PDF'i
+// yükler; Gemini belgeyi okuyup ad/soyad/TC, ya da firma/VKN/vergi dairesi bilgilerini
+// çıkarır, forma otomatik doldurulur. Var olan (kullanıcının zaten elle girdiği) bir
+// alanın üzerine ASLA yazılmaz — sadece boş alanlar doldurulur (bkz. sozlesmeAlanlariUygula
+// ile aynı "asla sessizce üzerine yazma" ilkesi). Gemini anahtarı yoksa (getGeminiKey())
+// sessizce devre dışı kalır, kullanıcı alanları elle doldurmaya devam edebilir.
+const MUSTERI_BELGE_SYSTEM = 'Sen bir müşteri kimlik/vergi belgesi okuyan asistansın. Sana T.C. kimlik kartı, nüfus cüzdanı, ehliyet ya da vergi levhası gibi bir belge görüntüsü/PDF\'i verilecek. SADECE şu JSON nesnesini döndür, başka hiçbir metin veya kod bloğu ekleme:\n{"musteriTuru": "bireysel"|"sirket"|null, "ad": string|null, "soyad": string|null, "tc": string|null, "ehliyetNo": string|null, "ehliyetSinifi": string|null, "ehliyetTarihi": "YYYY-MM-DD"|null, "firmaAdi": string|null, "vkn": string|null, "vergiDairesi": string|null, "yetkiliAdi": string|null, "adres": string|null, "telefon": string|null}\nKurallar: Belge T.C. kimlik kartı/nüfus cüzdanıysa "musteriTuru":"bireysel" yap, "ad", "soyad", "tc" (11 haneli T.C. kimlik no) alanlarını doldur; belgede adres yazıyorsa "adres"i de doldur. Belge ehliyet ise "musteriTuru":"bireysel" yap, "ad", "soyad", "ehliyetNo", "ehliyetSinifi" (B, C, D gibi sınıf/sınıfları virgülle ayırarak) ve "ehliyetTarihi" (ilk veriliş ya da geçerlilik tarihi, YYYY-MM-DD) alanlarını doldur. Belge vergi levhası ise "musteriTuru":"sirket" yap, "firmaAdi" (unvan), "vkn" (10 haneli vergi kimlik no), "vergiDairesi", belgede varsa "yetkiliAdi" ve "adres" alanlarını doldur. Belge bir şirket kaşesi/imza sirküleri gibi salt görsel bir belgeyse ya da hiçbir okunabilir kimlik/vergi bilgisi yoksa TÜM alanları null bırak, "musteriTuru"yu da null yap. Emin olmadığın hiçbir alanı tahmin etme, null yaz.';
+async function musteriBelgeAnalizEt(onceden){
+  for(let deneme=0; deneme<2; deneme++){
+    try{
+      const yanit = await geminiChatFetch(MUSTERI_BELGE_SYSTEM, [{role:'user', parts:[
+        {inline_data:{mime_type:onceden.mime, data:onceden.b64}},
+        {text:'Bu belgeyi oku ve istenen JSON formatında yanıtla.'}
+      ]}], {temperature:0, maxOutputTokens:1024});
+      const bilgi = JSON.parse(yanit.replace(/```json|```/g,'').trim());
+      if(bilgi && typeof bilgi==='object') return bilgi;
+    }catch(e){
+      if(deneme===0) await new Promise(r=>setTimeout(r,3000));
+    }
+  }
+  return null;
+}
+// Açık müşteri formundaki BOŞ alanları bilgi nesnesiyle doldurur, doldurduğu alan
+// etiketlerinin listesini döndürür. mfTip formda mevcut değilse (form kapanmışsa) sessizce çıkar.
+function musteriBelgeAlanlariDoldur(bilgi){
+  const tipEl = document.getElementById('mfTip');
+  if(!bilgi || !tipEl) return [];
+  const doldurulan = [];
+  const setIfEmpty = (id, val, etiket)=>{
+    if(val==null || String(val).trim()==='') return;
+    const el = document.getElementById(id);
+    if(!el || (el.value && String(el.value).trim())) return;
+    el.value = val;
+    doldurulan.push(etiket);
+  };
+  if(bilgi.musteriTuru==='bireysel' && tipEl.value!=='bireysel'){ tipEl.value='bireysel'; musteriFormTipDegisti(); }
+  else if(bilgi.musteriTuru==='sirket' && tipEl.value==='bireysel'){ tipEl.value='sirket'; musteriFormTipDegisti(); }
+
+  setIfEmpty('mfAd', bilgi.ad, 'ad');
+  setIfEmpty('mfSoyad', bilgi.soyad, 'soyad');
+  if(bilgi.tc && typeof tcknGecerliMi==='function' && tcknGecerliMi(String(bilgi.tc))) setIfEmpty('mfTc', bilgi.tc, 'T.C. kimlik no');
+  setIfEmpty('mfEhliyetNo', bilgi.ehliyetNo, 'ehliyet no');
+  setIfEmpty('mfEhliyetSinifi', bilgi.ehliyetSinifi, 'ehliyet sınıfı');
+  const ehTarih = bilgi.ehliyetTarihi ? normalizeExtractedDate(bilgi.ehliyetTarihi) : '';
+  if(ehTarih) setIfEmpty('mfEhliyetTarihi', ehTarih, 'ehliyet tarihi');
+  setIfEmpty('mfFirmaAdi', bilgi.firmaAdi, 'firma/kurum adı');
+  if(bilgi.vkn && typeof vknGecerliMi==='function' && vknGecerliMi(String(bilgi.vkn))) setIfEmpty('mfVkn', bilgi.vkn, 'VKN');
+  setIfEmpty('mfVergiDairesi', bilgi.vergiDairesi, 'vergi dairesi');
+  setIfEmpty('mfYetkiliAdi', bilgi.yetkiliAdi, 'yetkili adı');
+  setIfEmpty('mfAdres', bilgi.adres, 'adres');
+  setIfEmpty('mfTelefon', bilgi.telefon, 'telefon');
+  return doldurulan;
+}
+// Müşteri formundaki "Belge ile otomatik doldur" seçicisinden çağrılır — birden fazla
+// dosya seçilebilir (ör. önce kimlik, sonra vergi levhası), her biri sırayla okunur.
+async function musteriBelgeYukle(fileList){
+  const files = Array.from(fileList||[]);
+  if(!files.length) return;
+  const statusEl = document.getElementById('mfBelgeDurum');
+  if(!getGeminiKey()){
+    if(statusEl) statusEl.textContent = 'Otomatik okuma servisine şu an ulaşılamıyor — alanları elle doldurabilirsiniz.';
+    showToast('Otomatik belge okuma şu anda kullanılamıyor, lütfen elle doldurun.', true);
+    return;
+  }
+  if(statusEl) statusEl.textContent = 'Belge(ler) okunuyor…';
+  let toplamDoldurulan = [];
+  let hataVar = false;
+  for(const file of files){
+    try{
+      if(file.size > 10*1024*1024){ showToast(`"${esc(file.name)}" çok büyük (en fazla 10 MB), atlandı.`, true); continue; }
+      if(file.type === 'image/svg+xml'){ showToast('SVG dosyaları desteklenmiyor.', true); continue; }
+      const onceden = await belgeVeriOku(file);
+      const bilgi = await musteriBelgeAnalizEt(onceden);
+      if(bilgi) toplamDoldurulan = toplamDoldurulan.concat(musteriBelgeAlanlariDoldur(bilgi));
+      else hataVar = true;
+    }catch(e){
+      console.error('musteriBelgeYukle:', e);
+      hataVar = true;
+    }
+  }
+  const benzersiz = [...new Set(toplamDoldurulan)];
+  if(statusEl){
+    statusEl.textContent = benzersiz.length
+      ? `Belgeden okunup dolduruldu: ${benzersiz.join(', ')}. Kaydetmeden önce kontrol edin.`
+      : (hataVar ? 'Belge okunamadı — lütfen alanları elle doldurun.' : 'Belgede tanınabilir bir bilgi bulunamadı — lütfen elle doldurun.');
+  }
+  if(benzersiz.length) showToast('Bilgiler belgeden okunup forma dolduruldu. Kaydetmeden önce kontrol edin.');
+  else showToast('Belgeden otomatik bilgi okunamadı, lütfen elle doldurun.', true);
+}
 async function belgeTopluTek(file, fallbackId){
   try{
     if(file.size > 10*1024*1024) return {durum:'hata', mesaj:'10 MB sınırı aşıldı'};
@@ -17855,6 +17945,14 @@ function musteriFormAc(id, prefillAd){
             <option value="sirket" ${tip==='sirket'?'selected':''}>Şirket</option>
             <option value="kurumsal" ${tip==='kurumsal'?'selected':''}>Kurumsal</option>
           </select>
+        </div>
+        <div class="field" style="background:var(--surface-2);border-radius:10px;padding:10px 14px;">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:0;" onclick="document.getElementById('mfBelgeInput').click()">
+            ${ICO('camera',13)}
+            <span style="font-size:13px;color:var(--text-3);">Belge ile otomatik doldur — kimlik, ehliyet, vergi levhası (birden fazla dosya seçilebilir)</span>
+          </label>
+          <input type="file" id="mfBelgeInput" accept="image/*,application/pdf" multiple style="display:none" onchange="musteriBelgeYukle(this.files);this.value='';">
+          <div id="mfBelgeDurum" style="font-size:12px;color:var(--text-3);margin-top:4px;"></div>
         </div>
         <div id="mfBireysel" style="${tip==='bireysel'?'':'display:none;'}">
           <div class="field-row">
