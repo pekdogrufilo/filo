@@ -2415,7 +2415,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-23.206</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-23.207</div>
     </div>
   </div>
 </div>
@@ -2581,7 +2581,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-23.206</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-23.207</div>
     </div>
   </aside>
 <script>
@@ -7381,6 +7381,15 @@ function openAracKirala(vehicleId){
           <label>Kiracı adresi</label>
           <input type="text" id="krAdres" placeholder="Kiracının açık adresi">
         </div>
+        <!-- v.207: sözleşme şablonu "Ehliyet No" satırını zaten basıyordu (bkz. d.kiraciEhliyet,
+             sözleşme metninde) ama bu (en sık kullanılan) sihirbazda bunu girecek alan hiç yoktu —
+             şasi no'daki aynı desen: alan var, kaynak yok. Elle girilebilsin diye eklendi + belge
+             ile otomatik doldurma zaten ehliyet no okuyordu (bkz. krBelgeAlanlariUygula), artık
+             buraya da yazıyor. -->
+        <div class="iade-field">
+          <label>Kiracı ehliyet no (opsiyonel)</label>
+          <input type="text" id="krEhliyet" placeholder="Ehliyet no">
+        </div>
         <div class="iade-row">
           <div class="iade-field">
             <label>Kefil (opsiyonel)</label>
@@ -7516,6 +7525,9 @@ function krBelgeAlanlariUygula(bilgi){
     setIfEmpty('krVKN', tcVkn, 'TC/VKN');
     setIfEmpty('krTel', bilgi.telefon, 'telefon');
     setIfEmpty('krAdres', bilgi.adres, 'kiracı adresi');
+    // v.207: bilgi.ehliyetNo zaten okunuyordu (bkz. MUSTERI_BELGE_SYSTEM) ama krEhliyet
+    // alanı bu sihirbazda hiç olmadığı için hiçbir zaman kullanılmıyordu.
+    setIfEmpty('krEhliyet', bilgi.ehliyetNo, 'ehliyet no');
   }else{
     setIfEmpty('krKefil', adSoyad, 'kefil adı');
     if(bilgi.tc && typeof tcknGecerliMi==='function' && tcknGecerliMi(String(bilgi.tc))) setIfEmpty('krKefilTC', bilgi.tc, 'kefil TC');
@@ -7748,6 +7760,7 @@ async function kirayaVerVeSozlesme(format){
   const kiraciVKN = document.getElementById('krVKN')?.value?.trim();
   const kiraciTel = document.getElementById('krTel')?.value?.trim();
   const kiraciAdres = document.getElementById('krAdres')?.value?.trim();
+  const kiraciEhliyet = document.getElementById('krEhliyet')?.value?.trim();
   const tip = document.getElementById('krTip')?.value;
   const notlar = document.getElementById('krNotlar')?.value?.trim();
 
@@ -7769,6 +7782,7 @@ async function kirayaVerVeSozlesme(format){
       kiraciVergi: kiraciVKN||v.kiraciVergi||'',
       kiraciTel: kiraciTel||v.kiraciTel||'',
       kiraciAdres: kiraciAdres||v.kiraciAdres||'',
+      kiraciEhliyet: kiraciEhliyet||v.kiraciEhliyet||'',
       kira: kira||v.kira||0,
       kiraBitis: bitis,
       sozlesmeBitis: bitis,
@@ -7829,7 +7843,7 @@ async function kirayaVerVeSozlesme(format){
     firmaVergiNo: localStorage.getItem('filoPaneli_firmaVergiNo')||'',
     firmaEposta: localStorage.getItem('filoPaneli_firmaEposta')||'',
     sozlesmeTip: tip,
-    kiraci, kiraciVergi: kiraciVKN||'', kiraciAdres: kiraciAdres||'', kiraciTel: kiraciTel||'', kiraciEhliyet: '', kiraciVKN: kiraciVKN||'',
+    kiraci, kiraciVergi: kiraciVKN||'', kiraciAdres: kiraciAdres||'', kiraciTel: kiraciTel||'', kiraciEhliyet: kiraciEhliyet||'', kiraciVKN: kiraciVKN||'',
     kefil: krKefilAd,
     kefilTC: krKefilTCNo,
     yakit: krTeslimYakit,
@@ -13361,6 +13375,7 @@ async function sozlesmeOlustur(format){
   const renk = document.getElementById('sozRenk')?.value?.trim();
   const kiraciVKNInp = document.getElementById('sozKiraciVKN')?.value?.trim();
   const kiraciAdresInp = document.getElementById('sozKiraciAdres')?.value?.trim();
+  const kiraciEhliyetInp = document.getElementById('sozKiraciEhliyet')?.value?.trim();
   const notlar = document.getElementById('sozNotlar')?.value?.trim();
   const log = document.getElementById('sozlesmeLog');
 
@@ -13381,7 +13396,7 @@ async function sozlesmeOlustur(format){
     firmaTelefon: localStorage.getItem('filoPaneli_firmaTelefon')||'',
     firmaVergiNo: localStorage.getItem('filoPaneli_firmaVergiNo')||'',
     sozlesmeTip: tip,
-    kiraci, kiraciVergi: kiraciVKNInp||v.kiraciVergi||'', kiraciAdres: kiraciAdresInp||v.kiraciAdres||'', kiraciTel: v.kiraciTel||'', kiraciEhliyet: v.kiraciEhliyet||'', kiraciVKN: kiraciVKNInp||v.kiraciVergi||'',
+    kiraci, kiraciVergi: kiraciVKNInp||v.kiraciVergi||'', kiraciAdres: kiraciAdresInp||v.kiraciAdres||'', kiraciTel: v.kiraciTel||'', kiraciEhliyet: kiraciEhliyetInp||v.kiraciEhliyet||'', kiraciVKN: kiraciVKNInp||v.kiraciVergi||'',
     kefil: document.getElementById('sozKefil')?.value?.trim()||'',
     kefilTC: document.getElementById('sozKefilTC')?.value?.trim()||'',
     bas: bas.split('-').reverse().join('.'),
@@ -13421,6 +13436,7 @@ async function sozlesmeOlustur(format){
       kiraciAdi: kiraci,
       kiraciVergi: kiraciVKNInp||v.kiraciVergi||'',
       kiraciAdres: kiraciAdresInp||v.kiraciAdres||'',
+      kiraciEhliyet: kiraciEhliyetInp||v.kiraciEhliyet||'',
       kira: kiraNum,
       kiraBitis: bitis,
       sozlesmeBitis: bitis,
@@ -14627,6 +14643,10 @@ function renderKiralamaPage(){
         <div class="field">
           <label>Kiracı Adresi</label>
           <input type="text" id="sozKiraciAdres" placeholder="Kiracının açık adresi">
+        </div>
+        <div class="field">
+          <label>Kiracı Ehliyet No (opsiyonel)</label>
+          <input type="text" id="sozKiraciEhliyet" placeholder="Ehliyet no">
         </div>
         <div class="field">
           <label>Kefil (opsiyonel)</label>
