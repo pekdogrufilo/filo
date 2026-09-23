@@ -2415,7 +2415,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-23.201</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-23.202</div>
     </div>
   </div>
 </div>
@@ -2581,7 +2581,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-23.201</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-23.202</div>
     </div>
   </aside>
 <script>
@@ -7768,6 +7768,17 @@ async function kirayaVerVeSozlesme(format){
   // rentals kaydına yazılacak ek bir veri.
   const krTeslimYakit = document.getElementById('krYakit')?.value||'Dolu';
   const krKontrolListesi = kontrolListesiOku('krChk');
+  // v.202: "yakıt yarım yazdım sözleşmede dolu çıktı" hata bildirimi üzerine bulundu — modal
+  // birkaç satır aşağıda kaldırılıyor (document.getElementById('kiralaModal')?.remove()), ama
+  // sozData nesnesi o SATIRDAN SONRA kefil/kefilTC/yakit/teslimYer alanlarını modal DOM'undan
+  // TEKRAR okumaya çalışıyordu — modal artık belgeden kopmuş olduğu için document.getElementById
+  // hep null dönüyor, bu yüzden bu dört alan sessizce sabit varsayılanlara (yakıt "Dolu", kefil/
+  // kefilTC/teslimYer boş metin) düşüyordu; kullanıcının seçtiği/girdiği değer HİÇBİR ZAMAN
+  // sözleşmeye yansımıyordu. Düzeltme: bu dört alan da (krTeslimYakit gibi) modal SİLİNMEDEN
+  // ÖNCE, burada yakalanır; sozData bu yakalanmış değişkenleri kullanır, DOM'u tekrar sorgulamaz.
+  const krKefilAd = (document.getElementById('krKefil')?.value||'').trim();
+  const krKefilTCNo = (document.getElementById('krKefilTC')?.value||'').trim();
+  const krTeslimYerYakalanan = (document.getElementById('krTeslimYer')?.value||'').trim();
   document.getElementById('kiralaModal')?.remove();
   const plakalar = secilen.map(v=>esc(v.plaka)).join(', ');
   logActivity('edit', secilen.length===1
@@ -7792,10 +7803,10 @@ async function kirayaVerVeSozlesme(format){
     firmaEposta: localStorage.getItem('filoPaneli_firmaEposta')||'',
     sozlesmeTip: tip,
     kiraci, kiraciVergi: kiraciVKN||'', kiraciAdres: kiraciAdres||'', kiraciTel: kiraciTel||'', kiraciEhliyet: '', kiraciVKN: kiraciVKN||'',
-    kefil: (document.getElementById('krKefil')||{}).value?.trim()||'',
-    kefilTC: (document.getElementById('krKefilTC')||{}).value?.trim()||'',
-    yakit: (document.getElementById('krYakit')||{}).value||'Dolu',
-    teslimYer: (document.getElementById('krTeslimYer')||{}).value?.trim()||'',
+    kefil: krKefilAd,
+    kefilTC: krKefilTCNo,
+    yakit: krTeslimYakit,
+    teslimYer: krTeslimYerYakalanan,
     bas: bas.split('-').reverse().join('.'),
     bitis: bitis.split('-').reverse().join('.'),
     // Tek araç uyumluluğu (ilk araç)
