@@ -2415,7 +2415,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-23.203</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-23.204</div>
     </div>
   </div>
 </div>
@@ -2581,7 +2581,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-23.203</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-23.204</div>
     </div>
   </aside>
 <script>
@@ -14011,6 +14011,29 @@ const YK_DURUM_ETIKET = {teklif:'Teklif', rezervasyon:'Rezervasyon', sozlesmeHaz
 function openYeniKiralamaSihirbazi(){
   if(!requireAdmin()){ showToast('Bu işlem için yönetici girişi gerekir.', true); return; }
   ykSihirbazState = { rentalId: null, sozData: null };
+  ykModalGoster();
+}
+// v.203: pencere kapatılıp (küçültülmeden) sayfa yenilendiğinde ya da başka bir sayfaya
+// geçilip geri dönüldüğünde, ykSihirbazState kalıcı olmayan (persist edilmeyen) bir
+// bellek-içi değişken olduğu için "teklif"/"sozlesmeHazir" durumundaki kiralamalar
+// hiçbir yerde görünmüyor, sihirbaz yeniden açıldığında sıfırdan başlıyordu — kayıt
+// aslında rentals içinde duruyordu ama sihirbaz üzerinden ERİŞİLEMİYORDU. Şimdi
+// Kiralama sayfasındaki "Devam Eden Adım Adım Kiralamalar" kartından, ilgili rental id
+// ile ykDevamEt() çağrılarak state (ve varsa daha önce oluşturulmuş sözleşme verisi,
+// sozlesmeler kaydından) yeniden kurulup sihirbaz kaldığı adımdan devam ettirilebiliyor.
+function ykDevamEt(rentalId){
+  if(!requireAdmin()){ showToast('Bu işlem için yönetici girişi gerekir.', true); return; }
+  const r = rentals.find(x=>x.id===rentalId);
+  if(!r){ showToast('Kiralama kaydı bulunamadı.', true); return; }
+  let sozData = null;
+  if(r.sozlesmeId){
+    const rec = sozlesmeler.find(x=>x.id===r.sozlesmeId);
+    if(rec) sozData = rec.data;
+  }
+  ykSihirbazState = { rentalId: r.id, sozData };
+  ykModalGoster();
+}
+function ykModalGoster(){
   const eski = document.getElementById('ykModal'); if(eski) eski.remove();
   const el = document.createElement('div');
   el.className = 'iade-modal';
@@ -14379,6 +14402,34 @@ function renderKiralamaPage(){
         </div>
       </div>
     </div>
+
+    ${(() => {
+      // v.203: "Yeni Kiralama (Adım Adım)" sihirbazıyla başlatılıp sözleşme/teslim adımına
+      // henüz gelmeden (küçültülmeden) kapatılan ya da sayfa yenilenmesiyle bellek-içi
+      // state'i kaybolan teklif/sözleşme-hazır kayıtları burada listelenir, "Devam Et" ile
+      // kaldığı yerden açılır. Yoksa bu kart hiç gösterilmez.
+      const ykBekleyen = rentals.filter(r=>['teklif','sozlesmeHazir'].includes(r.durum));
+      if(!ykBekleyen.length) return '';
+      return `
+    <div class="dcard" style="margin-bottom:14px;border-color:rgba(54,161,104,.3);">
+      <h3><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#36A168;margin-right:7px;"></span>Devam Eden Adım Adım Kiralamalar <span style="font-weight:400;font-size:13px;">${ykBekleyen.length} kayıt</span></h3>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        ${ykBekleyen.map(r=>{
+          const v = vehicles.find(x=>x.id===r.vehicleId);
+          const musteri = r.customerId ? customers.find(c=>c.id===r.customerId) : null;
+          return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:rgba(54,161,104,.06);border-radius:8px;border:1px solid rgba(54,161,104,.15);flex-wrap:wrap;gap:6px;">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+              <span class="mini-plaka" style="font-size:12px;">${v?esc(v.plaka):'—'}</span>
+              <span style="font-size:12px;color:var(--text-3);">${v?esc([v.marka,v.model].filter(Boolean).join(' ')):''}</span>
+              <span style="font-size:12px;color:var(--text-3);">${esc(musteri?musteriGoruntuAdi(musteri):'Müşteri seçilmedi')}</span>
+              <span class="mini-plaka" style="font-size:11px;">${esc(YK_DURUM_ETIKET[r.durum]||r.durum)}</span>
+            </div>
+            <button onclick="ykDevamEt('${r.id}')" style="background:rgba(54,161,104,.15);border:1px solid rgba(54,161,104,.3);color:#36A168;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Devam Et</button>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+    })()}
 
     <div class="dash-stats" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:20px;">
       <div class="dstat" style="cursor:default;">
