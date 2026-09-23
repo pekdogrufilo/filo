@@ -2415,7 +2415,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-21.194</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-23.197</div>
     </div>
   </div>
 </div>
@@ -2548,6 +2548,9 @@
         <div class="sb-group-body">
           <button class="sb-item" data-page="ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a4 4 0 0 1 4 4v1h1a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3v-8a3 3 0 0 1 3-3h1V6a4 4 0 0 1 4-4z"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17c1 1 5 1 6 0"/></svg>AI Filo Asistanı</button>
           <button class="sb-item" data-page="excel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="m8 13 2.5 5"/><path d="m13.5 13-2.5 5"/></svg>Veri Aktarımı</button>
+          <!-- v.196: "genişletilmiş rol/izin sistemi" — Ekip sayfası, sadece ekipYonet iznine sahip
+               rollerde görünür (bkz. applyRoleVisibility()'deki [data-ekip-only] kuralı). -->
+          <button class="sb-item" data-page="ekip" data-ekip-only><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Ekip</button>
           <button class="sb-item" data-page="ayarlar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.04 1.56V21a2 2 0 0 1-4 0v-.09A1.7 1.7 0 0 0 9 19.36a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.64 15a1.7 1.7 0 0 0-1.56-1.04H3a2 2 0 0 1 0-4h.09A1.7 1.7 0 0 0 4.64 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.64a1.7 1.7 0 0 0 1.04-1.56V3a2 2 0 0 1 4 0v.09a1.7 1.7 0 0 0 1.04 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.36 9a1.7 1.7 0 0 0 1.56 1.04H21a2 2 0 0 1 0 4h-.09a1.7 1.7 0 0 0-1.56 1.04Z"/></svg>Ayarlar</button>
         </div>
       </div>
@@ -2578,7 +2581,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-21.194</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-23.197</div>
     </div>
   </aside>
 <script>
@@ -2827,6 +2830,7 @@
 <section class="page" data-page="raporlar" id="page-raporlar"></section>
 <section class="page" data-page="bildirimler" id="page-bildirimler"></section>
 <section class="page" data-page="excel" id="page-excel"></section>
+<section class="page" data-page="ekip" id="page-ekip"></section>
 <section class="page" data-page="ayarlar" id="page-ayarlar"></section>
 <section class="page" data-page="ai" id="page-ai"></section>
 <section class="page" data-page="super-admin" id="page-super-admin"></section>
@@ -2981,6 +2985,16 @@
             <select id="fDurum"><option>Müsait</option><option>Kirada</option><option>Serviste</option><option>Pert</option><option>Satıldı</option></select>
           </div>
           <div id="kiraEkleGizli2" style="display:none;"><div class="field"><label>Aylık kira (₺)</label><input type="number" id="fKira" min="0" placeholder="0"></div></div>
+        </div>
+        <!-- v.193: "sözleşme sihirbazı km alanlarını hiç okumuyor/yazmıyor" — bu modalda km
+             limiti/aşım ücreti alanları hiç yoktu (sadece ayrı bir sayfadaki "Teslim" tab'ında
+             vardı), bu yüzden ne AI ile sözleşmeden okunabiliyor ne elle girilebiliyordu. kg3
+             de kg2 ile aynı görünürlük deseninde (sadece düzenlemede, openEdit içinde açılıyor). -->
+        <div id="kiraEkleGizli3" style="display:none;">
+          <div class="field-row">
+            <div class="field"><label>Aylık km limiti</label><input type="number" id="fKmLimitiModal" min="0" placeholder="Örn: 3000"></div>
+            <div class="field"><label>Km aşım ücreti (₺/km)</label><input type="number" id="fKmAsimFiyatiModal" step="0.50" min="0" placeholder="Örn: 3.00"></div>
+          </div>
         </div>
         <div class="field-row">
           <div class="field"><label>Kayıt tarihi</label><input type="date" id="fTarih"></div>
@@ -5848,14 +5862,20 @@ const DOC_TYPES = [
     fileId: 'fSozlesme', mevcutId: 'sozlesmeMevcut', adiId: 'sozlesmeAdi', kaldirId: 'sozlesmeKaldir',
     autoBtnId: 'autoFillBtn', autoTextId: 'autoFillBtnText', resultId: 'autoFillResult',
     vehicleAdiField: 'sozlesmeAdi', vehicleTipField: 'sozlesmeTip', storagePrefix: 'contract_',
-    system: 'Sen bir kira sözleşmesi belgesinden bilgi çıkaran bir asistansın. Sana verilen belgeyi dikkatle oku. SADECE aşağıdaki alanları içeren geçerli bir JSON nesnesiyle yanıt ver — başka hiçbir metin, açıklama veya markdown kod bloğu ekleme:\n{"kiraciAdi": string|null, "kiraciTel": string|null, "sozlesmeBitis": "YYYY-MM-DD"|null, "aylikKira": number|null, "plaka": string|null}\nBir alanı belgede bulamıyorsan veya emin değilsen null yaz, tahmin yürütme. Tarihleri mutlaka YYYY-MM-DD formatına çevir. Kira tutarını sadece sayı olarak yaz.',
-    userText: 'Bu kira sözleşmesinden kiracı adını, telefon numarasını, sözleşme/kira bitiş tarihini, aylık kira tutarını ve varsa araç plakasını çıkar.',
+    // v.193: "sözleşme sihirbazı km alanlarını hiç okumuyor" — bu şema önceden sadece
+    // {kiraciAdi,kiraciTel,sozlesmeBitis,aylikKira,plaka} okuyordu; OTO_BELGE_SYSTEM'deki (Belge
+    // Yükleme sayfası) aynı iki alan (kmLimiti/kmAsimUcreti) buraya da eklendi, apply() da bu
+    // formda artık var olan fKmLimitiModal/fKmAsimFiyatiModal'a yazıyor.
+    system: 'Sen bir kira sözleşmesi belgesinden bilgi çıkaran bir asistansın. Sana verilen belgeyi dikkatle oku. SADECE aşağıdaki alanları içeren geçerli bir JSON nesnesiyle yanıt ver — başka hiçbir metin, açıklama veya markdown kod bloğu ekleme:\n{"kiraciAdi": string|null, "kiraciTel": string|null, "sozlesmeBitis": "YYYY-MM-DD"|null, "aylikKira": number|null, "plaka": string|null, "kmLimiti": number|null, "kmAsimUcreti": number|null}\nBir alanı belgede bulamıyorsan veya emin değilsen null yaz, tahmin yürütme. Tarihleri mutlaka YYYY-MM-DD formatına çevir. Kira tutarını sadece sayı olarak yaz. "kmLimiti" aylık kilometre kullanım limiti (sadece sayı, km). "kmAsimUcreti" bu limiti aşan her kilometre için uygulanan birim ücret (KDV hariç, sadece sayı, TL/km — sözleşmede "aşım ücreti", "fazla km bedeli" gibi ifadelerle geçebilir).',
+    userText: 'Bu kira sözleşmesinden kiracı adını, telefon numarasını, sözleşme/kira bitiş tarihini, aylık kira tutarını, aylık km limitini, km aşım ücretini ve varsa araç plakasını çıkar.',
     apply(extracted){
       const filled = [];
       if(extracted.kiraciAdi){ setFieldValueFlash('fKiraciAdi', extracted.kiraciAdi); filled.push('kiracı adı'); }
       if(extracted.kiraciTel){ setFieldValueFlash('fKiraciTel', extracted.kiraciTel); filled.push('telefon'); }
       if(extracted.sozlesmeBitis){ const nd = normalizeExtractedDate(extracted.sozlesmeBitis); if(nd){ setFieldValueFlash('fSozlesmeBitis', nd); filled.push('sözleşme bitiş tarihi'); } }
       if(extracted.aylikKira && !isNaN(Number(extracted.aylikKira))){ setFieldValueFlash('fKira', Number(extracted.aylikKira)); filled.push('aylık kira'); }
+      if(extracted.kmLimiti && !isNaN(Number(extracted.kmLimiti)) && Number(extracted.kmLimiti)>0){ setFieldValueFlash('fKmLimitiModal', Number(extracted.kmLimiti)); filled.push('aylık km limiti'); }
+      if(extracted.kmAsimUcreti && !isNaN(Number(extracted.kmAsimUcreti)) && Number(extracted.kmAsimUcreti)>0){ setFieldValueFlash('fKmAsimFiyatiModal', Number(extracted.kmAsimUcreti)); filled.push('km aşım ücreti'); }
       if(extracted.plaka && !document.getElementById('fPlaka').value.trim()){ setFieldValueFlash('fPlaka', extracted.plaka); filled.push('plaka'); }
       return filled;
     }
@@ -6593,7 +6613,7 @@ async function viewBelgeByKey(key, adi){
 }
 
 function clearForm(){
-  ['fPlaka','fCins','fMarka','fModel','fVersiyon','fDonanim','fYil','fSirket','fSofor','fYer','fKira','fTarih','fMuayene','fSigorta','fRuhsatSeri','fMuayeneSeri','fSigortaNo','fKaskoNo','fKaskoBitis','fSozlesmeBitis','fKiraciAdi','fKiraciTel','fKiraciVergi','fKiraciEhliyet','fKiraciAdres','fSoforUcreti','fAlisTarihi','fAlisFiyati','fGuncelDeger','fSatisDegeri','fAylikTaksit','fKalanBorc'].forEach(id=>document.getElementById(id).value='');
+  ['fPlaka','fCins','fMarka','fModel','fVersiyon','fDonanim','fYil','fSirket','fSofor','fYer','fKira','fTarih','fMuayene','fSigorta','fRuhsatSeri','fMuayeneSeri','fSigortaNo','fKaskoNo','fKaskoBitis','fSozlesmeBitis','fKiraciAdi','fKiraciTel','fKiraciVergi','fKiraciEhliyet','fKiraciAdres','fSoforUcreti','fKmLimitiModal','fKmAsimFiyatiModal','fAlisTarihi','fAlisFiyati','fGuncelDeger','fSatisDegeri','fAylikTaksit','fKalanBorc'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('fKiralamaTuru').value='soförsüz';
   document.getElementById('fFinansmanTuru').value='Peşin';
   document.getElementById('fDurum').value='Müsait';
@@ -6617,6 +6637,8 @@ function openAdd(){
   const kg1=document.getElementById('kiraEkleGizli'), kg2=document.getElementById('kiraEkleGizli2');
   if(kg1) kg1.style.display='none';
   if(kg2) kg2.style.display='none';
+  const kg3=document.getElementById('kiraEkleGizli3');
+  if(kg3) kg3.style.display='none';
   const bkg=document.getElementById('belgelerKiraGizli');
   if(bkg) bkg.style.display='none';
   const rhs=document.getElementById('ruhsatHizliStatus');
@@ -8885,6 +8907,74 @@ function grupKmDurumu(grupId){
   const asimTutar = (asim>0 && g.kmAsimFiyat) ? asim*Number(g.kmAsimFiyat) : null;
   return {araclar, kullanilanToplam, hak, asim, asimTutar};
 }
+// v.196: "havuz km grubu için ayrı bir rapor çıktısı yok" — grubun güncel km durumunu ve
+// değişiklik geçmişini, mevcut yazdırma raporlarıyla (bkz. printInventory vb.) aynı desende
+// bir yazdırma penceresinde açar; kullanıcı tarayıcının "PDF olarak kaydet" seçeneğiyle PDF'e
+// çevirebilir. Yeni bir kütüphane (jsPDF vb.) eklemeden, mevcut window.print() deseni kullanıldı.
+function sozGrupRaporYazdir(grupId){
+  const g = sozlesmeGruplari.find(x=>x.id===grupId);
+  if(!g) return;
+  const d = grupKmDurumu(grupId);
+  const asimVar = !!(d && d.asim>0);
+  const bugun = new Date().toLocaleDateString('tr-TR', {day:'2-digit', month:'long', year:'numeric'});
+  const araclarHtml = (d && d.araclar.length) ? d.araclar.map(a=>`
+    <tr><td class="plaka">${esc(a.plaka)}</td><td>${a.kullanilan.toLocaleString('tr-TR')} km</td></tr>
+  `).join('') : '<tr><td colspan="2" style="text-align:center;padding:14px;color:#999">Gruba tanımlı araç kalmadı</td></tr>';
+  const gecmisHtml = (g.gecmis||[]).length ? (g.gecmis||[]).slice().reverse().map(e=>`
+    <tr><td style="white-space:nowrap;">${fmtTarih((e.tarih||'').slice(0,10))||'—'}</td><td>${esc(e.olay)}</td></tr>
+  `).join('') : '<tr><td colspan="2" style="text-align:center;padding:14px;color:#999">Henüz bir değişiklik kaydı yok</td></tr>';
+
+  const html = `<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>Havuz Km Raporu — ${esc(g.ad)}</title>
+  <style>
+    *{box-sizing:border-box;}
+    body{font-family:Arial,Helvetica,sans-serif;color:#15171A;margin:0;padding:32px;background:#fff;}
+    .head{display:flex;align-items:center;gap:14px;border-bottom:3px solid #E1554E;padding-bottom:14px;margin-bottom:6px;}
+    .head img{width:42px;height:42px;}
+    .head h1{font-size:19px;margin:0;}
+    .head .d{font-size:13px;color:#666;margin-top:2px;}
+    .stats{display:flex;gap:14px;margin:18px 0 22px;flex-wrap:wrap;}
+    .stat{flex:1;min-width:140px;border:1px solid #ddd;border-radius:8px;padding:10px 14px;}
+    .stat .l{font-size:10.5px;color:#888;text-transform:uppercase;letter-spacing:.4px;}
+    .stat .v{font-size:17px;font-weight:bold;margin-top:3px;}
+    .stat.warn{border-color:#E1554E;} .stat.warn .v{color:#E1554E;}
+    .stat.ok{border-color:#1E7A4F;} .stat.ok .v{color:#1E7A4F;}
+    h2{font-size:14px;margin:22px 0 8px;}
+    table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:6px;}
+    th{text-align:left;background:#15171A;color:#fff;padding:8px 10px;font-size:12px;text-transform:uppercase;letter-spacing:.3px;}
+    td{padding:7px 10px;border-bottom:1px solid #ddd;}
+    td.plaka{font-family:'Courier New',monospace;font-weight:bold;}
+    .foot{margin-top:26px;font-size:12px;color:#888;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
+    @media print{ body{padding:12mm;} .head{margin-bottom:10px;} .foot{position:fixed;bottom:0;left:0;right:0;margin:0;font-size:10.5px;border-top:1px solid #ddd;padding-top:5px;background:#fff;} }
+  </style></head>
+  <body>
+    <div class="head">
+      <img src="${SIRKET_LOGOS['PEKDOĞRU GRUP']}" alt="">
+      <div>
+        <h1>Havuz Km Raporu — ${esc(g.ad)}</h1>
+        <div class="d">${g.kiraci?esc(g.kiraci)+' · ':''}Oluşturulma tarihi: ${bugun}${g.baslangic||g.bitis?' · Sözleşme: '+(g.baslangic?fmtTarih(g.baslangic):'—')+' – '+(g.bitis?fmtTarih(g.bitis):'—'):''}</div>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="l">Toplam Hak</div><div class="v">${d?d.hak.toLocaleString('tr-TR'):0} km</div></div>
+      <div class="stat"><div class="l">Kullanılan (toplam)</div><div class="v">${d?d.kullanilanToplam.toLocaleString('tr-TR'):0} km</div></div>
+      <div class="stat ${d?(asimVar?'warn':'ok'):''}"><div class="l">${asimVar?'Aşım':'Kalan Hak'}</div><div class="v">${d?Math.abs(d.asim).toLocaleString('tr-TR'):0} km</div></div>
+      ${d&&d.asimTutar!=null?`<div class="stat warn"><div class="l">Tahmini Aşım Bedeli</div><div class="v">${fmtTL2(d.asimTutar)}</div></div>`:''}
+    </div>
+    <h2>Gruptaki Araçlar</h2>
+    <table><thead><tr><th>Plaka</th><th>Kullanılan Km (teslimden bugüne)</th></tr></thead><tbody>${araclarHtml}</tbody></table>
+    <h2>Değişiklik Geçmişi</h2>
+    <table><thead><tr><th style="width:130px;">Tarih</th><th>Olay</th></tr></thead><tbody>${gecmisHtml}</tbody></table>
+    <div class="foot"><span>PEKDOĞRU GRUP · Filo Kontrol Paneli</span><span>Oluşturulma: ${bugun}</span></div>
+  </body></html>`;
+
+  let w;
+  try{ w = window.open('', '_blank'); }catch(e){}
+  if(!w){ showToast('Rapor penceresi açılamadı — tarayıcınız pop-up engelliyor olabilir.', true); return; }
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+  w.onload = ()=>{ w.focus(); w.print(); };
+}
 // Yeni km girişinde canlı önceki→yeni→fark gösterimi (araç detay Bakım sekmesindeki hızlı giriş kartı).
 function kmManuelFarkGuncelle(id){
   const v = vehicles.find(x=>x.id===id); if(!v) return;
@@ -9084,6 +9174,8 @@ function openEdit(id){
   const kg1=document.getElementById('kiraEkleGizli'), kg2=document.getElementById('kiraEkleGizli2');
   if(kg1) kg1.style.display='';
   if(kg2) kg2.style.display='block';
+  const kg3=document.getElementById('kiraEkleGizli3');
+  if(kg3) kg3.style.display='block';
   const bkg=document.getElementById('belgelerKiraGizli');
   if(bkg) bkg.style.display='';
   document.getElementById('fPlaka').value=v.plaka||'';
@@ -9115,6 +9207,8 @@ function openEdit(id){
   document.getElementById('fKiraciAdres').value=v.kiraciAdres||'';
   document.getElementById('fKiralamaTuru').value=v.kiralamaTuru||'soförsüz';
   document.getElementById('fSoforUcreti').value=v.soforUcreti||'';
+  document.getElementById('fKmLimitiModal').value=v.kmLimiti||'';
+  document.getElementById('fKmAsimFiyatiModal').value=v.kmAsimFiyat!=null?v.kmAsimFiyat:'';
   // FAZ5: Finansal Bilgiler — eski araç kayıtlarında bu alanlar yoktur, boş bırakılır.
   document.getElementById('fAlisTarihi').value=v.alisTarihi||'';
   document.getElementById('fAlisFiyati').value=v.alisFiyati||'';
@@ -9794,7 +9888,18 @@ document.getElementById('saveBtn').onclick = async ()=>{
       docFields[d.vehicleTipField] = tip;
     }
 
+    // v.193: KRİTİK VERİ KAYBI DÜZELTMESİ — bu obje önceden orig'in HİÇBİR alanını devralmadan
+    // sıfırdan kuruluyordu ve `vehicles = vehicles.map(v=>v.id===id?data:v)` ile aracın TÜM
+    // kaydının yerine geçiyordu. Formda hiç alanı olmayan (dolayısıyla burada hiç yazılmayan)
+    // kmAsimFiyat, depozito, sonKm, kiraGecmisi, hasarlar, kmGecmisi, belgeYuklemeZamanlari gibi
+    // TÜM diğer alanlar, "Araç Düzenle" ile HERHANGİ bir alan (ör. sadece model adını düzeltmek)
+    // kaydedildiğinde sessizce undefined'a düşüyordu — yalnızca aşağıdaki dar bir listedeki
+    // (teslimTarih/teslimKm/kmLimiti/sonBakimKm/bakimPeriyotKm/teslimFoto*) alanlar elle
+    // korunuyordu. Artık `orig` taban olarak yayılıyor (spread), formdaki alanlar bunun üzerine
+    // yazıyor — yeni bir alan eklendiğinde onu ayrıca "koru" listesine eklemeyi unutmak artık veri
+    // kaybına yol açmıyor. Eski dar "koru" bloğu bu yüzden kaldırıldı (artık gereksiz/yanıltıcı).
     const data = {
+      ...(orig || {}),
       id: vehicleId,
       plaka: plakaRaw.toLocaleUpperCase('tr-TR'),
       aracCinsi: document.getElementById('fCins').value.trim(),
@@ -9825,6 +9930,11 @@ document.getElementById('saveBtn').onclick = async ()=>{
       kiraciAdres: document.getElementById('fKiraciAdres').value.trim(),
       kiralamaTuru: document.getElementById('fKiralamaTuru').value||'soförsüz',
       soforUcreti: Number(document.getElementById('fSoforUcreti').value)||undefined,
+      // v.193: bu iki alan bu formda önceden hiç yoktu (sadece Kiralama İşlemleri > Teslim
+      // tab'ında vardı). Boş bırakılırsa (kullanıcı bu forma hiç dokunmadıysa) orig'deki mevcut
+      // değer korunuyor — Teslim tab'ından girilmiş bir değeri burada yanlışlıkla silmeyelim diye.
+      kmLimiti: document.getElementById('fKmLimitiModal').value!=='' ? (Number(document.getElementById('fKmLimitiModal').value)||undefined) : orig?.kmLimiti,
+      kmAsimFiyat: document.getElementById('fKmAsimFiyatiModal').value!=='' ? (Number(document.getElementById('fKmAsimFiyatiModal').value)||undefined) : orig?.kmAsimFiyat,
       // FAZ5: Finansal Bilgiler — tamamı opsiyonel, boş bırakılırsa alan hiç yazılmaz gibi
       // davranması için 0/''/undefined yerine boşsa yine de saklıyoruz (diğer opsiyonel
       // alanlarla — ör. soforUcreti — aynı desen: girilmemişse 0/'').
@@ -9836,13 +9946,9 @@ document.getElementById('saveBtn').onclick = async ()=>{
       aylikTaksit: Number(document.getElementById('fAylikTaksit').value)||undefined,
       kalanBorc: Number(document.getElementById('fKalanBorc').value)||undefined,
       ...docFields,
-      // Araç teslimi (teslim tarihi/km, km limiti, bakım km, teslim fotoğrafları) artık
-      // "Kira İşlemleri" sayfasından yönetiliyor (bu formda alanları yok) — mevcut kaydı koru.
-      ...(orig ? {
-        teslimTarih: orig.teslimTarih, teslimKm: orig.teslimKm, kmLimiti: orig.kmLimiti,
-        sonBakimKm: orig.sonBakimKm, bakimPeriyotKm: orig.bakimPeriyotKm,
-        teslimFoto1Adi: orig.teslimFoto1Adi, teslimFoto2Adi: orig.teslimFoto2Adi, teslimFoto3Adi: orig.teslimFoto3Adi,
-      } : {}),
+      // Araç teslimi (teslim tarihi/km, km limiti, bakım km, teslim fotoğrafları) artık "Kira
+      // İşlemleri" sayfasından yönetiliyor (bu formda alanları yok) — ...(orig||{}) tabanı
+      // sayesinde zaten olduğu gibi korunuyorlar, burada ayrıca listelenmelerine gerek yok.
     };
     if(id){
       vehicles = vehicles.map(v=>v.id===id?data:v);
@@ -9904,6 +10010,10 @@ const infoSvg = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" str
 
 let appLoaded = false;
 window.currentRole = sessionStorage.getItem('filoRole') || 'admin';
+// v.196: yerel (bulutsuz, paylaşımlı şifre) modda kişiye özel bir rol kimliği yok — bu yüzden
+// currentRoleId boş bırakılır ve can()/sayfaGorunurMu() otomatik olarak eski ikili admin/staff
+// davranışına düşer (kısıtlama YOK, mevcut davranış korunur).
+window.currentRoleId = null;
 
 // ===== FAZ2: Firma/Kullanıcı veri modeli — rol eşlemesi =====
 // Bulut modunda (window.__cloudSyncActive) gerçek kullanıcı kimliği artık Firestore'daki
@@ -9922,7 +10032,66 @@ window.currentCompanyId = null;  // FAZ2: giriş yapan kullanıcının bağlı o
 window.currentUserDoc = null;    // FAZ2: users/{uid} dokümanının tamamı (adSoyad, email, roleId, ...)
 window.currentCompanyDoc = null; // FAZ9: companies/{currentCompanyId} dokümanının tamamı (unvan, plan, durum, ...) — enterCloudSession'da doldurulur
 
-function roleIdToCurrentRole(roleId){ return roleId==='admin' ? 'admin' : 'staff'; }
+// v.196: FAZ2b — genişletilmiş rol/izin sistemi (9 rol). Her rol tanımı: sidebar'da hangi
+// sayfaların görüneceği (sayfalar — null = kısıtlama yok, tüm sayfalar), para tutarlarını
+// görüp göremeyeceği (paraGorebilir — bkz. fmtTL_role/fmtTL2_role), Ekip sayfasını yönetip
+// yönetemeyeceği (ekipYonet) ve tarihsel ikili admin/personel sistemine (aşağıdaki
+// isAdmin()/requireAdmin() ve ~40 çağrı noktası) hangi tarafa denk geldiği
+// (currentRoleEsdegeri) tanımlanır.
+// ÖNEMLİ SINIRLAMA (kullanıcıya da iletildi): requireAdmin() ile korunan tekil işlemler
+// (araç kaydet/sil, kiraya ver, masraf/tahsilat/fatura/müşteri kaydet-sil, sözleşme grubu
+// vb. — bkz. o fonksiyonun üstündeki yorum) HÂLÂ ikili (admin/staff) kontrol ediyor; yani
+// örn. "Muhasebe" rolü currentRoleEsdegeri 'admin' olduğu için teknik olarak bu işlemleri
+// yapabilir, sadece sidebar'da o sayfalar gizlendiği için pratikte oraya erişemiyor. Her
+// işlemi role özel ayrı ayrı kilitlemek (ör. Muhasebe masraf silebilsin ama araç silemesin)
+// çok daha büyük, aşamalı bir sonraki adım.
+const ROLE_DEFS = [
+  { id:'sahip', ad:'Sahip / Yönetici', aciklama:'Tüm yetkiler — kullanıcı yönetimi, silme, finans dahil.',
+    currentRoleEsdegeri:'admin', ekipYonet:true, paraGorebilir:true, sayfalar:null },
+  { id:'operasyon-muduru', ad:'Operasyon Müdürü', aciklama:'Tüm operasyonel sayfalar (araç, kiralama, bakım, finans); kullanıcı yönetemez.',
+    currentRoleEsdegeri:'admin', ekipYonet:false, paraGorebilir:true,
+    sayfalar:['genel-bakis','bildirimler','arac-yonetimi','km-takibi','belgeler','docupload','kiralama','musteriler','hasarcezalar','cari','faturalar','finansal-analiz','masraf','bakim','yakit','lastikler','raporlar','ai','excel','ayarlar'] },
+  { id:'filo-sorumlusu', ad:'Filo Sorumlusu', aciklama:'Araç ekleme/düzenleme, kiralama, iade, bakım — silme yok, finans göremez.',
+    currentRoleEsdegeri:'admin', ekipYonet:false, paraGorebilir:false,
+    sayfalar:['genel-bakis','bildirimler','arac-yonetimi','km-takibi','belgeler','docupload','kiralama','musteriler','hasarcezalar','bakim','yakit','lastikler','raporlar'] },
+  { id:'muhasebe', ad:'Muhasebe / Finans', aciklama:'Masraf, tahsilat, cari, fatura ve finansal analiz — araç kaydı düzenleyemez.',
+    currentRoleEsdegeri:'admin', ekipYonet:false, paraGorebilir:true,
+    sayfalar:['genel-bakis','bildirimler','cari','faturalar','finansal-analiz','masraf','raporlar'] },
+  { id:'saha-personeli', ad:'Saha Personeli / Şoför Koordinatörü', aciklama:'Sadece teslim/iade ve km girişi — finans ve raporları göremez.',
+    currentRoleEsdegeri:'staff', ekipYonet:false, paraGorebilir:false,
+    sayfalar:['genel-bakis','bildirimler','arac-yonetimi','km-takibi','kiralama'] },
+  { id:'musteri-temsilcisi', ad:'Müşteri Temsilcisi', aciklama:'Müşteri ve sözleşme işlemleri — araç silemez, finans detayını göremez.',
+    currentRoleEsdegeri:'admin', ekipYonet:false, paraGorebilir:false,
+    sayfalar:['genel-bakis','bildirimler','kiralama','musteriler','raporlar'] },
+  { id:'bakim-sorumlusu', ad:'Bakım / Servis Sorumlusu', aciklama:'Bakım kaydı, belge yükleme, lastik/servis — kiralama ve finans göremez.',
+    currentRoleEsdegeri:'admin', ekipYonet:false, paraGorebilir:false,
+    sayfalar:['genel-bakis','bildirimler','belgeler','docupload','bakim','yakit','lastikler','hasarcezalar'] },
+  { id:'denetci', ad:'Salt Görüntüleme / Denetçi', aciklama:'Her şeyi görür, hiçbir şeyi değiştiremez (ihale/denetim için).',
+    currentRoleEsdegeri:'staff', ekipYonet:false, paraGorebilir:true, sayfalar:null },
+  { id:'misafir', ad:'Misafir / Stajyer', aciklama:'Sadece genel bakış ve araç arama — hiçbir hassas veri yok.',
+    currentRoleEsdegeri:'staff', ekipYonet:false, paraGorebilir:false,
+    sayfalar:['genel-bakis','arac-yonetimi'] },
+];
+function roleDefFor(roleId){ return ROLE_DEFS.find(r=>r.id===roleId) || null; }
+// Eski/bilinmeyen roleId (ör. cloud'daki tarihsel 'admin'/'personel', ya da yerel paylaşımlı
+// şifre modu) — ROLE_DEFS'te karşılığı yoksa davranış AYNEN korunur: kısıtlama YOK.
+function can(izin){
+  const def = roleDefFor(window.currentRoleId);
+  if(!def) return isAdmin();
+  return !!def[izin];
+}
+function sayfaGorunurMu(pageKey){
+  const def = roleDefFor(window.currentRoleId);
+  if(!def || !def.sayfalar) return true;
+  return def.sayfalar.includes(pageKey);
+}
+
+function roleIdToCurrentRole(roleId){
+  const def = roleDefFor(roleId);
+  if(def) return def.currentRoleEsdegeri;
+  // FAZ2'nin orijinal eşlemesi — değişmedi.
+  return roleId==='admin' ? 'admin' : 'staff';
+}
 
 function isAdmin(){ return window.currentRole === 'admin'; }
 
@@ -9954,14 +10123,32 @@ function applyRoleVisibility(){
   superAdminOnly.forEach(el=>{
     el.style.display = isSuperAdmin() ? '' : 'none';
   });
+  // v.196: sadece ekipYonet iznine sahip rollerde görünen elementler (sidebar'daki "Ekip" öğesi).
+  document.querySelectorAll('[data-ekip-only]').forEach(el=>{
+    el.style.display = can('ekipYonet') ? '' : 'none';
+  });
+  // v.196: rol tanımında (ROLE_DEFS) belirli sayfalarla sınırlandırılmış bir kullanıcıda,
+  // sidebar'da izinli olmayan sayfa butonları gizlenir. Rol tanımı yoksa (eski hesaplar,
+  // yerel paylaşımlı şifre modu) sayfaGorunurMu() her zaman true döner — hiçbir şey değişmez.
+  document.querySelectorAll('.sb-item[data-page]').forEach(el=>{
+    const pk = el.dataset.page;
+    if(pk==='super-admin' || pk==='ekip') return; // kendi ayrı kurallarıyla zaten yönetiliyor
+    el.style.display = sayfaGorunurMu(pk) ? '' : 'none';
+  });
+  document.querySelectorAll('.bn-item[data-page]').forEach(el=>{
+    const pk = el.dataset.page;
+    el.style.display = sayfaGorunurMu(pk) ? '' : 'none';
+  });
   // Kullanıcı bilgisi güncelle
+  const roleDef = roleDefFor(window.currentRoleId);
+  const roleLabel = roleDef ? roleDef.ad : (role==='admin' ? 'Yönetici' : 'Personel');
   const roleEl = document.getElementById('thUserRole');
-  if(roleEl) roleEl.textContent = role==='admin' ? 'Yönetici' : 'Personel';
+  if(roleEl) roleEl.textContent = roleLabel;
   // Sidebar kullanıcı alanı
   const sbUserName = document.getElementById('sbUserName');
   const sbUserRoleLabel = document.getElementById('sbUserRoleLabel');
   const sbUserAvatar = document.getElementById('sbUserAvatar');
-  if(sbUserRoleLabel) sbUserRoleLabel.textContent = role==='admin' ? 'Yönetici' : 'Personel';
+  if(sbUserRoleLabel) sbUserRoleLabel.textContent = roleLabel;
   if(sbUserName){
     if(window.__cloudSyncActive && window.currentUserDoc){
       sbUserName.textContent = window.currentUserDoc.adSoyad || window.currentUserDoc.email || (role==='admin' ? 'Yönetici' : 'Personel');
@@ -9977,13 +10164,17 @@ function applyRoleVisibility(){
   if(staffCard) staffCard.style.display = (role==='admin' && !window.__cloudSyncActive) ? '' : 'none';
 }
 
-// Kira tutarlarını personelden gizle
+// Kira tutarlarını yetkisiz rollerden gizle. v.196: artık ikili isAdmin() yerine can('paraGorebilir')
+// kullanılıyor — böylece ör. "Denetçi" (currentRoleEsdegeri 'staff' ama paraGorebilir:true)
+// tutarları görebilirken, "Filo Sorumlusu" (currentRoleEsdegeri 'admin' ama paraGorebilir:false)
+// göremez. ROLE_DEFS'te karşılığı olmayan eski hesaplarda can() otomatik isAdmin()'e düşer —
+// davranış değişmez.
 function fmtTL2_role(val){
-  if(!isAdmin() && val>0) return '*** ₺';
+  if(!can('paraGorebilir') && val>0) return '*** ₺';
   return fmtTL2(val);
 }
 function fmtTL_role(val){
-  if(!isAdmin() && val>0) return '***';
+  if(!can('paraGorebilir') && val>0) return '***';
   return fmtTL(val);
 }
 let failedAttempts = 0;
@@ -10303,7 +10494,11 @@ async function createCompanyAndAdminUser(uid, email, unvan){
   const companyRef = db.collection('companies').doc();
   const companyDoc = { unvan, olusturmaTarihi: now, plan: 'Starter', durum: 'aktif' };
   await companyRef.set(companyDoc);
-  const userDoc = { companyId: companyRef.id, adSoyad: '', email, roleId: 'admin', aktif: true, olusturmaTarihi: now };
+  // v.196: yeni oluşturulan şirketlerde artık genişletilmiş rol sisteminin tam yetkili
+  // rolü 'sahip' kullanılıyor (eski 'admin' değeri, mevcut hesaplarda ROLE_DEFS'te
+  // karşılığı olmadığı için roleIdToCurrentRole()'daki eski eşlemeyle AYNEN çalışmaya
+  // devam ediyor — geriye dönük hiçbir şey bozulmuyor).
+  const userDoc = { companyId: companyRef.id, adSoyad: '', email, roleId: 'sahip', aktif: true, olusturmaTarihi: now };
   await db.collection('users').doc(uid).set(userDoc);
   return userDoc;
 }
@@ -10338,6 +10533,10 @@ async function enterCloudSession(user, userDoc){
   window.currentUserDoc = userDoc;
   window.currentCompanyId = userDoc.companyId;
   window.currentRole = roleIdToCurrentRole(userDoc.roleId);
+  // v.196: genişletilmiş rol/izin sistemi için gerçek roleId (ör. 'sahip','muhasebe',...) —
+  // ROLE_DEFS'te karşılığı yoksa (eski 'admin'/'personel' hesapları) can()/sayfaGorunurMu()
+  // otomatik olarak eski ikili davranışa düşer, hiçbir şey kısıtlanmaz.
+  window.currentRoleId = userDoc.roleId || null;
   // FAZ9: plan/durum bilgisi (araç limiti kontrolü ve Süper Admin paneli için) — okuma
   // başarısız olursa (ör. geçici ağ hatası) oturum açılışını ENGELLEMEZ, sadece plan limiti
   // o oturumda uygulanmamış olur (currentPlanLimitleri() 'Starter' varsayımına düşer).
@@ -10383,6 +10582,38 @@ function renderCloudAuth(mode, opts){
     document.getElementById('clsGotoLogin').onclick = ()=>renderCloudAuth('login');
     body.querySelectorAll('input').forEach(inp=>inp.addEventListener('keydown', e=>{ if(e.key==='Enter') onCloudSignupSubmit(); }));
     document.getElementById('clsUnvan').focus();
+  }else if(mode==='invite'){
+    body.innerHTML = `
+      <h2 style="margin-bottom:18px;">Davetinizi <i>Kullanın</i></h2>
+      <p style="font-size:12.5px;color:var(--text-3);margin:-8px 0 16px;">Yöneticinizin sizi davet ettiği e-posta adresini girin ve kendi şifrenizi belirleyin.</p>
+      <div class="lock-field has-icon">
+        <label>E-posta</label>
+        <span class="lf-ic">${mailSvg}</span>
+        <input type="email" id="civEmail" autocomplete="email" placeholder="ornek@sirket.com" style="letter-spacing:normal;text-transform:none;">
+      </div>
+      <div class="lock-field">
+        <label>Ad Soyad</label>
+        <input type="text" id="civAdSoyad" autocomplete="name" placeholder="Adınız Soyadınız" style="letter-spacing:normal;text-transform:none;">
+      </div>
+      <div class="lock-field has-icon">
+        <label>Şifre (en az 6 karakter)</label>
+        <span class="lf-ic">${lockIconSvg}</span>
+        <input type="password" id="civPassword" autocomplete="new-password" placeholder="••••••">
+        <button type="button" class="eye" data-target="civPassword">${eyeSvg}</button>
+      </div>
+      <div class="lock-field">
+        <label>Şifre (tekrar)</label>
+        <input type="password" id="civPassword2" autocomplete="new-password" placeholder="••••••">
+      </div>
+      <div class="lock-err" id="lockErr">${opts.error ? esc(opts.error) : ''}</div>
+      <button class="lock-btn-main" id="civSubmit">Katıl</button>
+      <button class="lock-forgot" id="civGotoLogin">Zaten hesabım var, giriş yap</button>
+    `;
+    wireEyeToggles();
+    document.getElementById('civSubmit').onclick = onCloudInviteJoinSubmit;
+    document.getElementById('civGotoLogin').onclick = ()=>renderCloudAuth('login');
+    body.querySelectorAll('input').forEach(inp=>inp.addEventListener('keydown', e=>{ if(e.key==='Enter') onCloudInviteJoinSubmit(); }));
+    document.getElementById('civEmail').focus();
   }else{
     body.innerHTML = `
       <h2 style="margin-bottom:18px;">Giriş <i>Yap</i></h2>
@@ -10402,11 +10633,13 @@ function renderCloudAuth(mode, opts){
       <button class="lock-forgot" id="claForgot">Şifremi unuttum</button>
       <div class="lock-divider"></div>
       <button class="lock-forgot" id="claGotoSignup" style="margin-top:14px;">Yeni şirket kaydı oluştur</button>
+      <button class="lock-forgot" id="claGotoInvite">Bir davetim var, katıl</button>
     `;
     wireEyeToggles();
     document.getElementById('claSubmit').onclick = onCloudLoginSubmit;
     document.getElementById('claForgot').onclick = onCloudForgotPassword;
     document.getElementById('claGotoSignup').onclick = ()=>renderCloudAuth('signup');
+    document.getElementById('claGotoInvite').onclick = ()=>renderCloudAuth('invite');
     document.getElementById('claEmail').addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('claPassword').focus(); });
     document.getElementById('claPassword').addEventListener('keydown', e=>{ if(e.key==='Enter') onCloudLoginSubmit(); });
     document.getElementById('claEmail').focus();
@@ -10426,6 +10659,15 @@ async function onCloudLoginSubmit(){
     const userDoc = await fetchUserDoc(cred.user.uid);
     if(!userDoc){
       err.textContent = 'Bu hesap bir şirkete bağlı değil, yöneticinizle iletişime geçin.';
+      shakeLockCard();
+      await cloudAuth().signOut();
+      return;
+    }
+    // v.196: Ekip sayfasından "Devre Dışı Bırak" ile pasifleştirilen kullanıcılar giriş yapamaz.
+    // NOT: bu istemci tarafı bir kontroldür (mevcut isSuperAdmin() yorumundaki gibi) — gerçek
+    // engelleme için firestore.rules'ta da users/{uid}.aktif===true şartı önerilir.
+    if(userDoc.aktif===false){
+      err.textContent = 'Bu hesap devre dışı bırakılmış. Yöneticinizle iletişime geçin.';
       shakeLockCard();
       await cloudAuth().signOut();
       return;
@@ -10455,6 +10697,48 @@ async function onCloudSignupSubmit(){
   try{
     const cred = await cloudAuth().createUserWithEmailAndPassword(email, p1);
     const userDoc = await createCompanyAndAdminUser(cred.user.uid, email, unvan);
+    await enterCloudSession(cred.user, userDoc);
+  }catch(e){
+    err.textContent = cloudAuthErrorMessage(e);
+    shakeLockCard();
+  }finally{
+    btn.disabled = false;
+  }
+}
+
+// v.196: "ekip üyesi davet et" akışının katılma tarafı — bir yönetici ekipDavetGonder() ile
+// invites/{email} dokümanı oluşturduktan sonra, davet edilen kişi bu ekrandan KENDİ Firebase
+// Auth hesabını oluşturur; onCloudSignupSubmit'in aksine YENİ bir şirket açmaz, bunun yerine
+// bekleyen daveti bulup companyId/roleId'yi oradan alır. ÖNEMLİ: bu, invites koleksiyonu için
+// Firestore güvenlik kurallarında (kullanıcıya ayrıca iletildi) bir okuma/yazma izni gerektirir
+// — bu ortamdan canlı Firestore kurallarına erişimim yok, bu yüzden gerçek bir davet ile uçtan
+// uca test edilmesi önerilir.
+async function onCloudInviteJoinSubmit(){
+  const email = (document.getElementById('civEmail').value||'').trim().toLowerCase();
+  const adSoyad = (document.getElementById('civAdSoyad').value||'').trim();
+  const p1 = document.getElementById('civPassword').value;
+  const p2 = document.getElementById('civPassword2').value;
+  const err = document.getElementById('lockErr');
+  err.textContent = '';
+  if(!email){ err.textContent = 'E-posta adresini girin.'; shakeLockCard(); return; }
+  if(p1.length<6){ err.textContent = 'Şifre en az 6 karakter olmalı.'; shakeLockCard(); return; }
+  if(p1!==p2){ err.textContent = 'Şifreler birbiriyle eşleşmiyor.'; shakeLockCard(); return; }
+  const btn = document.getElementById('civSubmit');
+  btn.disabled = true;
+  try{
+    const inviteSnap = await window.__cloudDb.collection('invites').doc(email).get();
+    if(!inviteSnap.exists || inviteSnap.data().kullanildi){
+      err.textContent = 'Bu e-posta için bekleyen bir davet bulunamadı. Yöneticinizden yeni bir davet istemeniz gerekebilir.';
+      shakeLockCard();
+      btn.disabled = false;
+      return;
+    }
+    const invite = inviteSnap.data();
+    const cred = await cloudAuth().createUserWithEmailAndPassword(email, p1);
+    const now = new Date().toISOString();
+    const userDoc = { companyId: invite.companyId, adSoyad, email, roleId: invite.roleId, aktif: true, olusturmaTarihi: now };
+    await window.__cloudDb.collection('users').doc(cred.user.uid).set(userDoc);
+    await window.__cloudDb.collection('invites').doc(email).update({kullanildi:true, kullanilmaTarihi: now}).catch(()=>{});
     await enterCloudSession(cred.user, userDoc);
   }catch(e){
     err.textContent = cloudAuthErrorMessage(e);
@@ -10504,6 +10788,12 @@ function initCloudAuth(){
           const userDoc = await fetchUserDoc(user.uid);
           if(!userDoc){
             renderCloudAuth('login', {error:'Bu hesap bir şirkete bağlı değil, yöneticinizle iletişime geçin.'});
+            lockScreenShow();
+            await cloudAuth().signOut();
+            return;
+          }
+          if(userDoc.aktif===false){
+            renderCloudAuth('login', {error:'Bu hesap devre dışı bırakılmış. Yöneticinizle iletişime geçin.'});
             lockScreenShow();
             await cloudAuth().signOut();
             return;
@@ -10626,6 +10916,7 @@ const PAGE_META = {
   'excel': {title:'Veri Aktarımı', sub:'Excel ile içe / dışa aktarım'},
   'docupload': {title:'Belge Yükleme', sub:'Poliçe, fiş ve raporları otomatik olarak araç kartına yükleyin'},
   'ai': {title:'AI Filo Asistanı', sub:'Filonuzu analiz edin, sorunları önceden görün'},
+  'ekip': {title:'Ekip', sub:'Kullanıcıları davet et, rol ata, erişimi yönet'},
   'ayarlar': {title:'Ayarlar', sub:'Kilit, hatırlatma, bulut ve AI ayarları'},
   'super-admin': {title:'Süper Admin', sub:'Şirketler, planlar ve kullanıcı özet bilgisi'},
 };
@@ -10641,6 +10932,17 @@ function switchPage(key){
   // engellenir. Gerçek yetkilendirme yine firestore.rules'tadır; bu sadece UI erişimini keser.
   if(key==='super-admin' && !isSuperAdmin()){
     showToast('Bu sayfayı görüntüleme yetkiniz yok.', true);
+    return;
+  }
+  // v.196: "genişletilmiş rol/izin sistemi" — sidebar'daki [data-ekip-only]/sayfa gizleme CSS
+  // ile yapılsa bile, konsoldan doğrudan switchPage('ekip') veya rolün göremediği başka bir
+  // sayfa çağrılırsa burada da engellenir (bkz. super-admin'deki aynı desen, yukarıda).
+  if(key==='ekip' && !can('ekipYonet')){
+    showToast('Bu sayfayı görüntüleme yetkiniz yok.', true);
+    return;
+  }
+  if(!sayfaGorunurMu(key)){
+    showToast('Bu sayfaya erişim yetkiniz yok.', true);
     return;
   }
   // v.85: AI sayfasından ayrılırken mikrofon dinlemeye devam ediyordu (örn. kullanıcı mikrofonu
@@ -10836,6 +11138,7 @@ function renderCurrentPage(){
   else if(key==='excel') renderExcelPage();
   else if(key==='docupload') renderDocUploadPage();
   else if(key==='ayarlar') renderAyarlarPage();
+  else if(key==='ekip') renderEkipPage();
   else if(key==='kiralama') renderKiralamaPage();
   else if(key==='musteriler') renderMusterilerPage();
   else if(key==='cari') renderCariPage();
@@ -11759,6 +12062,17 @@ function renderDashboard(){
         items.push({kritik:true, renk:'#E1554E', bg:'rgba(225,85,78,.1)', etiket:'Km Aşımı', plaka:v.plaka,
           aci: asim.toLocaleString('tr-TR')+' km aşım — '+kullanilan.toLocaleString('tr-TR')+' km yapılmış, '+hak.toLocaleString('tr-TR')+' km hakkı vardı',
           act:"switchPage('arac-yonetimi')", btn:''});
+      }
+    });
+    // v.196: "havuz/toplu km" (sözleşme grupları) aşımı — önceden sadece Kiralama İşlemleri >
+    // Sözleşmeler sekmesinde, kullanıcı elle açtığında görünüyordu; artık tek araçlı km aşımıyla
+    // aynı şekilde Bugün Yapılacaklar'da da proaktif olarak uyarı olarak çıkıyor.
+    sozlesmeGruplari.forEach(g=>{
+      const d = grupKmDurumu(g.id);
+      if(d && d.asim>0){
+        items.push({kritik:true, renk:'#E1554E', bg:'rgba(225,85,78,.1)', etiket:'Havuz Km', plaka:g.ad,
+          aci: d.asim.toLocaleString('tr-TR')+' km aşım (grup toplamı) — '+d.kullanilanToplam.toLocaleString('tr-TR')+' km yapılmış, '+d.hak.toLocaleString('tr-TR')+' km hakkı vardı'+(d.asimTutar!=null?' — tahmini '+fmtTL2(d.asimTutar):''),
+          act:"switchPage('kiralama');setTimeout(()=>krTabSet('sozlesme'),50)", btn:''});
       }
     });
     // Bu ayın hakedişi henüz yüklenmediyse hatırlat (ayın 5'inden itibaren, sadece yönetici görür)
@@ -14286,6 +14600,18 @@ async function sozGrubuKaydetForm(){
   if(araclar.length<2){ showToast('En az 2 araç seçin — tek araç için aracın kendi "Aylık Km Limiti" alanı yeterli.', true); return; }
   if(!kmLimit || isNaN(Number(kmLimit)) || Number(kmLimit)<=0){ showToast('Lütfen geçerli bir toplam km limiti girin.', true); return; }
   if(bas && bitis && bitis<=bas){ showToast('Bitiş tarihi başlangıçtan sonra olmalı.', true); return; }
+  // v.196: aynı araç aynı anda birden fazla havuz km grubunda olamaz — olursa km'si her iki
+  // grubun toplamında da sayılır ve rakamlar yanıltıcı olur. Düzenlenen grubun kendisi hariç
+  // diğer tüm gruplarda, seçilen araçlardan biri zaten varsa kaydı engelle.
+  const catisanlar = araclar
+    .map(vid=>({vid, grup: sozlesmeGruplari.find(x=>x.id!==editId && (x.araclar||[]).includes(vid))}))
+    .filter(x=>x.grup);
+  if(catisanlar.length){
+    const plakaOfC = vid => vehicles.find(x=>x.id===vid)?.plaka || vid;
+    const mesaj = catisanlar.map(c=>`${plakaOfC(c.vid)} → "${c.grup.ad}"`).join(', ');
+    showToast(`Bir araç aynı anda yalnızca bir grupta olabilir. Önce şu araçları mevcut gruplarından çıkarın: ${mesaj}`, true);
+    return;
+  }
 
   const eski = editId ? sozlesmeGruplari.find(g=>g.id===editId) : null;
   const yeniKmAsim = kmAsim!=='' && kmAsim!=null && !isNaN(Number(kmAsim)) ? Number(kmAsim) : null;
@@ -14432,6 +14758,7 @@ function sozGruplariHTML(){
               <div style="font-size:12px;color:var(--text-3);margin-top:2px;">${d&&d.araclar.length ? d.araclar.map(a=>esc(a.plaka)).join(', ') : '—'}</div>
             </div>
             <div style="display:flex;gap:6px;">
+              <button onclick="sozGrupRaporYazdir('${g.id}')" style="background:rgba(139,146,155,.12);border:1px solid rgba(139,146,155,.25);color:var(--text-2);padding:5px 12px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;">Rapor (PDF)</button>
               <button onclick="sozGrubuDuzenleAc('${g.id}')" style="background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.2);color:var(--accent-blue);padding:5px 12px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;">Düzenle</button>
               <button onclick="sozGrubuSil('${g.id}')" style="background:rgba(225,85,78,.1);border:1px solid rgba(225,85,78,.2);color:#E1554E;padding:5px 12px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;">Sil</button>
             </div>
@@ -20724,6 +21051,146 @@ function renderAyarlarPage(){
 //   4) Kaydedin — bir sonraki girişte (ya da sayfa yenilendiğinde) o kullanıcı
 //      sidebar'da "Süper Admin" menüsünü görür.
 // Bu, uygulamanın hiçbir ekranından yapılamaz; sadece Firebase Console'dan elle.
+// v.196: "genişletilmiş rol/izin sistemi + ekip yönetimi" — Ekip sayfası, ekipYonet iznine
+// (bkz. ROLE_DEFS) sahip roller için ekip üyelerini listeler, rol atar/değiştirir, devre dışı
+// bırakır ve yeni üye davet eder. Davet akışı invites/{email} dokümanı üzerinden çalışır —
+// bkz. onCloudInviteJoinSubmit() üstündeki not: bu yeni koleksiyon için Firestore güvenlik
+// kuralı eklenmesi gerekir, bu ortamdan canlı kurallara erişimim yok.
+function ekipRolOptionsHtml(secili){
+  return ROLE_DEFS.map(r=>`<option value="${r.id}" ${r.id===secili?'selected':''}>${esc(r.ad)}</option>`).join('');
+}
+async function renderEkipPage(){
+  const page = document.getElementById('page-ekip');
+  if(!page) return;
+  if(!can('ekipYonet')){
+    page.innerHTML = `<div class="dcard" style="padding:24px;text-align:center;color:var(--text-2);">Bu sayfayı görüntüleme yetkiniz yok.</div>`;
+    return;
+  }
+  if(!window.__cloudSyncActive || !window.__cloudDb){
+    page.innerHTML = `<div class="dcard" style="padding:24px;text-align:center;color:var(--text-2);">Ekip yönetimi yalnızca bulut (Firebase) senkronizasyonu aktifken kullanılabilir — yerel modda kişiye özel hesap yerine paylaşılan yönetici/personel şifreleri kullanılıyor.</div>`;
+    return;
+  }
+  page.innerHTML = `<div class="dcard" style="padding:24px;text-align:center;color:var(--text-2);">Ekip yükleniyor...</div>`;
+  let users = [], invites = [];
+  try{
+    const usnap = await window.__cloudDb.collection('users').where('companyId','==',window.currentCompanyId).get();
+    users = usnap.docs.map(d=>({id:d.id, ...d.data()}));
+    const isnap = await window.__cloudDb.collection('invites').where('companyId','==',window.currentCompanyId).get();
+    invites = isnap.docs.map(d=>({id:d.id, ...d.data()})).filter(i=>!i.kullanildi);
+  }catch(e){
+    page.innerHTML = `<div class="dcard" style="padding:24px;color:#E1554E;">Ekip listesi yüklenemedi: ${esc(e.message||'bilinmeyen hata')}</div>`;
+    return;
+  }
+  users.sort((a,b)=>String(a.adSoyad||a.email||'').localeCompare(String(b.adSoyad||b.email||''),'tr'));
+  page.innerHTML = ekipPageHtml(users, invites);
+  wireEkipPage();
+}
+function ekipPageHtml(users, invites){
+  const rows = users.map(u=>{
+    const benMiyim = !!(window.currentUser && window.currentUser.uid===u.id);
+    return `<div class="dcard" style="margin-bottom:10px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+      <div>
+        <div style="font-weight:700;font-size:14px;color:var(--paper);">${esc(u.adSoyad||u.email||'—')}${benMiyim?' <span style="font-weight:400;font-size:11.5px;color:var(--text-3);">(siz)</span>':''}</div>
+        <div style="font-size:12px;color:var(--text-3);">${esc(u.email||'')}</div>
+        ${u.aktif===false?'<div style="font-size:11.5px;color:#E1554E;font-weight:600;margin-top:2px;">Devre dışı</div>':''}
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <select onchange="ekipRolDegistir('${u.id}', this.value)" ${benMiyim?'disabled title="Kendi rolünüzü değiştiremezsiniz"':''} style="background:var(--surface-2);border:1px solid var(--border);color:var(--paper);padding:6px 10px;border-radius:6px;font-size:12px;">
+          ${ekipRolOptionsHtml(u.roleId)}
+        </select>
+        <button onclick="ekipAktifToggle('${u.id}', ${u.aktif===false})" ${benMiyim?'disabled':''} style="background:${u.aktif===false?'rgba(54,161,104,.1)':'rgba(225,85,78,.1)'};border:1px solid ${u.aktif===false?'rgba(54,161,104,.2)':'rgba(225,85,78,.2)'};color:${u.aktif===false?'#36A168':'#E1554E'};padding:5px 12px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;">${u.aktif===false?'Etkinleştir':'Devre Dışı Bırak'}</button>
+      </div>
+    </div>`;
+  }).join('');
+  const inviteRows = invites.map(i=>`
+    <div class="dcard" style="margin-bottom:8px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+      <div>
+        <div style="font-weight:600;font-size:13px;color:var(--paper);">${esc(i.email)}</div>
+        <div style="font-size:11.5px;color:var(--text-3);">${roleDefFor(i.roleId)?esc(roleDefFor(i.roleId).ad):esc(i.roleId||'')} · Bekliyor</div>
+      </div>
+      <button onclick="ekipDavetIptal('${esc(i.id)}')" style="background:rgba(225,85,78,.1);border:1px solid rgba(225,85,78,.2);color:#E1554E;padding:5px 12px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;">İptal Et</button>
+    </div>`).join('');
+  return `
+    <div class="dcard" style="margin-bottom:16px;">
+      <h3>Yeni Davet</h3>
+      <p style="font-size:13px;color:var(--text-2);margin-bottom:12px;">Davet gönderdikten sonra, ekip üyenize e-posta adresini ve bu paneldeki giriş ekranındaki <b>"Bir davetim var"</b> seçeneğini kullanarak kendi şifresini belirlemesini söyleyin.</p>
+      <div class="field-row">
+        <div class="field"><label>E-posta</label><input type="email" id="ekipDavetEmail" placeholder="ornek@sirket.com"></div>
+        <div class="field"><label>Rol</label><select id="ekipDavetRol">${ekipRolOptionsHtml('operasyon-muduru')}</select></div>
+      </div>
+      <button class="add-btn" id="ekipDavetGonderBtn" style="margin-top:10px;">Davet Gönder</button>
+    </div>
+    ${invites.length?`<div class="dcard" style="margin-bottom:16px;"><h3>Bekleyen Davetler (${invites.length})</h3>${inviteRows}</div>`:''}
+    <div class="dcard" style="margin-bottom:16px;">
+      <h3>Ekip Üyeleri (${users.length})</h3>
+      ${rows || '<div class="log-empty">Henüz ekip üyesi yok.</div>'}
+    </div>
+    <div class="dcard">
+      <h3>Roller</h3>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        ${ROLE_DEFS.map(r=>`<div style="font-size:12.5px;color:var(--text-2);"><b style="color:var(--paper);">${esc(r.ad)}:</b> ${esc(r.aciklama)}</div>`).join('')}
+      </div>
+    </div>
+  `;
+}
+function wireEkipPage(){
+  const btn = document.getElementById('ekipDavetGonderBtn');
+  if(btn) btn.onclick = ()=>{
+    const email = document.getElementById('ekipDavetEmail').value;
+    const roleId = document.getElementById('ekipDavetRol').value;
+    ekipDavetGonder(email, roleId);
+  };
+}
+async function ekipDavetGonder(email, roleId){
+  if(!can('ekipYonet')) return;
+  email = (email||'').trim().toLowerCase();
+  if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ showToast('Geçerli bir e-posta adresi girin.', true); return; }
+  if(!roleDefFor(roleId)){ showToast('Geçerli bir rol seçin.', true); return; }
+  try{
+    const ref = window.__cloudDb.collection('invites').doc(email);
+    const existing = await ref.get();
+    if(existing.exists && existing.data().kullanildi){ showToast('Bu e-posta zaten ekipte kayıtlı.', true); return; }
+    await ref.set({
+      companyId: window.currentCompanyId,
+      email, roleId,
+      davetEden: (window.currentUserDoc && (window.currentUserDoc.adSoyad||window.currentUserDoc.email)) || '',
+      olusturmaTarihi: new Date().toISOString(),
+      kullanildi: false,
+    });
+    showToast('Davet oluşturuldu — '+email+' adresine, "Bir davetim var" ekranından bu e-postayla kayıt olmasını söyleyin.');
+    renderEkipPage();
+  }catch(e){
+    showToast('Davet gönderilemedi: '+(e.message||'bilinmeyen hata'), true);
+  }
+}
+async function ekipDavetIptal(email){
+  if(!can('ekipYonet')) return;
+  if(!confirm('Bu daveti iptal etmek istediğinize emin misiniz?')) return;
+  try{
+    await window.__cloudDb.collection('invites').doc(email).delete();
+    showToast('Davet iptal edildi.');
+    renderEkipPage();
+  }catch(e){ showToast('İptal edilemedi: '+(e.message||'bilinmeyen hata'), true); }
+}
+async function ekipRolDegistir(uid, yeniRoleId){
+  if(!can('ekipYonet')) return;
+  if(!roleDefFor(yeniRoleId)) return;
+  try{
+    await window.__cloudDb.collection('users').doc(uid).update({roleId: yeniRoleId});
+    showToast('Rol güncellendi.');
+    renderEkipPage();
+  }catch(e){ showToast('Rol güncellenemedi: '+(e.message||'bilinmeyen hata'), true); }
+}
+async function ekipAktifToggle(uid, aktif){
+  if(!can('ekipYonet')) return;
+  if(window.currentUser && window.currentUser.uid===uid){ showToast('Kendi hesabınızı devre dışı bırakamazsınız.', true); return; }
+  try{
+    await window.__cloudDb.collection('users').doc(uid).update({aktif});
+    showToast(aktif ? 'Kullanıcı etkinleştirildi.' : 'Kullanıcı devre dışı bırakıldı.');
+    renderEkipPage();
+  }catch(e){ showToast('Güncellenemedi: '+(e.message||'bilinmeyen hata'), true); }
+}
+
 function isSuperAdminPanelYetkiliYok(){
   return !window.__cloudSyncActive || !window.__cloudDb;
 }
