@@ -2415,7 +2415,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-23.198</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-23.199</div>
     </div>
   </div>
 </div>
@@ -2581,7 +2581,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-23.198</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-23.199</div>
     </div>
   </aside>
 <script>
@@ -3746,6 +3746,7 @@ async function load(){
   await initNotifications();
   await checkDailyReminder();
   await checkWeeklyBackupReminder();
+  gunlukOtomatikYedekKontrolEt().catch(e=>console.error('gunlukOtomatikYedekKontrolEt hatası:', e));
   applyPlakaFromUrl();
   checkOnboardingWizard().catch(e=>console.error('onboarding kontrolü hatası:', e));
 }
@@ -4364,6 +4365,16 @@ async function checkDailyReminder(){
 
 async function checkWeeklyBackupReminder(){
   if(vehicles.length===0) return;
+  // v.199: günlük otomatik yedek aktifse ve son 2 gün içinde gerçekten çalıştıysa, bu haftalık
+  // manuel hatırlatma artık gereksiz/kafa karıştırıcı olur ("bir haftadır yedek alınmadı" derken
+  // aslında her gün otomatik alınıyor olabilir) — atlanır.
+  try{
+    const ayarlar = await otomatikYedekAyarlariOku();
+    if(ayarlar.aktif){
+      const son = await otomatikYedekSonOku();
+      if(son && son.zaman && (Date.now()-new Date(son.zaman).getTime()) < 2*24*60*60*1000) return;
+    }
+  }catch(e){}
   const r = await storageAPI.get('lastBackupReminder').catch(()=>null);
   const now = Date.now();
   if(r && r.value && (now - Number(r.value)) < 7*24*60*60*1000) return;
@@ -21010,6 +21021,7 @@ function renderAyarlarPage(){
         </div>
         <div id="sonYedekInfo" style="font-size:12px;color:var(--text-3);margin-top:10px;">Son yedek: yükleniyor...</div>
       </div>
+      ${otomatikYedekCardHTML()}
     </div>
   `;
   document.getElementById('apThemeSwitch').checked = getTheme() === 'light';
@@ -21032,6 +21044,103 @@ function renderAyarlarPage(){
     showToast(eklendi ? 'Otomasyon çalıştı — yeni bildirim(ler) oluşturuldu.' : 'Otomasyon çalıştı — eşleşen yeni durum yok.');
     updateShellChrome();
     renderAyarlarPage();
+  };
+  wireOtomatikYedekCard();
+}
+
+// v.199: "sistem hergün yedek alsın mail atsın excel vs" — bu panel statik bir site + Firebase
+// (sürekli çalışan bir sunucu YOK), bu yüzden "her gün otomatik" ancak panel GÜN İÇİNDE bir kez
+// açıldığında tetiklenebilir (bkz. gunlukOtomatikYedekKontrolEt, load() içinde çağrılıyor).
+// E-posta gönderimi EmailJS (istemci taraflı, ücretsiz plan) ile yapılır — ücretsiz planda dosya
+// EKİ desteklenmediği için gerçek .xlsx dosyası bu cihaza İNDİRİLİR, e-postaya sadece özet gider.
+function otomatikYedekCardHTML(){
+  return `
+    <div class="settings-card">
+      <h3><span class="settings-ic" style="background:#16A086"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg></span> Otomatik Günlük Yedek</h3>
+      <p style="font-size:13px;color:var(--text-2);">Aktif edilirse, paneli her açtığınızda (günde en fazla bir kez) otomatik olarak bir Excel yedeği bu cihaza iner ve aşağıdaki e-posta adresine kısa bir özet bildirimi gönderilir. <b>Önemli:</b> panel o gün hiç açılmazsa o günkü yedek de alınmaz — arkada sürekli çalışan bir sunucu yok.</p>
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;width:fit-content;margin:10px 0;">
+        <input type="checkbox" id="oyAktif" style="width:38px;height:22px;accent-color:var(--accent-blue);cursor:pointer;">
+        <span style="font-size:13px;font-weight:600;">Aktif</span>
+      </label>
+      <div class="field" style="max-width:340px;"><label>Özet e-postasının gideceği adres</label><input type="email" id="oyEposta" placeholder="ornek@sirket.com"></div>
+      <details style="margin-top:12px;">
+        <summary style="cursor:pointer;font-size:12.5px;font-weight:600;color:var(--text-3);">Gelişmiş: e-posta gönderimi nasıl çalışır? (EmailJS ayarları)</summary>
+        <div style="margin-top:10px;font-size:12.5px;color:var(--text-2);">
+          <p>E-postayı gerçekten göndermek için ücretsiz bir <a href="https://www.emailjs.com" target="_blank" rel="noopener" style="color:var(--accent-blue);">EmailJS</a> hesabı açıp Gmail/Outlook adresinizi "Service" olarak bağlamanız, bir "Template" oluşturmanız (şablonda <code>{{to_email}}</code>, <code>{{tarih}}</code>, <code>{{ozet}}</code> değişkenlerini kullanın) ve aşağıya 3 bilgiyi (Public Key, Service ID, Template ID — hepsi EmailJS panelinizde) yapıştırmanız gerekir. Ücretsiz planda dosya EKİ desteklenmiyor — bu yüzden gerçek Excel dosyası e-postaya değil, doğrudan bu cihaza iner.</p>
+          <div class="field-row">
+            <div class="field"><label>Public Key</label><input type="text" id="oyPublicKey" placeholder="EmailJS Public Key"></div>
+            <div class="field"><label>Service ID</label><input type="text" id="oyServiceId" placeholder="service_xxxxxxx"></div>
+          </div>
+          <div class="field" style="max-width:340px;"><label>Template ID</label><input type="text" id="oyTemplateId" placeholder="template_xxxxxxx"></div>
+        </div>
+      </details>
+      <div class="row-btns" style="margin-top:12px;">
+        <button class="settings-btn" id="oyKaydet">Kaydet</button>
+        <button class="settings-btn" id="oyTest">Şimdi Test Et</button>
+      </div>
+      <div id="oySonInfo" style="font-size:12px;color:var(--text-3);margin-top:10px;">Son otomatik yedek: yükleniyor...</div>
+    </div>
+  `;
+}
+function otomatikYedekSonMetni(k){
+  if(!k) return 'Son otomatik yedek: henüz hiç çalışmadı.';
+  const d = new Date(k.zaman);
+  return `Son otomatik yedek: <b style="color:var(--text-2);">${d.toLocaleDateString('tr-TR')} ${d.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})}</b> — Excel: ${k.excelIndirildi?'<span style="color:#36A168;">indirildi</span>':'<span style="color:var(--red);">başarısız</span>'}, e-posta: ${k.epostaGonderildi?'<span style="color:#36A168;">gönderildi</span>':(k.epostaHata?`<span style="color:var(--red);">gönderilemedi (${esc(k.epostaHata)})</span>`:'<span style="color:var(--text-3);">yapılandırılmamış</span>')}`;
+}
+async function wireOtomatikYedekCard(){
+  const ayarlar = await otomatikYedekAyarlariOku();
+  const aktifEl = document.getElementById('oyAktif');
+  const epostaEl = document.getElementById('oyEposta');
+  const pkEl = document.getElementById('oyPublicKey');
+  const svcEl = document.getElementById('oyServiceId');
+  const tplEl = document.getElementById('oyTemplateId');
+  if(!aktifEl) return; // sayfa değişmiş olabilir
+  aktifEl.checked = !!ayarlar.aktif;
+  epostaEl.value = ayarlar.epostaAlici||'';
+  pkEl.value = ayarlar.emailjsPublicKey||'';
+  svcEl.value = ayarlar.emailjsServiceId||'';
+  tplEl.value = ayarlar.emailjsTemplateId||'';
+  const info = document.getElementById('oySonInfo');
+  otomatikYedekSonOku().then(k=>{ if(info) info.innerHTML = otomatikYedekSonMetni(k); });
+  document.getElementById('oyKaydet').onclick = async ()=>{
+    if(!requireAdmin()) return;
+    const yeni = {
+      aktif: aktifEl.checked,
+      epostaAlici: epostaEl.value.trim(),
+      emailjsPublicKey: pkEl.value.trim(),
+      emailjsServiceId: svcEl.value.trim(),
+      emailjsTemplateId: tplEl.value.trim(),
+    };
+    if(yeni.aktif && !yeni.epostaAlici){ showToast('Aktif etmek için önce bir e-posta adresi girin.', true); return; }
+    await otomatikYedekAyarlariKaydet(yeni);
+    showToast('Otomatik yedek ayarları kaydedildi.');
+  };
+  document.getElementById('oyTest').onclick = async ()=>{
+    if(!requireAdmin()) return;
+    const btn = document.getElementById('oyTest');
+    btn.disabled = true; btn.textContent = 'Test ediliyor...';
+    try{
+      // Test her zaman EKRANDAKİ (henüz kaydedilmemiş olabilecek) değerlerle çalışır.
+      window.__otomatikYedekAyarlari = {
+        aktif: true,
+        epostaAlici: epostaEl.value.trim(),
+        emailjsPublicKey: pkEl.value.trim(),
+        emailjsServiceId: svcEl.value.trim(),
+        emailjsTemplateId: tplEl.value.trim(),
+      };
+      const sonuc = await otomatikYedekCalistir(true);
+      if(sonuc.epostaHata){
+        showToast('Excel indirildi, ama e-posta gönderilemedi: '+sonuc.epostaHata, true);
+      }else if(sonuc.epostaGonderildi){
+        showToast('Test başarılı — Excel indirildi ve özet e-postası gönderildi.');
+      }else{
+        showToast('Excel indirildi. E-posta gönderilmedi çünkü EmailJS bilgileri eksik.', true);
+      }
+      const info = document.getElementById('oySonInfo');
+      if(info) info.innerHTML = otomatikYedekSonMetni(await otomatikYedekSonOku());
+    }finally{
+      btn.disabled = false; btn.textContent = 'Şimdi Test Et';
+    }
   };
 }
 
@@ -21674,6 +21783,108 @@ document.getElementById('restoreJsonInput')?.addEventListener('change', async (e
   }
   e.target.value = '';
 });
+
+// ===== v.199: Günlük Otomatik Yedek + E-posta Bildirimi =====
+// Bu panel statik bir site + Firebase'den oluşuyor (sürekli çalışan bir sunucu YOK) — bu yüzden
+// "her gün otomatik" ancak panel GÜN İÇİNDE bir kez açıldığında tetiklenebilir (bkz.
+// gunlukOtomatikYedekKontrolEt, load() içinde çağrılıyor). E-posta gönderimi EmailJS (istemci
+// taraflı, kullanıcının kendi ücretsiz hesabı) ile yapılır — EmailJS'in ücretsiz planı dosya EKİ
+// DESTEKLEMEDİĞİ için gerçek .xlsx dosyası e-postaya değil, doğrudan bu cihaza İNDİRİLİR;
+// e-postaya yalnızca araç/sözleşme/müşteri sayılarını içeren bir ÖZET gider.
+async function otomatikYedekAyarlariOku(){
+  if(window.__otomatikYedekAyarlari) return window.__otomatikYedekAyarlari;
+  const varsayilan = {aktif:false, epostaAlici:'', emailjsPublicKey:'', emailjsServiceId:'', emailjsTemplateId:''};
+  try{
+    const r = await storageAPI.get('otomatikYedekAyarlari').catch(()=>null);
+    window.__otomatikYedekAyarlari = (r && r.value) ? {...varsayilan, ...JSON.parse(r.value)} : varsayilan;
+  }catch(e){ window.__otomatikYedekAyarlari = varsayilan; }
+  return window.__otomatikYedekAyarlari;
+}
+async function otomatikYedekAyarlariKaydet(ayarlar){
+  window.__otomatikYedekAyarlari = ayarlar;
+  await storageAPI.set('otomatikYedekAyarlari', JSON.stringify(ayarlar)).catch(()=>{});
+}
+async function otomatikYedekSonOku(){
+  try{
+    const r = await storageAPI.get('otomatikYedekSon').catch(()=>null);
+    return (r && r.value) ? JSON.parse(r.value) : null;
+  }catch(e){ return null; }
+}
+async function otomatikYedekSonKaydet(kayit){
+  await storageAPI.set('otomatikYedekSon', JSON.stringify(kayit)).catch(()=>{});
+}
+function emailjsYukle(){
+  return new Promise((resolve, reject)=>{
+    if(window.emailjs){ resolve(window.emailjs); return; }
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
+    s.onload = ()=>resolve(window.emailjs);
+    s.onerror = ()=>reject(new Error('EmailJS betiği yüklenemedi (internet bağlantınızı kontrol edin).'));
+    document.head.appendChild(s);
+  });
+}
+// exportExcel()'dekiyle benzer sayfa yapısı (Filo Listesi + Masraflar + Sözleşmeler) — kasıtlı
+// olarak AYRI bir fonksiyon: manuel "Excel'e Aktar" akışına dokunmadan bağımsız geliştirilebilsin.
+function otomatikYedekWorkbookOlustur(){
+  const rows = vehicles.map(v=>({
+    'Plaka': v.plaka || '', 'Marka': v.marka || '', 'Model': v.model || '',
+    'Bağlı Şirket': v.sirket || '', 'Şoför': v.sofor || '', 'Çalıştığı Yer': v.yer || '',
+    'Durum': v.durum || '', 'Aylık Kira (TL)': v.kira || 0, 'Kira Bitiş Tarihi': v.kiraBitis || '',
+    'Muayene Tarihi': v.muayeneTarihi || '', 'Sigorta Tarihi': v.sigortaTarihi || '',
+  }));
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Filo Listesi');
+  const masrafRows = (expenses||[]).map(e=>{
+    const v = vehicles.find(x=>x.id===e.vehicleId);
+    return {'Tarih': e.tarih || '', 'Plaka': e.plaka || (v?v.plaka:''), 'Tür': e.tip || '', 'Açıklama': e.not||e.aciklama||e.firma||'', 'Tutar (TL)': e.tutar||0};
+  });
+  if(masrafRows.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(masrafRows), 'Masraflar');
+  const sozRows = (sozlesmeler||[]).map(r=>({'Sözleşme No': r.sozNo||'', 'Kiracı': r.kiraci||'', 'Araç(lar)': r.aracOzet||'', 'Başlangıç': r.basISO?fmtTarih(r.basISO):'', 'Bitiş': r.bitisISO?fmtTarih(r.bitisISO):''}));
+  if(sozRows.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(sozRows), 'Sözleşmeler');
+  return wb;
+}
+// manuelTest=true: "Şimdi Test Et" butonundan — aktif/tarih kontrollerini atlar, her zaman çalışır.
+async function otomatikYedekCalistir(manuelTest){
+  const ayarlar = await otomatikYedekAyarlariOku();
+  let excelIndirildi = false, epostaGonderildi = false, epostaHata = '';
+  try{
+    const wb = otomatikYedekWorkbookOlustur();
+    XLSX.writeFile(wb, `filo-otomatik-yedek-${todayISO()}.xlsx`);
+    excelIndirildi = true;
+  }catch(e){}
+  if(ayarlar.epostaAlici && ayarlar.emailjsPublicKey && ayarlar.emailjsServiceId && ayarlar.emailjsTemplateId){
+    try{
+      const emailjs = await emailjsYukle();
+      emailjs.init({publicKey: ayarlar.emailjsPublicKey});
+      await emailjs.send(ayarlar.emailjsServiceId, ayarlar.emailjsTemplateId, {
+        to_email: ayarlar.epostaAlici,
+        tarih: new Date().toLocaleDateString('tr-TR'),
+        arac_sayisi: String(vehicles.length),
+        sozlesme_sayisi: String((sozlesmeler||[]).length),
+        musteri_sayisi: String((customers||[]).length),
+        ozet: `${vehicles.length} araç, ${(customers||[]).length} müşteri, ${(sozlesmeler||[]).length} sözleşme kayıtlı. Excel yedeği bu paneli açan cihaza indirildi (e-postaya eklenmedi — bkz. panel Ayarlar sayfasındaki not).`,
+      });
+      epostaGonderildi = true;
+    }catch(e){ epostaHata = (e && e.text) || (e && e.message) || 'bilinmeyen hata'; }
+  }
+  await otomatikYedekSonKaydet({tarih: todayISO(), zaman: new Date().toISOString(), excelIndirildi, epostaGonderildi, epostaHata});
+  logActivity('backup', `Otomatik ${manuelTest?'test ':''}yedek çalıştı — Excel ${excelIndirildi?'indirildi':'indirilemedi'}, e-posta ${epostaGonderildi?'gönderildi':(epostaHata?'gönderilemedi: '+epostaHata:'yapılandırılmamış')}.`).catch(()=>{});
+  return {excelIndirildi, epostaGonderildi, epostaHata};
+}
+// load() içinde, günde en fazla bir kez çağrılır — bkz. dosya başındaki dürüstlük notu: panel
+// o gün hiç açılmazsa o günkü yedek de alınmaz.
+async function gunlukOtomatikYedekKontrolEt(){
+  try{
+    if(!isAdmin()) return; // sadece yönetici-eşdeğeri roller tetiklesin
+    const ayarlar = await otomatikYedekAyarlariOku();
+    if(!ayarlar.aktif) return;
+    const son = await otomatikYedekSonOku();
+    if(son && son.tarih===todayISO()) return;
+    const sonuc = await otomatikYedekCalistir(false);
+    showToast(sonuc.epostaGonderildi ? 'Günlük otomatik yedek alındı, özet e-postası gönderildi.' : 'Günlük otomatik yedek alındı (Excel indirildi).');
+  }catch(e){ console.error('gunlukOtomatikYedekKontrolEt hatası:', e); }
+}
 
 // ===== PWA: uygulama gibi kurulabilme =====
 function isIOS(){ return /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream; }
