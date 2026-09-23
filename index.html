@@ -2415,7 +2415,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-23.205</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-23.206</div>
     </div>
   </div>
 </div>
@@ -2581,7 +2581,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-23.205</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-23.206</div>
     </div>
   </aside>
 <script>
@@ -6301,11 +6301,18 @@ function wireDocType(d){
 // duruyor; tarayıcıya, localStorage'a ya da Firestore'a hiç yazılmıyor.
 // Not: GitHub Pages üzerinden açılan kopya da bu fonksiyonu çağırabilsin diye adres mutlak
 // (Cloudflare Worker adresi sabit yazılı) — Worker adresiniz değişirse burayı güncelleyin.
+// v.206: "Gemini hatası (404): models/gemini-2.5-flash is no longer available to new
+// users" — Google, 2.5 serisini yeni kullanıma kapattı. Bu model listenin EN SONUNDAydı;
+// geminiChatFetch() 404/503'te bir sonraki modele geçiyor ama listenin sonuna gelince
+// deneyecek başka model kalmayıp hatayı olduğu gibi kullanıcıya yansıtıyordu. Kapatılan
+// 2.5-flash tamamen kaldırıldı, yerine güncel (3.x) modellerle daha derin bir yedekleme
+// zinciri kondu — ucuz/hızlı olanlar önce, en son en güncel/kapasiteli GA model.
 const GEMINI_MODELS = [
   'gemini-3.5-flash-lite',
-  'gemini-3.5-flash',
   'gemini-3.1-flash-lite',
-  'gemini-2.5-flash',
+  'gemini-3.5-flash',
+  'gemini-3.8-flash',
+  'gemini-3.7-flash',
 ];
 const GEMINI_PROXY_URL = 'https://filo-gemini-proxy.hasan-huseyin-pekdogru.workers.dev/';
 
