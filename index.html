@@ -2415,7 +2415,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-23.204</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-23.205</div>
     </div>
   </div>
 </div>
@@ -2581,7 +2581,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-23.204</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-23.205</div>
     </div>
   </aside>
 <script>
@@ -3007,6 +3007,15 @@
         <div class="field-row">
           <div class="field"><label>Ruhsat seri no</label><input type="text" id="fRuhsatSeri" placeholder="Ruhsat seri no"></div>
           <div class="field"><label>Muayene seri no</label><input type="text" id="fMuayeneSeri" placeholder="Seri no"></div>
+        </div>
+        <!-- v.205: "ruhsatta şasi no var onu kaydetmemiş sözleşmede çıkmıyor" geri bildirimi —
+             sözleşme şablonu (bkz. sözData.sasiNo/motorNo) bu iki alanı zaten yıllardır
+             gösteriyordu ama aracı ekleme/düzenleme formunda bu bilgileri girecek HİÇBİR alan
+             yoktu, bu yüzden her zaman boş kalıyorlardı. Şimdi eklendi + ruhsat belgesinden
+             otomatik okuma da bu iki alanı da çıkarıyor (aşağıdaki DOC_TYPES 'ruhsat' girdisi). -->
+        <div class="field-row">
+          <div class="field"><label>Şasi no</label><input type="text" id="fSasiNo" placeholder="Şasi (VIN) no"></div>
+          <div class="field"><label>Motor no</label><input type="text" id="fMotorNo" placeholder="Motor no"></div>
         </div>
         <div class="field-row">
           <div class="field"><label>Sigorta poliçe no</label><input type="text" id="fSigortaNo" placeholder="Poliçe no"></div>
@@ -5233,6 +5242,8 @@ function updateFromExcel(file){
               else if(key==='SİGORTA TARİHİ') colMap.sigorta=ci;
               else if(key==='MUAYENE BELGE SERİ NO' || key==='MUAYENE SERİ NO') colMap.muayeneSeri=ci;
               else if(key==='RUHSAT SERİ NO' || key==='RUHSAT SERİ NUMARASI') colMap.ruhsatSeri=ci;
+              else if(key==='ŞASİ NO' || key==='ŞASE NO' || key==='ŞASİ NUMARASI') colMap.sasiNo=ci;
+              else if(key==='MOTOR NO' || key==='MOTOR NUMARASI') colMap.motorNo=ci;
               else if(key==='SİGORTA POLİÇE NO' || key==='SİGORTA BELGE NO') colMap.sigortaNo=ci;
               else if(key==='KASKO POLİÇE NO') colMap.kaskoNo=ci;
               else if(key==='BAĞLI ŞİRKET') colMap.sirket=ci;
@@ -5279,6 +5290,8 @@ function updateFromExcel(file){
           if(colMap.sigorta!==undefined){ const d=excelCellDate(r[colMap.sigorta]); if(d) patch.sigortaTarihi = d; }
           if(colMap.muayeneSeri!==undefined && r[colMap.muayeneSeri]!==undefined) patch.muayeneSeriNo = String(r[colMap.muayeneSeri]||'').trim();
           if(colMap.ruhsatSeri!==undefined && r[colMap.ruhsatSeri]!==undefined) patch.ruhsatSeriNo = String(r[colMap.ruhsatSeri]||'').trim();
+          if(colMap.sasiNo!==undefined && r[colMap.sasiNo]!==undefined) patch.sasiNo = String(r[colMap.sasiNo]||'').trim();
+          if(colMap.motorNo!==undefined && r[colMap.motorNo]!==undefined) patch.motorNo = String(r[colMap.motorNo]||'').trim();
           if(colMap.sigortaNo!==undefined && r[colMap.sigortaNo]!==undefined) patch.sigortaNo = String(r[colMap.sigortaNo]||'').trim();
           if(colMap.kaskoNo!==undefined && r[colMap.kaskoNo]!==undefined) patch.kaskoNo = String(r[colMap.kaskoNo]||'').trim();
           if(colMap.kiraBitis!==undefined){ const d=excelCellDate(r[colMap.kiraBitis]); if(d) patch.kiraBitis = d; }
@@ -5769,13 +5782,15 @@ function exportExcel(){
     'Muayene Tarihi': v.muayeneTarihi || '',
     'Sigorta Tarihi': v.sigortaTarihi || '',
     'Ruhsat Seri No': v.ruhsatSeriNo || '',
+    'Şasi No': v.sasiNo || '',
+    'Motor No': v.motorNo || '',
     'Muayene Belge Seri No': v.muayeneSeriNo || '',
     'Sigorta Poliçe No': v.sigortaNo || '',
     'Kasko Poliçe No': v.kaskoNo || '',
     'Muayene Randevusu': v.muayeneRandevu ? 'Evet' : 'Hayır',
   }));
   const ws = XLSX.utils.json_to_sheet(rows);
-  ws['!cols'] = [{wch:12},{wch:14},{wch:14},{wch:16},{wch:16},{wch:10},{wch:18},{wch:18},{wch:24},{wch:10},{wch:15},{wch:16},{wch:14},{wch:14},{wch:14},{wch:18},{wch:22},{wch:20},{wch:18},{wch:16}];
+  ws['!cols'] = [{wch:12},{wch:14},{wch:14},{wch:16},{wch:16},{wch:10},{wch:18},{wch:18},{wch:24},{wch:10},{wch:15},{wch:16},{wch:14},{wch:14},{wch:14},{wch:18},{wch:18},{wch:18},{wch:22},{wch:20},{wch:18},{wch:16}];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Filo Listesi');
 
@@ -5959,8 +5974,8 @@ const DOC_TYPES = [
     fileId: 'fRuhsatBelge', mevcutId: 'ruhsatBelgeMevcut', adiId: 'ruhsatBelgeAdi', kaldirId: 'ruhsatBelgeKaldir',
     autoBtnId: 'ruhsatBelgeAutoFillBtn', autoTextId: 'ruhsatBelgeAutoFillText', resultId: 'ruhsatBelgeAutoFillResult',
     vehicleAdiField: 'ruhsatBelgeAdi', vehicleTipField: 'ruhsatBelgeTip', storagePrefix: 'ruhsat_',
-    system: 'Sen bir araç ruhsat/tescil belgesinden bilgi çıkaran bir asistansın. Belge klasik pembe/mavi ruhsat kartı, geçici tescil belgesi ya da noter satışı sonrası düzenlenen tescil/fatura eki belgesi olabilir — hepsi geçerlidir, formatına takılma. Sana verilen belgeyi dikkatle oku. SADECE aşağıdaki alanları içeren geçerli bir JSON nesnesiyle yanıt ver — başka hiçbir metin, açıklama veya markdown kod bloğu ekleme:\n{"plaka": string|null, "marka": string|null, "model": string|null, "versiyon": string|null, "donanim": string|null, "modelYili": number|null, "ruhsatSeriNo": string|null, "aracCinsi": string|null, "muayeneTarihi": "YYYY-MM-DD"|null}\n"marka" (D.1/MARKASI) ile "model" (D.3/TİCARİ ADI ya da D.2/TİPİ) alanlarını karıştırma: "TİCARİ ADI" hem markayı hem modeli içeriyorsa (ör. "FIAT DUCATO"), "model" alanına SADECE marka adından sonraki kısmı yaz (ör. "DUCATO"), markayı tekrar etme. "versiyon" alanına doğrudan yazılı bir motor/versiyon adı (ör. "1.5 dCi") varsa onu yaz; yoksa silindir hacmi (cm³) ve yakıt cinsinden kısa bir özet oluştur (ör. "2.2 Dizel"); hiçbiri yoksa null. "donanim" alanına donanım paket adını yaz (ör. "Touch", "Safeline", "Joy") — bulamazsan null. "modelYili" sadece 4 haneli yıl sayısı olsun. "ruhsatSeriNo" için önce "RUHSAT SERİ NO" alanına bak; yoksa belgedeki "BELGE Seri" / "Seri No" numarasını kullan. Değeri HARF VE RAKAM OLMAK ÜZERE EKSİKSİZ yaz (ör. "IK 056880", "A12B3456") — yalnızca harf kısmını ("IK", "İK") veya yalnızca rakamları yazmak yanlıştır, ikisini birleştir. Sayfa başlığı, logo, yazılım/sistem adı gibi metinleri asla seri no sanma. "aracCinsi" alanına belgedeki CİNSİ bilgisini olduğu gibi yaz (ör. "Kamyonet-Açık Kasa", "Otomobil"). "muayeneTarihi" alanına ruhsat üzerindeki "MUA.GEC.TRH" / "muayene geçerlilik tarihi" bilgisini yaz — bu bir bitiş tarihidir, YYYY-MM-DD formatına çevir; belgede bu alan yoksa null. Bir alanı hiçbir şekilde bulamıyorsan null yaz, tahmin yürütme.',
-    userText: 'Bu ruhsat/tescil belgesinden plaka, marka, model, versiyon, donanım, model yılı, ruhsat seri numarası, araç cinsi ve muayene geçerlilik tarihini (MUA.GEC.TRH) çıkar.',
+    system: 'Sen bir araç ruhsat/tescil belgesinden bilgi çıkaran bir asistansın. Belge klasik pembe/mavi ruhsat kartı, geçici tescil belgesi ya da noter satışı sonrası düzenlenen tescil/fatura eki belgesi olabilir — hepsi geçerlidir, formatına takılma. Sana verilen belgeyi dikkatle oku. SADECE aşağıdaki alanları içeren geçerli bir JSON nesnesiyle yanıt ver — başka hiçbir metin, açıklama veya markdown kod bloğu ekleme:\n{"plaka": string|null, "marka": string|null, "model": string|null, "versiyon": string|null, "donanim": string|null, "modelYili": number|null, "ruhsatSeriNo": string|null, "aracCinsi": string|null, "muayeneTarihi": "YYYY-MM-DD"|null, "sasiNo": string|null, "motorNo": string|null}\n"marka" (D.1/MARKASI) ile "model" (D.3/TİCARİ ADI ya da D.2/TİPİ) alanlarını karıştırma: "TİCARİ ADI" hem markayı hem modeli içeriyorsa (ör. "FIAT DUCATO"), "model" alanına SADECE marka adından sonraki kısmı yaz (ör. "DUCATO"), markayı tekrar etme. "versiyon" alanına doğrudan yazılı bir motor/versiyon adı (ör. "1.5 dCi") varsa onu yaz; yoksa silindir hacmi (cm³) ve yakıt cinsinden kısa bir özet oluştur (ör. "2.2 Dizel"); hiçbiri yoksa null. "donanim" alanına donanım paket adını yaz (ör. "Touch", "Safeline", "Joy") — bulamazsan null. "modelYili" sadece 4 haneli yıl sayısı olsun. "ruhsatSeriNo" için önce "RUHSAT SERİ NO" alanına bak; yoksa belgedeki "BELGE Seri" / "Seri No" numarasını kullan. Değeri HARF VE RAKAM OLMAK ÜZERE EKSİKSİZ yaz (ör. "IK 056880", "A12B3456") — yalnızca harf kısmını ("IK", "İK") veya yalnızca rakamları yazmak yanlıştır, ikisini birleştir. Sayfa başlığı, logo, yazılım/sistem adı gibi metinleri asla seri no sanma. "aracCinsi" alanına belgedeki CİNSİ bilgisini olduğu gibi yaz (ör. "Kamyonet-Açık Kasa", "Otomobil"). "muayeneTarihi" alanına ruhsat üzerindeki "MUA.GEC.TRH" / "muayene geçerlilik tarihi" bilgisini yaz — bu bir bitiş tarihidir, YYYY-MM-DD formatına çevir; belgede bu alan yoksa null. "sasiNo" alanına ŞASİ NO / E.ŞASİ NO satırındaki değeri harf ve rakamlarıyla EKSİKSİZ yaz (genelde 17 haneli, harf+rakam karışık bir seri, ör. "NM0LXXBBXLT123456") — kısaltma, boşluk ekleme, tahmin etme. "motorNo" alanına MOTOR NO / D.4 satırındaki değeri olduğu gibi yaz. Bir alanı hiçbir şekilde bulamıyorsan null yaz, tahmin yürütme.',
+    userText: 'Bu ruhsat/tescil belgesinden plaka, marka, model, versiyon, donanım, model yılı, ruhsat seri numarası, araç cinsi, muayene geçerlilik tarihini (MUA.GEC.TRH), şasi no ve motor no çıkar.',
     apply(extracted){
       const filled = [];
       if(extracted.plaka && !document.getElementById('fPlaka').value.trim()){ setFieldValueFlash('fPlaka', extracted.plaka); filled.push('plaka'); }
@@ -5974,6 +5989,11 @@ const DOC_TYPES = [
       else if(extracted.ruhsatSeriNo){ console.warn('Ruhsat seri no dogrulanamadi, alan korunuyor:', extracted.ruhsatSeriNo); filled.push('⚠ seri no tam okunamadı — elle kontrol edin'); }
       if(extracted.aracCinsi && !document.getElementById('fCins').value.trim()){ setFieldValueFlash('fCins', extracted.aracCinsi); filled.push('araç cinsi'); }
       if(extracted.muayeneTarihi){ const nd = normalizeExtractedDate(extracted.muayeneTarihi); if(nd && !document.getElementById('fMuayene').value.trim()){ setFieldValueFlash('fMuayene', nd); filled.push('muayene tarihi'); } }
+      // v.205: "ruhsatta şasi no var onu kaydetmemiş sözleşmede çıkmıyor" — bu iki alan daha
+      // önce burada hiç okunmuyordu (aşağıdaki DOC_TYPES şeması + fSasiNo/fMotorNo formundan
+      // önce). Var olan bir değerin üzerine asla yazılmaz — sadece boşsa doldurulur.
+      if(extracted.sasiNo && !document.getElementById('fSasiNo').value.trim()){ setFieldValueFlash('fSasiNo', String(extracted.sasiNo).trim()); filled.push('şasi no'); }
+      if(extracted.motorNo && !document.getElementById('fMotorNo').value.trim()){ setFieldValueFlash('fMotorNo', String(extracted.motorNo).trim()); filled.push('motor no'); }
       return filled;
     }
   },
@@ -6624,7 +6644,7 @@ async function viewBelgeByKey(key, adi){
 }
 
 function clearForm(){
-  ['fPlaka','fCins','fMarka','fModel','fVersiyon','fDonanim','fYil','fSirket','fSofor','fYer','fKira','fTarih','fMuayene','fSigorta','fRuhsatSeri','fMuayeneSeri','fSigortaNo','fKaskoNo','fKaskoBitis','fSozlesmeBitis','fKiraciAdi','fKiraciTel','fKiraciVergi','fKiraciEhliyet','fKiraciAdres','fSoforUcreti','fKmLimitiModal','fKmAsimFiyatiModal','fAlisTarihi','fAlisFiyati','fGuncelDeger','fSatisDegeri','fAylikTaksit','fKalanBorc'].forEach(id=>document.getElementById(id).value='');
+  ['fPlaka','fCins','fMarka','fModel','fVersiyon','fDonanim','fYil','fSirket','fSofor','fYer','fKira','fTarih','fMuayene','fSigorta','fRuhsatSeri','fMuayeneSeri','fSasiNo','fMotorNo','fSigortaNo','fKaskoNo','fKaskoBitis','fSozlesmeBitis','fKiraciAdi','fKiraciTel','fKiraciVergi','fKiraciEhliyet','fKiraciAdres','fSoforUcreti','fKmLimitiModal','fKmAsimFiyatiModal','fAlisTarihi','fAlisFiyati','fGuncelDeger','fSatisDegeri','fAylikTaksit','fKalanBorc'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('fKiralamaTuru').value='soförsüz';
   document.getElementById('fFinansmanTuru').value='Peşin';
   document.getElementById('fDurum').value='Müsait';
@@ -9291,6 +9311,8 @@ function openEdit(id){
   document.getElementById('fSigorta').value=v.sigortaTarihi||'';
   document.getElementById('fRuhsatSeri').value=v.ruhsatSeriNo||'';
   document.getElementById('fMuayeneSeri').value=v.muayeneSeriNo||'';
+  document.getElementById('fSasiNo').value=v.sasiNo||'';
+  document.getElementById('fMotorNo').value=v.motorNo||'';
   document.getElementById('fSigortaNo').value=v.sigortaNo||'';
   document.getElementById('fKaskoNo').value=v.kaskoNo||'';
   document.getElementById('fKaskoBitis').value=v.kaskoBitis||'';
@@ -10014,6 +10036,8 @@ document.getElementById('saveBtn').onclick = async ()=>{
       sigortaTarihi: document.getElementById('fSigorta').value,
       ruhsatSeriNo: document.getElementById('fRuhsatSeri').value.trim(),
       muayeneSeriNo: document.getElementById('fMuayeneSeri').value.trim(),
+      sasiNo: document.getElementById('fSasiNo').value.trim(),
+      motorNo: document.getElementById('fMotorNo').value.trim(),
       sigortaNo: document.getElementById('fSigortaNo').value.trim(),
       kaskoNo: document.getElementById('fKaskoNo').value.trim(),
       kaskoBitis: document.getElementById('fKaskoBitis').value,
