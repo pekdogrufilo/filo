@@ -2415,7 +2415,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-23.214</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-24.215</div>
     </div>
   </div>
 </div>
@@ -2581,7 +2581,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-23.214</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-24.215</div>
     </div>
   </aside>
 <script>
@@ -12565,8 +12565,13 @@ function renderFinansalAnalizPage(){
   const aktifMusteri = new Set(vehicles.filter(v=>v.kiraciAdi).map(v=>v.kiraciAdi)).size;
 
   const page = document.getElementById('page-finansal-analiz');
+  // v.215: "Filo Sağlık Skoru" kartı burada (Finans) VE Raporlar sayfasında birebir aynı
+  // şekilde tekrarlanıyordu (bkz. filoSaglikSkoruHTML — iki sayfa da onu birebir çağırıyordu).
+  // Kullanıcı iki sayfa arasında geçince aynı kartı ikinci kez görüyordu; bu bir "ekran
+  // karışıklığı" kaynağıydı. Skor parasal değil (belge/bakım/hasar/kullanım ağırlıklı
+  // ortalaması), bu yüzden daha genel bir özet sayfası olan Raporlar'da tutuldu, Finans
+  // sayfasından kaldırıldı — hesaplama/fonksiyon (filoSaglikSkoruHTML) değişmedi.
   page.innerHTML = `
-    ${filoSaglikSkoruHTML()}
     <div class="dash-widget" data-widget-key="fa-ozet" ${DASH_WIDGET_ATTRS}>${DASH_WIDGET_HANDLE}
     <div class="dash-stats" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:20px;">
       <div class="dstat dstat-strong" style="--accent-c:#36A168;background:linear-gradient(135deg,rgba(54,161,104,.14),rgba(54,161,104,.03));cursor:default;">
@@ -13034,8 +13039,9 @@ function renderBakimPage(){
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:4px;">
         <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>AI Bakım Tahmini <span style="font-weight:400;font-size:13px;color:var(--steel-100)">${bakimTahminleri.length} araç</span></h3>
       </div>
+      ${bakimTahminleri.length ? `
       <p style="font-size:12.5px;color:var(--steel-300);margin-bottom:14px;">Yapay zekâ servisine bağlanmaz — aracın geçmiş kilometre kullanımından (km geçmişi + kira dönemleri) günlük ortalama kullanım hesaplanır ve bir sonraki periyodik bakıma kaç gün kaldığı bu ortalamaya göre tahmin edilir.</p>
-      ${bakimTahminleri.length ? `<div class="table-scroll"><table class="mini-table">
+      <div class="table-scroll"><table class="mini-table">
         <thead><tr><th>Plaka</th><th>Araç</th><th>Kalan km</th><th>Günlük Ort. Kullanım</th><th>Tahmini Bakım Tarihi</th></tr></thead>
         <tbody>${bakimTahminleri.map(({v,t})=>{
           const gecti = t.kalanKm<=0;
@@ -13055,7 +13061,7 @@ function renderBakimPage(){
             <td>${tahminTxt}</td>
           </tr>`;
         }).join('')}</tbody>
-      </table></div>` : `<div class="log-empty">Tahmin için araç kartında "Son Bakım Km" ve "Bakım Periyodu (km)" alanlarının doldurulmuş olması gerekiyor.</div>`}
+      </table></div>` : `<div class="log-empty">Bakım tahmini, aracın geçmiş km kullanımından hesaplanır (yapay zekâ servisine bağlanmaz) — tahmin için araç kartında "Son Bakım Km" ve "Bakım Periyodu (km)" alanlarının doldurulmuş olması gerekiyor.</div>`}
     </div>
 
     <div class="dcard">
@@ -15998,12 +16004,10 @@ function renderBelgelerPage(){
   };
 
   page.innerHTML = `
-    <div class="topbar">
-      <div class="topbar-left">
-        <h1>Belgeler</h1>
-        <span style="font-size:13px;color:var(--text-3);">${vehicles.length} araç · ${kritikSayi>0?`<span style="color:#E8A132">${kritikSayi} kritik</span>`:'Tümü geçerli'}</span>
-      </div>
-    </div>
+    <!-- v.215: bu sayfanın kendi "Belgeler" başlığı, kabuğun üstteki genel sayfa başlığıyla
+    (bkz. PAGE_META['belgeler']) birebir çakışıyordu — kullanıcı aynı başlığı art arda iki kez
+    görüyordu (karışıklık kaynağı). Başlık kaldırıldı, canlı araç/kritik sayısı bilgisi korundu. -->
+    <div style="font-size:13px;color:var(--text-3);margin-bottom:14px;">${vehicles.length} araç · ${kritikSayi>0?`<span style="color:#E8A132;font-weight:600;">${kritikSayi} kritik</span>`:'Tümü geçerli'}</div>
     <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">
       <div style="display:flex;gap:6px;align-items:center;margin-right:8px;">
         <select id="belgeYukleArac" style="background:var(--surface-2);border:1px solid transparent;border-radius:10px;color:var(--text);padding:8px 10px;font-size:13px;max-width:150px;font-family:inherit;">
@@ -20169,14 +20173,13 @@ function renderBildirimlerPage(){
   const okunmamisSayi = list.filter(u=>!u.okunduMu).length;
 
   page.innerHTML = `
-    <div class="topbar">
-      <div class="topbar-left">
-        <h1>Bildirimler</h1>
-        <span style="font-size:13px;color:var(--text-3);">${list.length} bildirim · ${okunmamisSayi} okunmamış</span>
-      </div>
-      <div class="topbar-right">
-        <button onclick="bildirimTumunuOkunduYap()" style="background:none;border:1px solid var(--border);color:var(--text-2);padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer;font-family:inherit;">✓ Tümünü okundu yap</button>
-      </div>
+    <!-- v.215: bu sayfanın kendi "Bildirimler" başlığı, kabuğun üstteki genel sayfa başlığıyla
+    (bkz. PAGE_META['bildirimler']) birebir çakışıyordu — kullanıcı aynı başlığı art arda iki kez
+    görüyordu (karışıklık kaynağı). Başlık kaldırıldı; canlı sayaç ve "Tümünü okundu yap" düğmesi
+    (tek işlevsel içerik) korundu. -->
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
+      <span style="font-size:13px;color:var(--text-3);">${list.length} bildirim · ${okunmamisSayi} okunmamış</span>
+      <button onclick="bildirimTumunuOkunduYap()" style="background:none;border:1px solid var(--border);color:var(--text-2);padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer;font-family:inherit;">✓ Tümünü okundu yap</button>
     </div>
 
     <div style="background:rgba(142,142,147,.08);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:space-between;">
@@ -21407,13 +21410,11 @@ ${JSON.stringify(filoOzet, null, 1)}`;
 function renderExcelPage(){
   const page = document.getElementById('page-excel');
   page.innerHTML = `
-    <div class="topbar">
-      <div class="topbar-left">
-        <h1>Veri Aktarımı</h1>
-        <span style="font-size:13px;color:var(--text-3);">Excel import/export, km takibi ve toplu belge yükleme</span>
-      </div>
-    </div>
-
+    <!-- v.215: bu sayfanın kendi "Veri Aktarımı" başlığı, kabuğun üstteki genel sayfa başlığıyla
+    (bkz. PAGE_META['excel']) birebir çakışıyordu — kullanıcı aynı başlığı art arda iki kez
+    görüyordu (karışıklık kaynağı). Başlığın taşıdığı benzersiz bir bilgi olmadığından tamamen
+    kaldırıldı (bkz. Belgeler/Bildirimler'deki aynı düzeltme — orada canlı sayaç/düğme vardı, o
+    yüzden korundu; burada yok). -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
       <!-- Excel'e Aktar -->
       <div class="dcard">
