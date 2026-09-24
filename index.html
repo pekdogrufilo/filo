@@ -2415,7 +2415,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-23.210</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-23.211</div>
     </div>
   </div>
 </div>
@@ -2581,7 +2581,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-23.210</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-23.211</div>
     </div>
   </aside>
 <script>
@@ -2594,8 +2594,19 @@
       try{const st=JSON.parse(localStorage.getItem(KEY)||'{}');st[g.dataset.group]=g.classList.contains('open');localStorage.setItem(KEY,JSON.stringify(st));}catch(e){}
     });
   });
+  // v.210: "tüm ekranlar çok karıştı / menü çok kalabalık" geri bildirimi — önceden TÜM gruplar
+  // ilk açılışta varsayılan olarak AÇIK geliyordu, yani menü fiilen düz 19 maddelik bir liste gibi
+  // görünüyordu (gruplama sadece küçük başlık etiketleriyle görsel bir ayraçtı, gerçek bir
+  // daraltma sağlamıyordu). Artık en sık kullanılan iki grup (Filo, Kiralama) ilk açılışta açık,
+  // diğerleri (Finans & Ödeme, Servis, Sistem) kapalı geliyor — hiçbir sayfa kaldırılmadı, sadece
+  // ilk görünümdeki madde sayısı azaldı. Kullanıcının kendi aç/kapat tercihi (localStorage,
+  // sbGroupsState) her zaman bu varsayılanın önüne geçer; aktif sayfanın grubu her zaman açılır.
+  const DEFAULT_ACIK = {filo:true, kiralama:true, finans:false, servis:false, sistem:false};
   let st={}; try{st=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){}
-  document.querySelectorAll('.sb-group').forEach(function(g){ g.classList.toggle('open', st[g.dataset.group]!==false); });
+  document.querySelectorAll('.sb-group').forEach(function(g){
+    const varsayilan = DEFAULT_ACIK[g.dataset.group]!==false;
+    g.classList.toggle('open', st[g.dataset.group]!==undefined ? st[g.dataset.group]!==false : varsayilan);
+  });
   const act=document.querySelector('.sb-item.active');
   if(act){ const g=act.closest('.sb-group'); if(g) g.classList.add('open'); }
 })();
@@ -12346,6 +12357,59 @@ function renderDashboard(){
       <span style="font-size:12.5px;font-weight:700;color:#E1554E;white-space:nowrap;">Ayrıntılar →</span>
     </div>` : ''}
 
+    <!-- v.210: "tüm ekranlar çok karıştı" / "iş akışı belirsiz" geri bildirimi — panelde 19 ayrı
+         sayfa var ve hangi işlemi hangi sırayla, hangi sayfada yapacağını gösteren tek bir yer
+         yoktu (Belge Yükleme'deki v.209 rehber kartı sadece belge yükleme konusundaydı). Bu kart
+         GENEL Bakış'ın en üstüne, doğru işlem sırasını (araç → müşteri → kiralama → belge →
+         masraf/bakım → fatura) tek bakışta özetliyor, her adımın "Git" butonu doğrudan o işlemi
+         başlatıyor. Kapatma/açma durumu (sbGroupsState ile aynı desende) localStorage'da tutulur —
+         ekip bir kere öğrenince kartı kapatıp bir daha görmeyebilir, istediği an tekrar açabilir. -->
+    <details class="dcard" id="isAkisiRehberi" style="margin-bottom:16px;border-color:rgba(22,160,134,.35);background:var(--blue-dim,rgba(22,160,134,.04));" ${(localStorage.getItem('filoPaneli_isAkisiKapali')!=='1')?'open':''}>
+      <summary style="cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;font-size:15px;font-weight:700;">
+        ${ICO('search',16)} Panel nasıl çalışır? — Doğru işlem sırası
+        <span style="margin-left:auto;font-size:12px;font-weight:500;color:var(--steel-300);">aç / kapat</span>
+      </summary>
+      <div style="font-size:12px;color:var(--text-2);margin:10px 0 14px;">Aşağıdaki sırayla ilerleyin — her kutudaki buton sizi doğrudan o işleme götürür.</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;">
+          <div style="font-size:12.5px;font-weight:700;color:var(--text);margin-bottom:3px;">1️⃣ Araç ekle</div>
+          <div style="font-size:11.5px;color:var(--text-3);margin-bottom:8px;">Plaka, marka, ruhsat/şasi bilgisiyle aracı filoya kaydet.</div>
+          <button onclick="switchPage('arac-yonetimi');setTimeout(()=>openAdd(),80)" style="background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.25);color:var(--accent-blue);padding:5px 11px;border-radius:7px;font-size:11.5px;font-weight:600;cursor:pointer;">Araç Yönetimi → Araç Ekle</button>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;">
+          <div style="font-size:12.5px;font-weight:700;color:var(--text);margin-bottom:3px;">2️⃣ Müşteri/kiracı ekle</div>
+          <div style="font-size:11.5px;color:var(--text-3);margin-bottom:8px;">Kiracı olacak kişi ya da firmanın bilgilerini kaydet.</div>
+          <button onclick="switchPage('musteriler');setTimeout(()=>musteriFormAc(),80)" style="background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.25);color:var(--accent-blue);padding:5px 11px;border-radius:7px;font-size:11.5px;font-weight:600;cursor:pointer;">Müşteriler → Yeni Müşteri</button>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;">
+          <div style="font-size:12.5px;font-weight:700;color:var(--text);margin-bottom:3px;">3️⃣ Kirala &amp; sözleşme yap</div>
+          <div style="font-size:11.5px;color:var(--text-3);margin-bottom:8px;">Aracı kiracıya bağla, sözleşmeyi oluştur ve yazdır/PDF al.</div>
+          <button onclick="openAracKirala()" style="background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.25);color:var(--accent-blue);padding:5px 11px;border-radius:7px;font-size:11.5px;font-weight:600;cursor:pointer;">Araç Kirala sihirbazını aç</button>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;">
+          <div style="font-size:12.5px;font-weight:700;color:var(--text);margin-bottom:3px;">4️⃣ Belgeleri yükle</div>
+          <div style="font-size:11.5px;color:var(--text-3);margin-bottom:8px;">Ruhsat, poliçe, sözleşme gibi belgeleri AI okusun, bilgiler araca işlensin.</div>
+          <button onclick="switchPage('docupload')" style="background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.25);color:var(--accent-blue);padding:5px 11px;border-radius:7px;font-size:11.5px;font-weight:600;cursor:pointer;">Belge Yükleme'ye git</button>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;">
+          <div style="font-size:12.5px;font-weight:700;color:var(--text);margin-bottom:3px;">5️⃣ Masraf &amp; bakım takibi</div>
+          <div style="font-size:11.5px;color:var(--text-3);margin-bottom:8px;">Araç kullanımdayken yakıt/tamir masraflarını ve servis giriş-çıkışlarını işle.</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button onclick="switchPage('masraf');setTimeout(()=>document.getElementById('mpPlaka')?.focus(),80)" style="background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.25);color:var(--accent-blue);padding:5px 11px;border-radius:7px;font-size:11.5px;font-weight:600;cursor:pointer;">Masraf Yönetimi</button>
+            <button onclick="switchPage('bakim')" style="background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.25);color:var(--accent-blue);padding:5px 11px;border-radius:7px;font-size:11.5px;font-weight:600;cursor:pointer;">Bakım &amp; Servis</button>
+          </div>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;">
+          <div style="font-size:12.5px;font-weight:700;color:var(--text);margin-bottom:3px;">6️⃣ Fatura &amp; tahsilat</div>
+          <div style="font-size:11.5px;color:var(--text-3);margin-bottom:8px;">Kira bedelini faturalandır, ödemeleri Cari sayfasından takip et.</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button onclick="switchPage('cari')" style="background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.25);color:var(--accent-blue);padding:5px 11px;border-radius:7px;font-size:11.5px;font-weight:600;cursor:pointer;">Cari &amp; Tahsilat</button>
+            <button onclick="switchPage('faturalar')" style="background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.25);color:var(--accent-blue);padding:5px 11px;border-radius:7px;font-size:11.5px;font-weight:600;cursor:pointer;">Faturalar</button>
+          </div>
+        </div>
+      </div>
+    </details>
+
     <!-- v.90: Genel Bakış en sade hali — sadece 3 blok:
          1) Filo Durumu şeridi  2) Bugün Yapılacaklar + Hızlı İşlemler
          3) Yaklaşan 30 Gün (tam genişlik).
@@ -12455,6 +12519,10 @@ function renderDashboard(){
   wireQuickActions(page);
   dashYedekUyarisiGoster();
   applyRoleVisibility();
+  // v.210: iş akışı rehber kartının aç/kapat durumunu hatırla (sbGroupsState ile aynı desen).
+  document.getElementById('isAkisiRehberi')?.addEventListener('toggle', function(){
+    try{ localStorage.setItem('filoPaneli_isAkisiKapali', this.open ? '0' : '1'); }catch(e){}
+  });
 }
 
 // ===== Finansal Analiz sayfası (Genel Bakış'tan ayrılmış grafikler) =====
