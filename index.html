@@ -2415,7 +2415,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-24.217</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-24.218</div>
     </div>
   </div>
 </div>
@@ -2581,7 +2581,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-24.217</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-24.218</div>
     </div>
   </aside>
 <script>
@@ -4628,6 +4628,32 @@ function fmtTarih(dateStr){
   if(parts.length!==3 || parts.some(isNaN)) return dateStr;
   const [y,m,d] = parts;
   return new Date(y, m-1, d).toLocaleDateString('tr-TR');
+}
+// v.218: sözleşme süresi eskiden `Math.round(gün/30)+' ay'` ile hesaplanıyordu — bu, ayı sabit
+// 30 gün sayan kaba bir yaklaşımdı ve gün farkının 30'a bölümünü yuvarladığı için hem yılları
+// hiç göstermiyordu hem de fazladan günleri sessizce yutuyordu (örn. 15.09.2026 → 23.09.2027
+// arası GERÇEKTE 1 yıl 8 gün iken, eski hesap 373/30=12,43'ü yuvarlayıp yalnızca "12 ay"
+// gösteriyordu — kullanıcı haklı olarak "sözleşmede süre hatası var" diye bildirdi). Bu fonksiyon
+// yerine takvim bazlı gerçek yıl/ay/gün farkını hesaplar, hiçbir gün kaybolmaz.
+function sozlesmeSureMetni(basStr, bitisStr){
+  if(!basStr || !bitisStr) return '—';
+  const bas = new Date(basStr), bitis = new Date(bitisStr);
+  if(isNaN(bas) || isNaN(bitis)) return '—';
+  const gunFarki = Math.round((bitis-bas)/86400000);
+  if(gunFarki < 30) return gunFarki+' gün';
+  let yil = bitis.getFullYear() - bas.getFullYear();
+  let ay = bitis.getMonth() - bas.getMonth();
+  let gun = bitis.getDate() - bas.getDate();
+  if(gun < 0){
+    ay -= 1;
+    gun += new Date(bitis.getFullYear(), bitis.getMonth(), 0).getDate(); // bir önceki ayın gün sayısı
+  }
+  if(ay < 0){ yil -= 1; ay += 12; }
+  const parcalar = [];
+  if(yil>0) parcalar.push(yil+' yıl');
+  if(ay>0) parcalar.push(ay+' ay');
+  if(gun>0) parcalar.push(gun+' gün');
+  return parcalar.length ? parcalar.join(' ') : '0 gün';
 }
 function todayISO(){
   const now = new Date();
@@ -7904,7 +7930,7 @@ async function kirayaVerVeSozlesme(format){
     araclar,
     toplamAylikKira: toplamKira ? toplamKira.toLocaleString('tr-TR',{minimumFractionDigits:2}) : '—',
     aracSayisi: araclar.length,
-    sure: (() => { const g=Math.round((new Date(bitis)-new Date(bas))/86400000); return g>=30?Math.round(g/30)+' ay':g+' gün'; })(),
+    sure: sozlesmeSureMetni(bas, bitis),
     notlar: notlar||'',
     tarih: new Date().toLocaleDateString('tr-TR'),
     sozNo: 'SOZ-'+new Date().getFullYear()+'-'+Date.now().toString().slice(-4),
@@ -13596,7 +13622,7 @@ async function sozlesmeOlustur(format){
     kmLimit: kmLimit ? Number(kmLimit).toLocaleString('tr-TR') : '3.000',
     kmAsimFiyat: kmAsim!==undefined && kmAsim!=='' ? Number(kmAsim).toLocaleString('tr-TR',{minimumFractionDigits:2}) : '3,00',
     depozito: depozito!==undefined && depozito!=='' ? Number(depozito).toLocaleString('tr-TR',{minimumFractionDigits:2}) : (kira ? Number(kira).toLocaleString('tr-TR',{minimumFractionDigits:2}) : '—'),
-    sure: bas&&bitis ? (() => { const g=Math.round((new Date(bitis)-new Date(bas))/86400000); return g>=30?Math.round(g/30)+' ay':g+' gün'; })() : '—',
+    sure: bas&&bitis ? sozlesmeSureMetni(bas, bitis) : '—',
     notlar: notlar||'',
     tarih: new Date().toLocaleDateString('tr-TR'),
     sozNo: 'SOZ-'+new Date().getFullYear()+'-'+Date.now().toString().slice(-4),
@@ -14452,7 +14478,7 @@ async function ykSozlesmeyeIlerle(){
     kmLimit: r.kmLimiti ? Number(r.kmLimiti).toLocaleString('tr-TR') : '3.000',
     kmAsimFiyat: r.fazlaKmBedeli!=null ? Number(r.fazlaKmBedeli).toLocaleString('tr-TR',{minimumFractionDigits:2}) : '3,00',
     depozito: r.depozito!=null ? Number(r.depozito).toLocaleString('tr-TR',{minimumFractionDigits:2}) : '—',
-    sure: (r.baslangic&&r.bitis) ? (()=>{ const g=Math.round((new Date(r.bitis)-new Date(r.baslangic))/86400000); return g>=30?Math.round(g/30)+' ay':g+' gün'; })() : '—',
+    sure: (r.baslangic&&r.bitis) ? sozlesmeSureMetni(r.baslangic, r.bitis) : '—',
     notlar: r.ekHizmetler||'',
     tarih: new Date().toLocaleDateString('tr-TR'),
     sozNo: 'SOZ-'+new Date().getFullYear()+'-'+Date.now().toString().slice(-4),
