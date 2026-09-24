@@ -2415,7 +2415,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-24.216</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-24.217</div>
     </div>
   </div>
 </div>
@@ -2581,7 +2581,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-24.216</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-24.217</div>
     </div>
   </aside>
 <script>
@@ -12895,6 +12895,29 @@ function renderMasrafPage(){
   };
 }
 
+// v.216: canlı sitede bazı araçların kiraGecmisi dizisinde (Firestore'daki gerçek veri) birebir
+// aynı kaydın 2-4 kez tekrarlandığı görüldü — örn. aynı plaka için aynı başlangıç/bitiş/kiracı/
+// km değerleriyle art arda 3 satır (bkz. Kiralama İşlemleri > Geçmiş). Bu dosya bu veriyi YAZMIYOR
+// (Firestore'a hiçbir şey silinmiyor/değiştirilmiyor), muhtemel kök neden birden fazla akıştan
+// (ör. çift tıklama, ya da iki ayrı kiralama akışının aynı kaydı eklemesi) aynı satırın iki kez
+// kaydedilmesi — bu, kaynağında (kayıt anında) ayrıca incelenmeli. Burada yapılan, EKRANDA
+// gösterilen/sayılan listelerde birebir aynı (tüm alanları eşit) kayıtları tekilleştirmek — hem
+// kullanıcı aynı kira dönemini 3-4 kez tekrar eden bir liste görmüyor, hem de bu diziden toplam
+// alan istatistikler (kira süresi/km toplamı, bakım tahmini vb.) tekrarlardan şişmiyor.
+function kiraGecmisiTekil(v){
+  const liste = (v && v.kiraGecmisi) || [];
+  if(!liste.length) return liste;
+  const gorulen = new Set();
+  const sonuc = [];
+  liste.forEach(k=>{
+    const anahtar = JSON.stringify(k);
+    if(gorulen.has(anahtar)) return;
+    gorulen.add(anahtar);
+    sonuc.push(k);
+  });
+  return sonuc;
+}
+
 // ===== Bakım & Servis sayfası =====
 // ===== AI Bakım Tahmini (basit hesaplama — km geçmişinden günlük ortalama kullanım) =====
 // Gerçek bir AI/harici API çağrısı yapmaz: aracın kmGecmisi (aylık Excel içe aktarım)
@@ -12915,7 +12938,7 @@ function bakimTahminiHesapla(v){
     const km = Number(k.toplamKm)||0;
     if(km>0){ toplamKm += km; toplamGun += 30; } // aylık dönem varsayımı
   });
-  (v.kiraGecmisi||[]).forEach(k=>{
+  kiraGecmisiTekil(v).forEach(k=>{
     if(!k.bas || !k.bitis) return;
     const gun = Math.round((new Date(k.bitis)-new Date(k.bas))/86400000);
     const km = Number(k.kullanim)||0;
@@ -14501,7 +14524,7 @@ function renderKiralamaPage(){
   // Kira geçmişi özet istatistikleri
   let toplamKiraSuresi = 0, toplamKmKullanim = 0, toplamKiraSayisi = 0;
   vehicles.forEach(v=>{
-    (v.kiraGecmisi||[]).forEach(k=>{
+    kiraGecmisiTekil(v).forEach(k=>{
       toplamKiraSayisi++;
       if(k.bas && k.bitis){
         const gun = Math.round((new Date(k.bitis)-new Date(k.bas))/(86400000));
@@ -14925,7 +14948,7 @@ function renderKiralamaPage(){
       ${(()=>{
         const kayitlar = [];
         withHistory.forEach(v=>{
-          (v.kiraGecmisi||[]).forEach(k=>kayitlar.push({v, k}));
+          kiraGecmisiTekil(v).forEach(k=>kayitlar.push({v, k}));
         });
         kayitlar.sort((a,b)=>((b.k.bitis||b.k.bas||'').localeCompare(a.k.bitis||a.k.bas||'')));
         if(!kayitlar.length) return '<div class="log-empty">Henüz iade kaydı yok. "İade Al" butonuyla kira dönemlerini kayıt altına alabilirsin.</div>';
@@ -17063,7 +17086,7 @@ function musteriListesiOlustur(){
   });
   // Sadece kira geçmişinde görünen (şu an aracı olmayan) müşteriler de listelensin
   vehicles.forEach(v=>{
-    (v.kiraGecmisi||[]).forEach(k=>{
+    kiraGecmisiTekil(v).forEach(k=>{
       const ad = (k.kiraci||'').trim();
       if(ad) kaydet(ad);
     });
@@ -17072,7 +17095,7 @@ function musteriListesiOlustur(){
     m.kirada = m.araclar.filter(v=>v.durum==='Kirada').length;
     m.toplamKira = m.araclar.filter(v=>v.durum==='Kirada').reduce((s,v)=>s+(Number(v.kira)||0),0);
     const key = m.ad.toLocaleLowerCase('tr-TR');
-    m.gecmisSayi = vehicles.reduce((s,v)=>s+(v.kiraGecmisi||[]).filter(k=>(k.kiraci||'').trim().toLocaleLowerCase('tr-TR')===key).length,0);
+    m.gecmisSayi = vehicles.reduce((s,v)=>s+kiraGecmisiTekil(v).filter(k=>(k.kiraci||'').trim().toLocaleLowerCase('tr-TR')===key).length,0);
     // Problemli müşteri: süresi geçmiş ama iade edilmemiş sözleşmesi olan ya da
     // kiradaki aracının kira/sözleşme bitişi geçmiş olan müşteri
     const gecmisSoz = (sozlesmeler||[]).filter(r=>!r.iadeEdildi
