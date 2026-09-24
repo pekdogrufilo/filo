@@ -2415,7 +2415,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-23.213</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-23.214</div>
     </div>
   </div>
 </div>
@@ -2581,7 +2581,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-23.213</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-23.214</div>
     </div>
   </aside>
 <script>
@@ -20086,12 +20086,67 @@ const BILDIRIM_TUR_ETIKET = {
   sigorta:'Sigorta', kasko:'Kasko Bitişi', muayene:'Muayene', kiraBitis:'Kira Bitişi',
   gecikenKira:'Kira Bitişi', servis:'Bakım (km)', tahsilat:'Tahsilat', fatura:'Fatura',
   hgs:'HGS/OGS', ceza:'Trafik Cezası', belge:'Belge',
+  // v.213: "böyle şeyler" (karışıklık) geri bildirimi — bu 4 tür (Otomasyon Kuralları'ndan
+  // üretilenler) bu haritada hiç yoktu, bu yüzden Bildirimler sayfasında kullanıcıya ham/iç
+  // anahtar adı ("otomasyonHakedis" gibi) gösteriliyordu — okunaksız ve karışık görünüyordu.
+  otomasyonSigorta:'Sigorta', otomasyonCari:'Tahsilat', otomasyonKiralama:'Kira Bitişi', otomasyonHakedis:'Hakediş',
 };
+// v.213: bir otomasyon kuralı tek seferde onlarca araç için neredeyse BİREBİR AYNI metni
+// üreten bildirim kaydı oluşturabiliyor (ör. "Ayın 5'inden sonra hakediş yüklenmemişse uyar"
+// kuralı, hakedişi eksik OLAN HER ARAÇ için ayrı bir kayıt açıyor — 29 araç, 29 satır).
+// Bildirimler listesi bunları tek tek gösteriyordu; bu gruplar için tek özet satır + açılır
+// liste kullanılıyor (bkz. renderBildirimlerPage). Veri modeli DEĞİŞMEDİ — her kayıt hâlâ ayrı
+// ayrı var, okundu/WA/e-posta/Araca Git gibi mevcut davranışların hiçbiri kaldırılmadı, sadece
+// görüntüleme gruplanıyor.
+const BILDIRIM_GRUPLANABILIR_TURLER = new Set(['otomasyonSigorta','otomasyonCari','otomasyonKiralama','otomasyonHakedis']);
+const BILDIRIM_GRUP_ACIKLAMA = {
+  otomasyonHakedis:'Bu ayın hakedişi henüz yüklenmedi',
+  otomasyonSigorta:'Sigorta yenileme tarihi yaklaşıyor',
+  otomasyonCari:'Vadesi geçmiş tahsilat bekliyor',
+  otomasyonKiralama:'Kiralama bitimine az kaldı',
+};
+async function bildirimGrupOkunduIsaretle(tur){
+  let degisti = false;
+  notifications.forEach(n=>{ if(n.tur===tur && !n.okunduMu){ n.okunduMu = true; degisti = true; } });
+  if(degisti) await persistNotifications();
+  renderBildirimlerPage();
+  updateShellChrome();
+}
 function bildirimGoruntuSatiri(n){
   let ad = '—';
   if(n.ilgiliTip==='arac'){ const v = vehicles.find(x=>x.id===n.ilgiliId); ad = v?v.plaka:'(silinmiş araç)'; }
   else{ const c = customers.find(x=>x.id===n.ilgiliId); ad = c?musteriGoruntuAdi(c):'(silinmiş müşteri)'; }
   return { id:n.id, tur:n.tur, plaka:ad, tip: BILDIRIM_TUR_ETIKET[n.tur]||n.tur, dl: n._dl, icerik:n.icerik, okunduMu:n.okunduMu, olusturmaTarihi:n.olusturmaTarihi };
+}
+// v.213: tek bir bildirim satırının HTML'i — hem tekil gösterimde hem de gruplanmış bir
+// türün açılır listesinde AYNEN kullanılıyor ki hiçbir davranış (WA/e-posta/okundu/Araca Git)
+// iki yerde ayrı ayrı bakım gerektirmesin.
+function bildirimSatirHTML(u){
+  const okundu = u.okunduMu;
+  const renk = (u.dl??0)<0?'#E1554E':(u.dl??999)<=7?'#E1554E':(u.dl??999)<=30?'#E8A132':'#36A168';
+  const dtxt = u.dl==null ? '' : (u.dl<0?`${Math.abs(u.dl)} gün gecikti!`:u.dl===0?'Bugün!':u.dl<=7?`${u.dl} gün kaldı ⚠️`:`${u.dl} gün kaldı`);
+  const arac = vehicles.find(x=>x.plaka===u.plaka);
+  return `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);opacity:${okundu?'.5':'1'};flex-wrap:wrap;">
+      <div style="width:8px;height:8px;border-radius:50%;background:${okundu?'var(--border)':renk};flex-shrink:0;"></div>
+      <div style="flex:1;min-width:180px;">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <span style="font-size:13px;font-weight:700;color:var(--text);font-family:monospace;">${esc(u.plaka)}</span>
+          <span style="font-size:12px;color:var(--text-2);">—</span>
+          <span style="font-size:13px;color:var(--text-2);">${esc(u.tip)}</span>
+        </div>
+        <div style="font-size:12px;color:var(--text-2);margin-top:2px;">${esc(u.icerik)}</div>
+        ${dtxt?`<div style="font-size:12px;font-weight:600;color:${renk};margin-top:2px;">${dtxt}</div>`:''}
+      </div>
+      <button onclick="hatirlatWhatsApp('${esc(u.plaka)}','${esc(u.tip)}')" title="WhatsApp ile hatırlat" style="background:rgba(37,211,102,.12);border:1px solid rgba(37,211,102,.3);color:#128C7E;padding:4px 9px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">WA</button>
+      <button onclick="hatirlatEposta('${esc(u.plaka)}','${esc(u.tip)}')" title="E-posta ile hatırlat (taslak açar, otomatik gönderim değildir)" style="background:rgba(142,142,147,.12);border:1px solid var(--border);color:var(--text-2);padding:4px 9px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">✉</button>
+      <button title="SMS — yakında" disabled style="background:none;border:1px solid var(--border);color:var(--text-3);padding:4px 9px;border-radius:6px;font-size:11px;font-weight:700;cursor:not-allowed;white-space:nowrap;opacity:.6;">SMS (Yakında)</button>
+      <button onclick="bildirimOkunduIsaretle('${u.id}')" ${okundu?'disabled':''}
+        style="background:none;border:1px solid var(--border);color:var(--text-3);padding:4px 9px;border-radius:6px;font-size:11px;cursor:${okundu?'default':'pointer'};white-space:nowrap;">${okundu?'✓ Okundu':'Okundu işaretle'}</button>
+      ${arac ? `<button onclick="switchPage('arac-yonetimi');setTimeout(()=>{const v=vehicles.find(x=>x.plaka==='${esc(u.plaka)}');if(v)openVehicleDetail(v.id);},100);"
+        style="background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.2);color:var(--accent-blue);padding:4px 9px;border-radius:6px;font-size:11px;cursor:pointer;white-space:nowrap;">Araca Git</button>`
+        : `<button onclick="switchPage('musteriler')" style="background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.2);color:var(--accent-blue);padding:4px 9px;border-radius:6px;font-size:11px;cursor:pointer;white-space:nowrap;">Müşteriye Git</button>`}
+    </div>`;
 }
 function renderBildirimlerPage(){
   const page = document.getElementById('page-bildirimler');
@@ -20148,33 +20203,41 @@ function renderBildirimlerPage(){
           <div class="empty-state-title">Her şey yolunda</div>
           <div class="empty-state-desc">Yaklaşan sigorta, muayene, kira bitişi, tahsilat/fatura, HGS/ceza veya belge uyarısı bulunmuyor. Yeni bir durum tespit edildiğinde burada görünecek.</div>
         </div>
-      ` : '<div class="log-empty">Bu filtrede bildirim yok.</div>') : filtered.map(u=>{
-        const okundu = u.okunduMu;
-        const renk = (u.dl??0)<0?'#E1554E':(u.dl??999)<=7?'#E1554E':(u.dl??999)<=30?'#E8A132':'#36A168';
-        const dtxt = u.dl==null ? '' : (u.dl<0?`${Math.abs(u.dl)} gün gecikti!`:u.dl===0?'Bugün!':u.dl<=7?`${u.dl} gün kaldı ⚠️`:`${u.dl} gün kaldı`);
-        const arac = vehicles.find(x=>x.plaka===u.plaka);
-        return `
-          <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);opacity:${okundu?'.5':'1'};flex-wrap:wrap;">
-            <div style="width:8px;height:8px;border-radius:50%;background:${okundu?'var(--border)':renk};flex-shrink:0;"></div>
-            <div style="flex:1;min-width:180px;">
-              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                <span style="font-size:13px;font-weight:700;color:var(--text);font-family:monospace;">${esc(u.plaka)}</span>
-                <span style="font-size:12px;color:var(--text-2);">—</span>
-                <span style="font-size:13px;color:var(--text-2);">${esc(u.tip)}</span>
+      ` : '<div class="log-empty">Bu filtrede bildirim yok.</div>') : (()=>{
+        // v.213: aynı otomasyon türünden 3+ bildirim varsa (ör. 29 araç için "hakediş
+        // yüklenmedi") tek tek satır yerine tek bir özet + açılır liste gösterilir. Diğer
+        // türler (sigorta/muayene/kira bitişi gibi — her biri gerçekten farklı bir tarih/
+        // aciliyet taşıyor) hiç gruplanmaz, eskisi gibi tek tek listelenir.
+        const gruplar = {};
+        filtered.forEach(u=>{ if(BILDIRIM_GRUPLANABILIR_TURLER.has(u.tur)) (gruplar[u.tur]=gruplar[u.tur]||[]).push(u); });
+        const gerceklenGruplar = new Set(Object.keys(gruplar).filter(t=>gruplar[t].length>=3));
+        const gosterilen = new Set();
+        return filtered.map(u=>{
+          if(!gerceklenGruplar.has(u.tur)) return bildirimSatirHTML(u);
+          if(gosterilen.has(u.tur)) return '';
+          gosterilen.add(u.tur);
+          const uyeler = gruplar[u.tur];
+          const okunmamisSayi = uyeler.filter(x=>!x.okunduMu).length;
+          const etiket = BILDIRIM_TUR_ETIKET[u.tur] || u.tur;
+          const aciklama = BILDIRIM_GRUP_ACIKLAMA[u.tur] || etiket;
+          return `
+            <details style="border-bottom:1px solid var(--border);padding:10px 0;">
+              <summary style="cursor:pointer;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                <div style="width:8px;height:8px;border-radius:50%;background:${okunmamisSayi>0?'#E8A132':'var(--border)'};flex-shrink:0;"></div>
+                <div style="flex:1;min-width:180px;">
+                  <div style="font-size:13px;font-weight:700;color:var(--text);">${esc(etiket)} <span style="font-weight:400;color:var(--text-2);">— ${uyeler.length} araç${okunmamisSayi>0?`, ${okunmamisSayi} okunmamış`:''}</span></div>
+                  <div style="font-size:12px;color:var(--text-2);margin-top:2px;">${esc(aciklama)}</div>
+                </div>
+                <button onclick="event.preventDefault();event.stopPropagation();bildirimGrupOkunduIsaretle('${u.tur}')" ${okunmamisSayi===0?'disabled':''}
+                  style="background:none;border:1px solid var(--border);color:var(--text-3);padding:4px 9px;border-radius:6px;font-size:11px;cursor:${okunmamisSayi===0?'default':'pointer'};white-space:nowrap;">${okunmamisSayi===0?'✓ Tümü okundu':'Tümünü okundu işaretle'}</button>
+                <span style="font-size:11px;color:var(--accent-blue);font-weight:600;white-space:nowrap;">Listeyi aç/kapat</span>
+              </summary>
+              <div style="margin-top:6px;padding-left:18px;">
+                ${uyeler.map(bildirimSatirHTML).join('')}
               </div>
-              <div style="font-size:12px;color:var(--text-2);margin-top:2px;">${esc(u.icerik)}</div>
-              ${dtxt?`<div style="font-size:12px;font-weight:600;color:${renk};margin-top:2px;">${dtxt}</div>`:''}
-            </div>
-            <button onclick="hatirlatWhatsApp('${esc(u.plaka)}','${esc(u.tip)}')" title="WhatsApp ile hatırlat" style="background:rgba(37,211,102,.12);border:1px solid rgba(37,211,102,.3);color:#128C7E;padding:4px 9px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">WA</button>
-            <button onclick="hatirlatEposta('${esc(u.plaka)}','${esc(u.tip)}')" title="E-posta ile hatırlat (taslak açar, otomatik gönderim değildir)" style="background:rgba(142,142,147,.12);border:1px solid var(--border);color:var(--text-2);padding:4px 9px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">✉</button>
-            <button title="SMS — yakında" disabled style="background:none;border:1px solid var(--border);color:var(--text-3);padding:4px 9px;border-radius:6px;font-size:11px;font-weight:700;cursor:not-allowed;white-space:nowrap;opacity:.6;">SMS (Yakında)</button>
-            <button onclick="bildirimOkunduIsaretle('${u.id}')" ${okundu?'disabled':''}
-              style="background:none;border:1px solid var(--border);color:var(--text-3);padding:4px 9px;border-radius:6px;font-size:11px;cursor:${okundu?'default':'pointer'};white-space:nowrap;">${okundu?'✓ Okundu':'Okundu işaretle'}</button>
-            ${arac ? `<button onclick="switchPage('arac-yonetimi');setTimeout(()=>{const v=vehicles.find(x=>x.plaka==='${esc(u.plaka)}');if(v)openVehicleDetail(v.id);},100);"
-              style="background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.2);color:var(--accent-blue);padding:4px 9px;border-radius:6px;font-size:11px;cursor:pointer;white-space:nowrap;">Araca Git</button>`
-              : `<button onclick="switchPage('musteriler')" style="background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.2);color:var(--accent-blue);padding:4px 9px;border-radius:6px;font-size:11px;cursor:pointer;white-space:nowrap;">Müşteriye Git</button>`}
-          </div>`;
-      }).join('')}
+            </details>`;
+        }).join('');
+      })()}
     </div>
   `;
 }
