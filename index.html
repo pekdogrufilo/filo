@@ -2415,7 +2415,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-23.211</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-23.212</div>
     </div>
   </div>
 </div>
@@ -2581,7 +2581,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-23.211</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-23.212</div>
     </div>
   </aside>
 <script>
@@ -12452,19 +12452,6 @@ function renderDashboard(){
       </div>
     </div>
 
-    <!-- v.96: Sık İşlemler — tek tıkla doğru akışı başlatan sihirbaz başlatıcıları -->
-    <div class="dcard" style="margin-bottom:16px;padding:14px 16px;">
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-        <span style="font-size:12px;font-weight:700;color:var(--text-3);letter-spacing:.4px;margin-right:4px;">SIK İŞLEMLER</span>
-        <button onclick="switchPage('masraf');setTimeout(()=>document.getElementById('mpPlaka')?.focus(),80)" style="padding:8px 16px;border-radius:999px;font-size:12.5px;font-weight:600;cursor:pointer;border:1px solid var(--border-2);background:var(--surface-2);color:var(--text);">Masraf Gir</button>
-        <button onclick="switchPage('excel');setTimeout(()=>{const a=document.getElementById('kiraYuklemeArea');if(a)a.scrollIntoView({behavior:'smooth',block:'center'});},80)" style="padding:8px 16px;border-radius:999px;font-size:12.5px;font-weight:600;cursor:pointer;border:1px solid var(--border-2);background:var(--surface-2);color:var(--text);">Hakediş / Fatura Yükle</button>
-        <button onclick="switchPage('excel');setTimeout(()=>{const a=document.getElementById('kmYuklemeArea');if(a)a.scrollIntoView({behavior:'smooth',block:'center'});},80)" style="padding:8px 16px;border-radius:999px;font-size:12.5px;font-weight:600;cursor:pointer;border:1px solid var(--border-2);background:var(--surface-2);color:var(--text);">Km Raporu Yükle</button>
-        <button onclick="switchPage('kiralamama')" onerror="" style="display:none;"></button>
-        <button onclick="switchPage('docupload')" style="padding:8px 16px;border-radius:999px;font-size:12.5px;font-weight:600;cursor:pointer;border:1px solid var(--border-2);background:var(--surface-2);color:var(--text);">Belge Yükle</button>
-        <button onclick="window.print()" style="padding:8px 16px;border-radius:999px;font-size:12.5px;font-weight:600;cursor:pointer;border:1px solid var(--border-2);background:var(--surface-2);color:var(--text);">Günlük Özet Yazdır</button>
-        <button onclick="filoTabloGoster()" style="padding:8px 16px;border-radius:999px;font-size:12.5px;font-weight:600;cursor:pointer;border:1px solid var(--accent-blue);background:var(--accent-blue);color:#fff;">Araç Tablosu</button>
-      </div>
-    </div>
     <div class="dash-grid dg-141" style="grid-template-columns:1.7fr 1fr;gap:22px;margin-bottom:22px;">
       <div class="dcard" id="bugunCard" style="min-height:280px;border-left:4px solid ${bugunKritik>0?'#E1554E':(bugunUyari>0?'var(--accent-blue)':'#36A168')};box-shadow:var(--shadow-md);">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
@@ -12488,6 +12475,14 @@ function renderDashboard(){
       </div>
       <div class="dcard">
         <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/></svg>Hızlı İşlemler</h3>
+        <!-- v.211: "yine karışık" geri bildirimi — ekran görüntüsüyle bakınca bu panelin HEMEN
+             yanında, aynı sayfada, aynı işi yapan İKİNCİ bir "Sık İşlemler" hap-buton satırı
+             olduğu görüldü (ör. "Masraf Gir" hapı ile buradaki "Masraf Ekle" karosu birebir aynı
+             işi görüyordu) — iki farklı görsel stil (hap/karo), iki farklı yerde, kısmen çakışan
+             etiketlerle aynı anda duruyordu. O satır tamamen kaldırıldı, kendine özgü 5 eylemi
+             (Hakediş/Fatura Yükle, Km Raporu Yükle, Belge Yükle, Günlük Özet Yazdır, Araç Tablosu)
+             buraya, TEK bir tutarlı görsel dile taşındı — artık Genel Bakış'ta tek bir hızlı işlem
+             alanı var. -->
         <div class="quick-grid">
           <button class="qbtn" data-act="arac-kirala" title="Müsait bir aracı yeni bir kiracıya teslim et"><div class="qic" style="background:var(--accent-blue);color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8v8h6l4 4V4L9 8H3Z"/></svg></div><span>Araç Kirala</span></button>
           <button class="qbtn" data-act="iade-al"><div class="qic" style="background:var(--accent-blue);color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></div><span>İade Al</span></button>
@@ -12496,6 +12491,11 @@ function renderDashboard(){
           <button class="qbtn" data-act="masraf-ekle"><div class="qic" style="background:var(--accent-blue);color:#fff">${DASH_ICONS.clock}</div><span>Masraf Ekle</span></button>
           <button class="qbtn" data-act="rapor-olustur"><div class="qic" style="background:var(--accent-blue);color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg></div><span>Rapor Oluştur</span></button>
           <button class="qbtn" data-act="tahsilat-gir"><div class="qic" style="background:var(--accent-blue);color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><span>Tahsilat Gir</span></button>
+          <button class="qbtn" data-act="hakedis-yukle"><div class="qic" style="background:var(--accent-blue);color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg></div><span>Hakediş / Fatura Yükle</span></button>
+          <button class="qbtn" data-act="km-raporu-yukle"><div class="qic" style="background:var(--accent-blue);color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg></div><span>Km Raporu Yükle</span></button>
+          <button class="qbtn" data-act="belge-yukle"><div class="qic" style="background:var(--accent-blue);color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg></div><span>Belge Yükle</span></button>
+          <button class="qbtn" data-act="gunluk-ozet"><div class="qic" style="background:var(--accent-blue);color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg></div><span>Günlük Özet Yazdır</span></button>
+          <button class="qbtn" data-act="arac-tablosu"><div class="qic" style="background:var(--accent-blue);color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg></div><span>Araç Tablosu</span></button>
         </div>
       </div>
     </div>
@@ -12724,7 +12724,14 @@ function handleQuickAction(act){
     showVehicleQuickList('Kirada','İade Al — Araç Seçin');
   }
   else if(act==='arac-ara'){ switchPage('arac-yonetimi'); setTimeout(()=>document.getElementById('search').focus(), 100); }
-  else if(act==='masraf-ekle'){ switchPage('masraf'); }
+  else if(act==='masraf-ekle'){ switchPage('masraf'); setTimeout(()=>document.getElementById('mpPlaka')?.focus(),80); }
+  // v.211: eski "Sık İşlemler" hap satırından buraya taşınan 4 eylem — bkz. Hızlı İşlemler karo
+  // ızgarasındaki v.211 notu (iki ayrı hızlı işlem alanı tek alana indirildi).
+  else if(act==='hakedis-yukle'){ switchPage('excel'); setTimeout(()=>{const a=document.getElementById('kiraYuklemeArea'); if(a) a.scrollIntoView({behavior:'smooth', block:'center'});}, 80); }
+  else if(act==='km-raporu-yukle'){ switchPage('excel'); setTimeout(()=>{const a=document.getElementById('kmYuklemeArea'); if(a) a.scrollIntoView({behavior:'smooth', block:'center'});}, 80); }
+  else if(act==='belge-yukle'){ switchPage('docupload'); }
+  else if(act==='gunluk-ozet'){ window.print(); }
+  else if(act==='arac-tablosu'){ filoTabloGoster(); }
   else if(act==='rapor-olustur'){ switchPage('raporlar'); }
   else if(act==='excele-aktar'){ exportExcel(); }
   else if(act==='tahsilat-gir'){ switchPage('cari'); setTimeout(()=>tahsilatFormAc(), 150); }
