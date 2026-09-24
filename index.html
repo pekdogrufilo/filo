@@ -2415,7 +2415,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-24.219</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-24.220</div>
     </div>
   </div>
 </div>
@@ -2581,7 +2581,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-24.219</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-24.220</div>
     </div>
   </aside>
 <script>
@@ -10422,8 +10422,14 @@ function fmtTL2_role(val){
   return fmtTL2(val);
 }
 function fmtTL_role(val){
+  // v.220: bu, para tutarlarını rol iznine göre maskeleyen (personel görünümünde "***")
+  // TEK yer olduğu için parasal görünürlük burada merkezi — ama ₺ birimini eklemiyordu
+  // (fmtTL bare kullanıyordu), oysa aynı sayfalardaki fmtTL2() ile biçimlendirilen komşu
+  // tutarlarda ₺ vardı. Sonuç: Finans ve Raporlar sayfalarında "Aylık Kira Geliri"/"Net
+  // Aylık Kar" birimsiz, hemen yanındaki "Net Kâr"/"Bu Ay Masraf" ₺'li görünüyordu. Artık
+  // fmtTL2 kullanıyor — maskeleme davranışı (izin yoksa "***") aynen korunuyor.
   if(!can('paraGorebilir') && val>0) return '***';
-  return fmtTL(val);
+  return fmtTL2(val);
 }
 let failedAttempts = 0;
 let lockoutUntil = 0;
@@ -16470,7 +16476,7 @@ function renderRaporlarPage(){
         </div>
         <div class="dstat" style="cursor:default;">
           <div class="dstat-ic" style="background:var(--safety)">${DASH_ICONS.wrench}</div>
-          <div class="dstat-txt"><div class="n">${fmtTL(toplamMasraf)}</div><div class="l">Aylık Masraf${hedefAyEtiket?` (${hedefAyEtiket})`:''}</div></div>
+          <div class="dstat-txt"><div class="n">${fmtTL2(toplamMasraf)}</div><div class="l">Aylık Masraf${hedefAyEtiket?` (${hedefAyEtiket})`:''}</div></div>
         </div>
         <div class="dstat" style="cursor:default;">
           <div class="dstat-ic" style="background:${toplamKar>=0?'#36A168':'var(--safety)'}">${DASH_ICONS.check}</div>
@@ -17945,6 +17951,20 @@ function bildirimUret(){
 // Otomasyon kurallarından (tur 'otomasyon...') gelen bildirimler burada değerlendirilmiyor —
 // onlar ayrı bir döngüyle (kural bazlı, haftalık) yönetiliyor, kapsam dışı bırakıldı.
 function bildirimGecerliMi(n){
+  // v.220: otomasyon kurallarından üretilen bildirimler (otomasyonSigorta, otomasyonHakedis, ...)
+  // BILINEN listesinde hiç yer almadığından bu fonksiyon onları hep "geçerli" sayıyordu —
+  // yani hiçbir zaman temizlenmiyorlardı. Bu yüzden bir otomasyon kuralı silinip aynı işi
+  // yapan yeni bir kuralla değiştirildiğinde, eski kuralın ürettiği bildirim sonsuza kadar
+  // listede kalıyor, yeni kuralın ürettiği birebir aynı metinli bildirimle yan yana durup
+  // tam bir mükerrer kayıt gibi görünüyordu (canlıda "... bu ayın hakedişi henüz
+  // yüklenmedi." aynı araç için 2-3 kez tekrar ediyordu — bkz. tasarım incelemesi). Artık:
+  // bildirimi üreten kural artık yoksa (silinmiş) ya da pasif hâle getirilmişse, o bildirim
+  // geçersiz sayılıp bildirimleriTemizle() tarafından siliniyor.
+  if(n.tur && n.tur.indexOf('otomasyon')===0){
+    const kuralId = (n._anahtar||'').split('_')[0];
+    const kural = automationRules.find(r=>r.id===kuralId);
+    return !!kural && kural.aktif!==false;
+  }
   const BILINEN = ['sigorta','kasko','muayene','kiraBitis','gecikenKira','servis','tahsilat','fatura','hgs','ceza','belge'];
   if(!BILINEN.includes(n.tur)) return true;
   if(n.tur==='sigorta' || n.tur==='kasko' || n.tur==='muayene'){
