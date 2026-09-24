@@ -2430,7 +2430,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-24.223</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-24.224</div>
     </div>
   </div>
 </div>
@@ -2597,7 +2597,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-24.223</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-24.224</div>
     </div>
   </aside>
 <script>
@@ -15094,7 +15094,7 @@ function renderKiralamaPage(){
   `;
   wireQuickActions(page);
 }
-// v.209: Teklifler — adım adım akışta oluşturulan teklif/rezervasyon/sözleşme-hazır
+// v.221: Teklifler — adım adım akışta oluşturulan teklif/rezervasyon/sözleşme-hazır
 // kayıtlarının tek ekranda listelendiği sayfa. Kiralama sayfasındaki "Devam Eden Adım
 // Adım Kiralamalar" kartının genişletilmiş hâlidir: durum/müşteri filtresi, potansiyel
 // değer özeti ve satır bazlı aksiyonlar (devam et / iptal) sunar.
@@ -15116,14 +15116,24 @@ function renderTekliflerPage(){
     const v = vehicles.find(x=>x.id===r.vehicleId);
     const m = r.customerId ? customers.find(c=>c.id===r.customerId) : null;
     const donem = (r.baslangic||r.bitis) ? `${r.baslangic?fmtTarih(r.baslangic):'—'} → ${r.bitis?fmtTarih(r.bitis):'—'}` : '—';
+    const onay = r.tkOnayDurumu || 'Beklemede';
+    const onayBadge = onay==='Onaylandi'
+      ? `<span style="font-size:11px;font-weight:700;padding:2px 9px;border-radius:12px;background:rgba(54,161,104,.15);color:#36A168;">Onaylandı</span>`
+      : onay==='Reddedildi'
+      ? `<span style="font-size:11px;font-weight:700;padding:2px 9px;border-radius:12px;background:rgba(225,85,78,.15);color:#E1554E;">Reddedildi</span>`
+      : `<span style="font-size:11px;font-weight:700;padding:2px 9px;border-radius:12px;background:rgba(120,120,128,.15);color:var(--text-3);">Beklemede</span>`;
     return `<tr style="border-bottom:1px solid var(--border);">
       <td style="padding:10px 14px;">${m?esc(musteriGoruntuAdi(m)):'<span style="color:var(--steel-300);">Müşteri seçilmedi</span>'}</td>
       <td style="padding:10px 14px;">${v?`<span class="mini-plaka">${esc(v.plaka)}</span>`:'<span style="color:var(--steel-300);">—</span>'} <span style="font-size:12px;color:var(--text-3);">${v?esc([v.marka,v.model].filter(Boolean).join(' ')):''}</span></td>
       <td style="padding:10px 14px;font-size:13px;">${donem}</td>
       <td style="padding:10px 14px;font-family:'SF Mono',SFMono-Regular,Consolas,monospace;">${r.kiraTutari!=null?fmtTL2(r.kiraTutari):'—'}</td>
       <td style="padding:10px 14px;"><span style="font-size:11px;font-weight:700;padding:2px 9px;border-radius:12px;background:${r.durum==='sozlesmeHazir'?'rgba(232,161,50,.15);color:#E8A132':r.durum==='rezervasyon'?'rgba(22,160,134,.12);color:var(--accent-blue)':'rgba(54,161,104,.15);color:#36A168'};">${esc(YK_DURUM_ETIKET[r.durum]||r.durum)}</span></td>
+      <td style="padding:10px 14px;">${onayBadge}</td>
       <td style="padding:10px 14px;text-align:right;white-space:nowrap;">
-        <button onclick="ykDevamEt('${r.id}')" style="background:rgba(54,161,104,.15);border:1px solid rgba(54,161,104,.3);color:#36A168;padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;">Devam Et</button>
+        <button onclick="tkPdfAc('${r.id}')" style="background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.2);color:var(--accent-blue);padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;">PDF</button>
+        ${onay!=='Onaylandi' ? `<button onclick="tkOnayVer('${r.id}','Onaylandi')" style="background:rgba(54,161,104,.15);border:1px solid rgba(54,161,104,.3);color:#36A168;padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;">Onaylandı</button>` : `<button onclick="ykDevamEt('${r.id}')" style="background:rgba(54,161,104,.15);border:1px solid rgba(54,161,104,.3);color:#36A168;padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;">Sözleşmeye İlerle</button>`}
+        ${onay==='Beklemede' ? `<button onclick="tkOnayVer('${r.id}','Reddedildi')" style="background:none;border:1px solid var(--line);color:#E1554E;padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;">Reddedildi</button>` : ''}
+        ${onay!=='Beklemede' ? `<button onclick="tkOnayVer('${r.id}','Beklemede')" style="background:none;border:1px solid var(--line);color:var(--text-3);padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;">Sıfırla</button>` : ''}
         ${r.durum!=='kapandi' && r.durum!=='iptal' ? `<button onclick="tkIptalEt('${r.id}')" style="background:none;border:1px solid var(--line);color:#E1554E;padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;">İptal</button>` : ''}
       </td>
     </tr>`;
@@ -15150,6 +15160,11 @@ function renderTekliflerPage(){
       <div class="dstat" style="cursor:default;"><div class="dstat-ic" style="background:rgba(54,161,104,.15);color:#36A168;">${DASH_ICONS.check}</div><div class="dstat-txt"><div class="l">Potansiyel Aylık Değer</div><div class="n">${fmtTL2(potansiyel)}</div></div></div>
     </div>
 
+    <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-radius:9px;background:rgba(22,160,134,.07);border:1px solid rgba(22,160,134,.18);font-size:12.5px;color:var(--text-2);margin-bottom:14px;flex-wrap:wrap;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;color:var(--accent-blue);"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+      <span><b>Akış:</b> Teklif oluştur → <b>PDF</b> ile müşteriye gönder (yazdır penceresinden PDF kaydedilir) → müşteri onaylayınca <b>Onaylandı</b> işaretle → <b>Sözleşmeye İlerle</b> ile 23 maddelik kira sözleşmesini hazırla.</span>
+    </div>
+
     <div class="dcard" style="padding:0;overflow-x:auto;">
       ${liste.length===0 ? `
         <div class="empty-state">
@@ -15164,6 +15179,7 @@ function renderTekliflerPage(){
           <th style="padding:10px 14px;">Dönem</th>
           <th style="padding:10px 14px;text-align:left;">Aylık Kira</th>
           <th style="padding:10px 14px;">Durum</th>
+          <th style="padding:10px 14px;">Onay</th>
           <th style="padding:10px 14px;"></th>
         </tr></thead>
         <tbody>${liste.map(tkSatir).join('')}</tbody>
@@ -15181,6 +15197,88 @@ async function tkIptalEt(rentalId){
   logActivity('edit', `Kiralama teklifi iptal edildi: <b>${esc(vehicles.find(x=>x.id===r.vehicleId)?.plaka||rentalId)}</b>`);
   showToast('Teklif iptal edildi.');
   renderTekliflerPage();
+}
+// v.221: Teklif PDF + onay akışı — teklif müşteriye PDF olarak gönderilir ("PDF" butonu,
+// tarayıcının yazdır penceresinden PDF olarak kaydedilir), müşteri onayladığında
+// "Onaylandı" işaretlenir ve buton "Sözleşmeye İlerle"ye dönüşür (mevcut adım adım
+// sihirbazın sözleşme adımını yeniden kullanır — yeni akış icat edilmez).
+async function tkOnayVer(rentalId, durum){
+  if(!requireAdmin()) return;
+  const r = rentals.find(x=>x.id===rentalId);
+  if(!r){ showToast('Kiralama kaydı bulunamadı.', true); return; }
+  if(durum==='Onaylandi' && !r.customerId){ showToast('Onayı kaydetmeden önce teklife bir müşteri seçin (sihirbazda "Devam Et").', true); return; }
+  r.tkOnayDurumu = durum;
+  r.tkOnayTarihi = durum==='Beklemede' ? null : todayISO();
+  await persistRentals();
+  if(durum==='Onaylandi'){
+    logActivity('edit', `Teklif onaylandı: <b>${esc(vehicles.find(x=>x.id===r.vehicleId)?.plaka||rentalId)}</b> — sözleşme adımına geçilebilir.`);
+    showToast('Onay kaydedildi. "Sözleşmeye İlerle" ile sözleşmeyi hazırlayın.');
+  }else if(durum==='Reddedildi'){
+    logActivity('edit', `Teklif reddedildi: <b>${esc(vehicles.find(x=>x.id===r.vehicleId)?.plaka||rentalId)}</b>`);
+    showToast('Reddedildi olarak işaretlendi.');
+  }else{
+    showToast('Onay durumu sıfırlandı.');
+  }
+  renderTekliflerPage();
+}
+function tkPdfAc(rentalId){
+  const r = rentals.find(x=>x.id===rentalId); if(!r) return;
+  const v = vehicles.find(x=>x.id===r.vehicleId);
+  const m = r.customerId ? customers.find(x=>x.id===r.customerId) : null;
+  // Teklif numarası ilk üretimde atanır ve kayıtta sabit kalır (her açılışta değişmesin).
+  if(!r.tkNo){
+    r.tkNo = 'TK-' + new Date().getFullYear() + '-' + String(Math.floor(Math.random()*90000)+10000);
+    persistRentals();
+  }
+  const gecerlilik = new Date(Date.now() + 7*86400000).toISOString().slice(0,10);
+  const satir = (l,v2)=>`<tr><td class="lbl">${l}</td><td>${v2!=null&&v2!==''?v2:'—'}</td></tr>`;
+  const html = `<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>Teklif ${esc(r.tkNo)}</title>
+  <style>
+    *{box-sizing:border-box;}
+    body{font-family:Arial,Helvetica,sans-serif;color:#15171A;margin:0;padding:32px;background:#fff;}
+    .head{display:flex;align-items:center;gap:14px;border-bottom:3px solid #E1554E;padding-bottom:14px;margin-bottom:18px;}
+    .head img{width:42px;height:42px;}
+    .head h1{font-size:19px;margin:0;}
+    .head .d{font-size:13px;color:#666;margin-top:2px;}
+    .musteri{margin-bottom:18px;font-size:13px;}
+    table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:18px;}
+    td{padding:7px 10px;border-bottom:1px solid #ddd;}
+    td.lbl{width:38%;background:#F4F2F0;font-weight:bold;font-size:12px;text-transform:uppercase;letter-spacing:.3px;color:#555;}
+    .onay-kutu{border:2px solid #ccc;border-radius:8px;padding:16px;margin-top:22px;font-size:12.5px;color:#444;}
+    .imza-row{display:flex;gap:32px;margin-top:42px;}
+    .imza{flex:1;border-top:1.5px solid #333;padding-top:6px;font-size:12px;color:#666;text-align:center;}
+    .not{margin-top:16px;font-size:11.5px;color:#888;border-top:1px solid #eee;padding-top:10px;}
+    @media print{ body{padding:12mm;} }
+  </style></head>
+  <body>
+    <div class="head">
+      <img src="${SIRKET_LOGOS['PEKDOĞRU GRUP']}" alt="">
+      <div>
+        <h1>Kiralama Teklifi — ${esc(r.tkNo)}</h1>
+        <div class="d">Teklif tarihi: ${fmtTarih(todayISO())} · Geçerlilik: ${fmtTarih(gecerlilik)} (7 gün)</div>
+      </div>
+    </div>
+    <div class="musteri"><b>Müşteri:</b> ${esc(m?musteriGoruntuAdi(m):'—')}${m&&m.telefon?' · '+esc(m.telefon):''}${m&&m.adres?' · '+esc(m.adres):''}</div>
+    <table>
+      ${satir('Araç', v ? (esc(v.plaka)+' — '+esc([v.marka,v.model].filter(Boolean).join(' '))+(v.modelYili?' ('+esc(String(v.modelYili))+')':'')) : '—')}
+      ${satir('Kiralama dönemi', (r.baslangic||r.bitis) ? (fmtTarih(r.baslangic)+' → '+fmtTarih(r.bitis)) : '—')}
+      ${satir('Aylık kira bedeli', r.kiraTutari!=null ? Number(r.kiraTutari).toLocaleString('tr-TR',{maximumFractionDigits:2})+' ₺' : '—')}
+      ${satir('Depozito', r.depozito!=null ? Number(r.depozito).toLocaleString('tr-TR',{maximumFractionDigits:2})+' ₺' : '—')}
+      ${satir('Aylık km limiti', r.kmLimiti!=null ? Number(r.kmLimiti).toLocaleString('tr-TR')+' km' : '—')}
+      ${satir('Fazla km bedeli', r.fazlaKmBedeli!=null ? Number(r.fazlaKmBedeli).toLocaleString('tr-TR',{maximumFractionDigits:2})+' ₺/km' : '—')}
+      ${satir('Ek hizmetler / özel koşullar', esc(r.ekHizmetler||''))}
+    </table>
+    <div class="onay-kutu"><b>Onay:</b> Bu teklifi onaylıyorsanız, alt kısımda imza/tarih belirterek bize iletebilir ya da telefon/e-posta ile onay bildirebilirsiniz. Onay üzerine kira sözleşmesi hazırlanacak ve araç teslim randevusu planlanacaktır.</div>
+    <div class="imza-row">
+      <div class="imza">Müşteri — Ad Soyad / İmza / Tarih</div>
+      <div class="imza">PEKDOĞRU GRUP — Yetkili / İmza / Tarih</div>
+    </div>
+    <div class="not">PEKDOĞRU GRUP · Bu belge bilgilendirme amaçlı bir fiyat teklifidir; kesin satış/kira sözleşmesi niteliği taşımaz. Fiyatlar ${fmtTarih(gecerlilik)} tarihine kadar geçerlidir.</div>
+  </body></html>`;
+  const w = window.open('', '_blank');
+  if(!w){ showToast('PDF penceresi açılamadı — tarayıcı pop-up engelleyicisini kontrol edin.', true); return; }
+  w.document.open(); w.document.write(html); w.document.close();
+  w.onload = ()=>{ w.focus(); w.print(); };
 }
 // v.95: Kiralama iç sekmeleri
 window.krTabSet = function(t){
