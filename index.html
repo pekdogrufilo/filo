@@ -2415,7 +2415,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-24.218</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-24.219</div>
     </div>
   </div>
 </div>
@@ -2581,7 +2581,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-24.218</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-24.219</div>
     </div>
   </aside>
 <script>
@@ -8877,7 +8877,7 @@ async function hasarKaydet(id){
     if(!Array.isArray(v.hasarlar)) v.hasarlar = [];
     v.hasarlar.push(h);
     await persist();
-    logActivity('Hasar kaydı', `${v.plaka} — ${aciklama}${h.fotolar.length?` (${h.fotolar.length} foto)`:''}`).catch(()=>{});
+    logActivity('Hasar kaydı', `${esc(v.plaka)} — ${esc(aciklama)}${h.fotolar.length?` (${h.fotolar.length} foto)`:''}`).catch(()=>{});
     showToast(h.fotolar.length>1 ? `Hasar kaydı eklendi — ${h.fotolar.length} fotoğraf kaydedildi.` : 'Hasar kaydı eklendi.');
     document.getElementById('vehicleDetailOverlay')?.remove();
     openVehicleDetail(id);
@@ -9247,7 +9247,7 @@ async function kmManuelKaydet(id){
   const idx = vehicles.findIndex(x=>x.id===id);
   vehicles[idx] = {...v, kmGecmisi, sonKm: Math.round(km), aykm: yeniKayit.toplamKm};
   await persist();
-  logActivity('Km güncellendi (manuel)', `${v.plaka} — ${Math.round(km).toLocaleString('tr-TR')} km (${yeniKayit.kaynak})`).catch(()=>{});
+  logActivity('Km güncellendi (manuel)', `${esc(v.plaka)} — ${Math.round(km).toLocaleString('tr-TR')} km (${esc(yeniKayit.kaynak)})`).catch(()=>{});
   showToast('Km güncellendi.');
   if(document.getElementById('vehicleDetailOverlay')){
     document.getElementById('vehicleDetailOverlay').remove();
@@ -9379,7 +9379,7 @@ async function kmFotoKaydet(id){
   const idx = vehicles.findIndex(x=>x.id===id);
   vehicles[idx] = {...v, kmGecmisi, sonKm: Math.round(km), aykm: yeniKayit.toplamKm};
   await persist();
-  logActivity('Km güncellendi (fotoğraf)', `${v.plaka} — ${Math.round(km).toLocaleString('tr-TR')} km`).catch(()=>{});
+  logActivity('Km güncellendi (fotoğraf)', `${esc(v.plaka)} — ${Math.round(km).toLocaleString('tr-TR')} km`).catch(()=>{});
   showToast('Km güncellendi.');
   window.__kmFotoDataUrl = null;
   document.getElementById('kmFotoOverlay')?.remove();
@@ -10884,13 +10884,11 @@ function renderCloudAuth(mode, opts){
       <button class="lock-btn-main" id="claSubmit">Giriş Yap</button>
       <button class="lock-forgot" id="claForgot">Şifremi unuttum</button>
       <div class="lock-divider"></div>
-      <button class="lock-forgot" id="claGotoSignup" style="margin-top:14px;">Yeni şirket kaydı oluştur</button>
-      <button class="lock-forgot" id="claGotoInvite">Bir davetim var, katıl</button>
+      <button class="lock-forgot" id="claGotoInvite" style="margin-top:14px;">Bir davetim var, katıl</button>
     `;
     wireEyeToggles();
     document.getElementById('claSubmit').onclick = onCloudLoginSubmit;
     document.getElementById('claForgot').onclick = onCloudForgotPassword;
-    document.getElementById('claGotoSignup').onclick = ()=>renderCloudAuth('signup');
     document.getElementById('claGotoInvite').onclick = ()=>renderCloudAuth('invite');
     document.getElementById('claEmail').addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('claPassword').focus(); });
     document.getElementById('claPassword').addEventListener('keydown', e=>{ if(e.key==='Enter') onCloudLoginSubmit(); });
@@ -10934,28 +10932,21 @@ async function onCloudLoginSubmit(){
 }
 
 async function onCloudSignupSubmit(){
-  const unvan = (document.getElementById('clsUnvan').value||'').trim();
-  const email = (document.getElementById('clsEmail').value||'').trim();
-  const p1 = document.getElementById('clsPassword').value;
-  const p2 = document.getElementById('clsPassword2').value;
-  const err = document.getElementById('lockErr');
-  err.textContent = '';
-  if(!unvan){ err.textContent = 'Şirket adını girin.'; shakeLockCard(); return; }
-  if(!email){ err.textContent = 'E-posta adresini girin.'; shakeLockCard(); return; }
-  if(p1.length<6){ err.textContent = 'Şifre en az 6 karakter olmalı.'; shakeLockCard(); return; }
-  if(p1!==p2){ err.textContent = 'Şifreler birbiriyle eşleşmiyor.'; shakeLockCard(); return; }
-  const btn = document.getElementById('clsSubmit');
-  btn.disabled = true;
-  try{
-    const cred = await cloudAuth().createUserWithEmailAndPassword(email, p1);
-    const userDoc = await createCompanyAndAdminUser(cred.user.uid, email, unvan);
-    await enterCloudSession(cred.user, userDoc);
-  }catch(e){
-    err.textContent = cloudAuthErrorMessage(e);
-    shakeLockCard();
-  }finally{
-    btn.disabled = false;
-  }
+  // v.219: GÜVENLİK — "Yeni şirket kaydı oluştur" tamamen KAPATILDI. Sebep: filo verisi
+  // (vehicles/activityLog/expenses/sozlesmeler/customers vb.) hâlâ eski filoPaneliData blob
+  // deposunda, şirkete göre AYRILMADAN, sabit anahtarlarla (ör. 'vehicles') tutuluyor — bkz.
+  // satır ~10664'teki FAZ9 notu. Bu, herkese açık self-servis şirket kaydının, Firestore
+  // kuralları yeterince sıkı değilse, YENİ kayıt olan HERHANGİ birinin bu panelin GERÇEK
+  // verisini (tüm araçlar, müşteriler, sözleşmeler, mali kayıtlar) okuyup/değiştirebilmesi
+  // riskini taşıdığı anlamına geliyor. Kullanıcı zaten multi-tenant/white-label istemediğini
+  // belirtmişti; bu fonksiyon artık hiçbir koşulda yeni şirket/kullanıcı OLUŞTURMUYOR — arayüz
+  // düğmesi de kaldırıldı (bkz. renderCloudAuth 'login' dalı), bu satır konsoldan doğrudan
+  // çağrılsa bile aynı korumayı sağlıyor. ÖNEMLİ: bu SADECE istemci tarafı bir önlemdir — asıl
+  // ve kalıcı çözüm Firebase Console'da (a) Firestore kurallarında filoPaneliData'nın gerçek
+  // şirket/kullanıcıyla sınırlandırılması ve/veya (b) Authentication ayarlarından e-posta/şifre
+  // ile "sign-up"ın (yeni hesap oluşturmanın) tamamen kapatılmasıdır — o ayarlara bu ortamdan
+  // erişimim yok, kullanıcının kendisinin kontrol etmesi gerekiyor.
+  showToast('Yeni şirket kaydı şu anda kapalı. Ekibe katılmak için bir davet linki kullanın.', true);
 }
 
 // v.196: "ekip üyesi davet et" akışının katılma tarafı — bir yönetici ekipDavetGonder() ile
@@ -15534,7 +15525,7 @@ async function otoBelgeKaydetVeBildir(v, tur, bilgi, onceden, file, statusEl){
     const genelBelgeMsg = std ? '' : ` (${esc(v.plaka)} aracının "Belgeler" sekmesindeki genel dosya listesine eklendi — bu bir masraf ya da cari/tedarikçi bakiye kaydı OLUŞTURMAZ; tutar varsa Masraf Yönetimi'nden ayrıca girmen gerekir.)`;
     const tarihMsg = tarihGuncellendi ? `, tarih ${fmtTarih(okunanTarih)} olarak kaydedildi` : (ruhsatM ? `, muayene tarihi ${fmtTarih(okunanTarih)} olarak işlendi` : '');
     const sozMsg = sozlesmeMesajOlustur(sozSonuc);
-    logActivity('Belge yüklendi', `${v.plaka} — ${std?std.label:genelTurEtiket} (${file.name})`).catch(()=>{});
+    logActivity('Belge yüklendi', `${esc(v.plaka)} — ${std?std.label:genelTurEtiket} (${esc(file.name)})`).catch(()=>{});
     showToast(`Kaydedildi: ${esc(v.plaka)} — ${std?std.label:genelTurEtiket} "${esc(file.name)}"${tarihMsg}.${sozMsg}${tarihCeliski}${genelBelgeMsg}`);
     renderBelgelerPage();
   }catch(e){
@@ -15959,7 +15950,7 @@ async function belgeTopluTek(file, fallbackId){
     }
     if(tur==='sozlesme') sozlesmeAlanlariUygula(v, bilgi);
     await persist();
-    logActivity('Belge yüklendi', `${v.plaka} — ${std?std.label:tur} (${file.name})`).catch(()=>{});
+    logActivity('Belge yüklendi', `${esc(v.plaka)} — ${std?std.label:esc(tur)} (${esc(file.name)})`).catch(()=>{});
     return {durum:'ok', plaka:v.plaka, etiket: std?std.label:(tur==='diger'?'Genel belge':tur), tarih: okunanTarih, celiski: tarihCeliski};
   }catch(e){ return {durum:'hata', mesaj: e.message||'bilinmeyen hata'}; }
 }
@@ -20955,7 +20946,7 @@ async function aiBelgeYukle(file){
     const ruhsatM = ruhsatMuayeneUygula(v, tur, okunanTarih);
     const sozSonuc = tur==='sozlesme' ? sozlesmeAlanlariUygula(v, bilgi) : null;
     await persist();
-    logActivity('Belge yüklendi', `${v.plaka} — ${std?std.label:tur} (${file.name}) [AI Asistanı]`).catch(()=>{});
+    logActivity('Belge yüklendi', `${esc(v.plaka)} — ${std?std.label:esc(tur)} (${esc(file.name)}) [AI Asistanı]`).catch(()=>{});
     const etiket = std ? std.label : (tur==='diger'?'Genel belge':tur);
     const tarihMsg = okunanTarih && std && std.tarihF ? ` Bitiş tarihi <b>${fmtTarih(okunanTarih)}</b> olarak güncellendi.` : (ruhsatM ? ` Belgedeki muayene tarihi <b>${fmtTarih(okunanTarih)}</b> olarak işlendi.` : '');
     const sozMsg = esc(sozlesmeMesajOlustur(sozSonuc));
@@ -21006,7 +20997,7 @@ async function aiPendingBelgeCozumle(txt){
     const ruhsatM = ruhsatMuayeneUygula(v, tur, okunanTarih);
     const sozSonuc = tur==='sozlesme' ? sozlesmeAlanlariUygula(v, bilgi) : null;
     await persist();
-    logActivity('Belge yüklendi', `${v.plaka} — ${std?std.label:tur} (${pending.file.name}) [AI Asistanı]`).catch(()=>{});
+    logActivity('Belge yüklendi', `${esc(v.plaka)} — ${std?std.label:esc(tur)} (${esc(pending.file.name)}) [AI Asistanı]`).catch(()=>{});
     const etiket = std ? std.label : (tur==='diger'?'Genel belge':tur);
     const tarihMsg = okunanTarih && std && std.tarihF ? ` Bitiş tarihi <b>${fmtTarih(okunanTarih)}</b> olarak güncellendi.` : (ruhsatM ? ` Belgedeki muayene tarihi <b>${fmtTarih(okunanTarih)}</b> olarak işlendi.` : '');
     const sozMsg = esc(sozlesmeMesajOlustur(sozSonuc));
@@ -22144,7 +22135,7 @@ async function kmRaporuYukle(file){
       </div>
       <div style="max-height:300px;overflow-y:auto;">${logLines.join('')}</div>
     `;
-    logActivity('add', `Km raporu yüklendi: ${donem} — ${eslesme} araç güncellendi`);
+    logActivity('add', `Km raporu yüklendi: ${esc(donem)} — ${eslesme} araç güncellendi`);
 
   }catch(e){
     log.innerHTML = `<div style="color:var(--red)">Hata: ${esc(e.message||'Bilinmeyen hata')}</div>`;
