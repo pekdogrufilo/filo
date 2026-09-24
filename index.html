@@ -2415,7 +2415,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-23.209</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-23.210</div>
     </div>
   </div>
 </div>
@@ -2581,7 +2581,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-23.209</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-23.210</div>
     </div>
   </aside>
 <script>
@@ -8087,19 +8087,30 @@ function openVehicleDetail(id){
 
   // Kronolojik geçmiş: masraflar + hasarlar + otomatik belgeler + km + teslim
   const otoDocs = Array.isArray(v.otoBelgeler) ? v.otoBelgeler : [];
+  // v.210: "Masraf kaydı girdi ama araç geçmişinde yok" — kök sebep, bu dizinin en sonunda
+  // uygulanan .filter(g=>g.d) idi: tarihi boş/eksik olan HERHANGİ bir kayıt (özellikle eski/
+  // içe aktarılmış masraf kayıtları, tarih alanı hiç doldurulmamış olabilir) "Toplam Masraf"
+  // kartında sayılmaya devam ederken, Geçmiş sekmesinde sessizce hiç görünmüyordu — kullanıcı
+  // "masrafı ekledim, toplam arttı ama listede yok" diye şaşırıyordu. Artık tarihi olmayan
+  // kayıtlar ATILMIYOR, en altta "Tarih belirtilmemiş" başlığı altında gösteriliyor (aşağıdaki
+  // sort zaten boş d'yi en sona atıyor — localeCompare '' > herhangi bir tarihten küçük çıkar).
+  // Ayrıca masraf tipi karşılaştırması ('tamir'/'bakım'/'lastik') küçük harfle yazılmıştı ama
+  // gerçek masraf kayıtlarındaki tip değerleri büyük harfle başlıyor ('Tamir','Bakım','Lastik')
+  // — hiçbir zaman eşleşmediği için bu masraflar "servis" yerine hep "masraf" ikonuyla
+  // gösteriliyordu (kayıp değil ama yanlış kategori/ikondu); artık case-insensitive karşılaştırılıyor.
   const gecmis = [
-    ...vMasraf.map(e=>({d:e.tarih||'', tip:e.tip==='tamir'||e.tip==='bakım'||e.tip==='lastik'?'servis':'masraf', baslik:(e.tip||'Masraf').charAt(0).toLocaleUpperCase('tr-TR')+(e.tip||'Masraf').slice(1), detay:e.aciklama||e.firma||'', tutar:e.tutar, tarihTxt:fmtTarih(e.tarih||''), onclick:e.hasFis?`fisBelgeGor('${e.id}')`:''})),
-    ...hasarlar.map(h=>({d:h.tarih||'', tip:'hasar', baslik:'Hasar / Kaza', detay:h.aciklama||'', tutar:h.tutar, tarihTxt:fmtTarih(h.tarih||''), onclick:h.fotoKey?`hasarFotoGor('${id}','${h.id}')`:''})),
+    ...vMasraf.map(e=>({d:e.tarih||'', tip:['tamir','bakım','lastik'].includes((e.tip||'').toLocaleLowerCase('tr-TR'))?'servis':'masraf', baslik:(e.tip||'Masraf').charAt(0).toLocaleUpperCase('tr-TR')+(e.tip||'Masraf').slice(1), detay:e.aciklama||e.firma||'', tutar:e.tutar, tarihTxt:fmtTarih(e.tarih||'')||'Tarih belirtilmemiş', onclick:e.hasFis?`fisBelgeGor('${e.id}')`:''})),
+    ...hasarlar.map(h=>({d:h.tarih||'', tip:'hasar', baslik:'Hasar / Kaza', detay:h.aciklama||'', tutar:h.tutar, tarihTxt:fmtTarih(h.tarih||'')||'Tarih belirtilmemiş', onclick:h.fotoKey?`hasarFotoGor('${id}','${h.id}')`:''})),
     ...otoDocs.map(o=>({d:(o.tarih||'').slice(0,10)||'', tip:o.tur==='servis'?'servis':'belge', baslik:o.tur==='diger'?'Belge yüklendi':(o.tur.charAt(0).toLocaleUpperCase('tr-TR')+o.tur.slice(1))+' belgesi', detay:o.adi, tutar:null, tarihTxt:fmtTarih((o.tarih||'').slice(0,10))||'tarih yok', onclick:`viewOtoDoc('${id}',${otoDocs.indexOf(o)})`})),
-    ...kmGecmisi.map(k=>({d:k.donem?k.donem+'-01':'', tip:'km', baslik:'Km raporu', detay:(k.toplamKm?Number(k.toplamKm).toLocaleString('tr-TR')+' km':''), tutar:null, tarihTxt:k.donem||'', onclick:''})),
-    ...(isAdmin() ? hakedisGecmisi.map(h=>({d:h.donemKey?h.donemKey+'-01':'', tip:'hakedis', baslik:'Hakediş kaydedildi', detay:h.donem||'', tutar:h.tutar, tarihTxt:h.donem||'', onclick:''})) : []),
+    ...kmGecmisi.map(k=>({d:k.donem?k.donem+'-01':'', tip:'km', baslik:'Km raporu', detay:(k.toplamKm?Number(k.toplamKm).toLocaleString('tr-TR')+' km':''), tutar:null, tarihTxt:k.donem||'Tarih belirtilmemiş', onclick:''})),
+    ...(isAdmin() ? hakedisGecmisi.map(h=>({d:h.donemKey?h.donemKey+'-01':'', tip:'hakedis', baslik:'Hakediş kaydedildi', detay:h.donem||'', tutar:h.tutar, tarihTxt:h.donem||'Tarih belirtilmemiş', onclick:''})) : []),
     ...(v.teslimTarih?[{d:v.teslimTarih, tip:'teslim', baslik:'Araç teslim edildi', detay:v.teslimKm?Number(v.teslimKm).toLocaleString('tr-TR')+' km':'', tutar:null, tarihTxt:fmtTarih(v.teslimTarih), onclick:''}]:[]),
-    ...(v.durumOlaylari||[]).map(o=>({d:o.tarih||'', tip:o.tip==='satis'?'satis':'pert', baslik:o.tip==='satis'?'Araç satıldı':'Pert kaydı (kaza)', detay:o.aciklama||'', tutar:o.tutar||null, tarihTxt:fmtTarih(o.tarih||''), onclick:''})),
+    ...(v.durumOlaylari||[]).map(o=>({d:o.tarih||'', tip:o.tip==='satis'?'satis':'pert', baslik:o.tip==='satis'?'Araç satıldı':'Pert kaydı (kaza)', detay:o.aciklama||'', tutar:o.tutar||null, tarihTxt:fmtTarih(o.tarih||'')||'Tarih belirtilmemiş', onclick:''})),
     ...(v.servisGirisleri||[]).flatMap(k=>[
-      {d:k.giris||'', tip:'servis', baslik:'Servise girdi', detay:[k.yer, k.islem].filter(Boolean).join(' · '), tutar:k.tutar, tarihTxt:fmtTarih(k.giris||''), onclick:''},
+      {d:k.giris||'', tip:'servis', baslik:'Servise girdi', detay:[k.yer, k.islem].filter(Boolean).join(' · '), tutar:k.tutar, tarihTxt:fmtTarih(k.giris||'')||'Tarih belirtilmemiş', onclick:''},
       ...(k.cikis ? [{d:k.cikis, tip:'servis', baslik:'Servisten çıktı', detay:[k.yer, (()=>{ try{ const g=new Date(k.giris), c=new Date(k.cikis); const n=Math.round((c-g)/86400000); return n>=0?n+' gün serviste':''; }catch(e){ return ''; } })()].filter(Boolean).join(' · '), tutar:null, tarihTxt:fmtTarih(k.cikis), onclick:''}] : []),
     ]),
-  ].filter(g=>g.d).sort((a,b)=>(b.d||'').localeCompare(a.d||''));
+  ].sort((a,b)=>(b.d||'').localeCompare(a.d||''));
 
   // Durum rengi
   const durumRenk = v.durum==='Kirada'?'#36A168':v.durum==='Serviste'?'#E1554E':v.durum==='Pert'?'#7B7873':v.durum==='Satıldı'?'#9B7ED8':'#E8A132';
@@ -8517,6 +8528,12 @@ function openVehicleDetail(id){
                 const ayAdi = aylar[Number(parcalar[1])-1] || '';
                 ayBaslik = `<div class="gh-ay-baslik" style="font-size:10.5px;font-weight:700;color:var(--steel-500);text-transform:uppercase;letter-spacing:.6px;margin:${ilk?'0':'16px'} 0 6px;padding:0 2px;">${ayAdi} ${parcalar[0]||''}</div>`;
                 ilk = false;
+              }else if(!ayKey && sonAy!=='__tarihsiz__'){
+                // v.210: tarihi olmayan kayıtlar artık silinmiyor (bkz. yukarıdaki gecmis dizisi) —
+                // sort zaten bunları en sona attığı için burada tek seferlik bir ayırıcı başlık yeterli.
+                sonAy = '__tarihsiz__';
+                ayBaslik = `<div class="gh-ay-baslik" style="font-size:10.5px;font-weight:700;color:var(--steel-500);text-transform:uppercase;letter-spacing:.6px;margin:${ilk?'0':'16px'} 0 6px;padding:0 2px;">Tarih belirtilmemiş</div>`;
+                ilk = false;
               }
               return `${ayBaslik}<div class="gh-row" data-gtip="${g.tip}" style="display:flex;gap:11px;padding:8px;border-radius:9px;align-items:flex-start;">
                 <div style="flex-shrink:0;width:28px;height:28px;border-radius:9px;background:color-mix(in srgb, ${stil.renk} 16%, transparent);color:${stil.renk};display:flex;align-items:center;justify-content:center;">${stil.ico}</div>
@@ -8589,19 +8606,21 @@ function aracServisGecmisiPdf(id){
   const hakedisGecmisi = v.hakedisGecmisi || [];
   const hasarlar = Array.isArray(v.hasarlar) ? v.hasarlar : [];
   const otoDocs = Array.isArray(v.otoBelgeler) ? v.otoBelgeler : [];
+  // v.210: openVehicleDetail'deki aynı düzeltme burada da uygulandı — tarihi olmayan kayıtlar
+  // artık raporun tamamen dışında bırakılmıyor (bkz. openVehicleDetail'deki v.210 notu).
   const gecmis = [
-    ...vMasraf.map(e=>({d:e.tarih||'', baslik:(e.tip||'Masraf').charAt(0).toLocaleUpperCase('tr-TR')+(e.tip||'Masraf').slice(1), detay:e.not||e.aciklama||e.firma||'', tutar:e.tutar, tarihTxt:fmtTarih(e.tarih||'')})),
-    ...hasarlar.map(h=>({d:h.tarih||'', baslik:'Hasar / Kaza', detay:h.aciklama||'', tutar:h.tutar, tarihTxt:fmtTarih(h.tarih||'')})),
+    ...vMasraf.map(e=>({d:e.tarih||'', baslik:(e.tip||'Masraf').charAt(0).toLocaleUpperCase('tr-TR')+(e.tip||'Masraf').slice(1), detay:e.not||e.aciklama||e.firma||'', tutar:e.tutar, tarihTxt:fmtTarih(e.tarih||'')||'Tarih belirtilmemiş'})),
+    ...hasarlar.map(h=>({d:h.tarih||'', baslik:'Hasar / Kaza', detay:h.aciklama||'', tutar:h.tutar, tarihTxt:fmtTarih(h.tarih||'')||'Tarih belirtilmemiş'})),
     ...otoDocs.map(o=>({d:(o.tarih||'').slice(0,10)||'', baslik:o.tur==='diger'?'Belge yüklendi':(o.tur.charAt(0).toLocaleUpperCase('tr-TR')+o.tur.slice(1))+' belgesi', detay:o.adi, tutar:null, tarihTxt:fmtTarih((o.tarih||'').slice(0,10))||'tarih yok'})),
-    ...kmGecmisi.map(k=>({d:k.donem?k.donem+'-01':'', baslik:'Km raporu', detay:(k.toplamKm?Number(k.toplamKm).toLocaleString('tr-TR')+' km':''), tutar:null, tarihTxt:k.donem||''})),
-    ...(isAdmin() ? hakedisGecmisi.map(h=>({d:h.donemKey?h.donemKey+'-01':'', baslik:'Hakediş kaydedildi', detay:h.donem||'', tutar:h.tutar, tarihTxt:h.donem||''})) : []),
+    ...kmGecmisi.map(k=>({d:k.donem?k.donem+'-01':'', baslik:'Km raporu', detay:(k.toplamKm?Number(k.toplamKm).toLocaleString('tr-TR')+' km':''), tutar:null, tarihTxt:k.donem||'Tarih belirtilmemiş'})),
+    ...(isAdmin() ? hakedisGecmisi.map(h=>({d:h.donemKey?h.donemKey+'-01':'', baslik:'Hakediş kaydedildi', detay:h.donem||'', tutar:h.tutar, tarihTxt:h.donem||'Tarih belirtilmemiş'})) : []),
     ...(v.teslimTarih?[{d:v.teslimTarih, baslik:'Araç teslim edildi', detay:v.teslimKm?Number(v.teslimKm).toLocaleString('tr-TR')+' km':'', tutar:null, tarihTxt:fmtTarih(v.teslimTarih)}]:[]),
-    ...(v.durumOlaylari||[]).map(o=>({d:o.tarih||'', baslik:o.tip==='satis'?'Araç satıldı':'Pert kaydı (kaza)', detay:o.aciklama||'', tutar:o.tutar||null, tarihTxt:fmtTarih(o.tarih||'')})),
+    ...(v.durumOlaylari||[]).map(o=>({d:o.tarih||'', baslik:o.tip==='satis'?'Araç satıldı':'Pert kaydı (kaza)', detay:o.aciklama||'', tutar:o.tutar||null, tarihTxt:fmtTarih(o.tarih||'')||'Tarih belirtilmemiş'})),
     ...(v.servisGirisleri||[]).flatMap(k=>[
-      {d:k.giris||'', baslik:'Servise girdi', detay:[k.yer, k.islem].filter(Boolean).join(' · '), tutar:k.tutar, tarihTxt:fmtTarih(k.giris||'')},
+      {d:k.giris||'', baslik:'Servise girdi', detay:[k.yer, k.islem].filter(Boolean).join(' · '), tutar:k.tutar, tarihTxt:fmtTarih(k.giris||'')||'Tarih belirtilmemiş'},
       ...(k.cikis ? [{d:k.cikis, baslik:'Servisten çıktı', detay:[k.yer, (()=>{ try{ const g=new Date(k.giris), c=new Date(k.cikis); const n=Math.round((c-g)/86400000); return n>=0?n+' gün serviste':''; }catch(e){ return ''; } })()].filter(Boolean).join(' · '), tutar:null, tarihTxt:fmtTarih(k.cikis)}] : []),
     ]),
-  ].filter(g=>g.d).sort((a,b)=>(b.d||'').localeCompare(a.d||''));
+  ].sort((a,b)=>(b.d||'').localeCompare(a.d||''));
 
   const belgeler = [
     {ad:'Sigorta', tarih:v.sigortaTarihi},
@@ -12373,7 +12392,7 @@ function renderDashboard(){
     <div class="dcard" style="margin-bottom:16px;padding:14px 16px;">
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
         <span style="font-size:12px;font-weight:700;color:var(--text-3);letter-spacing:.4px;margin-right:4px;">SIK İŞLEMLER</span>
-        <button onclick="openMasrafDrawer()" style="padding:8px 16px;border-radius:999px;font-size:12.5px;font-weight:600;cursor:pointer;border:1px solid var(--border-2);background:var(--surface-2);color:var(--text);">Masraf Gir</button>
+        <button onclick="switchPage('masraf');setTimeout(()=>document.getElementById('mpPlaka')?.focus(),80)" style="padding:8px 16px;border-radius:999px;font-size:12.5px;font-weight:600;cursor:pointer;border:1px solid var(--border-2);background:var(--surface-2);color:var(--text);">Masraf Gir</button>
         <button onclick="switchPage('excel');setTimeout(()=>{const a=document.getElementById('kiraYuklemeArea');if(a)a.scrollIntoView({behavior:'smooth',block:'center'});},80)" style="padding:8px 16px;border-radius:999px;font-size:12.5px;font-weight:600;cursor:pointer;border:1px solid var(--border-2);background:var(--surface-2);color:var(--text);">Hakediş / Fatura Yükle</button>
         <button onclick="switchPage('excel');setTimeout(()=>{const a=document.getElementById('kmYuklemeArea');if(a)a.scrollIntoView({behavior:'smooth',block:'center'});},80)" style="padding:8px 16px;border-radius:999px;font-size:12.5px;font-weight:600;cursor:pointer;border:1px solid var(--border-2);background:var(--surface-2);color:var(--text);">Km Raporu Yükle</button>
         <button onclick="switchPage('kiralamama')" onerror="" style="display:none;"></button>
