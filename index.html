@@ -2430,7 +2430,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-24.222</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-24.223</div>
     </div>
   </div>
 </div>
@@ -2532,6 +2532,7 @@
         <button class="sb-group-head" type="button">Kiralama<svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
         <div class="sb-group-body">
           <button class="sb-item" data-page="kiralama"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Kiralama İşlemleri</button>
+          <button class="sb-item" data-page="teklifler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z"/></svg>Teklifler<span class="sb-badge" id="sbTekliflerBadge" style="display:none;background:var(--amber);">0</span></button>
           <button class="sb-item" data-page="musteriler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Müşteriler</button>
           <button class="sb-item" data-page="hasarcezalar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Hasar &amp; Cezalar</button>
         </div>
@@ -2596,7 +2597,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-24.222</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-24.223</div>
     </div>
   </aside>
 <script>
@@ -2854,6 +2855,7 @@
 </section>
 
 <section class="page" data-page="kiralama" id="page-kiralama"></section>
+<section class="page" data-page="teklifler" id="page-teklifler"></section>
 <section class="page" data-page="musteriler" id="page-musteriler"></section>
 <section class="page" data-page="cari" id="page-cari"></section>
 <section class="page" data-page="faturalar" id="page-faturalar"></section>
@@ -4021,6 +4023,14 @@ function updateShellChrome(){
   if(tileLastik){
     if(lastikUyari>0){ tileLastik.textContent = lastikUyari; tileLastik.style.display='flex'; }
     else{ tileLastik.style.display='none'; }
+  }
+  // Teklifler bölümü rozeti — teklif durumuna göre: Gönderilen/Taslak sayısı
+  const sbTeklif = document.getElementById('sbTekliflerBadge');
+  if(sbTeklif){
+    const teklifRozet = (typeof quotes!=='undefined'&&Array.isArray(quotes))
+      ? quotes.filter(q=>q && q.durum!=='Kazanildi' && q.durum!=='Kaybedildi').length : 0;
+    if(teklifRozet>0){ sbTeklif.textContent = teklifRozet; sbTeklif.style.display='inline-block'; }
+    else{ sbTeklif.style.display='none'; }
   }
 }
 window.addEventListener('resize', ()=>{ const b=document.getElementById('sbToggleBtn'); if(b) b.style.display = window.innerWidth<=900 ? 'flex' : 'none'; });
@@ -10371,19 +10381,19 @@ const ROLE_DEFS = [
     currentRoleEsdegeri:'admin', ekipYonet:true, paraGorebilir:true, sayfalar:null },
   { id:'operasyon-muduru', ad:'Operasyon Müdürü', aciklama:'Tüm operasyonel sayfalar (araç, kiralama, bakım, finans); kullanıcı yönetemez.',
     currentRoleEsdegeri:'admin', ekipYonet:false, paraGorebilir:true,
-    sayfalar:['genel-bakis','bildirimler','arac-yonetimi','km-takibi','belgeler','docupload','kiralama','musteriler','hasarcezalar','cari','faturalar','finansal-analiz','masraf','bakim','yakit','lastikler','raporlar','ai','excel','ayarlar'] },
+    sayfalar:['genel-bakis','bildirimler','arac-yonetimi','km-takibi','belgeler','docupload','kiralama','teklifler','musteriler','hasarcezalar','cari','faturalar','finansal-analiz','masraf','bakim','yakit','lastikler','raporlar','ai','excel','ayarlar'] },
   { id:'filo-sorumlusu', ad:'Filo Sorumlusu', aciklama:'Araç ekleme/düzenleme, kiralama, iade, bakım — silme yok, finans göremez.',
     currentRoleEsdegeri:'admin', ekipYonet:false, paraGorebilir:false,
-    sayfalar:['genel-bakis','bildirimler','arac-yonetimi','km-takibi','belgeler','docupload','kiralama','musteriler','hasarcezalar','bakim','yakit','lastikler','raporlar'] },
+    sayfalar:['genel-bakis','bildirimler','arac-yonetimi','km-takibi','belgeler','docupload','kiralama','teklifler','musteriler','hasarcezalar','bakim','yakit','lastikler','raporlar'] },
   { id:'muhasebe', ad:'Muhasebe / Finans', aciklama:'Masraf, tahsilat, cari, fatura ve finansal analiz — araç kaydı düzenleyemez.',
     currentRoleEsdegeri:'admin', ekipYonet:false, paraGorebilir:true,
     sayfalar:['genel-bakis','bildirimler','cari','faturalar','finansal-analiz','masraf','raporlar'] },
   { id:'saha-personeli', ad:'Saha Personeli / Şoför Koordinatörü', aciklama:'Sadece teslim/iade ve km girişi — finans ve raporları göremez.',
     currentRoleEsdegeri:'staff', ekipYonet:false, paraGorebilir:false,
-    sayfalar:['genel-bakis','bildirimler','arac-yonetimi','km-takibi','kiralama'] },
+    sayfalar:['genel-bakis','bildirimler','arac-yonetimi','km-takibi','kiralama','teklifler'] },
   { id:'musteri-temsilcisi', ad:'Müşteri Temsilcisi', aciklama:'Müşteri ve sözleşme işlemleri — araç silemez, finans detayını göremez.',
     currentRoleEsdegeri:'admin', ekipYonet:false, paraGorebilir:false,
-    sayfalar:['genel-bakis','bildirimler','kiralama','musteriler','raporlar'] },
+    sayfalar:['genel-bakis','bildirimler','kiralama','teklifler','musteriler','raporlar'] },
   { id:'bakim-sorumlusu', ad:'Bakım / Servis Sorumlusu', aciklama:'Bakım kaydı, belge yükleme, lastik/servis — kiralama ve finans göremez.',
     currentRoleEsdegeri:'admin', ekipYonet:false, paraGorebilir:false,
     sayfalar:['genel-bakis','bildirimler','belgeler','docupload','bakim','yakit','lastikler','hasarcezalar'] },
@@ -11223,6 +11233,7 @@ const PAGE_META = {
   'arac-yonetimi': {title:'Araç Yönetimi', sub:'Tüm araçları görüntüle, ekle ve düzenle'},
   'km-takibi': {title:'Km Takibi', sub:'Filo genelinde kilometre, kira km aşımı ve bakım-km uyarıları'},
   'kiralama': {title:'Kiralama İşlemleri', sub:'Kiradaki araçlar ve kiracı bilgileri'},
+  'teklifler': {title:'Teklifler', sub:'Adım adım akışta oluşturulan kiralama teklifleri'},
   'musteriler': {title:'Müşteriler', sub:'Kiracı ve kurumlar: araçlar, kira toplamı ve geçmiş'},
   'cari': {title:'Cari & Tahsilat', sub:'Müşteri bazlı cari bakiye, tahsilat ve ekstre'},
   'faturalar': {title:'Faturalar', sub:'Fatura oluştur, durum takibi yap, yazdır'},
@@ -11462,6 +11473,7 @@ function renderCurrentPage(){
   else if(key==='ayarlar') renderAyarlarPage();
   else if(key==='ekip') renderEkipPage();
   else if(key==='kiralama') renderKiralamaPage();
+  else if(key==='teklifler') renderTekliflerPage();
   else if(key==='musteriler') renderMusterilerPage();
   else if(key==='cari') renderCariPage();
   else if(key==='faturalar') renderFaturalarPage();
@@ -15081,6 +15093,94 @@ function renderKiralamaPage(){
     </div>
   `;
   wireQuickActions(page);
+}
+// v.209: Teklifler — adım adım akışta oluşturulan teklif/rezervasyon/sözleşme-hazır
+// kayıtlarının tek ekranda listelendiği sayfa. Kiralama sayfasındaki "Devam Eden Adım
+// Adım Kiralamalar" kartının genişletilmiş hâlidir: durum/müşteri filtresi, potansiyel
+// değer özeti ve satır bazlı aksiyonlar (devam et / iptal) sunar.
+function renderTekliflerPage(){
+  const page = document.getElementById('page-teklifler');
+  if(!page) return;
+  const AKTIF = ['teklif','rezervasyon','sozlesmeHazir'];
+  const durumFiltre = window.__tkDurumFiltre || 'aktif';
+  const musteriFiltre = window.__tkMusteriFiltre || '';
+  let liste = rentals.filter(r=>durumFiltre==='hepsi' ? true : AKTIF.includes(r.durum));
+  if(musteriFiltre) liste = liste.filter(r=>r.customerId===musteriFiltre);
+  liste = [...liste].sort((a,b)=>String(b.baslangic||'').localeCompare(String(a.baslangic||'')) || String(b.id).localeCompare(String(a.id)));
+
+  const aktifSayi = rentals.filter(r=>AKTIF.includes(r.durum)).length;
+  const potansiyel = rentals.filter(r=>AKTIF.includes(r.durum)).reduce((s,r)=>s+(Number(r.kiraTutari)||0),0);
+  const bekleyenSoz = rentals.filter(r=>r.durum==='sozlesmeHazir').length;
+
+  const tkSatir = r=>{
+    const v = vehicles.find(x=>x.id===r.vehicleId);
+    const m = r.customerId ? customers.find(c=>c.id===r.customerId) : null;
+    const donem = (r.baslangic||r.bitis) ? `${r.baslangic?fmtTarih(r.baslangic):'—'} → ${r.bitis?fmtTarih(r.bitis):'—'}` : '—';
+    return `<tr style="border-bottom:1px solid var(--border);">
+      <td style="padding:10px 14px;">${m?esc(musteriGoruntuAdi(m)):'<span style="color:var(--steel-300);">Müşteri seçilmedi</span>'}</td>
+      <td style="padding:10px 14px;">${v?`<span class="mini-plaka">${esc(v.plaka)}</span>`:'<span style="color:var(--steel-300);">—</span>'} <span style="font-size:12px;color:var(--text-3);">${v?esc([v.marka,v.model].filter(Boolean).join(' ')):''}</span></td>
+      <td style="padding:10px 14px;font-size:13px;">${donem}</td>
+      <td style="padding:10px 14px;font-family:'SF Mono',SFMono-Regular,Consolas,monospace;">${r.kiraTutari!=null?fmtTL2(r.kiraTutari):'—'}</td>
+      <td style="padding:10px 14px;"><span style="font-size:11px;font-weight:700;padding:2px 9px;border-radius:12px;background:${r.durum==='sozlesmeHazir'?'rgba(232,161,50,.15);color:#E8A132':r.durum==='rezervasyon'?'rgba(22,160,134,.12);color:var(--accent-blue)':'rgba(54,161,104,.15);color:#36A168'};">${esc(YK_DURUM_ETIKET[r.durum]||r.durum)}</span></td>
+      <td style="padding:10px 14px;text-align:right;white-space:nowrap;">
+        <button onclick="ykDevamEt('${r.id}')" style="background:rgba(54,161,104,.15);border:1px solid rgba(54,161,104,.3);color:#36A168;padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;">Devam Et</button>
+        ${r.durum!=='kapandi' && r.durum!=='iptal' ? `<button onclick="tkIptalEt('${r.id}')" style="background:none;border:1px solid var(--line);color:#E1554E;padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;">İptal</button>` : ''}
+      </td>
+    </tr>`;
+  };
+
+  page.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <select onchange="window.__tkDurumFiltre=this.value;renderTekliflerPage()" style="background:var(--surface-2);border:1px solid var(--line);color:var(--paper);padding:8px 10px;border-radius:8px;font-size:12.5px;">
+          <option value="aktif" ${durumFiltre==='aktif'?'selected':''}>Aktif teklifler</option>
+          <option value="hepsi" ${durumFiltre==='hepsi'?'selected':''}>Tümü (iptal/kapandı dahil)</option>
+        </select>
+        <select onchange="window.__tkMusteriFiltre=this.value;renderTekliflerPage()" style="background:var(--surface-2);border:1px solid var(--line);color:var(--paper);padding:8px 10px;border-radius:8px;font-size:12.5px;">
+          <option value="">Tüm müşteriler</option>
+          ${musterileriSirali().map(c=>`<option value="${c.id}" ${musteriFiltre===c.id?'selected':''}>${esc(musteriGoruntuAdi(c))}</option>`).join('')}
+        </select>
+      </div>
+      <button class="add-btn" onclick="openYeniKiralamaSihirbazi()">+ Yeni Teklif</button>
+    </div>
+
+    <div class="dash-stats" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:16px;">
+      <div class="dstat" style="cursor:default;"><div class="dstat-ic" style="background:rgba(22,160,134,.15);color:var(--accent-blue);">${DASH_ICONS.car}</div><div class="dstat-txt"><div class="l">Aktif Teklif</div><div class="n">${aktifSayi}</div></div></div>
+      <div class="dstat" style="cursor:default;"><div class="dstat-ic" style="background:rgba(232,161,50,.15);color:#E8A132;">${DASH_ICONS.clock}</div><div class="dstat-txt"><div class="l">Sözleşme Bekleyen</div><div class="n">${bekleyenSoz}</div></div></div>
+      <div class="dstat" style="cursor:default;"><div class="dstat-ic" style="background:rgba(54,161,104,.15);color:#36A168;">${DASH_ICONS.check}</div><div class="dstat-txt"><div class="l">Potansiyel Aylık Değer</div><div class="n">${fmtTL2(potansiyel)}</div></div></div>
+    </div>
+
+    <div class="dcard" style="padding:0;overflow-x:auto;">
+      ${liste.length===0 ? `
+        <div class="empty-state">
+          <div class="empty-state-title">Teklif kaydı yok</div>
+          <div class="empty-state-desc">"+ Yeni Teklif" ile adım adım kiralama akışını başlatın; teklifiniz burada listelenir.</div>
+          <button class="empty-state-cta" onclick="openYeniKiralamaSihirbazi()">+ Yeni Teklif</button>
+        </div>` : `
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead><tr style="text-align:left;border-bottom:1px solid var(--border);">
+          <th style="padding:10px 14px;">Müşteri</th>
+          <th style="padding:10px 14px;">Araç</th>
+          <th style="padding:10px 14px;">Dönem</th>
+          <th style="padding:10px 14px;text-align:left;">Aylık Kira</th>
+          <th style="padding:10px 14px;">Durum</th>
+          <th style="padding:10px 14px;"></th>
+        </tr></thead>
+        <tbody>${liste.map(tkSatir).join('')}</tbody>
+      </table>`}
+    </div>
+  `;
+}
+async function tkIptalEt(rentalId){
+  if(!requireAdmin()) return;
+  const r = rentals.find(x=>x.id===rentalId);
+  if(!r){ showToast('Kiralama kaydı bulunamadı.', true); return; }
+  if(!confirm('Bu teklifi iptal etmek istediğinize emin misiniz?')) return;
+  r.durum = 'iptal';
+  await persistRentals();
+  logActivity('edit', `Kiralama teklifi iptal edildi: <b>${esc(vehicles.find(x=>x.id===r.vehicleId)?.plaka||rentalId)}</b>`);
+  showToast('Teklif iptal edildi.');
+  renderTekliflerPage();
 }
 // v.95: Kiralama iç sekmeleri
 window.krTabSet = function(t){
@@ -22773,6 +22873,10 @@ initInstallPrompt();
       <button class="bn-tile" onclick="closeMoreSheet();switchPage('lastikler')">
         <div class="bn-tile-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg><span class="bn-tile-badge" id="bnTileLastikBadge" style="display:none">0</span></div>
         <span>Lastikler</span>
+      </button>
+      <button class="bn-tile" onclick="closeMoreSheet();switchPage('teklifler')">
+        <div class="bn-tile-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z"/></svg></div>
+        <span>Teklifler</span>
       </button>
       <button class="bn-tile" onclick="closeMoreSheet();switchPage('hasarcezalar')">
         <div class="bn-tile-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
