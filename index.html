@@ -2415,7 +2415,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-24.220</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-24.221</div>
     </div>
   </div>
 </div>
@@ -2581,7 +2581,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-24.220</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-24.221</div>
     </div>
   </aside>
 <script>
@@ -19439,8 +19439,10 @@ function renderLastiklerPage(){
     <div class="dcard" style="padding:0;overflow-x:auto;">
       ${liste.length===0 ? `
         <div class="empty-state">
-          <div class="empty-state-title">Lastik kaydı yok</div>
-          <div class="empty-state-desc">"+ Yeni Lastik" ile ilk kaydı oluşturun.</div>
+          <div class="empty-state-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M4.2 7.8l2.1 2.1M17.7 14.1l2.1 2.1M3 12h3M18 12h3M4.2 16.2l2.1-2.1M17.7 9.9l2.1-2.1"/></svg></div>
+          <div class="empty-state-title">Henüz lastik kaydı yok</div>
+          <div class="empty-state-desc">Lastikleri araçlara bağlayarak diş derinliği ve değişim takibine başlayın.</div>
+          <button class="empty-state-cta" onclick="lastikFormuAc()">+ Yeni Lastik</button>
         </div>` : `
       <table style="width:100%;border-collapse:collapse;font-size:13px;">
         <thead><tr style="text-align:left;border-bottom:1px solid var(--border);">
@@ -19784,8 +19786,10 @@ function renderYakitPage(){
     <div class="dcard" style="padding:0;overflow-x:auto;">
       ${liste.length===0 ? `
         <div class="empty-state">
-          <div class="empty-state-title">Yakıt kaydı yok</div>
-          <div class="empty-state-desc">"+ Yeni Yakıt Kaydı" ile ilk kaydı oluşturun.</div>
+          <div class="empty-state-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2s7 8.5 7 13a7 7 0 0 1-14 0c0-4.5 7-13 7-13Z"/></svg></div>
+          <div class="empty-state-title">${aracFiltre?'Bu araç için yakıt kaydı yok':'Henüz yakıt kaydı yok'}</div>
+          <div class="empty-state-desc">İlk kaydı ekleyerek araç başına yakıt tüketimini ve maliyetini izlemeye başlayın.</div>
+          <button class="empty-state-cta" onclick="yakitFormuAc(null,'${aracFiltre}')">+ Yeni Yakıt Kaydı</button>
         </div>` : `
       <table style="width:100%;border-collapse:collapse;font-size:13px;">
         <thead><tr style="text-align:left;border-bottom:1px solid var(--border);">
@@ -19951,7 +19955,7 @@ function renderHasarCezalarPage(){
       <div class="dstat" style="cursor:default;"><div class="dstat-ic" style="background:rgba(232,161,50,.15);color:#E8A132;">${DASH_ICONS.check}</div><div class="dstat-txt"><div class="l">Müşteriye Yansıtılan</div><div class="n">${hasarYansitilan}</div></div></div>
     </div>
     <div class="dcard" style="padding:0;overflow-x:auto;">
-      ${hasarlar.length===0 ? `<div class="empty-state"><div class="empty-state-title">Hasar kaydı yok</div><div class="empty-state-desc">Hasar kayıtları araç detayındaki "Bakım" sekmesinden eklenir.</div></div>` : `
+      ${hasarlar.length===0 ? `<div class="empty-state"><div class="empty-state-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg></div><div class="empty-state-title">Hasar kaydı yok</div><div class="empty-state-desc">Hasar kayıtları araç detayındaki "Bakım" sekmesinden eklenir.</div></div>` : `
       <table style="width:100%;border-collapse:collapse;font-size:13px;">
         <thead><tr style="text-align:left;border-bottom:1px solid var(--border);">
           <th style="padding:10px 14px;">Araç</th><th style="padding:10px 14px;">Tarih</th><th style="padding:10px 14px;">Bölge</th>
@@ -19991,7 +19995,7 @@ function renderHasarCezalarPage(){
       <div class="dstat" style="cursor:default;"><div class="dstat-ic" style="background:rgba(54,161,104,.15);color:#36A168;">${DASH_ICONS.money}</div><div class="dstat-txt"><div class="l">Listelenen Tutar</div><div class="n">${fmtTL2(cezaToplam)}</div></div></div>
     </div>
     <div class="dcard" style="padding:0;overflow-x:auto;">
-      ${cezalar.length===0 ? `<div class="empty-state"><div class="empty-state-title">Trafik cezası kaydı yok</div><div class="empty-state-desc">"+ Yeni Ceza" ile ilk kaydı oluşturun.</div></div>` : `
+      ${cezalar.length===0 ? `<div class="empty-state"><div class="empty-state-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M8 7h8M8 11h8M8 15h5"/></svg></div><div class="empty-state-title">Trafik cezası kaydı yok</div><div class="empty-state-desc">"+ Yeni Ceza" ile ilk kaydı oluşturun.</div><button class="empty-state-cta" onclick="cezaFormuAc()">+ Yeni Ceza</button></div>` : `
       <table style="width:100%;border-collapse:collapse;font-size:13px;">
         <thead><tr style="text-align:left;border-bottom:1px solid var(--border);">
           <th style="padding:10px 14px;">Araç</th><th style="padding:10px 14px;">Sürücü</th><th style="padding:10px 14px;">Tarih</th>
@@ -21610,7 +21614,7 @@ function renderAyarlarPage(){
         </div>
       </div>
       <div class="settings-card" id="staffPwCard">
-        <h3><span class="settings-ic" style="background:#9B7ED8"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span> Personel Erişimi</h3>
+        <h3><span class="settings-ic" style="background:#5B6EE1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span> Personel Erişimi</h3>
         <p>Personel şifresiyle giriş yapanlar kira tutarlarını, gelir analizini ve masraf rakamlarını göremez. Araç bilgileri, belgeler ve muayene/sigorta takibi görünür kalır.</p>
         <div class="row-btns">
           <button class="settings-btn" id="apStaffPw">Personel şifresini ayarla</button>
@@ -21627,7 +21631,7 @@ function renderAyarlarPage(){
         <div class="row-btns"><button class="settings-btn" id="apCloud">${window.__cloudSyncActive ? 'Yönet' : 'Bağlan'}</button></div>
       </div>
       <div class="settings-card">
-        <h3><span class="settings-ic" style="background:#9B7ED8"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg></span> AI Otomatik Doldurma (Gemini)</h3>
+        <h3><span class="settings-ic" style="background:#D6499D"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg></span> AI Otomatik Doldurma (Gemini)</h3>
         <p style="font-size:13px;color:var(--text-2);">Belge okuma artık güvenli bir sunucu üzerinden çalışıyor — anahtar tarayıcıda tutulmuyor, buraya bir şey girmene gerek yok. <span style="color:#36A168;">✓ Aktif</span></p>
       </div>
       ${automationRulesCardHTML()}
@@ -21676,7 +21680,7 @@ function renderAyarlarPage(){
 function otomatikYedekCardHTML(){
   return `
     <div class="settings-card">
-      <h3><span class="settings-ic" style="background:#16A086"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg></span> Otomatik Günlük Yedek</h3>
+      <h3><span class="settings-ic" style="background:#7B7873"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg></span> Otomatik Günlük Yedek</h3>
       <p style="font-size:13px;color:var(--text-2);">Aktif edilirse, paneli her açtığınızda (günde en fazla bir kez) otomatik olarak bir Excel yedeği bu cihaza iner ve aşağıdaki e-posta adresine kısa bir özet bildirimi gönderilir. <b>Önemli:</b> panel o gün hiç açılmazsa o günkü yedek de alınmaz — arkada sürekli çalışan bir sunucu yok.</p>
       <label style="display:flex;align-items:center;gap:10px;cursor:pointer;width:fit-content;margin:10px 0;">
         <input type="checkbox" id="oyAktif" style="width:38px;height:22px;accent-color:var(--accent-blue);cursor:pointer;">
