@@ -2415,7 +2415,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-23.212</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-23.213</div>
     </div>
   </div>
 </div>
@@ -2581,7 +2581,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-23.212</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-23.213</div>
     </div>
   </aside>
 <script>
@@ -2602,7 +2602,21 @@
   // ilk görünümdeki madde sayısı azaldı. Kullanıcının kendi aç/kapat tercihi (localStorage,
   // sbGroupsState) her zaman bu varsayılanın önüne geçer; aktif sayfanın grubu her zaman açılır.
   const DEFAULT_ACIK = {filo:true, kiralama:true, finans:false, servis:false, sistem:false};
+  // v.212: yukarıdaki v.210 düzeltmesi, panel AYLARDIR açık kullanan cihazlarda hiç fark
+  // etmiyordu — çünkü o cihazların localStorage'ında zaten "tüm gruplar açık" kaydı vardı ve
+  // "kullanıcının kendi tercihi yeni varsayılanın önüne geçer" kuralı bunu koruyordu (istenen
+  // davranış AMA "biraz daha güzelleşti, hâlâ kalabalık" geri bildirimi tam olarak bunun için
+  // geldi — Hasan'ın kendi tarayıcısı zaten eski "hepsi açık" durumunu hatırlıyordu). Bu yeni
+  // yeni-varsayılan sadeleştirmesi bir SEFERLİĞİNE (sbGroupsStateMigV2 bayrağı ile) herkesin
+  // mevcut aç/kapat kaydının üzerine yazılıyor; bu bayrak yazıldıktan sonra kullanıcı tercihi
+  // yine her zaman esas alınır — yani birisi bir grubu tekrar açarsa o tercih kalıcı olarak korunur.
+  const MIG_KEY='sbGroupsStateMigV2';
   let st={}; try{st=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){}
+  let migRan = false; try{ migRan = localStorage.getItem(MIG_KEY)==='1'; }catch(e){}
+  if(!migRan){
+    st = Object.assign({}, DEFAULT_ACIK);
+    try{ localStorage.setItem(KEY, JSON.stringify(st)); localStorage.setItem(MIG_KEY, '1'); }catch(e){}
+  }
   document.querySelectorAll('.sb-group').forEach(function(g){
     const varsayilan = DEFAULT_ACIK[g.dataset.group]!==false;
     g.classList.toggle('open', st[g.dataset.group]!==undefined ? st[g.dataset.group]!==false : varsayilan);
