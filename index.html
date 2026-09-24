@@ -46,6 +46,21 @@
   html[data-theme="dark"] img[src^="data:"]{background:#fff;border-radius:8px;padding:4px;box-shadow:0 2px 8px rgba(0,0,0,.4);}
   html[data-theme="dark"] img[src^="blob:"]{background:#fff;border-radius:8px;padding:4px;box-shadow:0 2px 8px rgba(0,0,0,.4);}
 </style>
+<style id="ui-polish-v1">
+  /* v.208: Filtre çiplerindeki emoji renk göstergelerini temaya bağlı, erişilebilir SVG/CSS noktalara çevir */
+  .chip-dot{display:inline-flex;align-items:center;gap:6px;}
+  .chip-dot::before{content:'';width:7px;height:7px;border-radius:50%;flex-shrink:0;background:currentColor;}
+  .chip-dot-blue{color:#3B82F6;}
+  .chip-dot-amber{color:#F59E0B;}
+  .chip-dot-purple{color:#A855F7;}
+  .chip-dot-gray{color:var(--text-3);}
+  .status-dot{display:inline-flex;align-items:center;justify-content:center;width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+  .status-dot.kirada{background:var(--accent-blue);}
+  .status-dot.serviste{background:var(--amber);}
+  .status-dot.musait{background:var(--green);}
+  .status-dot.pert{background:var(--text-3);}
+  .status-dot.satildi{background:var(--purple);}
+</style>
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#F5F8F7" id="themeColorMeta">
 <script>
@@ -2415,7 +2430,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-24.221</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-24.222</div>
     </div>
   </div>
 </div>
@@ -2581,7 +2596,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-24.221</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-24.222</div>
     </div>
   </aside>
 <script>
@@ -2802,10 +2817,10 @@
       <div class="chip" data-f="Müsait">Müsait</div>
       <div class="chip" data-f="Serviste">Serviste</div>
       <div class="chip" data-f="Satıldı">Satıldı</div>
-      <div class="chip" id="chipArsiv" onclick="arsivAc()">🗄 Arşiv (<span id="arsivSayi">0</span>)</div>
-      <div class="chip" id="chipSigorta">🔵 Sigortası yaklaşan</div>
-      <div class="chip" id="chipMuayene">🟠 Muayenesi yaklaşan</div>
-      <div class="chip" id="chipKira">🟣 Kirası yaklaşan</div>
+      <div class="chip" id="chipArsiv" onclick="arsivAc()"><span class="chip-dot chip-dot-gray"></span>Arşiv (<span id="arsivSayi">0</span>)</div>
+      <div class="chip" id="chipSigorta"><span class="chip-dot chip-dot-blue"></span>Sigortası yaklaşan</div>
+      <div class="chip" id="chipMuayene"><span class="chip-dot chip-dot-amber"></span>Muayenesi yaklaşan</div>
+      <div class="chip" id="chipKira"><span class="chip-dot chip-dot-purple"></span>Kirası yaklaşan</div>
     </div>
   </div>
 
@@ -4838,7 +4853,7 @@ function render(){
         </div>
         ${aracAdi ? `<div class="arac-adi">${esc(aracAdi)}</div>` : ''}
         <div class="model">${esc(modelTxt||'')}</div>
-        ${aracGorsel?`<img class="vk-car" src="${aracGorsel}" alt="" onerror="this.remove();">`:''}
+        ${aracGorsel?`<img class="vk-car" src="${aracGorsel}" alt="" loading="lazy" decoding="async" onerror="this.remove();">`:''}
       </div>
 
       ${healthHtml}
@@ -7399,12 +7414,12 @@ function openAracKirala(vehicleId){
             <input type="text" id="krAra" placeholder="Plaka veya model ara..." oninput="krListeFiltrele()" style="margin-bottom:6px;">
             <div id="krListe" style="max-height:170px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;">
               ${vehicles.map(v=>{
-                const st = v.durum==='Kirada'?'🔴':(v.durum==='Serviste'?'🟡':v.durum==='Pert'?'⚫':v.durum==='Satıldı'?'🔵':'🟢');
+                const st = v.durum==='Kirada'?'<span class="status-dot kirada" title="Kirada"></span>':(v.durum==='Serviste'?'<span class="status-dot serviste" title="Serviste"></span>':v.durum==='Pert'?'<span class="status-dot pert" title="Pert"></span>':v.durum==='Satıldı'?'<span class="status-dot satildi" title="Satıldı"></span>':'<span class="status-dot musait" title="Müsait"></span>');
                 return `<label class="kr-item" data-ara="${esc((v.plaka+' '+(v.marka||'')+' '+(v.model||'')).toLocaleLowerCase('tr-TR'))}" style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-bottom:1px solid var(--line);cursor:pointer;font-size:13px;">
                   <input type="checkbox" class="krCheck" value="${v.id}" data-durum="${esc(v.durum||'')}" onchange="krSecimGuncelle()" style="width:16px;height:16px;accent-color:var(--accent-blue);">
                   <span class="mini-plaka" style="font-size:12px;">${esc(v.plaka)}</span>
                   <span style="color:var(--text-2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc([v.marka,v.model].filter(Boolean).join(' ')||'Araç')}</span>
-                  <span title="${v.durum}">${st}</span>
+                  <span>${st}</span>
                 </label>`;
               }).join('')}
             </div>
@@ -7837,6 +7852,15 @@ async function kirayaVerVeSozlesme(format){
     return { v, kira, teslimKm: teslimKm!=='' && teslimKm!=null ? Number(teslimKm) : (v.teslimKm||0) };
   });
   const toplamKira = aracVerileri.reduce((s,a)=>s+a.kira,0);
+
+  // v.208: Müşterinin risk limiti aşılıyorsa engelleme değil, açık uyarı ver
+  const riskCustId = customerIdAdaGoreBul(kiraci);
+  if(riskCustId){
+    const risk = musteriRiskDurumu(riskCustId, toplamKira);
+    if(risk.asildi){
+      showToast(`Uyarı: ${esc(musteriGoruntuAdi(customers.find(c=>c.id===riskCustId)))} risk limitini aşıyor (limit ${fmtTL2(risk.limit)}, kalan ${fmtTL2(Math.max(0,risk.kalan))}).`, true);
+    }
+  }
 
   // 1) Tüm araçları kiraya ver
   aracVerileri.forEach(({v, kira, teslimKm})=>{
@@ -8924,7 +8948,7 @@ async function hasarFotoGor(id, hid){
   const parcalar = [];
   for(const key of anahtarlar){
     const r = await storageAPI.get(key).catch(()=>null);
-    if(r && r.value) parcalar.push(`<img src="${r.value}" onclick="window.open(this.src,'_blank')" style="width:100%;height:110px;object-fit:cover;border-radius:10px;cursor:pointer;border:1px solid var(--line);">`);
+    if(r && r.value) parcalar.push(`<img src="${r.value}" onclick="window.open(this.src,'_blank')" loading="lazy" decoding="async" style="width:100%;height:110px;object-fit:cover;border-radius:10px;cursor:pointer;border:1px solid var(--line);">`);
   }
   ic.innerHTML = parcalar.length ? parcalar.join('') : '<div style="grid-column:1/-1;text-align:center;color:var(--steel-500);font-size:12px;padding:20px 0;">Fotoğraf okunamadı.</div>';
 }
@@ -9912,7 +9936,7 @@ function getMarkaLogo(marka, ipucuMetni){
   const domain = markaDomain[m];
   if(!domain) return `<div class="marka-logo">${fallback}</div>`;
   // 1) jsdelivr araç-logo veri seti (yüksek kalite, şeffaf PNG) → hata olursa harf rozeti
-  const img = `<img src="https://cdn.jsdelivr.net/gh/filippofilip95/car-logos-dataset@master/logos/optimized/${domain}.png" alt="${esc(marka)}" onerror="this.parentElement.classList.add('ml-err');this.remove();">`;
+  const img = `<img src="https://cdn.jsdelivr.net/gh/filippofilip95/car-logos-dataset@master/logos/optimized/${domain}.png" alt="${esc(marka)}" loading="lazy" decoding="async" onerror="this.parentElement.classList.add('ml-err');this.remove();">`;
   return `<div class="marka-logo">${img}${fallback}</div>`;
 }
 
@@ -10005,6 +10029,46 @@ function validPlaka(p){
   if(isNaN(il) || il<1 || il>81) return false;
   return /^[0-9]{2}[A-ZÇĞİÖŞÜ]{1,3}[0-9]{2,5}$/.test(p);
 }
+
+// v.208: Ortak form validasyon yardımcıları
+function telefonFormatla(tel){
+  const s = String(tel||'').replace(/\D/g,'');
+  if(!s) return '';
+  if(s.startsWith('0')) return s;
+  if(s.startsWith('5')) return '0'+s;
+  return s;
+}
+function telefonGecerliMi(tel){
+  const s = String(tel||'').replace(/\D/g,'');
+  return /^0?5[0-9]{9}$/.test(s);
+}
+function telefonMaskeliGoster(tel){
+  const s = telefonFormatla(tel);
+  if(s.length===11) return s.replace(/(\d{4})(\d{3})(\d{2})(\d{2})/,'$1 $2 $3 $4');
+  if(s.length===10) return s.replace(/(\d{3})(\d{3})(\d{2})(\d{2})/,'0$1 $2 $3 $4');
+  return tel;
+}
+function tarihKarsilastir(a,b){
+  if(!a || !b) return 0;
+  return new Date(a).getTime() - new Date(b).getTime();
+}
+function yakitTutarKontrolu(litre, fiyat, toplam, tolerans=0.5){
+  if(!litre || !fiyat || !toplam) return {ok:true};
+  const hesaplanan = Math.round(litre * fiyat * 100) / 100;
+  const fark = Math.abs(hesaplanan - toplam);
+  if(fark <= tolerans) return {ok:true};
+  return {ok:false, hesaplanan, mesaj:`Girilen toplam (${fmtTL2(toplam)}) litre×fiyat (${fmtTL2(hesaplanan)}) hesaplamasıyla uyuşmuyor.`};
+}
+function musteriRiskDurumu(customerId, ilaveBorc=0){
+  const c = customers.find(x=>x.id===customerId);
+  if(!c) return {limit:0, mevcut:0, kalan:Infinity, asildi:false};
+  const ozet = customerCariOzet(c.id);
+  const limit = Number(c.riskLimiti)||0;
+  const mevcut = Number(ozet.borc)||0;
+  const kalan = limit - mevcut;
+  return {limit, mevcut, kalan, asildi: ilaveBorc > kalan && limit>0};
+}
+
 function clearFieldErrors(){
   ['fPlaka','fYil','fKira'].forEach(id=>document.getElementById(id).classList.remove('invalid'));
 }
@@ -10047,6 +10111,15 @@ document.getElementById('saveBtn').onclick = async ()=>{
   }
   const kiraVal = document.getElementById('fKira').value;
   if(kiraVal!=='' && Number(kiraVal)<0){ fieldErr('fKira','Aylık kira negatif olamaz.'); return; }
+
+  // v.208: Tarih tutarlılığı kontrolleri
+  const kayitTarihi = document.getElementById('fTarih').value;
+  const muayeneTarihi = document.getElementById('fMuayene').value;
+  const sigortaBitis = document.getElementById('fSigorta').value;
+  const kaskoBitis = document.getElementById('fKaskoBitis').value;
+  if(muayeneTarihi && tarihKarsilastir(muayeneTarihi, todayISO()) > 0){ fieldErr('fMuayene','Muayene tarihi gelecekte olamaz.'); return; }
+  if(kayitTarihi && sigortaBitis && tarihKarsilastir(sigortaBitis, kayitTarihi) < 0){ fieldErr('fSigorta','Sigorta bitiş tarihi kayıt tarihinden önce olamaz.'); return; }
+  if(kayitTarihi && kaskoBitis && tarihKarsilastir(kaskoBitis, kayitTarihi) < 0){ fieldErr('fKaskoBitis','Kasko bitiş tarihi kayıt tarihinden önce olamaz.'); return; }
 
   for(const d of DOC_TYPES){
     if(docState[d.key].reading){
@@ -14431,6 +14504,14 @@ async function ykTeklifOlustur(){
     fazlaKmBedeli: (()=>{ const n=Number(document.getElementById('ykFazlaKmBedeli')?.value); return isNaN(n)||n===0?null:n; })(),
     ekHizmetler: document.getElementById('ykEkHizmetler')?.value?.trim()||'',
   });
+  // v.208: Risk limiti uyarısı (adım adım sihirbaz)
+  if(customerId){
+    const risk = musteriRiskDurumu(customerId, Number(document.getElementById('ykKira')?.value)||0);
+    if(risk.asildi){
+      const musteriRisk = customers.find(c=>c.id===customerId);
+      showToast(`Uyarı: ${musteriRisk?esc(musteriGoruntuAdi(musteriRisk)):'Müşteri'} risk limitini aşıyor (limit ${fmtTL2(risk.limit)}, kalan ${fmtTL2(Math.max(0,risk.kalan))}).`, true);
+    }
+  }
   ykSihirbazState = { rentalId: r.id, sozData: null };
   showToast('Kiralama teklifi oluşturuldu.');
   logActivity('add', `Kiralama teklifi oluşturuldu (adım adım akış): <b>${esc(v.plaka)}</b>`);
@@ -18525,6 +18606,15 @@ async function musteriKaydet(id){
     });
   }
 
+  // v.208: Telefon formatla ve doğrula
+  veri.telefon = telefonFormatla(veri.telefon);
+  if(veri.telefon && !telefonGecerliMi(veri.telefon)){
+    errEl.textContent = 'Telefon numarası geçersiz. Örnek: 05XX XXX XX XX';
+    errEl.style.display='block';
+    showToast('Geçersiz telefon numarası.', true);
+    return;
+  }
+
   // FAZ10 (KVKK): rıza onayı olmadan müşteri kaydı OLUŞTURULAMAZ/GÜNCELLENEMEZ — bkz. Ayarlar
   // > KVKK / Veri Yönetimi kartı (statik örnek metin, gerçek hukuki metin DEĞİLDİR).
   const kvkkOnayli = document.getElementById('mfKvkkOnay').checked;
@@ -19544,6 +19634,13 @@ async function lastikKaydet(id){
     sokulmeKm: document.getElementById('lfSokulmeKm').value===''?null:Number(document.getElementById('lfSokulmeKm').value),
     maliyet: document.getElementById('lfMaliyet').value===''?null:Number(document.getElementById('lfMaliyet').value),
   };
+  // v.208: Tarih/km tutarlılığı — sökülme, takılmadan önce olamaz
+  if(data.sokulmeTarihi && data.takilmaTarihi && data.sokulmeTarihi < data.takilmaTarihi){
+    errEl.textContent='Sökülme tarihi, takılma tarihinden önce olamaz.'; errEl.style.display='block'; return;
+  }
+  if(data.takilmaKm!=null && data.sokulmeKm!=null && data.sokulmeKm < data.takilmaKm){
+    errEl.textContent='Sökülme kilometresi, takılma kilometresinden küçük olamaz.'; errEl.style.display='block'; return;
+  }
   const yeniMi = !id;
   if(id){ tires = tires.map(t=>t.id===id?data:t); } else { tires.push(data); }
   await persistTires();
@@ -19872,6 +19969,13 @@ async function yakitKaydet(id){
   const toplamGirilen = document.getElementById('yfToplam').value;
   const toplam = toplamGirilen!=='' ? Number(toplamGirilen) : Math.round(litre*litreFiyati*100)/100;
   if(!toplam || toplam<=0){ errEl.textContent='Lütfen geçerli bir tutar girin (litre × fiyat veya doğrudan toplam).'; errEl.style.display='block'; return; }
+  // v.208: litre × fiyat ile girilen toplam uyuşmuyorsa kullanıcıyı bilgilendir (iptal edebilir)
+  const tutarKontrol = yakitTutarKontrolu(litre, litreFiyati, toplam);
+  if(!tutarKontrol.ok && !confirm(tutarKontrol.mesaj+' Yine de kaydetmek istiyor musunuz?')){
+    errEl.textContent = tutarKontrol.mesaj;
+    errEl.style.display='block';
+    return;
+  }
   const data = {
     id: id || yeniId('fuel'), vehicleId,
     tarih: document.getElementById('yfTarih').value || todayISO(),
