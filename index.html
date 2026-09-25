@@ -2430,7 +2430,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-24.232</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-24.233</div>
     </div>
   </div>
 </div>
@@ -2598,7 +2598,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-24.232</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-24.233</div>
     </div>
   </aside>
 <script>
@@ -21342,7 +21342,7 @@ function aiSesSecimiHTML(){
   return html;
 }
 function aiSesDene(){
-  aiMetniSesliOku(`Merhaba, ben ${FIRMA_ADI} Asistanı. Sesim şimdi böyle duyuluyor.`);
+  aiMetniSesliOku(`Merhaba, ben ${FIRMA_ADI} Asistanı. Sesim şimdi böyle duyuluyor.`, true);
 }
 if(window.speechSynthesis && !window.__aiSesListenerBagli){
   window.__aiSesListenerBagli = true;
@@ -21431,12 +21431,25 @@ async function aiGeminiSesUret(metin){
   const sampleRate = rateEslesme ? Number(rateEslesme[1]) : 24000;
   return pcmToWavBlob(b64, sampleRate, 1, 16);
 }
-async function aiMetniSesliOku(html){
+async function aiMetniSesliOku(html, testModu){
   const tmp = document.createElement('div');
   tmp.innerHTML = html;
   const metin = (tmp.textContent||'').trim();
   if(!metin) return;
-  if(aiGeminiSesAcMi() && typeof getGeminiKey==='function' && getGeminiKey()){
+  // v.233: "yine aynı ses, mesajda yok" geri bildirimi üzerine — v.232'deki toast sadece
+  // Gemini isteği GERÇEKTEN denenip BAŞARISIZ olduğunda çıkıyordu; kullanıcı hâlâ hiçbir şey
+  // görmediyse, akışın muhtemelen Gemini denemesine hiç GİRMEDEN (ör. kutucuk işaretli değil,
+  // ya da bir önceki oturumdan kalma localStorage değeri) doğrudan tarayıcı sesine gittiği
+  // ihtimali güçlü. Artık SADECE "Dene" butonundan (testModu=true) çağrıldığında, izlenen
+  // yoldan BAĞIMSIZ olarak (Gemini kapalı / Gemini başarılı / Gemini başarısız) HER ZAMAN bir
+  // durum mesajı gösteriyoruz — böylece kullanıcı tam olarak hangi yolun izlendiğini görüp
+  // bana birebir aktarabilir; normal sohbet sırasında otomatik okumada (testModu yok) hâlâ
+  // spam olmaması için eskisi gibi sessiz/oturum-başı-bir-kez davranış korunuyor.
+  if(!aiGeminiSesAcMi()){
+    if(testModu) showToast('Gemini sesi KAPALI (yukarıdaki kutucuk işaretli değil) — doğrudan tarayıcı sesi deneniyor.');
+  }else if(typeof getGeminiKey!=='function' || !getGeminiKey()){
+    if(testModu) showToast('AI servisi aktif değil — doğrudan tarayıcı sesi deneniyor.', true);
+  }else{
     try{
       const blob = await aiGeminiSesUret(metin.length>3000 ? metin.slice(0,3000) : metin);
       const url = URL.createObjectURL(blob);
@@ -21445,23 +21458,21 @@ async function aiMetniSesliOku(html){
       window.__aiSesAudioEl = audio;
       audio.onended = ()=>{ try{ URL.revokeObjectURL(url); }catch(e){} };
       await audio.play();
+      if(testModu) showToast('✓ Gemini sesi başarıyla çalıyor.');
       return;
     }catch(e){
-      // v.232: "ses değişmemiş" geri bildirimi üzerine — önceden burası TAMAMEN sessizdi, yani
-      // Gemini TTS her başarısız olduğunda kullanıcı hiçbir şey görmeden eski tarayıcı sesini
-      // duyuyordu ve NEDEN olduğunu bilme imkanı yoktu. Artık oturum başına BİR KEZ (spam
-      // olmasın diye) gerçek hata mesajını toast ile gösteriyoruz — kullanıcı bunu ekran
-      // görüntüsü alıp bana iletebilir, ben de canlı ağ erişimim olmadan bile asıl sorunu
-      // (Worker uyumsuzluğu/model adı/API erişimi vb.) buradan teşhis edebilirim. Sessiz
-      // tarayıcı sesine düşme davranışı DEĞİŞMEDİ, sadece artık görünür/izlenebilir.
-      if(!window.__aiGeminiSesHataGosterildi){
+      const mesaj = 'Gemini sesi denendi ama başarısız oldu: ' + (e && e.message ? e.message : 'bilinmeyen hata') + ' — tarayıcı sesine geçildi.';
+      if(testModu || !window.__aiGeminiSesHataGosterildi){
         window.__aiGeminiSesHataGosterildi = true;
-        showToast('Gemini sesi denendi ama başarısız oldu: ' + (e && e.message ? e.message : 'bilinmeyen hata') + ' — tarayıcı sesine geçildi.', true);
+        showToast(mesaj, true);
       }
       console.warn('Gemini TTS başarısız, tarayıcı sesine geçiliyor:', e);
     }
   }
-  if(!window.speechSynthesis) return;
+  if(!window.speechSynthesis){
+    if(testModu) showToast('Bu tarayıcı hiçbir sesli okumayı desteklemiyor.', true);
+    return;
+  }
   try{
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(metin);
