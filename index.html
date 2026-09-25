@@ -797,6 +797,15 @@
   @media(max-width:900px){.dstat-wide{flex-direction:column;align-items:flex-start;gap:10px;}.dstat-wide .dstat-txt{flex-direction:column;gap:2px;}}
 
   .dash-grid{display:grid;grid-template-columns:1fr 1fr 320px;gap:20px;align-items:start;}
+  /* v.237: "mobil daha gelişmeli" denetiminde bulundu — grid öğelerinin varsayılan
+     min-width'i "auto"dur (içeriğin en dar haline göre büzülemez). "Bugün Yapılacaklar"
+     kartındaki satırlar (plaka rozeti + sabit genişlikte etiket + buton gibi büzülmeyen
+     öğeler) yan yana dizildiğinde bu min-content genişliği mobil grid sütununun (~369px)
+     üzerine (~431px) çıkabiliyor — kart bu genişliğe zorla büyüyor, satırdaki "Tümü →"
+     bağlantısı ve buton (Yükle vb.) ekranın dışına taşıp görünmez oluyordu. min-width:0
+     ile kart artık sütuna sıkışabiliyor, satırın içindeki ellipsis (...) zaten hazır olan
+     metin kısaltması devreye girip düzgün görünüyor. */
+  .dash-grid > .dcard{min-width:0;}
   .dg-21{grid-template-columns:1.6fr 1fr;}
   .dg-3{grid-template-columns:1fr 1fr 1fr;}
   .dg-141{grid-template-columns:1.4fr 1fr;}
@@ -2453,7 +2462,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-25.237</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-25.238</div>
     </div>
   </div>
 </div>
@@ -2621,7 +2630,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-25.237</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-25.238</div>
     </div>
   </aside>
 <script>
