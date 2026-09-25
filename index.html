@@ -2430,7 +2430,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-24.225</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-24.226</div>
     </div>
   </div>
 </div>
@@ -2597,7 +2597,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-24.225</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-24.226</div>
     </div>
   </aside>
 <script>
@@ -15222,6 +15222,14 @@ async function tkOnayVer(rentalId, durum){
   }
   renderTekliflerPage();
 }
+// v.226: Müşteriye giden teklif PDF'i baştan tasarlandı — "müşteriye gidecek tasarım süper
+// olmalı" geri bildirimi üzerine. Eskiden diğer TÜM iç raporlarla aynı (kırmızı çizgili, düz
+// tablo) kalıbı paylaşıyordu; kırmızı panelin genelinde SADECE hata/red durumları için
+// kullanılan renk — markanın gerçek rengi her yerde yeşil/turkuaz (#00A99D). Artık: turkuaz
+// renkli bir "antetli kağıt" başlığı, en önemli rakamı (aylık kira) öne çıkaran vurgulu bir
+// özet kutusu, ve gerçek şirket bilgileriyle (sözleşme belgeleriyle AYNI localStorage
+// alanları — adres/telefon/vergi no/e-posta) dolu bir alt bilgi var. Uydurma bilgi YOK —
+// hiçbir alan ayarlanmamışsa o satır sessizce gizleniyor.
 function tkPdfAc(rentalId){
   const r = rentals.find(x=>x.id===rentalId); if(!r) return;
   const v = vehicles.find(x=>x.id===r.vehicleId);
@@ -15231,51 +15239,100 @@ function tkPdfAc(rentalId){
     r.tkNo = 'TK-' + new Date().getFullYear() + '-' + String(Math.floor(Math.random()*90000)+10000);
     persistRentals();
   }
+  const firmaAdi = 'PEKDOĞRU OTOMOTİV TURİZM TAŞIMACILIK NAKLİYE HAYVANCILIK TİCARET LİMİTED ŞİRKETİ';
+  const firmaAdres = localStorage.getItem('filoPaneli_firmaAdres')||'Ferhuniye Mah. Sultanşah Cad. No:24B Selçuklu / KONYA';
+  const firmaTel = localStorage.getItem('filoPaneli_firmaTelefon')||'';
+  const firmaEposta = localStorage.getItem('filoPaneli_firmaEposta')||'';
   const gecerlilik = new Date(Date.now() + 7*86400000).toISOString().slice(0,10);
   const satir = (l,v2)=>`<tr><td class="lbl">${l}</td><td>${v2!=null&&v2!==''?v2:'—'}</td></tr>`;
+  const aracEtiket = v ? (esc(v.plaka)+' — '+esc([v.marka,v.model].filter(Boolean).join(' '))+(v.modelYili?' ('+esc(String(v.modelYili))+')':'')) : '—';
+  const donemEtiket = (r.baslangic||r.bitis) ? (fmtTarih(r.baslangic)+' → '+fmtTarih(r.bitis)) : 'dönem henüz belirlenmedi';
+  const iletisimSatirlari = [
+    firmaTel ? `<span>Tel: ${esc(firmaTel)}</span>` : '',
+    firmaEposta ? `<span>${esc(firmaEposta)}</span>` : '',
+  ].filter(Boolean).join('<span class="sep">·</span>');
   const html = `<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>Teklif ${esc(r.tkNo)}</title>
   <style>
-    *{box-sizing:border-box;}
-    body{font-family:Arial,Helvetica,sans-serif;color:#15171A;margin:0;padding:32px;background:#fff;}
-    .head{display:flex;align-items:center;gap:14px;border-bottom:3px solid #E1554E;padding-bottom:14px;margin-bottom:18px;}
-    .head img{width:42px;height:42px;}
-    .head h1{font-size:19px;margin:0;}
-    .head .d{font-size:13px;color:#666;margin-top:2px;}
-    .musteri{margin-bottom:18px;font-size:13px;}
-    table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:18px;}
-    td{padding:7px 10px;border-bottom:1px solid #ddd;}
-    td.lbl{width:38%;background:#F4F2F0;font-weight:bold;font-size:12px;text-transform:uppercase;letter-spacing:.3px;color:#555;}
-    .onay-kutu{border:2px solid #ccc;border-radius:8px;padding:16px;margin-top:22px;font-size:12.5px;color:#444;}
-    .imza-row{display:flex;gap:32px;margin-top:42px;}
-    .imza{flex:1;border-top:1.5px solid #333;padding-top:6px;font-size:12px;color:#666;text-align:center;}
-    .not{margin-top:16px;font-size:11.5px;color:#888;border-top:1px solid #eee;padding-top:10px;}
-    @media print{ body{padding:12mm;} }
+    *{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    body{font-family:Arial,Helvetica,sans-serif;color:#15171A;margin:0;padding:0;background:#EAF6F4;}
+    .sayfa{max-width:760px;margin:0 auto;background:#fff;}
+    .letterhead{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:26px 34px;background:linear-gradient(120deg,#00A99D,#017F76);color:#fff;flex-wrap:wrap;}
+    .lh-left{display:flex;align-items:center;gap:14px;}
+    .lh-logo{width:44px;height:44px;border-radius:11px;background:#fff;padding:5px;display:flex;align-items:center;justify-content:center;}
+    .lh-logo img{width:100%;height:100%;object-fit:contain;}
+    .lh-name{font-size:16px;font-weight:800;letter-spacing:.2px;}
+    .lh-tag{font-size:11.5px;color:rgba(255,255,255,.82);margin-top:2px;}
+    .lh-right{text-align:right;}
+    .tk-badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.6px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);border-radius:20px;padding:4px 13px;}
+    .tk-no{font-size:15px;font-weight:800;margin-top:7px;}
+    .tk-tarih{font-size:11px;color:rgba(255,255,255,.82);margin-top:2px;}
+    .gövde{padding:28px 34px 8px;}
+    .musteri{font-size:13px;margin-bottom:20px;color:#333;}
+    .musteri b{color:#123B38;}
+    .hero{background:#F0FAF9;border:1px solid #BFE8E3;border-left:5px solid #00A99D;border-radius:10px;padding:18px 22px;margin-bottom:22px;display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+    .hero-lbl{font-size:11.5px;font-weight:700;letter-spacing:.5px;color:#017F76;text-transform:uppercase;}
+    .hero-val{font-size:30px;font-weight:800;color:#003E3A;margin-top:3px;}
+    .hero-sub{font-size:12px;color:#4B6B67;max-width:280px;text-align:right;}
+    table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:20px;}
+    td{padding:8px 12px;border-bottom:1px solid #E4E4E4;}
+    td.lbl{width:38%;background:#F7F8F8;font-weight:700;font-size:11.5px;text-transform:uppercase;letter-spacing:.3px;color:#5A5A5A;}
+    .onay-kutu{border:1.5px solid #BFE8E3;background:#F7FCFB;border-radius:10px;padding:16px 18px;margin-top:4px;font-size:12.5px;color:#2E4644;line-height:1.5;}
+    .onay-kutu b{color:#017F76;}
+    .imza-row{display:flex;gap:32px;margin-top:46px;}
+    .imza{flex:1;border-top:1.5px solid #333;padding-top:7px;font-size:12px;color:#666;text-align:center;}
+    .foot{margin-top:26px;padding:16px 34px 22px;border-top:1px solid #E4E4E4;font-size:11px;color:#8A8A8A;display:flex;flex-direction:column;gap:3px;}
+    .foot .fu1{font-weight:700;color:#4B6B67;font-size:11.5px;}
+    .foot .sep{margin:0 6px;color:#BBB;}
+    .foot .disclaimer{margin-top:6px;color:#A5A5A5;}
+    @media print{ body{padding:0;background:#fff;} .sayfa{max-width:none;} }
   </style></head>
-  <body>
-    <div class="head">
-      <img src="${SIRKET_LOGOS['PEKDOĞRU GRUP']}" alt="">
-      <div>
-        <h1>Kiralama Teklifi — ${esc(r.tkNo)}</h1>
-        <div class="d">Teklif tarihi: ${fmtTarih(todayISO())} · Geçerlilik: ${fmtTarih(gecerlilik)} (7 gün)</div>
+  <body><div class="sayfa">
+    <div class="letterhead">
+      <div class="lh-left">
+        <div class="lh-logo"><img src="${SIRKET_LOGOS['PEKDOĞRU GRUP']}" alt=""></div>
+        <div>
+          <div class="lh-name">PEKDOĞRU GRUP</div>
+          <div class="lh-tag">Filo Kiralama Hizmetleri</div>
+        </div>
+      </div>
+      <div class="lh-right">
+        <span class="tk-badge">KİRALAMA TEKLİFİ</span>
+        <div class="tk-no">${esc(r.tkNo)}</div>
+        <div class="tk-tarih">Teklif: ${fmtTarih(todayISO())} · Geçerlilik: ${fmtTarih(gecerlilik)}</div>
       </div>
     </div>
-    <div class="musteri"><b>Müşteri:</b> ${esc(m?musteriGoruntuAdi(m):'—')}${m&&m.telefon?' · '+esc(m.telefon):''}${m&&m.adres?' · '+esc(m.adres):''}</div>
-    <table>
-      ${satir('Araç', v ? (esc(v.plaka)+' — '+esc([v.marka,v.model].filter(Boolean).join(' '))+(v.modelYili?' ('+esc(String(v.modelYili))+')':'')) : '—')}
-      ${satir('Kiralama dönemi', (r.baslangic||r.bitis) ? (fmtTarih(r.baslangic)+' → '+fmtTarih(r.bitis)) : '—')}
-      ${satir('Aylık kira bedeli', r.kiraTutari!=null ? Number(r.kiraTutari).toLocaleString('tr-TR',{maximumFractionDigits:2})+' ₺' : '—')}
-      ${satir('Depozito', r.depozito!=null ? Number(r.depozito).toLocaleString('tr-TR',{maximumFractionDigits:2})+' ₺' : '—')}
-      ${satir('Aylık km limiti', r.kmLimiti!=null ? Number(r.kmLimiti).toLocaleString('tr-TR')+' km' : '—')}
-      ${satir('Fazla km bedeli', r.fazlaKmBedeli!=null ? Number(r.fazlaKmBedeli).toLocaleString('tr-TR',{maximumFractionDigits:2})+' ₺/km' : '—')}
-      ${satir('Ek hizmetler / özel koşullar', esc(r.ekHizmetler||''))}
-    </table>
-    <div class="onay-kutu"><b>Onay:</b> Bu teklifi onaylıyorsanız, alt kısımda imza/tarih belirterek bize iletebilir ya da telefon/e-posta ile onay bildirebilirsiniz. Onay üzerine kira sözleşmesi hazırlanacak ve araç teslim randevusu planlanacaktır.</div>
-    <div class="imza-row">
-      <div class="imza">Müşteri — Ad Soyad / İmza / Tarih</div>
-      <div class="imza">PEKDOĞRU GRUP — Yetkili / İmza / Tarih</div>
+    <div class="gövde">
+      <div class="musteri"><b>Sayın</b> ${esc(m?musteriGoruntuAdi(m):'İlgili')}${m&&m.telefon?' · '+esc(m.telefon):''}${m&&m.adres?' · '+esc(m.adres):''}</div>
+
+      <div class="hero">
+        <div>
+          <div class="hero-lbl">Aylık Kira Bedeli</div>
+          <div class="hero-val">${r.kiraTutari!=null ? Number(r.kiraTutari).toLocaleString('tr-TR',{maximumFractionDigits:2})+' ₺' : 'Belirlenmedi'}</div>
+        </div>
+        <div class="hero-sub">${aracEtiket}<br>${esc(donemEtiket)}</div>
+      </div>
+
+      <table>
+        ${satir('Araç', aracEtiket)}
+        ${satir('Kiralama dönemi', esc(donemEtiket))}
+        ${satir('Depozito', r.depozito!=null ? Number(r.depozito).toLocaleString('tr-TR',{maximumFractionDigits:2})+' ₺' : '—')}
+        ${satir('Aylık km limiti', r.kmLimiti!=null ? Number(r.kmLimiti).toLocaleString('tr-TR')+' km' : '—')}
+        ${satir('Fazla km bedeli', r.fazlaKmBedeli!=null ? Number(r.fazlaKmBedeli).toLocaleString('tr-TR',{maximumFractionDigits:2})+' ₺/km' : '—')}
+        ${satir('Ek hizmetler / özel koşullar', esc(r.ekHizmetler||''))}
+      </table>
+
+      <div class="onay-kutu"><b>Onay:</b> Bu teklifi onaylıyorsanız, alt kısımda imza/tarih belirterek bize iletebilir ya da telefon/e-posta ile onay bildirebilirsiniz. Onay üzerine kira sözleşmesi hazırlanacak ve araç teslim randevusu planlanacaktır.</div>
+      <div class="imza-row">
+        <div class="imza">Müşteri — Ad Soyad / İmza / Tarih</div>
+        <div class="imza">PEKDOĞRU GRUP — Yetkili / İmza / Tarih</div>
+      </div>
     </div>
-    <div class="not">PEKDOĞRU GRUP · Bu belge bilgilendirme amaçlı bir fiyat teklifidir; kesin satış/kira sözleşmesi niteliği taşımaz. Fiyatlar ${fmtTarih(gecerlilik)} tarihine kadar geçerlidir.</div>
-  </body></html>`;
+    <div class="foot">
+      <div class="fu1">${esc(firmaAdi)}</div>
+      <div>${esc(firmaAdres)}${iletisimSatirlari?'<span class="sep">·</span>'+iletisimSatirlari:''}</div>
+      <div class="disclaimer">Bu belge bilgilendirme amaçlı bir fiyat teklifidir; kesin satış/kira sözleşmesi niteliği taşımaz. Fiyatlar ${fmtTarih(gecerlilik)} tarihine kadar geçerlidir.</div>
+    </div>
+  </div></body></html>`;
   const w = window.open('', '_blank');
   if(!w){ showToast('PDF penceresi açılamadı — tarayıcı pop-up engelleyicisini kontrol edin.', true); return; }
   w.document.open(); w.document.write(html); w.document.close();
