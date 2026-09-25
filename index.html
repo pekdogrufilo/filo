@@ -2430,7 +2430,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-24.224</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-24.225</div>
     </div>
   </div>
 </div>
@@ -2597,7 +2597,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-24.224</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-24.225</div>
     </div>
   </aside>
 <script>
@@ -15168,6 +15168,7 @@ function renderTekliflerPage(){
     <div class="dcard" style="padding:0;overflow-x:auto;">
       ${liste.length===0 ? `
         <div class="empty-state">
+          <div class="empty-state-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z"/></svg></div>
           <div class="empty-state-title">Teklif kaydı yok</div>
           <div class="empty-state-desc">"+ Yeni Teklif" ile adım adım kiralama akışını başlatın; teklifiniz burada listelenir.</div>
           <button class="empty-state-cta" onclick="openYeniKiralamaSihirbazi()">+ Yeni Teklif</button>
@@ -18299,9 +18300,38 @@ function bildirimGecerliMi(n){
   }
   return true;
 }
+// v.225: "aynı bildirim tekrar tekrar geliyor" — canlıda doğrulanan ikinci bir mükerrer
+// bildirim kaynağı: bildirimEkleyeBil()'in tekilleştirmesi SADECE aynı hafta içinde çalışıyor
+// (period = haftaAnahtari(), Unix epoch'a göre 7 günlük bir dilim). Koşul (ör. muayenesi geçmiş
+// bir araç, vadesi geçmemiş bir fatura) BİRDEN FAZLA hafta boyunca sürüyorsa, her yeni hafta
+// diliminde tur+anahtar aynı olsa bile YENİ bir bildirim satırı ekleniyor — bildirimGecerliMi()
+// ise koşul hâlâ doğru olduğu için eskisini de "geçerli" sayıp SİLMİYORDU. Sonuç: aynı araç/fatura
+// için birebir aynı konuda (sadece "X gün kaldı/geçti" sayısı farklı, bazen birebir aynı metin)
+// yan yana duran mükerrer kayıtlar — canlıda "42AKU776 — Muayene" için 16 gün geçti / 9 gün geçti
+// diye iki ayrı satır, ve aynı faturada (FTR-2026-0001) birebir aynı metinli iki satır olarak
+// gözlemlendi (iki bildirim de aynı _anahtar'a sahip, sadece _periyot'u 1 farklıydı — hafta
+// sınırı, panelin iki açılışı arasında, birkaç saat arayla bile geçilebiliyor). Düzeltme: geçerli
+// bildirimler arasında aynı (tur, _anahtar) çiftini paylaşanlar artık TEK bir kayda indirgeniyor —
+// en güncel periyotta (eşitlikte en yeni oluşturma tarihinde) üretilen satır kalıyor, öncekiler
+// siliniyor. Otomasyon bildirimlerinde _anahtar zaten ay bilgisini içerdiğinden (kural.id+'_'+
+// arac.id+'_'+ay) bu grupsama onları etkilemiyor — her ay kendi başına ayrı ve doğru kalıyor.
 function bildirimleriTemizle(){
   const once = notifications.length;
   notifications = notifications.filter(bildirimGecerliMi);
+  const enGuncel = new Map(); // "tur|anahtar" -> en güncel periyottaki bildirim
+  notifications.forEach(n=>{
+    if(n._anahtar==null) return; // anahtarı olmayan (eski/özel) kayıtlara dokunma
+    const key = n.tur+'|'+n._anahtar;
+    const mevcut = enGuncel.get(key);
+    if(!mevcut){ enGuncel.set(key, n); return; }
+    const mevcutPeriyot = Number(mevcut._periyot)||0;
+    const yeniPeriyot = Number(n._periyot)||0;
+    if(yeniPeriyot > mevcutPeriyot || (yeniPeriyot===mevcutPeriyot && new Date(n.olusturmaTarihi||0) > new Date(mevcut.olusturmaTarihi||0))){
+      enGuncel.set(key, n);
+    }
+  });
+  const tutulacak = new Set([...enGuncel.values()].map(n=>n.id));
+  notifications = notifications.filter(n=> n._anahtar==null || tutulacak.has(n.id));
   return notifications.length !== once;
 }
 function notifOkunmamisSayisi(){
