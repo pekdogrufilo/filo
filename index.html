@@ -2430,7 +2430,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-24.229</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-24.230</div>
     </div>
   </div>
 </div>
@@ -2598,7 +2598,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-24.229</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-24.230</div>
     </div>
   </aside>
 <script>
@@ -21044,7 +21044,11 @@ function renderAiPage(){
           <span style="font-size:11px;color:var(--steel-300);white-space:nowrap;display:flex;align-items:center;gap:4px;">${ICO('volume',12)} Ses:</span>
           <select id="aiSesSecimi" onchange="aiSesSec(this.value)" style="flex:1;max-width:340px;background:var(--surface);border:1px solid var(--line);color:var(--paper);font-size:12px;padding:5px 8px;border-radius:6px;">${aiSesSecimiHTML()}</select>
           <button onclick="aiSesDene()" style="background:var(--surface-2);border:1px solid var(--border);color:var(--text-2);padding:5px 12px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;white-space:nowrap;">Dene</button>
-        </div>` : ''}
+        </div>
+        <label style="display:flex;align-items:center;gap:6px;margin-top:7px;font-size:11.5px;color:var(--steel-300);cursor:pointer;">
+          <input type="checkbox" ${aiGeminiSesAcMi()?'checked':''} onchange="aiGeminiSesToggle()">
+          Gemini ile daha doğal ses üret (deneysel) — bağlantı/servis sorununda otomatik olarak yukarıdaki tarayıcı sesine döner
+        </label>` : ''}
       </div>
 
       <!-- v.86: Mobilde bu iki yükleme satırı gizlenir; yerine input çubuğundaki ataç
@@ -21276,7 +21280,10 @@ function aiSesliYanitAcMi(){
 function aiSesliYanitToggle(){
   const yeni = !aiSesliYanitAcMi();
   try{ localStorage.setItem('aiSesliYanit', yeni?'1':'0'); }catch(e){}
-  if(!yeni && window.speechSynthesis) try{ window.speechSynthesis.cancel(); }catch(e){}
+  if(!yeni){
+    if(window.speechSynthesis) try{ window.speechSynthesis.cancel(); }catch(e){}
+    if(window.__aiSesAudioEl) try{ window.__aiSesAudioEl.pause(); }catch(e){}
+  }
   renderAiPage();
 }
 // v.84: "Sesi çok kötü" geri bildirimi üzerine eklendi — tarayıcıda/işletim sisteminde genelde
@@ -21341,12 +21348,103 @@ if(window.speechSynthesis && !window.__aiSesListenerBagli){
   window.__aiSesListenerBagli = true;
   window.speechSynthesis.onvoiceschanged = ()=>{ if(document.getElementById('page-ai')) renderAiPage(); };
 }
-function aiMetniSesliOku(html){
-  if(!window.speechSynthesis) return;
+// ===== v.230: "seslendirme kötü" şikayetine gerçek çözüm — tarayıcının kendi sesleri yerine
+// Gemini'nin native ses üretimi (TTS) denenir. Google'ın güncel dokümantasyonuna göre
+// gemini-3.8-flash-tts modeli generateContent'e responseModalities:["AUDIO"] ile çağrılınca
+// Türkçe dahil gerçekçi bir ses üretiyor ve mevcut Cloudflare Worker proxy'mizi/Gemini
+// anahtarımızı DEĞİŞTİRMEDEN kullanılabiliyor (aynı GEMINI_PROXY_URL'e aynı şekilde POST
+// ediliyor). ÖNEMLİ DÜRÜSTLÜK NOTU: bu ortamda (sandbox) canlı ağ erişimi olmadığı için bu
+// çağrı GERÇEK bir ağ isteğiyle test EDİLEMEDİ — Google'ın resmi dokümantasyonuna dayanıyor
+// ama Worker'ın ses (audio) yanıtını sorunsuz geçirip geçirmediği doğrulanamadı. Bu yüzden:
+// varsayılan olarak DENENIYOR ama HER ZAMAN try/catch içinde — herhangi bir hata (404/400/ağ/
+// format) durumunda SESSİZCE ve OTOMATİK olarak aşağıdaki tarayıcı sesine (Web Speech API)
+// düşülüyor, yani en kötü ihtimalle kullanıcı v.228'deki (zaten iyileştirilmiş) tarayıcı sesini
+// duyar — hiçbir zaman sessiz kalmaz. Kullanıcı isterse ayarlardan kapatabilir (aiGeminiSesAcMi).
+const AI_GEMINI_TTS_MODEL = 'gemini-3.8-flash-tts';
+const AI_GEMINI_TTS_VOICE = 'Kore'; // Google'ın önerdiği doğal/sıcak tonlu hazır seslerden biri; dil otomatik metinden algılanıyor
+function aiGeminiSesAcMi(){
+  try{ return localStorage.getItem('aiGeminiSesAcMi') !== '0'; }catch(e){ return true; } // varsayılan AÇIK
+}
+function aiGeminiSesToggle(){
+  const yeni = !aiGeminiSesAcMi();
+  try{ localStorage.setItem('aiGeminiSesAcMi', yeni?'1':'0'); }catch(e){}
+  if(!yeni && window.__aiSesAudioEl) try{ window.__aiSesAudioEl.pause(); }catch(e){}
+  renderAiPage();
+}
+// Ham 16-bit PCM (Gemini TTS'in döndürdüğü format) çevresine standart bir 44 baytlık WAV
+// başlığı ekler — bu kısım Gemini'ye hiç bağımlı değil, sabit/bilinen bir ikili format olduğu
+// için ağ erişimi olmadan da doğruluğu test edilebildi (bkz. v230_gemini_tts_test.py).
+function pcmToWavBlob(base64Pcm, sampleRate, numChannels, bitsPerSample){
+  const binary = atob(base64Pcm);
+  const len = binary.length;
+  const pcmBytes = new Uint8Array(len);
+  for(let i=0;i<len;i++) pcmBytes[i] = binary.charCodeAt(i);
+  const byteRate = sampleRate * numChannels * (bitsPerSample/8);
+  const blockAlign = numChannels * (bitsPerSample/8);
+  const buffer = new ArrayBuffer(44 + len);
+  const view = new DataView(buffer);
+  const writeStr = (offset, str) => { for(let i=0;i<str.length;i++) view.setUint8(offset+i, str.charCodeAt(i)); };
+  writeStr(0, 'RIFF');
+  view.setUint32(4, 36 + len, true);
+  writeStr(8, 'WAVE');
+  writeStr(12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, numChannels, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, byteRate, true);
+  view.setUint16(32, blockAlign, true);
+  view.setUint16(34, bitsPerSample, true);
+  writeStr(36, 'data');
+  view.setUint32(40, len, true);
+  new Uint8Array(buffer, 44).set(pcmBytes);
+  return new Blob([buffer], {type:'audio/wav'});
+}
+async function aiGeminiSesUret(metin){
+  const body = {
+    model: AI_GEMINI_TTS_MODEL,
+    contents: [{role:'user', parts:[{text: metin}]}],
+    generationConfig: {
+      responseModalities: ['AUDIO'],
+      speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: AI_GEMINI_TTS_VOICE } } }
+    }
+  };
+  const controller = new AbortController();
+  const timeout = setTimeout(()=>controller.abort(), 20000);
+  let res;
+  try{
+    res = await fetch(GEMINI_PROXY_URL, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body), signal: controller.signal});
+  }finally{ clearTimeout(timeout); }
+  if(!res.ok) throw new Error('Gemini TTS isteği başarısız: '+res.status);
+  const data = await res.json();
+  const part = data?.candidates?.[0]?.content?.parts?.[0];
+  const b64 = part?.inlineData?.data;
+  if(!b64) throw new Error('Gemini TTS ses verisi döndürmedi');
+  const mime = part.inlineData.mimeType || 'audio/L16;rate=24000';
+  const rateEslesme = /rate=(\d+)/.exec(mime);
+  const sampleRate = rateEslesme ? Number(rateEslesme[1]) : 24000;
+  return pcmToWavBlob(b64, sampleRate, 1, 16);
+}
+async function aiMetniSesliOku(html){
   const tmp = document.createElement('div');
   tmp.innerHTML = html;
   const metin = (tmp.textContent||'').trim();
   if(!metin) return;
+  if(aiGeminiSesAcMi() && typeof getGeminiKey==='function' && getGeminiKey()){
+    try{
+      const blob = await aiGeminiSesUret(metin.length>3000 ? metin.slice(0,3000) : metin);
+      const url = URL.createObjectURL(blob);
+      if(window.__aiSesAudioEl){ try{ window.__aiSesAudioEl.pause(); }catch(e){} }
+      const audio = new Audio(url);
+      window.__aiSesAudioEl = audio;
+      audio.onended = ()=>{ try{ URL.revokeObjectURL(url); }catch(e){} };
+      await audio.play();
+      return;
+    }catch(e){
+      // Sessizce tarayıcı sesine düş — kullanıcı hiçbir zaman sessiz kalmasın.
+    }
+  }
+  if(!window.speechSynthesis) return;
   try{
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(metin);
