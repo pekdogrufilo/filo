@@ -2430,7 +2430,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-24.233</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-24.234</div>
     </div>
   </div>
 </div>
@@ -2598,7 +2598,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-24.233</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-24.234</div>
     </div>
   </aside>
 <script>
@@ -14679,6 +14679,13 @@ function renderKiralamaPage(){
   // aktif sekme artık hatırlanıyor.
   const krAktif = window.__krTabAktif || 'islem';
   const kirada = vehicles.filter(v=>v.durum==='Kirada');
+  // v.234: "ihalelere hazırlık yapıyorum, kaç araç var ne zaman dönecek, güzelce görmem lazım"
+  // geri bildirimi üzerine eklendi — bu sayfa zaten "Şu An Kiradaki Araçlar" tablosuyla dönüş
+  // tarihlerini gösteriyordu, ama şu an ELİNDE (hemen teklif edilebilir) kaç araç olduğunu
+  // görmenin hiçbir yolu yoktu. musait/serviste de aynı mantıkla eklendi — ihale hazırlığında
+  // toplam filo kapasitesi (müsait + yakında dönecek + serviste/kullanılamaz) tek bakışta net olsun.
+  const musait = vehicles.filter(v=>v.durum==='Müsait');
+  const serviste = vehicles.filter(v=>v.durum==='Serviste');
   const withHistory = vehicles.filter(v=>(v.kiraGecmisi||[]).length>0);
 
   // Kira geçmişi özet istatistikleri
@@ -14825,6 +14832,10 @@ function renderKiralamaPage(){
 
     <div class="dash-stats" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:20px;">
       <div class="dstat" style="cursor:default;">
+        <div class="dstat-ic" style="background:rgba(22,160,134,.12);color:var(--accent-blue);">${DASH_ICONS.car}</div>
+        <div class="dstat-txt"><div class="l">Şu An Müsait</div><div class="n" style="color:var(--accent-blue);">${musait.length}</div><div class="d">hemen teklif edilebilir</div></div>
+      </div>
+      <div class="dstat" style="cursor:default;">
         <div class="dstat-ic" style="background:rgba(54,161,104,.15);color:#36A168;">${DASH_ICONS.check}</div>
         <div class="dstat-txt"><div class="l">Şu An Kirada</div><div class="n" style="color:#36A168;">${kirada.length}</div></div>
       </div>
@@ -14835,6 +14846,10 @@ function renderKiralamaPage(){
       <div class="dstat" style="cursor:default;">
         <div class="dstat-ic" style="background:rgba(225,85,78,.15);color:#E1554E;">${DASH_ICONS.warn}</div>
         <div class="dstat-txt"><div class="l">Süresi Geçmiş</div><div class="n" style="color:#E1554E;">${suresiGecen.length}</div></div>
+      </div>
+      <div class="dstat" style="cursor:default;">
+        <div class="dstat-ic" style="background:rgba(120,120,128,.14);color:var(--text-3);">${DASH_ICONS.wrench}</div>
+        <div class="dstat-txt"><div class="l">Serviste</div><div class="n" style="color:var(--text-3);">${serviste.length}</div></div>
       </div>
     </div>
 
@@ -14884,6 +14899,20 @@ function renderKiralamaPage(){
         }).join('')}
       </div>
     </div>` : ''}
+
+    <div class="dcard" style="margin-bottom:16px;">
+      <h3><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--accent-blue);margin-right:7px;"></span>Şu An Müsait Araçlar <span style="font-weight:400;font-size:13px;color:var(--text-3);">${musait.length} araç — hemen teklif/ihaleye ayrılabilir</span></h3>
+      ${musait.length ? `
+      <div class="table-scroll"><table class="mini-table">
+        <thead><tr><th>Plaka</th><th>Araç</th><th>Model Yılı</th><th>Bulunduğu Yer</th></tr></thead>
+        <tbody>${[...musait].sort((a,b)=>(a.plaka||'').localeCompare(b.plaka||'','tr')).map(v=>`<tr>
+            <td><span class="mini-plaka">${esc(v.plaka)}</span></td>
+            <td>${esc([v.marka,v.model].filter(Boolean).join(' ')||'—')}</td>
+            <td>${esc(v.modelYili||'—')}</td>
+            <td>${esc(v.yer||'—')}</td>
+          </tr>`).join('')}</tbody>
+      </table></div>` : `<div style="padding:14px 4px;font-size:13px;color:var(--steel-300);">Şu an müsait araç yok — tüm filo kirada veya serviste.</div>`}
+    </div>
 
     <div class="dcard" style="margin-bottom:16px;">
       <h3>Şu An Kiradaki Araçlar <span style="font-weight:400;font-size:13px;color:var(--text-3);">${kirada.length}</span></h3>
