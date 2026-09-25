@@ -960,7 +960,19 @@
     .iade-foot button{flex:1 1 calc(50% - 5px);text-align:center;padding-left:8px;padding-right:8px;}
 
   /* v.115: Dar ekran ek ayarları */
-  .top-header{margin:-32px -8px 16px;padding:24px 8px 10px;}
+  /* v.236: "yan menü çentikten dolayı açılmıyor" — bu kuraldaki margin-top:-32px, hamburger
+     menü butonunu barındıran .top-header'ı normal akış konumunun 32px YUKARISINA çekiyordu.
+     Daha sonra eklenen çentik/Dynamic-Island güvenli-alan payı (bkz. aşağıdaki
+     "padding-top:calc(...+env(safe-area-inset-top))" kuralı, satır ~1223) SADECE padding-top'u
+     düzeltiyordu — bu negatif margin'i hesaba katmıyordu. Sonuç: iPhone'da (özellikle ana ekrana
+     eklenmiş/PWA modunda, status bar "black-translucent" olduğu için içerik çentiğin ALTINA
+     kayabiliyor) hamburger butonu net -21px kadar çentiğin/Dynamic Island'ın içine/arkasına
+     düşüyor, dokunulamaz hale geliyordu. Bu sayfada .top-header'ın üstünde taşmasını
+     gerektirecek dolgulu bir üst kapsayıcı YOK (.main-area'da padding yok) — yani bu üst margin
+     hiçbir zaman gerekli değildi, sadece eski (çentiksiz telefon döneminden kalma) kozmetik bir
+     sıkıştırma hilesiydi. Kaldırılınca (0 yapılınca) güvenli-alan dolgusu tek başına doğru
+     çalışıyor; yatay/alt margin değerleri (tasarımla ilgili, çentikle alakasız) aynen korunuyor. */
+  .top-header{margin:0 -8px 16px;padding:24px 8px 10px;}
   .th-title{font-size:15px;}
   .page{padding:14px 8px 90px;}
   .dstat-txt .n{font-size:17px;}
@@ -1027,7 +1039,9 @@
   /* v.115: Mobil genel iyileştirmeler */
   input, select, textarea{font-size:16px;} /* iOS otomatik zoom'u engeller */
   .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
-  .top-header{margin:-32px -12px 20px;padding:30px 12px 12px;}
+  /* v.236: aynı çentik/hamburger düzeltmesi (yukarıdaki 480px kuralındaki notla aynı gerekçe) —
+     bu 900px kırılımındaki margin-top:-32px de kaldırıldı. */
+  .top-header{margin:0 -12px 20px;padding:30px 12px 12px;}
   .th-title{font-size:16px;}
   .th-sub{font-size:12px;}
   .page{padding:20px 12px 86px;}
@@ -2430,7 +2444,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-25.235</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-25.236</div>
     </div>
   </div>
 </div>
@@ -2598,7 +2612,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-25.235</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-25.236</div>
     </div>
   </aside>
 <script>
