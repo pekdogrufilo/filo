@@ -925,7 +925,14 @@
     .wrap{padding:14px 12px 80px;}
     .topbar{margin:-14px -4px 16px;padding:18px 4px 10px;padding-bottom:14px;}
     .grid{grid-template-columns:1fr;}
-    .filters{flex-direction:column;align-items:stretch;}
+    /* v.236: "mobil çok kötü" araştırmasında bulundu — .filters'ın masaüstü kuralı (satır ~249)
+       flex-wrap:wrap taşıyor (filtre çipleri/select'ler dar ekranda YENİ SATIRA sarsın diye).
+       Bu mobil kuralda flex-direction column'a dönüyor ama flex-wrap SIFIRLANMIYORDU — column
+       yönünde flex-wrap:wrap, taşan öğeleri alt satıra değil YENİ SÜTUNA (sağa doğru) diziyor;
+       sonuç: arama kutusu/select'ler ~370px'lik konteynerin içinde ~910px genişliğe fırlıyor,
+       Araç Yönetimi filtre çubuğu mobilde tamamen bozuk görünüyordu. nowrap ile tek sütunda
+       düzgün alt alta dizilmesi sağlanıyor. */
+    .filters{flex-direction:column;align-items:stretch;flex-wrap:nowrap;}
     .search-wrap{min-width:0;}
     .field-row{grid-template-columns:1fr;}
     /* Mobilde tek kalan istatistik kartı tam genişlikte dengeli görünür */
@@ -1029,7 +1036,9 @@
     /* v.86: Mobil Araç Yönetimi sadeleştirme — filtre çipleri tek satır yatay kaydırmalı şerit,
        istatistik kartları yığın yerine yatay kaydırmalı tek satır olur (bkz. AskUserQuestion:
        "Araç Yönetimi + Detayı" mockup'ı) */
-    #page-arac-yonetimi .filters{flex-direction:column;align-items:stretch;}
+    /* v.236: aynı flex-wrap düzeltmesi (yukarıdaki 900px kuralındaki notla aynı gerekçe) — bu
+       sayfa-özel kural da nowrap almazsa aynı çoklu-sütun taşması tekrar oluşur. */
+    #page-arac-yonetimi .filters{flex-direction:column;align-items:stretch;flex-wrap:nowrap;}
     .filter-chips{display:flex;flex-wrap:nowrap;gap:7px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;scrollbar-width:none;}
     .filter-chips::-webkit-scrollbar{display:none;}
     .filter-chips .chip{flex-shrink:0;}
@@ -2444,7 +2453,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-25.236</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-25.237</div>
     </div>
   </div>
 </div>
@@ -2612,7 +2621,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-25.236</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-25.237</div>
     </div>
   </aside>
 <script>
