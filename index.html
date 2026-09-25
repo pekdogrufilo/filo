@@ -2430,7 +2430,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-24.227</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-24.228</div>
     </div>
   </div>
 </div>
@@ -2598,7 +2598,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-24.227</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-24.228</div>
     </div>
   </aside>
 <script>
@@ -6427,13 +6427,25 @@ function wireDocType(d){
 // geminiChatFetch() 404/503'te bir sonraki modele geçiyor ama listenin sonuna gelince
 // deneyecek başka model kalmayıp hatayı olduğu gibi kullanıcıya yansıtıyordu. Kapatılan
 // 2.5-flash tamamen kaldırıldı, yerine güncel (3.x) modellerle daha derin bir yedekleme
-// zinciri kondu — ucuz/hızlı olanlar önce, en son en güncel/kapasiteli GA model.
+// zinciri kondu.
+// v.228: "yapay zekamız çok amatör" geri bildirimi üzerine sıra TERS ÇEVRİLDİ. Liste eskiden
+// "ucuz/hızlı olanlar önce" mantığıyla en ZAYIF modelle ("-lite" — Gemini'nin en düşük
+// kapasiteli, en ucuz katmanı) BAŞLIYORDU ve yalnızca o istek TEKNİK olarak başarısız
+// olursa (404/503/zaman aşımı) bir sonrakine geçiyordu — yani normal koşullarda (istek
+// başarıyla 200 dönerse) HER sohbet yanıtı ve HER belge okuma, sıradaki en zayıf modelden
+// geliyordu; kullanıcı hiçbir zaman daha güçlü modelleri görmüyordu. Bu, canlıda gözlenen
+// "yüzeysel/amatör cevap" şikayetinin en olası kök nedeniydi. Artık en güncel/kapasiteli
+// modeller ÖNCE deneniyor, "-lite" modeller SADECE üsttekilerin hepsi (yoğunluk/hata/zaman
+// aşımı nedeniyle) tükenirse devreye giren son çare — yanıt kalitesi öncelikli, maliyet/hız
+// ikincil (kullanıcı bu tercihi net belirtti). Not: bu, ortalama yanıt süresini ve Gemini API
+// maliyetini bir miktar artırabilir — hız/maliyet öncelikli olması gerekirse sıra kolayca
+// eski haline çevrilebilir.
 const GEMINI_MODELS = [
-  'gemini-3.5-flash-lite',
-  'gemini-3.1-flash-lite',
-  'gemini-3.5-flash',
   'gemini-3.8-flash',
   'gemini-3.7-flash',
+  'gemini-3.5-flash',
+  'gemini-3.5-flash-lite',
+  'gemini-3.1-flash-lite',
 ];
 const GEMINI_PROXY_URL = 'https://filo-gemini-proxy.hasan-huseyin-pekdogru.workers.dev/';
 
@@ -20659,9 +20671,15 @@ function renderIhalelerPage(){
       </table>`}
     </div>`;
 }
-function ihaleFormuAc(id){
+// v.228: `pf` (prefill) — YENİ bir kayıt için (id boşken) alanları önceden doldurmak amacıyla
+// eklendi; AI Filo Asistanı'nın "ihale ekle" akışı (bkz. aiIhaleAkisiBaslat) bunu kullanıyor.
+// Var olan bir kaydı düzenlerken (id doluyken) YOK SAYILIR — asla gerçek bir kaydın üzerine
+// asistanın "tahmini" verisiyle sessizce yazılmaz, sadece boş formun ilk değerlerini belirler;
+// kaydı gerçekten oluşturan yine kullanıcının kendi "Kaydet" tıklaması.
+function ihaleFormuAc(id, pf){
   const old = document.getElementById('ihaleFormOverlay'); if(old) old.remove();
   const ih = id ? ihaleler.find(x=>x.id===id) : null;
+  const on = ih || pf || {};
   const el = document.createElement('div');
   el.className = 'overlay show';
   el.id = 'ihaleFormOverlay';
@@ -20671,26 +20689,27 @@ function ihaleFormuAc(id){
         <h2>${ih?'İhaleyi Düzenle':'Yeni İhale'}</h2>
         <button class="modal-close" onclick="document.getElementById('ihaleFormOverlay').remove()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
       </div>
+      ${!ih && pf ? `<div style="margin:0 22px 4px;padding:8px 12px;background:rgba(22,160,134,.08);border:1px solid rgba(22,160,134,.25);border-radius:8px;font-size:12px;color:var(--accent-blue);">AI Filo Asistanı'nın sohbetten hazırladığı bilgilerle dolduruldu — kaydetmeden önce gözden geçir.</div>` : ''}
       <div class="modal-body">
-        <div class="field"><label>Kurum Adı</label><input type="text" id="ifKurum" value="${esc(ih?(ih.kurumAdi||''):'')}" placeholder="Örn. Konya Büyükşehir Belediyesi"></div>
+        <div class="field"><label>Kurum Adı</label><input type="text" id="ifKurum" value="${esc(on.kurumAdi||'')}" placeholder="Örn. Konya Büyükşehir Belediyesi"></div>
         <div class="field-row">
-          <div class="field"><label>Konu</label><input type="text" id="ifKonu" value="${esc(ih?(ih.konu||''):'')}" placeholder="Örn. 10 adet binek araç operasyonel kiralama"></div>
-          <div class="field"><label>İhale No</label><input type="text" id="ifIhaleNo" value="${esc(ih?(ih.ihaleNo||''):'')}" placeholder="Örn. 2026/123456"></div>
+          <div class="field"><label>Konu</label><input type="text" id="ifKonu" value="${esc(on.konu||'')}" placeholder="Örn. 10 adet binek araç operasyonel kiralama"></div>
+          <div class="field"><label>İhale No</label><input type="text" id="ifIhaleNo" value="${esc(on.ihaleNo||'')}" placeholder="Örn. 2026/123456"></div>
         </div>
         <div class="field-row">
-          <div class="field"><label>Son Teklif Tarihi</label><input type="date" id="ifTarih" value="${ih?(ih.sonTeklifTarihi||''):todayISO()}"></div>
-          <div class="field"><label>Son Teklif Saati</label><input type="time" id="ifSaat" value="${ih?(ih.sonTeklifSaati||''):''}"></div>
+          <div class="field"><label>Son Teklif Tarihi</label><input type="date" id="ifTarih" value="${on.sonTeklifTarihi||(ih?'':todayISO())}"></div>
+          <div class="field"><label>Son Teklif Saati</label><input type="time" id="ifSaat" value="${on.sonTeklifSaati||''}"></div>
         </div>
         <div class="field-row">
-          <div class="field"><label>Tahmini Bedel (₺)</label><input type="number" min="0" id="ifTahminiBedel" value="${ih&&ih.tahminiBedel!=null?ih.tahminiBedel:''}"></div>
-          <div class="field"><label>Geçici Teminat (₺)</label><input type="number" min="0" id="ifTeminat" value="${ih&&ih.teminatTutari!=null?ih.teminatTutari:''}"></div>
+          <div class="field"><label>Tahmini Bedel (₺)</label><input type="number" min="0" id="ifTahminiBedel" value="${on.tahminiBedel!=null?on.tahminiBedel:''}"></div>
+          <div class="field"><label>Geçici Teminat (₺)</label><input type="number" min="0" id="ifTeminat" value="${on.teminatTutari!=null?on.teminatTutari:''}"></div>
         </div>
         <div class="field"><label>Durum</label>
           <select id="ifDurum">
-            ${['Hazırlanıyor','Verildi','Kazanıldı','Kaybedildi'].map(d=>`<option value="${d}" ${(ih?ih.durum:'Hazırlanıyor')===d?'selected':''}>${d}</option>`).join('')}
+            ${['Hazırlanıyor','Verildi','Kazanıldı','Kaybedildi'].map(d=>`<option value="${d}" ${(on.durum||'Hazırlanıyor')===d?'selected':''}>${d}</option>`).join('')}
           </select>
         </div>
-        <div class="field"><label>Notlar</label><input type="text" id="ifNotlar" value="${esc(ih?(ih.notlar||''):'')}" placeholder="İsteğe bağlı"></div>
+        <div class="field"><label>Notlar</label><input type="text" id="ifNotlar" value="${esc(on.notlar||'')}" placeholder="İsteğe bağlı"></div>
       </div>
       <div class="err" id="ifErr" style="padding:0 22px;"></div>
       <div class="modal-actions">
@@ -21011,6 +21030,7 @@ function renderAiPage(){
             'Filomun mevcut durumunu analiz et',
             'Bu ay gelir ve giderlerimi karşılaştır',
             'Önümüzdeki 30 günde belgesi bitecek araçlar',
+            'Yaklaşan ihalelerim neler?',
             'Bakım maliyeti en yüksek araçları göster',
             'Sözleşmesi yakında bitecek araçlar',
             'En kârlı araçlarımı göster',
@@ -21108,6 +21128,10 @@ function aiSendFromInput(){
   inp.style.height = 'auto';
   if(window.__aiPendingBelge){ aiPendingBelgeCozumle(txt); return; }
   if(window.__aiAkis){ aiAkisYanitla(txt); return; }
+  // v.228: "ihale ekle" gibi bir İŞLEM isteği normal soru-cevap sohbetine (aiSend) hiç
+  // gitmesin diye iade niyeti kontrolünden ÖNCE yakalanıyor — aksi halde aiSend bunu genel
+  // bir soru sanıp filo verisine bakarak alakasız bir cevap üretirdi.
+  if(aiIhaleNiyetiVarMi(txt)){ aiIhaleAkisiBaslat(txt); return; }
   const iadeNiyet = aiIadeNiyetiVarMi(txt);
   if(iadeNiyet.varMi){
     // v.85: eskiden burada __aiIadeBeklenenPlaka sıfırlanmıyordu — eğer flag zaten true iken
@@ -21217,20 +21241,43 @@ function aiKayitliSesAdi(){
 function aiSesSec(adi){
   try{ localStorage.setItem('aiSesAdi', adi||''); }catch(e){}
 }
+// v.228: "seslendirme kötü" geri bildirimi — kullanıcı elle bir ses SEÇMEDİYSE (aiKayitliSesAdi
+// boşsa) eskiden Türkçe olan İLK sesin nesnesi otomatik alınıyordu; tarayıcı/işletim sistemi
+// sesleri genelde alfabetik/kayıt sırasına göre döner ve bu sıradaki ilk ses çoğu zaman en eski/
+// en robotik (offline "Compact"/SAPI tarzı) motor olur — kullanıcı hiç fark etmeden en kötü
+// sesi dinliyor olabiliyordu. Artık VARSAYILAN seçim de bir kaliteye göre puanlanıyor: modern/
+// bulut tabanlı motorları işaret eden isim kalıpları (Google, Natural, Neural, Online, Wavenet,
+// Premium) öne, bilinen düşük kaliteli/robotik kalıplar (Compact, eSpeak, Microsoft tek başına —
+// SAPI5 masaüstü motorları) geriye alınıyor. Kullanıcı "Dene" ile başka bir ses seçerse (bkz.
+// aiSesSec) o seçim her zaman bu otomatik sıralamanın ÖNÜNE geçer, burası SADECE hiç seçim
+// yapılmamışken devreye giriyor.
+function aiSesKaliteSkoru(ses){
+  const ad = (ses.name||'').toLocaleLowerCase('tr-TR');
+  let skor = 0;
+  if(/google|natural|neural|online|wavenet|premium|studio/.test(ad)) skor += 10;
+  if(/microsoft/.test(ad) && !/online|natural|neural/.test(ad)) skor -= 3; // yerel SAPI5 motoru
+  if(/compact|espeak|eloquence/.test(ad)) skor -= 6; // bilinen en robotik/düşük kalite motorlar
+  if(ses.localService===false) skor += 2; // bulut tabanlı sesler genelde localService:false döner
+  return skor;
+}
 function aiSeciliSesNesnesi(){
   const adi = aiKayitliSesAdi();
   const sesler = aiSesListesi();
   if(adi){ const bulunan = sesler.find(s=>s.name===adi); if(bulunan) return bulunan; }
-  return sesler.find(s=>s.lang && s.lang.toLowerCase().startsWith('tr')) || null;
+  const trSesler = sesler.filter(s=>s.lang && s.lang.toLowerCase().startsWith('tr'));
+  if(!trSesler.length) return null;
+  return [...trSesler].sort((a,b)=>aiSesKaliteSkoru(b)-aiSesKaliteSkoru(a))[0];
 }
 function aiSesSecimiHTML(){
   const sesler = aiSesListesi();
   const secili = aiKayitliSesAdi();
   if(!sesler.length) return `<option value="">Sesler yükleniyor...</option>`;
-  const tr = sesler.filter(s=>s.lang && s.lang.toLowerCase().startsWith('tr'));
+  // v.228: liste artık kalite skoruna göre (en iyi üstte) sıralanıyor — kullanıcı manuel
+  // seçim yaparken en doğal sesler en başta görünsün, robotik olanları aramak zorunda kalmasın.
+  const tr = sesler.filter(s=>s.lang && s.lang.toLowerCase().startsWith('tr')).sort((a,b)=>aiSesKaliteSkoru(b)-aiSesKaliteSkoru(a));
   const diger = sesler.filter(s=>!(s.lang && s.lang.toLowerCase().startsWith('tr')));
   const opt = s => `<option value="${esc(s.name)}" ${s.name===secili?'selected':''}>${esc(s.name)} (${esc(s.lang)})</option>`;
-  let html = `<option value="">Sistem varsayılanı${tr.length?' (bulunan bir Türkçe ses otomatik seçilir)':''}</option>`;
+  let html = `<option value="">Sistem varsayılanı${tr.length?' (en iyi bulunan Türkçe ses otomatik seçilir)':''}</option>`;
   if(tr.length) html += `<optgroup label="Türkçe sesler">${tr.map(opt).join('')}</optgroup>`;
   if(diger.length) html += `<optgroup label="Diğer diller">${diger.map(opt).join('')}</optgroup>`;
   return html;
@@ -21421,6 +21468,51 @@ function aiIadeOnDoldurUygula(){
   setVal('iadeNot', d.not);
   if(typeof updateIadeKmDiff==='function') updateIadeKmDiff();
   showToast('Asistanın topladığı bilgiler forma dolduruldu — fotoğrafları ekleyip kontrol et.');
+}
+
+// ===== v.228: "Yeni İhale Ekle" sohbet akışı — "tam entegre olamıyor" geri bildirimine karşılık,
+// asistanın artık SADECE cevap vermekle kalmayıp gerçek bir kaydı da (İhaleler) hazırlayabilmesi
+// için eklendi. Aynı güvenlik ilkesi burada da geçerli: asistan HİÇBİR ZAMAN veriyi kendisi
+// yazmaz — serbest metinden alanları çıkarır (Gemini'ye JSON iste, belgeAnalizEt/
+// musteriBelgeAnalizEt ile AYNI kanıtlanmış "SADECE JSON döndür" deseni), bir özet + "İhale
+// Formunu Aç" düğmesi gösterir; formu GERÇEKTEN kaydeden yine kullanıcının kendi "Kaydet"
+// tıklamasıdır (bkz. yukarıdaki aiIadeAkisiTamamla ile birebir aynı felsefe). =====
+function aiIhaleNiyetiVarMi(txt){
+  const lower = (txt||'').toLocaleLowerCase('tr-TR');
+  const tetikleyiciler = ['ihale ekle','ihale kaydet','yeni ihale','ihaleye kaydet','ihale gir','ihale oluştur','ihale olustur'];
+  return tetikleyiciler.some(t=>lower.includes(t));
+}
+async function aiIhaleAkisiBaslat(txt){
+  aiMessages.push({role:'user', content: txt});
+  renderAiPage();
+  const bugun = todayISO();
+  const system = `Sen bir ihale kaydı oluşturma asistanısın. Kullanıcının serbest metninden bir kamu ihalesi teklif kaydı için bilgi çıkaracaksın. SADECE şu JSON nesnesini döndür, başka hiçbir metin veya kod bloğu ekleme:\n{"kurumAdi": string|null, "konu": string|null, "ihaleNo": string|null, "sonTeklifTarihi": "YYYY-MM-DD"|null, "tahminiBedel": number|null, "teminatTutari": number|null}\nBUGÜNÜN TARİHİ: ${bugun} — "yarın", "gelecek hafta", "3 gün sonra" gibi göreli ifadeleri bu tarihe göre kesin bir YYYY-MM-DD tarihine çevir. kurumAdi metinde açıkça bir kurum/belediye/kamu kuruluşu adı geçmiyorsa null bırak. Tutarları (tahminiBedel/teminatTutari) sadece metinde AÇIKÇA bir rakam varsa doldur ("2 milyon" → 2000000, "75 bin" → 75000 gibi çevirebilirsin), YOKSA null bırak, ASLA tahmin etme/uydurma.`;
+  try{
+    const yanit = await geminiChatFetch(system, [{role:'user', parts:[{text: txt}]}], {temperature:0, maxOutputTokens:512});
+    const bilgi = JSON.parse(yanit.replace(/```json|```/g,'').trim());
+    if(!bilgi || typeof bilgi!=='object') throw new Error('boş');
+    if(!bilgi.kurumAdi && !bilgi.sonTeklifTarihi){
+      aiMessages.push({role:'assistant', content: 'İhale eklemek istediğini anladım ama en azından kurum adını ya da son teklif tarihini metinden çıkaramadım — bir daha, biraz daha ayrıntılı yazar mısın? (ör: "Konya Büyükşehir Belediyesi için 15 Ekim son teklif tarihli bir ihale ekle")'});
+      renderAiPage();
+      return;
+    }
+    window.__aiIhaleOnDoldur = {
+      kurumAdi: bilgi.kurumAdi||'', konu: bilgi.konu||'', ihaleNo: bilgi.ihaleNo||'',
+      sonTeklifTarihi: bilgi.sonTeklifTarihi||'', tahminiBedel: bilgi.tahminiBedel!=null?Number(bilgi.tahminiBedel):null,
+      teminatTutari: bilgi.teminatTutari!=null?Number(bilgi.teminatTutari):null,
+    };
+    const parcalar = [
+      bilgi.kurumAdi ? `Kurum: <b>${esc(bilgi.kurumAdi)}</b>` : null,
+      bilgi.konu ? `Konu: <b>${esc(bilgi.konu)}</b>` : null,
+      bilgi.sonTeklifTarihi ? `Son teklif: <b>${fmtTarih(bilgi.sonTeklifTarihi)}</b>` : null,
+      bilgi.tahminiBedel!=null ? `Tahmini bedel: <b>${fmtTL2(bilgi.tahminiBedel)}</b>` : null,
+      bilgi.teminatTutari!=null ? `Teminat: <b>${fmtTL2(bilgi.teminatTutari)}</b>` : null,
+    ].filter(Boolean).join(' · ');
+    aiMessages.push({role:'assistant', content: `Şunu anladım:<br>${parcalar}<br><br>Şimdi "Yeni İhale" formunu bu bilgilerle dolu açıyorum — eksik/yanlış bir şey varsa düzeltip sen "Kaydet"e basacaksın, asistan kaydı otomatik oluşturmuyor. <button onclick="switchPage('ihaleler');setTimeout(()=>{ihaleFormuAc(null, window.__aiIhaleOnDoldur);},150)" style="margin-left:6px;background:var(--accent-blue);color:#fff;border:none;padding:5px 14px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;">İhale Formunu Aç</button>`});
+  }catch(e){
+    aiMessages.push({role:'assistant', content: 'İhale bilgilerini şu an çıkaramadım (bağlantı ya da servis sorunu olabilir) — istersen doğrudan İhaleler sayfasından "+ Yeni İhale" ile ekleyebilirsin, ya da biraz sonra tekrar dener misin?'});
+  }
+  renderAiPage();
 }
 
 async function sartnameYukle(file){
@@ -21993,6 +22085,16 @@ async function aiSend(mesaj){
           gecikmisCezaSayisi: odenmemisCeza.filter(f=>{ const dl=daysLeft(f.sonOdemeTarihi); return dl!==null && dl<0; }).length,
         };
       })()} : {}),
+      // v.228: İhale Hatırlatıcı (v.227) verisi asistana da aktarılıyor — yeni eklenen bu
+      // özellik daha önce filoOzet'e HİÇ dahil değildi, yani asistan ihalelerle ilgili hiçbir
+      // soruya cevap veremiyordu ("tam entegre olamıyor" şikayetinin somut bir örneği).
+      // Teminat/tahmini bedel gibi mali alanlar diğer mali özetlerle (cariOzet/faturaOzet)
+      // AYNI ilkeyle SADECE yönetici rolünde veride bulunur.
+      ihaleOzet: ihaleler.filter(ih=>ih.durum==='Hazırlanıyor').map(ih=>({
+        kurumAdi: ih.kurumAdi||'', konu: ih.konu||'', ihaleNo: ih.ihaleNo||'',
+        sonTeklifTarihi: ih.sonTeklifTarihi||'', gunKaldi: ih.sonTeklifTarihi ? daysLeft(ih.sonTeklifTarihi) : null,
+        ...(isAdmin() ? {tahminiBedel: ih.tahminiBedel||null, teminatTutari: ih.teminatTutari||null} : {}),
+      })),
     };
 
     const system = `Sen ${FIRMA_ADI} şirketinin akıllı AI filo yönetim asistanısın.
@@ -22056,7 +22158,15 @@ LASTİK / YAKIT / HGS-CEZA İÇİN (FAZ8 — FAZ5 modüllerinden):
 - hasarCezaOzet: şirket çapında ÖDENMEMİŞ HGS/OGS geçişi ve trafik cezası borcu (araç kartlarındaki eski hasarlar[] listesinden TAMAMEN AYRI bir veridir, karıştırma); SADECE yönetici rolünde bulunur
 - "Ödenmemiş HGS/ceza ne kadar?" → hasarCezaOzet.odenmemisHgsToplam / odenmemisCezaToplam (veride yoksa yetkin olmadığını belirt)
 
+İHALELER İÇİN (v.228 — dikkat: bu, "İhaleye uygun araç" sorularından FARKLI bir veridir, karıştırma):
+- ihaleOzet: kurumlara verilen ve HENÜZ "Hazırlanıyor" durumundaki (teklifi verilmemiş) ihale kayıtları — her biri kurum adı, konu, ihale no, son teklif tarihi ve o tarihe kaç gün kaldığını (gunKaldi; negatifse süre geçmiş demektir) taşır
+- tahminiBedel/teminatTutari SADECE yönetici rolünde veride bulunur; yoksa "bu bilgiye erişimin yok" de, tutar uydurma
+- "Yaklaşan ihalelerim neler?" / "Hangi ihalenin son teklif tarihi yaklaşıyor?" → ihaleOzet'i gunKaldi'ye göre küçükten büyüğe sırala, en yakınları öne çıkar
+- ihaleOzet BOŞSA "şu an hazırlanan bir ihale kaydın yok" de — Verildi/Kazanıldı/Kaybedildi durumundaki ihaleler bu listede YER ALMAZ (kasıtlı, artık aksiyon gerektirmiyorlar), bunu "hiç ihalen yok" diye yanlış yorumlama
+- Kullanıcı yeni bir ihale EKLEMEK isterse (ör. "ihale ekle", "yeni ihale kaydet") bu bir SORU değil bir İŞLEMDİR — asistan bunu kendi başına burada cevaplamaya ÇALIŞMAZ, ayrı bir akış bu isteği yakalar; sen bu mesajı hiç görmeyeceksin
+
 SIKÇA SORULAN SORULAR:
+- "Yaklaşan ihalelerim neler?" → ihaleOzet listesini gunKaldi'ye göre sıralı göster
 - "İhaleye uygun araç kaç tane?" → ihaleUygunAraclar listesini say ve göster
 - "Müsait araçlar?" → musaitAraclar listesini göster
 - "X marka araç var mı?" → araclar listesinden filtrele
