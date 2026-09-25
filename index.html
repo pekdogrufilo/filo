@@ -2430,7 +2430,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-24.231</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-24.232</div>
     </div>
   </div>
 </div>
@@ -2598,7 +2598,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-24.231</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-24.232</div>
     </div>
   </aside>
 <script>
@@ -21415,11 +21415,17 @@ async function aiGeminiSesUret(metin){
   try{
     res = await fetch(GEMINI_PROXY_URL, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body), signal: controller.signal});
   }finally{ clearTimeout(timeout); }
-  if(!res.ok) throw new Error('Gemini TTS isteği başarısız: '+res.status);
+  if(!res.ok){
+    // v.232: teşhis kolaylığı için sadece HTTP durum kodu değil, Worker/Gemini'nin döndürdüğü
+    // asıl hata mesajı da yakalanıyor (bkz. aiMetniSesliOku'daki tek seferlik toast).
+    const errBody = await res.json().catch(()=>({}));
+    const detay = errBody?.error?.message || errBody?.error || '';
+    throw new Error(`Gemini TTS isteği başarısız (HTTP ${res.status})${detay ? ': '+detay : ''}`);
+  }
   const data = await res.json();
   const part = data?.candidates?.[0]?.content?.parts?.[0];
   const b64 = part?.inlineData?.data;
-  if(!b64) throw new Error('Gemini TTS ses verisi döndürmedi');
+  if(!b64) throw new Error('Gemini TTS ses verisi döndürmedi (beklenmeyen yanıt formatı)');
   const mime = part.inlineData.mimeType || 'audio/L16;rate=24000';
   const rateEslesme = /rate=(\d+)/.exec(mime);
   const sampleRate = rateEslesme ? Number(rateEslesme[1]) : 24000;
@@ -21441,7 +21447,18 @@ async function aiMetniSesliOku(html){
       await audio.play();
       return;
     }catch(e){
-      // Sessizce tarayıcı sesine düş — kullanıcı hiçbir zaman sessiz kalmasın.
+      // v.232: "ses değişmemiş" geri bildirimi üzerine — önceden burası TAMAMEN sessizdi, yani
+      // Gemini TTS her başarısız olduğunda kullanıcı hiçbir şey görmeden eski tarayıcı sesini
+      // duyuyordu ve NEDEN olduğunu bilme imkanı yoktu. Artık oturum başına BİR KEZ (spam
+      // olmasın diye) gerçek hata mesajını toast ile gösteriyoruz — kullanıcı bunu ekran
+      // görüntüsü alıp bana iletebilir, ben de canlı ağ erişimim olmadan bile asıl sorunu
+      // (Worker uyumsuzluğu/model adı/API erişimi vb.) buradan teşhis edebilirim. Sessiz
+      // tarayıcı sesine düşme davranışı DEĞİŞMEDİ, sadece artık görünür/izlenebilir.
+      if(!window.__aiGeminiSesHataGosterildi){
+        window.__aiGeminiSesHataGosterildi = true;
+        showToast('Gemini sesi denendi ama başarısız oldu: ' + (e && e.message ? e.message : 'bilinmeyen hata') + ' — tarayıcı sesine geçildi.', true);
+      }
+      console.warn('Gemini TTS başarısız, tarayıcı sesine geçiliyor:', e);
     }
   }
   if(!window.speechSynthesis) return;
