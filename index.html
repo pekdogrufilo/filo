@@ -2430,7 +2430,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-24.228</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-24.229</div>
     </div>
   </div>
 </div>
@@ -2598,7 +2598,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-24.228</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-24.229</div>
     </div>
   </aside>
 <script>
@@ -20691,6 +20691,13 @@ function ihaleFormuAc(id, pf){
       </div>
       ${!ih && pf ? `<div style="margin:0 22px 4px;padding:8px 12px;background:rgba(22,160,134,.08);border:1px solid rgba(22,160,134,.25);border-radius:8px;font-size:12px;color:var(--accent-blue);">AI Filo Asistanı'nın sohbetten hazırladığı bilgilerle dolduruldu — kaydetmeden önce gözden geçir.</div>` : ''}
       <div class="modal-body">
+        ${!ih ? `<div style="margin:0 0 14px;padding:10px 12px;background:var(--surface);border:1px dashed var(--line);border-radius:10px;">
+          <div style="display:flex;align-items:center;gap:8px;cursor:pointer;" onclick="document.getElementById('ihSartnameInput').click()">
+            ${ICO('paperclip',14)}
+            <span id="ihSartnameLabel" style="font-size:12.5px;color:var(--text-3);">İdari şartname yükle (PDF/Word) — bilgiler otomatik doldurulsun</span>
+          </div>
+          <input type="file" id="ihSartnameInput" accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/*" style="display:none" onchange="ihaleSartnameYukle(this.files[0])">
+        </div>` : ''}
         <div class="field"><label>Kurum Adı</label><input type="text" id="ifKurum" value="${esc(on.kurumAdi||'')}" placeholder="Örn. Konya Büyükşehir Belediyesi"></div>
         <div class="field-row">
           <div class="field"><label>Konu</label><input type="text" id="ifKonu" value="${esc(on.konu||'')}" placeholder="Örn. 10 adet binek araç operasyonel kiralama"></div>
@@ -20719,6 +20726,51 @@ function ihaleFormuAc(id, pf){
     </div>`;
   document.body.appendChild(el);
   el.onclick = e=>{ if(e.target===el) el.remove(); };
+}
+// v.229: "İdari şartnameyi attığımda bilgiler otomatik dolsun" isteği üzerine eklendi. Kullanıcı
+// "Yeni İhale" formu açıkken bir İdari Şartname belgesi (PDF/Word/görsel) yüklüyor, Gemini bu
+// belgeden (İdarenin Adı, İhale Kayıt Numarası, İhale/Son Teklif Tarihi ve Saati, Geçici Teminat
+// gibi standart başlıklardan) ihale bilgilerini çıkarıyor ve AÇIK OLAN forma yazıyor — aynı
+// "asistan hiçbir zaman kendisi kaydetmez" ilkesi burada da geçerli: alanlar dolduruluyor, kaydı
+// oluşturan yine kullanıcının kendi "Kaydet" tıklaması. tahminiBedel (yaklaşık maliyet) çoğu idari
+// şartnamede gizli tutulduğu için sistem promptunda özellikle uydurmaması söyleniyor.
+async function ihaleSartnameYukle(file){
+  if(!file) return;
+  const lbl = document.getElementById('ihSartnameLabel');
+  if(lbl) lbl.innerHTML = '⏳ Analiz ediliyor...';
+  try{
+    const base64 = await new Promise((res,rej)=>{
+      const r = new FileReader();
+      r.onload = ()=>res(r.result.split(',')[1]);
+      r.onerror = rej;
+      r.readAsDataURL(file);
+    });
+    const mime = file.type || 'application/pdf';
+    const bugun = todayISO();
+    const system = `Sen bir ihale kaydı oluşturma asistanısın. Sana bir İDARİ ŞARTNAME belgesi verilecek (Türkiye kamu ihale mevzuatına göre hazırlanmış resmi bir belge). Bu belgeden bir ihale teklif kaydı için bilgi çıkaracaksın. SADECE şu JSON nesnesini döndür, başka hiçbir metin veya kod bloğu ekleme:
+{"kurumAdi": string|null, "konu": string|null, "ihaleNo": string|null, "sonTeklifTarihi": "YYYY-MM-DD"|null, "sonTeklifSaati": "HH:MM"|null, "tahminiBedel": number|null, "teminatTutari": number|null}
+BUGÜNÜN TARİHİ: ${bugun}. kurumAdi genelde "İdarenin Adı" başlığı altında, ihaleNo genelde "İhale Kayıt Numarası (İKN)" başlığı altında, sonTeklifTarihi/sonTeklifSaati genelde "İhale Tarihi ve Saati" ya da "Son Teklif Verme Tarihi ve Saati" başlığı altında bulunur. teminatTutari genelde "Geçici Teminat" tutarı olarak açıkça TL cinsinden yazılıyorsa onu al; sadece oran (örn. "%3") veriliyorsa ve tahmini bedel de belgede AÇIKÇA yazıyorsa TL tutarına çevirebilirsin, aksi halde null bırak. tahminiBedel (yaklaşık maliyet) çoğu idari şartnamede GİZLİ tutulur ve belgede yazmaz — böyle bir durumda ASLA tahmin etme/uydurma, null bırak. Belgede AÇIKÇA yazmayan hiçbir alanı uydurma.`;
+    const yanit = await geminiChatFetch(system, [{role:'user', parts:[
+      {inline_data:{mime_type:mime, data:base64}},
+      {text:'Bu idari şartname belgesinden ihale bilgilerini çıkar.'}
+    ]}], {temperature:0, maxOutputTokens:512});
+    const bilgi = JSON.parse(yanit.replace(/```json|```/g,'').trim());
+    if(!bilgi || typeof bilgi!=='object') throw new Error('boş');
+    const alanlar = {ifKurum:'kurumAdi', ifKonu:'konu', ifIhaleNo:'ihaleNo', ifTarih:'sonTeklifTarihi', ifSaat:'sonTeklifSaati', ifTahminiBedel:'tahminiBedel', ifTeminat:'teminatTutari'};
+    let doluSayisi = 0;
+    Object.entries(alanlar).forEach(([elId, anahtar])=>{
+      const deger = bilgi[anahtar];
+      const girdi = document.getElementById(elId);
+      if(!girdi || deger==null || deger==='') return;
+      girdi.value = deger;
+      doluSayisi++;
+    });
+    if(lbl) lbl.innerHTML = doluSayisi>0
+      ? `✓ ${esc(file.name)} — ${doluSayisi} alan otomatik dolduruldu, gözden geçirip Kaydet'e basın`
+      : `${esc(file.name)} yüklendi ama belgeden bilgi çıkarılamadı — alanları elle doldurmanız gerekebilir`;
+  }catch(e){
+    if(lbl) lbl.innerHTML = `${esc(file.name||'Belge')} yüklendi ama analiz edilemedi (bağlantı ya da servis sorunu) — alanları elle doldurmanız gerekebilir`;
+  }
 }
 async function ihaleKaydet(id){
   if(!requireAdmin()) return;
