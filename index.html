@@ -2430,7 +2430,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-24.226</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-24.227</div>
     </div>
   </div>
 </div>
@@ -2535,6 +2535,7 @@
           <button class="sb-item" data-page="teklifler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z"/></svg>Teklifler<span class="sb-badge" id="sbTekliflerBadge" style="display:none;background:var(--amber);">0</span></button>
           <button class="sb-item" data-page="musteriler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Müşteriler</button>
           <button class="sb-item" data-page="hasarcezalar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Hasar &amp; Cezalar</button>
+          <button class="sb-item" data-page="ihaleler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 3 8v2h18V8Z"/><path d="M5 21h14M6 21v-9M10 21v-9M14 21v-9M18 21v-9"/></svg>İhaleler<span class="sb-badge" id="sbIhalelerBadge" style="display:none;background:var(--amber);">0</span></button>
         </div>
       </div>
 
@@ -2597,7 +2598,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-24.226</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-24.227</div>
     </div>
   </aside>
 <script>
@@ -2863,6 +2864,7 @@
 <section class="page" data-page="yakit" id="page-yakit"></section>
 <section class="page" data-page="lastikler" id="page-lastikler"></section>
 <section class="page" data-page="hasarcezalar" id="page-hasarcezalar"></section>
+<section class="page" data-page="ihaleler" id="page-ihaleler"></section>
 <section class="page" data-page="masraf" id="page-masraf"></section>
 <section class="page" data-page="finansal-analiz" id="page-finansal-analiz"></section>
 
@@ -3609,6 +3611,13 @@ let automationRules = [];
 // bilgisini kayıt altına alır. Gerçek silme işlemi ilgili modülde (Müşteriler, Belgeler vb.)
 // yönetici tarafından elle yapılır. Bkz. Ayarlar > KVKK / Veri Yönetimi kartı.
 let kvkkTalepleri = [];
+// v.227: İhale Hatırlatıcı — kullanıcının devlet kurumlarına yaptığı ihale tekliflerini takip
+// eder (bkz. "devlet kurumlarına ihale ile de araç veriyor"). documents/notifications/
+// automationRules/kvkkTalepleri ile birebir aynı depolama deseni (tek JSON blob, storageAPI
+// üzerinden, persistIhaleler). Son teklif tarihi yaklaştıkça bildirimUret() üzerinden AYNI
+// kalıcı notifications kaydına (bildirimEkleyeBil) yazılır — ayrı bir hatırlatma mekanizması
+// İCAT EDİLMEDİ.
+let ihaleler = [];
 let activeFilter = 'hepsi';
 let activeSirket = 'hepsi';
 let belgeFilterType = null; // null | 'sigorta' | 'muayene' | 'kira'
@@ -3771,6 +3780,12 @@ async function load(){
         const kvr = await storageAPI.get('kvkkTalepleri').catch(()=>null);
         kvkkTalepleri = (kvr && kvr.value) ? JSON.parse(kvr.value) : [];
       }catch(e){ kvkkTalepleri = []; }
+    })(),
+    (async()=>{
+      try{
+        const ihr = await storageAPI.get('ihaleler').catch(()=>null);
+        ihaleler = (ihr && ihr.value) ? JSON.parse(ihr.value) : [];
+      }catch(e){ ihaleler = []; }
     })(),
   ]);
   // FAZ6: bildirim kayıtlarını (dedupe'lu) üret — sayfa her açıldığında değil, sadece burada,
@@ -4031,6 +4046,21 @@ function updateShellChrome(){
       ? quotes.filter(q=>q && q.durum!=='Kazanildi' && q.durum!=='Kaybedildi').length : 0;
     if(teklifRozet>0){ sbTeklif.textContent = teklifRozet; sbTeklif.style.display='inline-block'; }
     else{ sbTeklif.style.display='none'; }
+  }
+  // v.227: İhaleler bölümü rozeti — son teklif tarihine 7 gün veya daha az kalmış (ya da geçmiş)
+  // "Hazırlanıyor" durumundaki ihale sayısı, aynı 7 günlük eşik bildirimUret()/bildirimGecerliMi
+  // ile birebir aynı.
+  const sbIhale = document.getElementById('sbIhalelerBadge');
+  if(sbIhale){
+    const ihaleRozet = (typeof ihaleler!=='undefined'&&Array.isArray(ihaleler))
+      ? ihaleler.filter(ih=>ih.durum==='Hazırlanıyor' && ih.sonTeklifTarihi && daysLeft(ih.sonTeklifTarihi)!==null && daysLeft(ih.sonTeklifTarihi)<=7).length : 0;
+    if(ihaleRozet>0){ sbIhale.textContent = ihaleRozet; sbIhale.style.display='inline-block'; }
+    else{ sbIhale.style.display='none'; }
+    const tileIhale = document.getElementById('bnTileIhaleBadge');
+    if(tileIhale){
+      if(ihaleRozet>0){ tileIhale.textContent = ihaleRozet; tileIhale.style.display='flex'; }
+      else{ tileIhale.style.display='none'; }
+    }
   }
 }
 window.addEventListener('resize', ()=>{ const b=document.getElementById('sbToggleBtn'); if(b) b.style.display = window.innerWidth<=900 ? 'flex' : 'none'; });
@@ -10381,19 +10411,19 @@ const ROLE_DEFS = [
     currentRoleEsdegeri:'admin', ekipYonet:true, paraGorebilir:true, sayfalar:null },
   { id:'operasyon-muduru', ad:'Operasyon Müdürü', aciklama:'Tüm operasyonel sayfalar (araç, kiralama, bakım, finans); kullanıcı yönetemez.',
     currentRoleEsdegeri:'admin', ekipYonet:false, paraGorebilir:true,
-    sayfalar:['genel-bakis','bildirimler','arac-yonetimi','km-takibi','belgeler','docupload','kiralama','teklifler','musteriler','hasarcezalar','cari','faturalar','finansal-analiz','masraf','bakim','yakit','lastikler','raporlar','ai','excel','ayarlar'] },
+    sayfalar:['genel-bakis','bildirimler','arac-yonetimi','km-takibi','belgeler','docupload','kiralama','teklifler','ihaleler','musteriler','hasarcezalar','cari','faturalar','finansal-analiz','masraf','bakim','yakit','lastikler','raporlar','ai','excel','ayarlar'] },
   { id:'filo-sorumlusu', ad:'Filo Sorumlusu', aciklama:'Araç ekleme/düzenleme, kiralama, iade, bakım — silme yok, finans göremez.',
     currentRoleEsdegeri:'admin', ekipYonet:false, paraGorebilir:false,
     sayfalar:['genel-bakis','bildirimler','arac-yonetimi','km-takibi','belgeler','docupload','kiralama','teklifler','musteriler','hasarcezalar','bakim','yakit','lastikler','raporlar'] },
   { id:'muhasebe', ad:'Muhasebe / Finans', aciklama:'Masraf, tahsilat, cari, fatura ve finansal analiz — araç kaydı düzenleyemez.',
     currentRoleEsdegeri:'admin', ekipYonet:false, paraGorebilir:true,
-    sayfalar:['genel-bakis','bildirimler','cari','faturalar','finansal-analiz','masraf','raporlar'] },
+    sayfalar:['genel-bakis','bildirimler','cari','faturalar','finansal-analiz','masraf','raporlar','ihaleler'] },
   { id:'saha-personeli', ad:'Saha Personeli / Şoför Koordinatörü', aciklama:'Sadece teslim/iade ve km girişi — finans ve raporları göremez.',
     currentRoleEsdegeri:'staff', ekipYonet:false, paraGorebilir:false,
     sayfalar:['genel-bakis','bildirimler','arac-yonetimi','km-takibi','kiralama','teklifler'] },
   { id:'musteri-temsilcisi', ad:'Müşteri Temsilcisi', aciklama:'Müşteri ve sözleşme işlemleri — araç silemez, finans detayını göremez.',
     currentRoleEsdegeri:'admin', ekipYonet:false, paraGorebilir:false,
-    sayfalar:['genel-bakis','bildirimler','kiralama','teklifler','musteriler','raporlar'] },
+    sayfalar:['genel-bakis','bildirimler','kiralama','teklifler','ihaleler','musteriler','raporlar'] },
   { id:'bakim-sorumlusu', ad:'Bakım / Servis Sorumlusu', aciklama:'Bakım kaydı, belge yükleme, lastik/servis — kiralama ve finans göremez.',
     currentRoleEsdegeri:'admin', ekipYonet:false, paraGorebilir:false,
     sayfalar:['genel-bakis','bildirimler','belgeler','docupload','bakim','yakit','lastikler','hasarcezalar'] },
@@ -11243,6 +11273,7 @@ const PAGE_META = {
   'yakit': {title:'Yakıt', sub:'Yakıt alımları, L/100km ve araç bazlı tüketim analizi'},
   'lastikler': {title:'Lastikler', sub:'Araçlara takılı/sökülü lastikler ve diş derinliği takibi'},
   'hasarcezalar': {title:'Hasar & Cezalar', sub:'Filo genelinde hasar özeti ve trafik cezası takibi'},
+  'ihaleler': {title:'İhaleler', sub:'Kurumlara verilen tekliflerin son teklif tarihi ve durumu'},
   'belgeler': {title:'Belgeler', sub:'Yüklenen sözleşme, poliçe ve raporlar'},
   'raporlar': {title:'Raporlar', sub:'Yazdırılabilir özet ve fatura raporları'},
   'bildirimler': {title:'Bildirimler', sub:'Yaklaşan ve geçmiş tarihli belgeler'},
@@ -11480,6 +11511,7 @@ function renderCurrentPage(){
   else if(key==='yakit') renderYakitPage();
   else if(key==='lastikler') renderLastiklerPage();
   else if(key==='hasarcezalar') renderHasarCezalarPage();
+  else if(key==='ihaleler') renderIhalelerPage();
   else if(key==='super-admin') renderSuperAdminPage();
 }
 
@@ -17758,6 +17790,10 @@ async function persistKvkkTalepleri(){
   try{ await withStorageTimeout(storageAPI.set('kvkkTalepleri', JSON.stringify(kvkkTalepleri))); return true; }
   catch(e){ showToast((e && /zaman aşımı/i.test(e.message||'')) ? e.message : 'Talep kaydedilemedi.', true); return false; }
 }
+async function persistIhaleler(){
+  try{ await withStorageTimeout(storageAPI.set('ihaleler', JSON.stringify(ihaleler))); return true; }
+  catch(e){ showToast((e && /zaman aşımı/i.test(e.message||'')) ? e.message : 'İhale kaydedilemedi.', true); return false; }
+}
 
 // ================================================================================
 // FAZ8: Otomasyon Kuralları — basit, kural-tabanlı bir otomasyon katmanı. FAZ6'nın
@@ -18277,6 +18313,22 @@ function bildirimUret(){
     const icerik = dl<0 ? `${ad} — ${d.tur} belgesinin süresi ${Math.abs(dl)} gün geçti.` : `${ad} — ${d.tur} belgesine ${dl} gün kaldı.`;
     if(bildirimEkleyeBil('belge', d.ilgiliTip, d.ilgiliId, icerik, dl, d.id)) eklendi = true;
   });
+  // v.227: İhale Hatırlatıcı — sadece "Hazırlanıyor" durumundaki (yani teklifi henüz VERİLMEMİŞ)
+  // ihaleler için, son teklif tarihine 7 gün kalınca hatırlatma başlar ve tarih geçmişse (teklif
+  // hâlâ verilmediyse) "gün geçti" olarak devam eder. Verildi/Kazanıldı/Kaybedildi durumuna
+  // geçen bir ihale için artık aksiyon alınacak bir "son teklif tarihi" kalmadığından hatırlatma
+  // üretilmez (bkz. bildirimGecerliMi — durum değiştiğinde eski bildirim de otomatik silinir).
+  (typeof ihaleler!=='undefined'?ihaleler:[]).forEach(ih=>{
+    if(ih.durum!=='Hazırlanıyor' || !ih.sonTeklifTarihi) return;
+    const dl = daysLeft(ih.sonTeklifTarihi);
+    if(dl===null || dl>7) return;
+    const kurum = ih.kurumAdi || 'İhale';
+    const konu = ih.konu ? ` — ${ih.konu}` : '';
+    const icerik = dl<0 ? `${kurum}${konu} — son teklif tarihi ${Math.abs(dl)} gün geçti, teklif hâlâ verilmedi!`
+      : dl===0 ? `${kurum}${konu} — son teklif tarihi BUGÜN!`
+      : `${kurum}${konu} — son teklif tarihine ${dl} gün kaldı.`;
+    if(bildirimEkleyeBil('ihale', 'ihale', ih.id, icerik, dl)) eklendi = true;
+  });
   return eklendi;
 }
 // v.188 — "belge güncellendi ama bildirim aynı kalıyor" hatası: bildirimUret() sadece YENİ
@@ -18302,7 +18354,7 @@ function bildirimGecerliMi(n){
     const kural = automationRules.find(r=>r.id===kuralId);
     return !!kural && kural.aktif!==false;
   }
-  const BILINEN = ['sigorta','kasko','muayene','kiraBitis','gecikenKira','servis','tahsilat','fatura','hgs','ceza','belge'];
+  const BILINEN = ['sigorta','kasko','muayene','kiraBitis','gecikenKira','servis','tahsilat','fatura','hgs','ceza','belge','ihale'];
   if(!BILINEN.includes(n.tur)) return true;
   if(n.tur==='sigorta' || n.tur==='kasko' || n.tur==='muayene'){
     const v = vehicles.find(x=>x.id===n.ilgiliId);
@@ -18354,6 +18406,12 @@ function bildirimGecerliMi(n){
     if(!d || d.aktif===false || !d.sonGecerlilik) return false;
     const dl = daysLeft(d.sonGecerlilik);
     return dl!==null && dl<=30;
+  }
+  if(n.tur==='ihale'){
+    const ih = ihaleler.find(x=>x.id===n.ilgiliId);
+    if(!ih || ih.durum!=='Hazırlanıyor' || !ih.sonTeklifTarihi) return false;
+    const dl = daysLeft(ih.sonTeklifTarihi);
+    return dl!==null && dl<=7;
   }
   return true;
 }
@@ -20514,6 +20572,185 @@ function cezaExcelDisaAktar(){
   XLSX.writeFile(wb, `trafik-cezalari-${todayISO()}.xlsx`);
 }
 
+// ===== v.227: İhale Hatırlatıcı — trafficFines (Ceza) sayfasıyla BİREBİR AYNI kalıp: bağımsız
+// bir liste sayfası, kart üstü istatistikler, yan panel form ile ekle/düzenle, Excel'e aktar.
+// Son teklif tarihi yaklaştıkça bildirimUret()/bildirimGecerliMi üzerinden Bildirimler'e
+// otomatik düşer (bkz. yukarıdaki bildirimUret() içindeki "İhale Hatırlatıcı" bloğu). =====
+function ihaleDurumBilgi(d){
+  if(d==='Verildi') return {renk:'#5B6EE1', bg:'rgba(91,110,225,.12)'};
+  if(d==='Kazanıldı') return {renk:'#36A168', bg:'rgba(54,161,104,.12)'};
+  if(d==='Kaybedildi') return {renk:'#E1554E', bg:'rgba(225,85,78,.12)'};
+  return {renk:'#E8A132', bg:'rgba(232,161,50,.12)'}; // Hazırlanıyor
+}
+function renderIhalelerPage(){
+  const page = document.getElementById('page-ihaleler');
+  if(!page) return;
+  const durumFiltre = window.__ihaleDurumFiltre || 'hepsi';
+  let liste = [...ihaleler];
+  if(durumFiltre!=='hepsi') liste = liste.filter(ih=>ih.durum===durumFiltre);
+  // v.227 düzeltme: ilk sürümde SADECE tarihe göre artan sıralanıyordu — bu yüzden geçmişte
+  // kalmış, çoktan SONUÇLANMIŞ (Verildi/Kazanıldı/Kaybedildi) kayıtlar, hâlâ "Hazırlanıyor"
+  // durumundaki ACİL ihalelerin ÜSTÜNDE görünüyordu (bkz. ekran görüntüsü incelemesi — "2 gün
+  // kaldı" uyarısı listenin 4. sırasına gömülüyordu). Artık önce aksiyon gerektiren
+  // "Hazırlanıyor" kayıtlar (en yakın son teklif tarihi en üstte), ardından sonuçlanmış kayıtlar
+  // (en yeni son teklif tarihi en üstte) geliyor.
+  liste.sort((a,b)=>{
+    const aAktif = a.durum==='Hazırlanıyor', bAktif = b.durum==='Hazırlanıyor';
+    if(aAktif !== bAktif) return aAktif ? -1 : 1;
+    const aT = a.sonTeklifTarihi||'9999-99-99', bT = b.sonTeklifTarihi||'9999-99-99';
+    return aAktif ? aT.localeCompare(bT) : bT.localeCompare(aT);
+  });
+
+  const aktifSayi = ihaleler.filter(ih=>ih.durum==='Hazırlanıyor').length;
+  const yaklasanSayi = ihaleler.filter(ih=>ih.durum==='Hazırlanıyor' && ih.sonTeklifTarihi && daysLeft(ih.sonTeklifTarihi)!==null && daysLeft(ih.sonTeklifTarihi)<=7).length;
+  const kazanilanSayi = ihaleler.filter(ih=>ih.durum==='Kazanıldı').length;
+  const toplamTeminat = ihaleler.filter(ih=>ih.durum==='Hazırlanıyor'||ih.durum==='Verildi').reduce((s,ih)=>s+(Number(ih.teminatTutari)||0),0);
+
+  page.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <select onchange="window.__ihaleDurumFiltre=this.value;renderIhalelerPage()" style="background:var(--surface-2);border:1px solid var(--line);color:var(--paper);padding:8px 10px;border-radius:8px;font-size:12.5px;">
+          <option value="hepsi" ${durumFiltre==='hepsi'?'selected':''}>Tüm durumlar</option>
+          <option value="Hazırlanıyor" ${durumFiltre==='Hazırlanıyor'?'selected':''}>Hazırlanıyor</option>
+          <option value="Verildi" ${durumFiltre==='Verildi'?'selected':''}>Verildi</option>
+          <option value="Kazanıldı" ${durumFiltre==='Kazanıldı'?'selected':''}>Kazanıldı</option>
+          <option value="Kaybedildi" ${durumFiltre==='Kaybedildi'?'selected':''}>Kaybedildi</option>
+        </select>
+        <button onclick="ihaleExcelDisaAktar()" style="background:var(--surface-2);border:1px solid var(--line);color:var(--text);padding:8px 14px;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;">Excel'e Aktar</button>
+      </div>
+      <button class="add-btn" onclick="ihaleFormuAc()">+ Yeni İhale</button>
+    </div>
+    <div class="dash-stats" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:16px;">
+      <div class="dstat" style="cursor:default;"><div class="dstat-ic" style="background:rgba(100,116,139,.15);color:#7B7873;">${DASH_ICONS.doc}</div><div class="dstat-txt"><div class="l">Aktif İhale</div><div class="n">${aktifSayi}</div></div></div>
+      <div class="dstat" style="cursor:default;"><div class="dstat-ic" style="background:rgba(225,85,78,.15);color:#E1554E;">${DASH_ICONS.warn}</div><div class="dstat-txt"><div class="l">Son Teklife 7 Gün veya Az</div><div class="n">${yaklasanSayi}</div></div></div>
+      <div class="dstat" style="cursor:default;"><div class="dstat-ic" style="background:rgba(54,161,104,.15);color:#36A168;">${DASH_ICONS.check}</div><div class="dstat-txt"><div class="l">Kazanılan</div><div class="n">${kazanilanSayi}</div></div></div>
+      <div class="dstat" style="cursor:default;"><div class="dstat-ic" style="background:rgba(22,160,134,.15);color:var(--accent-blue);">${DASH_ICONS.money}</div><div class="dstat-txt"><div class="l">Bekleyen Teminat Toplamı</div><div class="n">${fmtTL2(toplamTeminat)}</div></div></div>
+    </div>
+    <div class="dcard" style="padding:0;overflow-x:auto;">
+      ${liste.length===0 ? `<div class="empty-state"><div class="empty-state-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 3 8v2h18V8Z"/><path d="M5 21h14M6 21v-9M10 21v-9M14 21v-9M18 21v-9"/></svg></div><div class="empty-state-title">${durumFiltre==='hepsi'?'Henüz ihale kaydı yok':'Bu durumda ihale kaydı yok'}</div><div class="empty-state-desc">"+ Yeni İhale" ile kurum, son teklif tarihi ve teminat bilgilerini kaydedin — son teklif tarihi yaklaşınca otomatik hatırlatılır.</div><button class="empty-state-cta" onclick="ihaleFormuAc()">+ Yeni İhale</button></div>` : `
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead><tr style="text-align:left;border-bottom:1px solid var(--border);">
+          <th style="padding:10px 14px;">Kurum</th><th style="padding:10px 14px;">Konu / İhale No</th><th style="padding:10px 14px;">Son Teklif</th>
+          <th style="padding:10px 14px;text-align:right;">Tahmini Bedel</th><th style="padding:10px 14px;text-align:right;">Teminat</th>
+          <th style="padding:10px 14px;">Durum</th><th style="padding:10px 14px;"></th>
+        </tr></thead>
+        <tbody>${liste.map(ih=>{
+          const db = ihaleDurumBilgi(ih.durum);
+          const dl = ih.sonTeklifTarihi ? daysLeft(ih.sonTeklifTarihi) : null;
+          const aktifMi = ih.durum==='Hazırlanıyor';
+          const dlRenk = dl==null?'var(--text-2)':dl<0?'#E1554E':dl<=3?'#E1554E':dl<=7?'#E8A132':'var(--text-2)';
+          const dlTxt = dl==null ? '' : (dl<0?` — ${Math.abs(dl)} gün geçti`:dl===0?' — bugün!':` — ${dl} gün kaldı`);
+          return `<tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:10px 14px;font-weight:600;">${esc(ih.kurumAdi||'—')}</td>
+            <td style="padding:10px 14px;">${esc(ih.konu||'—')}${ih.ihaleNo?`<div style="font-size:11px;color:var(--text-3);margin-top:2px;">${esc(ih.ihaleNo)}</div>`:''}</td>
+            <td style="padding:10px 14px;">
+              ${ih.sonTeklifTarihi?fmtTarih(ih.sonTeklifTarihi):'—'}${ih.sonTeklifSaati?' · '+esc(ih.sonTeklifSaati):''}
+              ${aktifMi&&dlTxt?`<div style="font-size:11.5px;font-weight:600;color:${dlRenk};margin-top:2px;">${dlTxt}</div>`:''}
+            </td>
+            <td style="padding:10px 14px;text-align:right;">${ih.tahminiBedel!=null?fmtTL2(ih.tahminiBedel):'—'}</td>
+            <td style="padding:10px 14px;text-align:right;">${ih.teminatTutari!=null?fmtTL2(ih.teminatTutari):'—'}</td>
+            <td style="padding:10px 14px;"><span style="font-size:11px;font-weight:700;padding:2px 9px;border-radius:12px;background:${db.bg};color:${db.renk};">${esc(ih.durum)}</span></td>
+            <td style="padding:10px 14px;text-align:right;white-space:nowrap;">
+              <button onclick="ihaleFormuAc('${ih.id}')" style="background:var(--surface-2);border:1px solid var(--line);color:var(--text);padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;">Düzenle</button>
+              <button onclick="ihaleSil('${ih.id}')" style="background:none;border:1px solid var(--line);color:#E1554E;padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;">Sil</button>
+            </td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>`}
+    </div>`;
+}
+function ihaleFormuAc(id){
+  const old = document.getElementById('ihaleFormOverlay'); if(old) old.remove();
+  const ih = id ? ihaleler.find(x=>x.id===id) : null;
+  const el = document.createElement('div');
+  el.className = 'overlay show';
+  el.id = 'ihaleFormOverlay';
+  el.innerHTML = `
+    <div class="modal" style="max-width:460px;">
+      <div class="modal-head">
+        <h2>${ih?'İhaleyi Düzenle':'Yeni İhale'}</h2>
+        <button class="modal-close" onclick="document.getElementById('ihaleFormOverlay').remove()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </div>
+      <div class="modal-body">
+        <div class="field"><label>Kurum Adı</label><input type="text" id="ifKurum" value="${esc(ih?(ih.kurumAdi||''):'')}" placeholder="Örn. Konya Büyükşehir Belediyesi"></div>
+        <div class="field-row">
+          <div class="field"><label>Konu</label><input type="text" id="ifKonu" value="${esc(ih?(ih.konu||''):'')}" placeholder="Örn. 10 adet binek araç operasyonel kiralama"></div>
+          <div class="field"><label>İhale No</label><input type="text" id="ifIhaleNo" value="${esc(ih?(ih.ihaleNo||''):'')}" placeholder="Örn. 2026/123456"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Son Teklif Tarihi</label><input type="date" id="ifTarih" value="${ih?(ih.sonTeklifTarihi||''):todayISO()}"></div>
+          <div class="field"><label>Son Teklif Saati</label><input type="time" id="ifSaat" value="${ih?(ih.sonTeklifSaati||''):''}"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Tahmini Bedel (₺)</label><input type="number" min="0" id="ifTahminiBedel" value="${ih&&ih.tahminiBedel!=null?ih.tahminiBedel:''}"></div>
+          <div class="field"><label>Geçici Teminat (₺)</label><input type="number" min="0" id="ifTeminat" value="${ih&&ih.teminatTutari!=null?ih.teminatTutari:''}"></div>
+        </div>
+        <div class="field"><label>Durum</label>
+          <select id="ifDurum">
+            ${['Hazırlanıyor','Verildi','Kazanıldı','Kaybedildi'].map(d=>`<option value="${d}" ${(ih?ih.durum:'Hazırlanıyor')===d?'selected':''}>${d}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field"><label>Notlar</label><input type="text" id="ifNotlar" value="${esc(ih?(ih.notlar||''):'')}" placeholder="İsteğe bağlı"></div>
+      </div>
+      <div class="err" id="ifErr" style="padding:0 22px;"></div>
+      <div class="modal-actions">
+        <button class="cancel" onclick="document.getElementById('ihaleFormOverlay').remove()">Vazgeç</button>
+        <button class="save" onclick="ihaleKaydet('${ih?ih.id:''}')">Kaydet</button>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+  el.onclick = e=>{ if(e.target===el) el.remove(); };
+}
+async function ihaleKaydet(id){
+  if(!requireAdmin()) return;
+  const errEl = document.getElementById('ifErr'); errEl.style.display='none'; errEl.textContent='';
+  const kurumAdi = document.getElementById('ifKurum').value.trim();
+  if(!kurumAdi){ errEl.textContent='Lütfen kurum adını girin.'; errEl.style.display='block'; return; }
+  const data = {
+    kurumAdi,
+    konu: document.getElementById('ifKonu').value.trim(),
+    ihaleNo: document.getElementById('ifIhaleNo').value.trim(),
+    sonTeklifTarihi: document.getElementById('ifTarih').value || null,
+    sonTeklifSaati: document.getElementById('ifSaat').value || null,
+    tahminiBedel: document.getElementById('ifTahminiBedel').value!=='' ? Number(document.getElementById('ifTahminiBedel').value) : null,
+    teminatTutari: document.getElementById('ifTeminat').value!=='' ? Number(document.getElementById('ifTeminat').value) : null,
+    durum: document.getElementById('ifDurum').value,
+    notlar: document.getElementById('ifNotlar').value.trim(),
+  };
+  let ih = id ? ihaleler.find(x=>x.id===id) : null;
+  const yeniMi = !ih;
+  if(ih){ Object.assign(ih, data); } else { ih = {id: yeniId('ihale'), olusturmaTarihi: new Date().toISOString(), ...data}; ihaleler.push(ih); }
+  await persistIhaleler();
+  document.getElementById('ihaleFormOverlay')?.remove();
+  showToast(yeniMi?'İhale eklendi.':'İhale güncellendi.');
+  logActivity(yeniMi?'add':'edit', `İhale ${yeniMi?'eklendi':'güncellendi'}: <b>${esc(kurumAdi)}</b>${data.konu?' — '+esc(data.konu):''}`);
+  renderIhalelerPage();
+  updateShellChrome();
+}
+async function ihaleSil(id){
+  if(!requireAdmin()) return;
+  if(!confirm('Bu ihale kaydı kalıcı olarak silinsin mi?')) return;
+  ihaleler = ihaleler.filter(ih=>ih.id!==id);
+  await persistIhaleler();
+  showToast('İhale silindi.');
+  renderIhalelerPage();
+  updateShellChrome();
+}
+function ihaleExcelDisaAktar(){
+  if(!ihaleler.length){ showToast('Aktarılacak ihale kaydı yok.', true); return; }
+  const rows = ihaleler.map(ih=>({
+    'Kurum': ih.kurumAdi||'', 'Konu': ih.konu||'', 'İhale No': ih.ihaleNo||'',
+    'Son Teklif Tarihi': ih.sonTeklifTarihi||'', 'Son Teklif Saati': ih.sonTeklifSaati||'',
+    'Tahmini Bedel (TL)': ih.tahminiBedel||0, 'Teminat (TL)': ih.teminatTutari||0,
+    'Durum': ih.durum||'', 'Notlar': ih.notlar||'',
+  }));
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws['!cols'] = [{wch:22},{wch:28},{wch:16},{wch:14},{wch:12},{wch:14},{wch:12},{wch:14},{wch:30}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'İhaleler');
+  XLSX.writeFile(wb, `ihaleler-${todayISO()}.xlsx`);
+}
+
 // ===== WhatsApp / E-posta hatırlatma =====
 function hatirlatmaMetni(plaka, tip){
   const v = vehicles.find(x=>x.plaka===plaka);
@@ -20542,7 +20779,7 @@ function hatirlatEposta(plaka, tip){
 const BILDIRIM_TUR_ETIKET = {
   sigorta:'Sigorta', kasko:'Kasko Bitişi', muayene:'Muayene', kiraBitis:'Kira Bitişi',
   gecikenKira:'Kira Bitişi', servis:'Bakım (km)', tahsilat:'Tahsilat', fatura:'Fatura',
-  hgs:'HGS/OGS', ceza:'Trafik Cezası', belge:'Belge',
+  hgs:'HGS/OGS', ceza:'Trafik Cezası', belge:'Belge', ihale:'İhale',
   // v.213: "böyle şeyler" (karışıklık) geri bildirimi — bu 4 tür (Otomasyon Kuralları'ndan
   // üretilenler) bu haritada hiç yoktu, bu yüzden Bildirimler sayfasında kullanıcıya ham/iç
   // anahtar adı ("otomasyonHakedis" gibi) gösteriliyordu — okunaksız ve karışık görünüyordu.
@@ -20572,6 +20809,10 @@ async function bildirimGrupOkunduIsaretle(tur){
 function bildirimGoruntuSatiri(n){
   let ad = '—';
   if(n.ilgiliTip==='arac'){ const v = vehicles.find(x=>x.id===n.ilgiliId); ad = v?v.plaka:'(silinmiş araç)'; }
+  // v.227: 'ihale' tipi ne araç ne müşteri — kendi diziye (ihaleler) bakıp kurum adını gösterir,
+  // aksi halde "arac"/"musteri" olmayan her şeyi müşteri sanan eski else dalı yanlışlıkla
+  // "(silinmiş müşteri)" yazardı.
+  else if(n.ilgiliTip==='ihale'){ const ih = ihaleler.find(x=>x.id===n.ilgiliId); ad = ih?(ih.kurumAdi||'İhale'):'(silinmiş ihale)'; }
   else{ const c = customers.find(x=>x.id===n.ilgiliId); ad = c?musteriGoruntuAdi(c):'(silinmiş müşteri)'; }
   return { id:n.id, tur:n.tur, plaka:ad, tip: BILDIRIM_TUR_ETIKET[n.tur]||n.tur, dl: n._dl, icerik:n.icerik, okunduMu:n.okunduMu, olusturmaTarihi:n.olusturmaTarihi };
 }
@@ -20583,24 +20824,32 @@ function bildirimSatirHTML(u){
   const renk = (u.dl??0)<0?'#E1554E':(u.dl??999)<=7?'#E1554E':(u.dl??999)<=30?'#E8A132':'#36A168';
   const dtxt = u.dl==null ? '' : (u.dl<0?`${Math.abs(u.dl)} gün gecikti!`:u.dl===0?'Bugün!':u.dl<=7?`${u.dl} gün kaldı ⚠️`:`${u.dl} gün kaldı`);
   const arac = vehicles.find(x=>x.plaka===u.plaka);
+  // v.227: 'ihale' bildirimleri bir araca/müşteriye değil, kuruma ait — WA/e-posta/SMS
+  // hatırlatma butonları (hatirlatWhatsApp/hatirlatEposta) plaka/kiracı telefonu üzerinden
+  // MÜŞTERİYE mesaj taslağı hazırlar, bu bildirim türünde hiç anlamlı değil (kendi
+  // hatırlatmamız, gönderilecek bir müşteri yok) — bu yüzden gizleniyor, yerine doğrudan
+  // İhaleler sayfasına götüren tek bir buton gösteriliyor.
+  const ihaleMi = u.tur==='ihale';
   return `
     <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);opacity:${okundu?'.5':'1'};flex-wrap:wrap;">
       <div style="width:8px;height:8px;border-radius:50%;background:${okundu?'var(--border)':renk};flex-shrink:0;"></div>
       <div style="flex:1;min-width:180px;">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-          <span style="font-size:13px;font-weight:700;color:var(--text);font-family:monospace;">${esc(u.plaka)}</span>
+          <span style="font-size:13px;font-weight:700;color:var(--text);${ihaleMi?'':'font-family:monospace;'}">${esc(u.plaka)}</span>
           <span style="font-size:12px;color:var(--text-2);">—</span>
           <span style="font-size:13px;color:var(--text-2);">${esc(u.tip)}</span>
         </div>
         <div style="font-size:12px;color:var(--text-2);margin-top:2px;">${esc(u.icerik)}</div>
         ${dtxt?`<div style="font-size:12px;font-weight:600;color:${renk};margin-top:2px;">${dtxt}</div>`:''}
       </div>
+      ${ihaleMi ? '' : `
       <button onclick="hatirlatWhatsApp('${esc(u.plaka)}','${esc(u.tip)}')" title="WhatsApp ile hatırlat" style="background:rgba(37,211,102,.12);border:1px solid rgba(37,211,102,.3);color:#128C7E;padding:4px 9px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">WA</button>
       <button onclick="hatirlatEposta('${esc(u.plaka)}','${esc(u.tip)}')" title="E-posta ile hatırlat (taslak açar, otomatik gönderim değildir)" style="background:rgba(142,142,147,.12);border:1px solid var(--border);color:var(--text-2);padding:4px 9px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">✉</button>
-      <button title="SMS — yakında" disabled style="background:none;border:1px solid var(--border);color:var(--text-3);padding:4px 9px;border-radius:6px;font-size:11px;font-weight:700;cursor:not-allowed;white-space:nowrap;opacity:.6;">SMS (Yakında)</button>
+      <button title="SMS — yakında" disabled style="background:none;border:1px solid var(--border);color:var(--text-3);padding:4px 9px;border-radius:6px;font-size:11px;font-weight:700;cursor:not-allowed;white-space:nowrap;opacity:.6;">SMS (Yakında)</button>`}
       <button onclick="bildirimOkunduIsaretle('${u.id}')" ${okundu?'disabled':''}
         style="background:none;border:1px solid var(--border);color:var(--text-3);padding:4px 9px;border-radius:6px;font-size:11px;cursor:${okundu?'default':'pointer'};white-space:nowrap;">${okundu?'✓ Okundu':'Okundu işaretle'}</button>
-      ${arac ? `<button onclick="switchPage('arac-yonetimi');setTimeout(()=>{const v=vehicles.find(x=>x.plaka==='${esc(u.plaka)}');if(v)openVehicleDetail(v.id);},100);"
+      ${ihaleMi ? `<button onclick="switchPage('ihaleler')" style="background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.2);color:var(--accent-blue);padding:4px 9px;border-radius:6px;font-size:11px;cursor:pointer;white-space:nowrap;">İhaleye Git</button>`
+        : arac ? `<button onclick="switchPage('arac-yonetimi');setTimeout(()=>{const v=vehicles.find(x=>x.plaka==='${esc(u.plaka)}');if(v)openVehicleDetail(v.id);},100);"
         style="background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.2);color:var(--accent-blue);padding:4px 9px;border-radius:6px;font-size:11px;cursor:pointer;white-space:nowrap;">Araca Git</button>`
         : `<button onclick="switchPage('musteriler')" style="background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.2);color:var(--accent-blue);padding:4px 9px;border-radius:6px;font-size:11px;cursor:pointer;white-space:nowrap;">Müşteriye Git</button>`}
     </div>`;
@@ -23066,6 +23315,10 @@ initInstallPrompt();
       <button class="bn-tile" onclick="closeMoreSheet();switchPage('hasarcezalar')">
         <div class="bn-tile-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
         <span>Hasar &amp; Cezalar</span>
+      </button>
+      <button class="bn-tile" onclick="closeMoreSheet();switchPage('ihaleler')">
+        <div class="bn-tile-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 3 8v2h18V8Z"/><path d="M5 21h14M6 21v-9M10 21v-9M14 21v-9M18 21v-9"/></svg><span class="bn-tile-badge" id="bnTileIhaleBadge" style="display:none">0</span></div>
+        <span>İhaleler</span>
       </button>
       <button class="bn-tile" onclick="closeMoreSheet();switchPage('raporlar')">
         <div class="bn-tile-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg></div>
