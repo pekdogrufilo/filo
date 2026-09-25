@@ -2430,7 +2430,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-24.234</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-25.235</div>
     </div>
   </div>
 </div>
@@ -2598,7 +2598,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-24.234</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-25.235</div>
     </div>
   </aside>
 <script>
@@ -5334,7 +5334,21 @@ function updateFromExcel(file){
         for(let i=0;i<Math.min(candidateRows.length,15);i++){
           const r = candidateRows[i] || [];
           const idx = r.findIndex(c=>String(c||'').trim().toLocaleUpperCase('tr-TR')==='PLAKA');
-          if(idx>=0){
+          // v.235: "kira bitiş tarihlerini yazdım ama sistem düzenlemedi" araştırmasında bulundu —
+          // uygulamanın kendi "otomatik yedek" Excel'i "Filo Listesi" sayfasının YANINDA bir de
+          // "Masraflar" sayfası üretiyor ve o sayfada da bir "Plaka" sütunu var (her masraf
+          // satırının hangi araca ait olduğunu göstermek için). Bu döngü SADECE "PLAKA" başlığına
+          // bakınca "Masraflar" sayfasını da yanlışlıkla bir "araç listesi" sayfası sanıp işleme
+          // alıyordu — 207 masraf satırının her biri için plaka eşleşmesi aranıp (genelde patch
+          // boş kalsa da) "güncellendi" sayılıyordu; plaka eşleşmezse YANLIŞLIKLA boş/çöp bir araç
+          // kaydı bile oluşturulabiliyordu. Artık gerçek bir araç listesi sayfası için PLAKA'nın
+          // yanında MARKA veya DURUM sütunlarından en az biri de aranıyor — Masraflar/Sözleşmeler
+          // gibi sayfalar bu ikisini hiç içermediği için artık elenirler.
+          const aracSayfasiMi = idx>=0 && r.some(c=>{
+            const k = String(c||'').trim().toLocaleUpperCase('tr-TR');
+            return k==='MARKA' || k==='DURUM';
+          });
+          if(aracSayfasiMi){
             const colMap = {};
             r.forEach((c,ci)=>{
               const key = String(c||'').trim().toLocaleUpperCase('tr-TR');
@@ -5426,8 +5440,14 @@ function updateFromExcel(file){
 
           const existing = vehicles.find(v=>v.plaka===plaka);
           if(existing){
-            Object.assign(existing, patch);
-            updated.add(plaka);
+            // v.235: "X araç yenilendi" mesajı eskiden patch TAMAMEN BOŞ olsa bile (ör. eşleşen
+            // ama hiçbir tanınan sütunu olmayan bir satır) o plakayı "güncellendi" sayıyordu —
+            // kullanıcı gerçek bir değişiklik olmadığı halde "güncellendi" görüp yanılabiliyordu.
+            // Artık sadece GERÇEKTEN en az bir alan değiştiyse sayılıyor.
+            if(Object.keys(patch).length>0){
+              Object.assign(existing, patch);
+              updated.add(plaka);
+            }
           }else{
             vehicles.push({
               id: cryptoId(), plaka, sofor:'', yer:'', kira:0, kiraBitis:'', durum:'Müsait',
