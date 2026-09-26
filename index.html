@@ -432,10 +432,13 @@
   .splash.hide{animation:splashOut .5s var(--ease) forwards;}
   @keyframes splashOut{to{opacity:0;transform:scale(1.03);}}
   .splash-grid-bg{position:absolute;inset:0;background-image:linear-gradient(rgba(22,160,134,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(22,160,134,.03) 1px,transparent 1px);background-size:64px 64px;}
-  .splash-glow{position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(22,160,134,.10) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;}
+  .splash-glow{position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(22,160,134,.10) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;animation:splashGlowPulse 2.4s ease-in-out infinite;}
+  @keyframes splashGlowPulse{0%,100%{opacity:.7;}50%{opacity:1;}}
   .splash-inner{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;text-align:center;}
-  .splash-logo{width:80px;height:80px;border-radius:20px;background:var(--fixed-light);display:flex;align-items:center;justify-content:center;padding:10px;box-shadow:0 0 0 1px rgba(255,255,255,.15),0 20px 50px rgba(0,0,0,.45);margin-bottom:22px;opacity:0;animation:introLogo .6s var(--ease) .1s forwards;}
-  @keyframes introLogo{from{opacity:0;transform:scale(.8);}to{opacity:1;transform:scale(1);}}
+  .splash-logo{position:relative;width:80px;height:80px;border-radius:20px;background:var(--fixed-light);display:flex;align-items:center;justify-content:center;padding:10px;box-shadow:0 0 0 1px rgba(255,255,255,.15),0 20px 50px rgba(0,0,0,.45);margin-bottom:22px;opacity:0;animation:introLogoBounce .7s cubic-bezier(.34,1.56,.64,1) .1s forwards;}
+  .splash-logo::before{content:'';position:absolute;inset:-16px;border-radius:28px;background:conic-gradient(from 0deg, rgba(0,169,157,0) 0%, rgba(0,169,157,.65) 50%, rgba(0,169,157,0) 100%);animation:splashSpinGlow 2.2s linear infinite;filter:blur(7px);z-index:-1;}
+  @keyframes splashSpinGlow{to{transform:rotate(360deg);}}
+  @keyframes introLogoBounce{0%{opacity:0;transform:scale(.4);}60%{opacity:1;transform:scale(1.1);}100%{opacity:1;transform:scale(1);}}
   .splash-logo img{width:100%;height:100%;object-fit:contain;}
   .splash h2{font-family:var(--font-display);font-size:26px;font-weight:700;margin:0 0 5px;color:var(--paper);letter-spacing:-.3px;opacity:0;animation:introSlide .5s var(--ease) .55s forwards;}
   @keyframes introSlide{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
@@ -2477,7 +2480,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-26.245</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-26.246</div>
     </div>
   </div>
 </div>
@@ -2645,7 +2648,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-26.245</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-26.246</div>
     </div>
   </aside>
 <script>
