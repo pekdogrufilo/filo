@@ -2480,7 +2480,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-26.251</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-26.252</div>
     </div>
   </div>
 </div>
@@ -2649,7 +2649,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-26.251</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-26.252</div>
     </div>
   </aside>
 <script>
@@ -12046,6 +12046,47 @@ async function tedarikciYeniKaydet(){
   showToast('Tedarikçi kaydedildi.');
 }
 
+// v.252: "TÜM BELGE YÜKLEME İŞLERİ TAM ENTEGRE OLSUN" — belgeden/fişten okunan (veya elle
+// seçilen) bir tedarikçi adını mevcut suppliers[] listesiyle eşleştirir; eşleşme yoksa otomatik
+// yeni bir tedarikçi kaydı oluşturur (ad haricinde bilgi yoksa boş bırakılır, sonradan
+// Tedarikçiler sayfasından tamamlanabilir). Böylece hangi belge yükleme yolundan gelirse gelsin
+// (AI sohbeti, Belge Yükleme sayfası, toplu içe aktarma) aynı isim aynı tedarikçi kaydına düşer.
+function tedarikciAdiylaBulYadaOlustur(ad){
+  const temiz = (ad||'').toString().trim();
+  if(!temiz) return null;
+  const norm = s => (s||'').toString().trim().toLocaleLowerCase('tr').replace(/\s+/g,' ');
+  let t = suppliers.find(s=>norm(s.ad)===norm(temiz));
+  if(!t){
+    t = {id: yeniId('sup'), ad: temiz, telefon:'', adres:'', hizmetTuru:''};
+    suppliers.push(t);
+  }
+  return t;
+}
+// Bir masraf kaydını (expenses[]'e zaten eklenmiş/eklenecek nesne — referansla değiştirilir)
+// tedarikçi cari hesabına (supplierLedger[]) "fiş/borç" olarak bağlar. Tedarikçi Cari Hesabı
+// sayfasındaki manuel "Fiş Ekle" (bkz. tedarikciFisKaydet) ile TAM AYNI kayıt şeklini kullanır —
+// böylece hangi belge yükleme yolundan gelirse gelsin (AI Filo Asistanı sohbeti, Belge Yükleme
+// sayfası, toplu içe aktarma, Bakım & Servis kaydı) aynı cari hesaba, aynı biçimde işlenir.
+// tedarikciAdiVeyaId bir mevcut tedarikçi id'si de olabilir (Bakım & Servis formunda olduğu gibi
+// zaten seçilmiş bir tedarikçi varsa isim eşleştirmeye hiç gerek yok), ya da belgeden okunan
+// serbest metin bir isim olabilir.
+async function masrafiTedarikciyeBagla(masrafObj, tedarikciAdiVeyaId, {aciklama, fisFoto}={}){
+  if(!tedarikciAdiVeyaId || !masrafObj) return null;
+  let t = suppliers.find(s=>s.id===tedarikciAdiVeyaId) || tedarikciAdiylaBulYadaOlustur(tedarikciAdiVeyaId);
+  if(!t) return null;
+  const ldgId = yeniId('sldg');
+  supplierLedger.push({
+    id: ldgId, supplierId: t.id, tur:'fis', yon:'borc', tutar: masrafObj.tutar, tarih: masrafObj.tarih,
+    aciklama: aciklama || masrafObj.not || '', fisNo: null, fisFoto: fisFoto || null,
+    vehicleId: masrafObj.vehicleId || null, masrafId: masrafObj.id,
+  });
+  masrafObj.tedarikciId = t.id;
+  masrafObj.supplierLedgerId = ldgId;
+  await persistSuppliers();
+  await persistSupplierLedger();
+  return t;
+}
+
 // ----- FAZ5: Servis kaydı parça satırları (fatura kalemleri ile aynı desen — bkz. faturaKalemlerRender) -----
 function svParcalarRender(){
   const wrap = document.getElementById('svParcalar');
@@ -12184,16 +12225,37 @@ async function servisGirisKaydet(id, kayitId){
   // Raporlar'da servis/bakım maliyeti tamamen görünmezdi. Artık bağlantılı bir masraf kaydı
   // (kaynak:'Servis Kaydı', servisKayitId ile eşleştirilmiş) otomatik oluşturuluyor/güncelleniyor.
   const mevcutMasraf = kayit ? expenses.find(x=>x.servisKayitId===kayit.id) : null;
+  let masrafKaydi = null;
   if(kayit && tutar && tutar>0){
     if(mevcutMasraf){
       Object.assign(mevcutMasraf, {plaka:v.plaka, tarih: cikis||giris, tutar, not:[yer,islem].filter(Boolean).join(' · ')});
+      masrafKaydi = mevcutMasraf;
     }else{
-      expenses.push({id:cryptoId(), vehicleId:v.id, plaka:v.plaka, tip:'Bakım', tarih: cikis||giris, tutar, not:[yer,islem].filter(Boolean).join(' · '), kaynak:'Servis Kaydı', servisKayitId:kayit.id});
+      masrafKaydi = {id:cryptoId(), vehicleId:v.id, plaka:v.plaka, tip:'Bakım', tarih: cikis||giris, tutar, not:[yer,islem].filter(Boolean).join(' · '), kaynak:'Servis Kaydı', servisKayitId:kayit.id};
+      expenses.push(masrafKaydi);
+    }
+    // v.252: "TÜM BELGE YÜKLEME İŞLERİ TAM ENTEGRE OLSUN" — Bakım & Servis formunda bir kayıtlı
+    // tedarikçi seçiliyse bu masraf, Tedarikçi Cari Hesabı'ndaki "Fiş Ekle" ile TAM AYNI şekilde
+    // o tedarikçinin cari hesabına (borç) da işlenir; tedarikçi seçili değilse eskisi gibi sadece
+    // Masraf Yönetimi'ne düşer.
+    if(tedarikciId){
+      const mevcutLedger = masrafKaydi.supplierLedgerId ? supplierLedger.find(l=>l.id===masrafKaydi.supplierLedgerId) : null;
+      if(mevcutLedger && mevcutLedger.supplierId===tedarikciId){
+        Object.assign(mevcutLedger, {tutar, tarih: cikis||giris, aciklama:[yer,islem].filter(Boolean).join(' · '), vehicleId:v.id});
+      }else{
+        await masrafiTedarikciyeBagla(masrafKaydi, tedarikciId, {aciklama:[yer,islem].filter(Boolean).join(' · ')});
+      }
+    }else if(masrafKaydi.supplierLedgerId){
+      // Tedarikçi seçimi kaldırıldıysa eski cari kaydı da temizlenir (tedarikçiye girilmiş ödemeleri etkilemez).
+      supplierLedger = supplierLedger.filter(l=>l.id!==masrafKaydi.supplierLedgerId);
+      delete masrafKaydi.tedarikciId; delete masrafKaydi.supplierLedgerId;
     }
   }else if(mevcutMasraf){
+    if(mevcutMasraf.supplierLedgerId) supplierLedger = supplierLedger.filter(l=>l.id!==mevcutMasraf.supplierLedgerId);
     expenses = expenses.filter(x=>x.id!==mevcutMasraf.id);
   }
   await persistExpenses();
+  await persistSupplierLedger();
   document.getElementById('servisGirisOverlay').remove();
   logActivity('servis', `Servis kaydı: <b>${esc(v.plaka)}</b> · ${cikis?esc(yer||'servis')+' ('+fmtTarih(giris)+' → '+fmtTarih(cikis)+')':esc(yer||'servis')+' · hâlâ serviste'}`);
   const detay = document.getElementById('vehicleDetailOverlay');
@@ -15878,7 +15940,7 @@ const OTO_BELGE_TURLERI = {
   ruhsat:   {label:'Ruhsat',           prefix:'ruhsat_',        adiF:'ruhsatBelgeAdi',  tipF:'ruhsatBelgeTip',  tarihF:null},
   sozlesme: {label:'Kira sözleşmesi',  prefix:'contract_',      adiF:'sozlesmeAdi',     tipF:'sozlesmeTip',     tarihF:'sozlesmeBitis'},
 };
-const OTO_BELGE_SYSTEM = 'Sen bir araç belgesi (poliçe, ruhsat, muayene raporu, kira sözleşmesi, masraf fişi, servis kaydı vb.) okuyan asistansın. SADECE şu JSON nesnesini döndür, başka hiçbir metin veya kod bloğu ekleme:\n{"plaka": string|null, "belgeTuru": "sigorta"|"kasko"|"muayene"|"ruhsat"|"sozlesme"|"masraf"|"servis"|"vize"|"diger", "tarih": "YYYY-MM-DD"|null, "belgeNo": string|null, "kiraTutari": sayı|null, "kmLimiti": sayı|null, "kmAsimUcreti": sayı|null, "teslimTarihi": "YYYY-MM-DD"|null, "teslimKm": sayı|null}\nKurallar: "plaka" belgedeki araç plakası (Türk formatı: 2 rakam + 2-3 harf + 2-4 rakam, ör. 42 ABC 123). "belgeTuru" belgenin türü — sigorta poliçesi ise "sigorta", kasko ise "kasko", muayene raporu ise "muayene", tescil/ruhsat ise "ruhsat", MUTLAKA kira/kiracı bilgisi içeren kira sözleşmesi ise "sozlesme", masraf/yakıt fişi ise "masraf", servis/bakım kaydı ise "servis", vize/uluslararası belge ise "vize", hiçbiri değilse "diger". Yalnızca plaka ve araç bilgisi içeren, kira/kiracı verisi olmayan belgeleri asla "sozlesme" olarak sınıflandırma; bunlar "ruhsat" veya "diger" olmalı. "tarih" belgenin geçerlilik bitiş tarihi (poliçe/muayene/sözleşme) ya da fiş/rapor tarihi — YYYY-MM-DD formatında; bulamazsan null. "ruhsat" türü belgede muayene geçerlilik tarihi görünüyorsa onu "tarih" olarak döndür. "belgeTuru" "sozlesme" ise EK OLARAK şunları da oku, başka hiçbir belge türünde bu beş alanı doldurma (null bırak): "kiraTutari" aylık kira bedeli (KDV hariç, sadece sayı, TL), "kmLimiti" aylık kilometre kullanım limiti (sadece sayı, km), "kmAsimUcreti" bu limiti aşan her kilometre için uygulanan birim ücret (KDV hariç, sadece sayı, TL/km — sözleşmede "aşım ücreti", "fazla km bedeli" gibi ifadelerle geçebilir), "teslimTarihi" aracın kiracıya TESLİM EDİLDİĞİ tarih (sözleşme başlangıç/teslim tarihi — sözleşmenin genel geçerlilik/imza tarihiyle karıştırma, aracın fiilen teslim edildiği tarihi ara — YYYY-MM-DD), "teslimKm" aracın teslim anındaki kilometresi (sözleşmede "teslim km", "başlangıç km", "kilometre" gibi ifadelerle geçebilir, sadece sayı). Emin değilsen null yaz, tahmin yürütme.';
+const OTO_BELGE_SYSTEM = 'Sen bir araç belgesi (poliçe, ruhsat, muayene raporu, kira sözleşmesi, masraf fişi, servis kaydı vb.) okuyan asistansın. SADECE şu JSON nesnesini döndür, başka hiçbir metin veya kod bloğu ekleme:\n{"plaka": string|null, "belgeTuru": "sigorta"|"kasko"|"muayene"|"ruhsat"|"sozlesme"|"masraf"|"servis"|"vize"|"diger", "tarih": "YYYY-MM-DD"|null, "belgeNo": string|null, "kiraTutari": sayı|null, "kmLimiti": sayı|null, "kmAsimUcreti": sayı|null, "teslimTarihi": "YYYY-MM-DD"|null, "teslimKm": sayı|null, "tutar": sayı|null, "tedarikci": string|null}\nKurallar: "plaka" belgedeki araç plakası (Türk formatı: 2 rakam + 2-3 harf + 2-4 rakam, ör. 42 ABC 123). "belgeTuru" belgenin türü — sigorta poliçesi ise "sigorta", kasko ise "kasko", muayene raporu ise "muayene", tescil/ruhsat ise "ruhsat", MUTLAKA kira/kiracı bilgisi içeren kira sözleşmesi ise "sozlesme", tutar/fiyat içeren masraf, yedek parça, tamir ya da servis/bakım fişi/faturası ise "masraf" (başlıkta "servis" veya "bakım" geçse bile, kayıtta bir TUTAR/fiyat bilgisi varsa "servis" değil "masraf" say — "servis" SADECE tutar/fiyat bilgisi hiç içermeyen, salt işlem kaydı niteliğindeki kayıtlar içindir), vize/uluslararası belge ise "vize", hiçbiri değilse "diger". Yalnızca plaka ve araç bilgisi içeren, kira/kiracı verisi olmayan belgeleri asla "sozlesme" olarak sınıflandırma; bunlar "ruhsat" veya "diger" olmalı. "tarih" belgenin geçerlilik bitiş tarihi (poliçe/muayene/sözleşme) ya da fiş/rapor tarihi — YYYY-MM-DD formatında; bulamazsan null. "ruhsat" türü belgede muayene geçerlilik tarihi görünüyorsa onu "tarih" olarak döndür. "belgeTuru" "sozlesme" ise EK OLARAK şunları da oku, başka hiçbir belge türünde bu beş alanı doldurma (null bırak): "kiraTutari" aylık kira bedeli (KDV hariç, sadece sayı, TL), "kmLimiti" aylık kilometre kullanım limiti (sadece sayı, km), "kmAsimUcreti" bu limiti aşan her kilometre için uygulanan birim ücret (KDV hariç, sadece sayı, TL/km — sözleşmede "aşım ücreti", "fazla km bedeli" gibi ifadelerle geçebilir), "teslimTarihi" aracın kiracıya TESLİM EDİLDİĞİ tarih (sözleşme başlangıç/teslim tarihi — sözleşmenin genel geçerlilik/imza tarihiyle karıştırma, aracın fiilen teslim edildiği tarihi ara — YYYY-MM-DD), "teslimKm" aracın teslim anındaki kilometresi (sözleşmede "teslim km", "başlangıç km", "kilometre" gibi ifadelerle geçebilir, sadece sayı). "belgeTuru" "masraf" ise EK OLARAK şunları da oku, diğer belge türlerinde bu iki alanı boş (null) bırak: "tutar" belgedeki toplam masraf/fiş/fatura tutarı (KDV dahil, sadece sayı, TL), "tedarikci" fişi/faturayı KESEN firmanın/servisin/tamircinin adı (sadece isim, adres veya telefon yazma). Emin değilsen null yaz, tahmin yürütme.';
 
 // v.81: "km limiti vs yazmadı, aşım ücreti okumuyor" geri bildirimi üzerine eklendi — sözleşme
 // türü belgelerde artık plaka+tarihin yanında kira tutarı, aylık km limiti ve km aşım ücreti de
@@ -16062,6 +16124,8 @@ async function otoBelgeKaydetVeBildir(v, tur, bilgi, onceden, file, statusEl){
           await belgeMerkeziKaydet({ilgiliTip:'arac', ilgiliId:v.id, tur:merkeziTur, tarih: okunanTarih||todayISO(), sonGecerlilik, dosyaRef:verKey, belgeNo});
         }catch(e){ console.error('Merkezi belge kaydı hatası:', e); }
       }
+    }else if(tur==='masraf' && Number(bilgi&&bilgi.tutar)>0){
+      var masrafSonuc = await belgeMasrafKaydet(v, bilgi, onceden.dataUrl, 'Belge Yükleme');
     }else{
       await belgeAracaEkle(v, tur, file.name, onceden.mime, onceden.dataUrl, okunanTarih);
     }
@@ -16069,18 +16133,34 @@ async function otoBelgeKaydetVeBildir(v, tur, bilgi, onceden, file, statusEl){
     const sozSonuc = tur==='sozlesme' ? sozlesmeAlanlariUygula(v, bilgi) : null;
     await persist();
     // v.175: "cari olarak kaydetmesi lazım ama nereye kaydetti bilmiyorum" — sigorta/kasko/
-    // muayene/ruhsat/sözleşme dışındaki (masraf/servis/vize/diğer) belgeler sadece aracın
-    // "Belgeler" sekmesindeki genel dosya listesine eklenir; ham "tur" kodu (ör. "diger")
-    // kullanıcıya bir şey ifade etmiyordu, ayrıca hiçbir masraf/cari kaydı oluşmadığı hiç
-    // belirtilmiyordu. Artık okunabilir bir etiket + nereye eklendiği + (araç purchase/tedarikçi
-    // faturası gibi finansal belgelerde) hiçbir masraf/cari kaydı oluşturulmadığı açıkça yazılıyor.
-    const genelTurEtiket = {masraf:'Masraf fişi', servis:'Servis kaydı', vize:'Vize belgesi', diger:'Diğer belge'}[tur] || esc(tur);
-    const genelBelgeMsg = std ? '' : ` (${esc(v.plaka)} aracının "Belgeler" sekmesindeki genel dosya listesine eklendi — bu bir masraf ya da cari/tedarikçi bakiye kaydı OLUŞTURMAZ; tutar varsa Masraf Yönetimi'nden ayrıca girmen gerekir.)`;
+    // muayene/ruhsat/sözleşme dışındaki (servis/vize/diğer) belgeler sadece aracın "Belgeler"
+    // sekmesindeki genel dosya listesine eklenir; ham "tur" kodu (ör. "diger") kullanıcıya bir
+    // şey ifade etmiyordu, ayrıca hiçbir masraf/cari kaydı oluşmadığı hiç belirtilmiyordu. Artık
+    // okunabilir bir etiket + nereye eklendiği + hiçbir masraf/cari kaydı oluşturulmadığı açıkça
+    // yazılıyor. v.252: "masraf" türü artık ayrı işleniyor (bkz. belgeMasrafKaydet) — kendi mesajı var.
+    const genelTurEtiket = {servis:'Servis kaydı', vize:'Vize belgesi', diger:'Diğer belge'}[tur] || esc(tur);
+    let genelBelgeMsg = std ? '' : ` (${esc(v.plaka)} aracının "Belgeler" sekmesindeki genel dosya listesine eklendi — bu bir masraf ya da cari/tedarikçi bakiye kaydı OLUŞTURMAZ; tutar varsa Masraf Yönetimi'nden ayrıca girmen gerekir.)`;
+    let masrafEtiket = '';
+    if(tur==='masraf'){
+      if(masrafSonuc && masrafSonuc.atlandi){
+        masrafEtiket = 'Masraf fişi (tekrar — zaten kayıtlı)';
+        genelBelgeMsg = ` (Aynı tarih/tutarla zaten bir masraf kaydı var, tekrar eklenmedi.)`;
+      }else if(masrafSonuc){
+        masrafEtiket = 'Masraf fişi';
+        genelBelgeMsg = ` (${fmtTL2(masrafSonuc.tutar)} Masraf Yönetimi'ne işlendi${masrafSonuc.tedarikciAdi?`, tedarikçi cari hesabına (${esc(masrafSonuc.tedarikciAdi)}) borç olarak yazıldı`:''}.)`;
+      }else{
+        masrafEtiket = 'Masraf fişi';
+        genelBelgeMsg = ` (Tutar okunamadığı için sadece "Belgeler" sekmesine dosya olarak eklendi — tutar varsa Masraf Yönetimi'nden elle girmen gerekir.)`;
+      }
+    }
+    const etiketGoster = std ? std.label : (tur==='masraf' ? masrafEtiket : genelTurEtiket);
     const tarihMsg = tarihGuncellendi ? `, tarih ${fmtTarih(okunanTarih)} olarak kaydedildi` : (ruhsatM ? `, muayene tarihi ${fmtTarih(okunanTarih)} olarak işlendi` : '');
     const sozMsg = sozlesmeMesajOlustur(sozSonuc);
-    logActivity('Belge yüklendi', `${esc(v.plaka)} — ${std?std.label:genelTurEtiket} (${esc(file.name)})`).catch(()=>{});
-    showToast(`Kaydedildi: ${esc(v.plaka)} — ${std?std.label:genelTurEtiket} "${esc(file.name)}"${tarihMsg}.${sozMsg}${tarihCeliski}${genelBelgeMsg}`);
+    logActivity('Belge yüklendi', `${esc(v.plaka)} — ${etiketGoster} (${esc(file.name)})`).catch(()=>{});
+    showToast(`Kaydedildi: ${esc(v.plaka)} — ${etiketGoster} "${esc(file.name)}"${tarihMsg}.${sozMsg}${tarihCeliski}${genelBelgeMsg}`);
     renderBelgelerPage();
+    if(tur==='masraf' && typeof renderMasrafPage==='function' && window.__currentPage==='masraf') renderMasrafPage();
+    if(masrafSonuc && masrafSonuc.tedarikciAdi && window.__currentPage==='tedarikciler' && typeof renderTedarikcilerPage==='function') renderTedarikcilerPage();
   }catch(e){
     console.error(e);
     showToast('Kaydedilmedi: ' + (e.message==='depolama kaydı başarısız' ? 'Depolama alanı dolu olabilir, eski belgeleri temizleyin.' : (e.message||'Bilinmeyen hata')), true);
@@ -16143,6 +16223,35 @@ async function belgeAracaEkle(v, tur, adi, tip, dataUrl, tarih){
   if(!res) throw new Error('depolama kaydı başarısız');
   if(!Array.isArray(v.otoBelgeler)) v.otoBelgeler = [];
   v.otoBelgeler.push({key, adi, tip, tur, tarih: tarih||'', yukleme: new Date().toISOString()});
+}
+
+// v.252: "TÜM BELGE YÜKLEME İŞLERİ TAM ENTEGRE OLSUN MESELA BU EVRAKLAR ARACIN MASRAFLARINA VE
+// TEDARİKÇİNİN ALACAK HESABINA İŞLENMELİ" — eskiden "Belge Yükleme" sayfası (tek dosya ya da
+// toplu) bir "masraf" türü belge okuduğunda bunu SADECE aracın genel dosya listesine ekliyordu;
+// tutar hiç okunmuyordu, hiçbir masraf ya da tedarikçi cari kaydı oluşmuyordu (bkz. eski
+// genelBelgeMsg/genelNot metinleri). AI Filo Asistanı sohbetindeki masraf akışıyla (aiMasrafKaydet)
+// AYNI sonucu üretsin diye — bu yollardan hangisi kullanılırsa kullanılsın aynı yere işlensin diye —
+// bu ortak fonksiyon eklendi. Bu sayfa zaten "onaylamadan direkt kaydet" prensibiyle çalışıyor
+// (bkz. otoBelgeKaydetVeBildir/belgeTopluTek'in diğer alanları da hiç sormadan yazması), o yüzden
+// burada da AI sohbetindeki gibi ayrı bir onay adımı YOK — doğrudan işlenir.
+async function belgeMasrafKaydet(v, bilgi, dataUrl, kaynakEtiket){
+  const tutar = bilgi && bilgi.tutar!=null ? Number(bilgi.tutar) : NaN;
+  if(!tutar || !(tutar>0)) return null;
+  const tarih = normalizeExtractedDate(bilgi.tarih||'') || todayISO();
+  const dupVar = expenses.some(e=>e.vehicleId===v.id && e.tarih===tarih && Math.abs(Number(e.tutar)-tutar)<1);
+  if(dupVar) return {atlandi:true};
+  const masrafId = cryptoId();
+  await withStorageTimeout(storageAPI.set('fis_'+masrafId, dataUrl)).catch(()=>{});
+  const not = [bilgi.aciklama||'', bilgi.belgeNo?('Fiş No: '+bilgi.belgeNo):''].filter(Boolean).join(' · ');
+  const masrafKaydi = {id:masrafId, vehicleId:v.id, plaka:v.plaka, tip:'Tamir', tarih, tutar, not, kaynak:kaynakEtiket, hasFis:true};
+  expenses.push(masrafKaydi);
+  await persistExpenses();
+  let tedarikciAdi = null;
+  if(bilgi.tedarikci){
+    const t = await masrafiTedarikciyeBagla(masrafKaydi, String(bilgi.tedarikci).trim(), {fisFoto: dataUrl});
+    if(t) tedarikciAdi = t.ad;
+  }
+  return {atlandi:false, tutar, tedarikciAdi};
 }
 
 // ===== Belge Yükleme sayfası =====
@@ -16374,7 +16483,7 @@ async function belgeAnalizEt(onceden){
 // sorulmuyordu. Bu yeni fonksiyon SADECE AI Filo Asistanı'nın (aiBelgeYukle) "Evrak Gönder"
 // akışında kullanılır — Belge Yükleme sayfasındaki (otoBelgeSec/belgeTopluTek) tek-araç
 // varsayımı zaten doğru/yeterli olan mevcut belgeAnalizEt/OTO_BELGE_SYSTEM'e DOKUNULMADI.
-const OTO_BELGE_COKLU_SYSTEM = 'Sen bir araç belgesi (poliçe, ruhsat, muayene raporu, kira sözleşmesi, masraf/servis fişi vb.) okuyan asistansın. Belge TEK bir araca ait olabileceği gibi, bir tamirci/yedek parçacı/servisin BİRDEN FAZLA farklı müşteri aracını tek bir dökümde ayrı ayrı listelediği TOPLU bir belge de olabilir. SADECE şu JSON nesnesini döndür, başka hiçbir metin veya kod bloğu ekleme:\n{"coklu": boolean, "kayitlar": [{"plaka": string|null, "belgeTuru": "sigorta"|"kasko"|"muayene"|"ruhsat"|"sozlesme"|"masraf"|"servis"|"vize"|"diger", "tarih": "YYYY-MM-DD"|null, "belgeNo": string|null, "tutar": sayı|null, "aciklama": string|null, "kiraTutari": sayı|null, "kmLimiti": sayı|null, "kmAsimUcreti": sayı|null, "teslimTarihi": "YYYY-MM-DD"|null, "teslimKm": sayı|null}]}\nKurallar: Belgede AÇIKÇA birden fazla farklı plakaya ait ayrı bölüm/tablo/satır grubu varsa "coklu":true yap ve HER birini "kayitlar" dizisinde AYRI bir eleman say (aynı plaka belgede birden fazla kez, farklı tarih/işlemle geçiyorsa, her geçtiği yeri de AYRI bir kayıt say — birleştirme, toplama). Belge tek bir araca aitse "coklu":false yap, "kayitlar" dizisinde sadece 1 eleman olsun. "plaka" Türk formatı (2 rakam + 2-3 harf + 2-4 rakam, ör. 42 ABC 123). "belgeTuru": sigorta poliçesi ise "sigorta", kasko ise "kasko", muayene raporu ise "muayene", tescil/ruhsat ise "ruhsat", MUTLAKA kira/kiracı bilgisi içeren kira sözleşmesi ise "sozlesme", tutar/fiyat içeren masraf, yedek parça, tamir ya da servis/bakım fişi/faturası ise "masraf" (başlıkta "servis" veya "bakım" geçse bile, o kayıtta bir TUTAR/fiyat bilgisi varsa "servis" değil "masraf" say — "servis" SADECE tutar/fiyat bilgisi hiç içermeyen, salt işlem kaydı niteliğindeki kayıtlar içindir), vize/uluslararası belge ise "vize", hiçbiri değilse "diger". Yalnızca plaka ve araç bilgisi içeren, kira/kiracı verisi olmayan belgeleri asla "sozlesme" olarak sınıflandırma. "tarih" o kaydın geçerlilik bitiş tarihi ya da fiş/işlem tarihi (YYYY-MM-DD, bulamazsan null). "tutar" o kayda ait toplam/genel toplam tutar (sadece sayı, TL), bulunamazsa null. "aciklama" o kayıtta yapılan işin/hizmetin çok kısa özeti (en fazla 80 karakter), yoksa null. "kiraTutari"/"kmLimiti"/"kmAsimUcreti"/"teslimTarihi"/"teslimKm" SADECE "belgeTuru":"sozlesme" olan bir kayıtta doldurulur, diğer tüm kayıtlarda null bırak. Emin olmadığın hiçbir alanı tahmin etme, null yaz.';
+const OTO_BELGE_COKLU_SYSTEM = 'Sen bir araç belgesi (poliçe, ruhsat, muayene raporu, kira sözleşmesi, masraf/servis fişi vb.) okuyan asistansın. Belge TEK bir araca ait olabileceği gibi, bir tamirci/yedek parçacı/servisin BİRDEN FAZLA farklı müşteri aracını tek bir dökümde ayrı ayrı listelediği TOPLU bir belge de olabilir. SADECE şu JSON nesnesini döndür, başka hiçbir metin veya kod bloğu ekleme:\n{"coklu": boolean, "kayitlar": [{"plaka": string|null, "belgeTuru": "sigorta"|"kasko"|"muayene"|"ruhsat"|"sozlesme"|"masraf"|"servis"|"vize"|"diger", "tarih": "YYYY-MM-DD"|null, "belgeNo": string|null, "tutar": sayı|null, "aciklama": string|null, "tedarikci": string|null, "kiraTutari": sayı|null, "kmLimiti": sayı|null, "kmAsimUcreti": sayı|null, "teslimTarihi": "YYYY-MM-DD"|null, "teslimKm": sayı|null}]}\nKurallar: Belgede AÇIKÇA birden fazla farklı plakaya ait ayrı bölüm/tablo/satır grubu varsa "coklu":true yap ve HER birini "kayitlar" dizisinde AYRI bir eleman say (aynı plaka belgede birden fazla kez, farklı tarih/işlemle geçiyorsa, her geçtiği yeri de AYRI bir kayıt say — birleştirme, toplama). Belge tek bir araca aitse "coklu":false yap, "kayitlar" dizisinde sadece 1 eleman olsun. "plaka" Türk formatı (2 rakam + 2-3 harf + 2-4 rakam, ör. 42 ABC 123). "belgeTuru": sigorta poliçesi ise "sigorta", kasko ise "kasko", muayene raporu ise "muayene", tescil/ruhsat ise "ruhsat", MUTLAKA kira/kiracı bilgisi içeren kira sözleşmesi ise "sozlesme", tutar/fiyat içeren masraf, yedek parça, tamir ya da servis/bakım fişi/faturası ise "masraf" (başlıkta "servis" veya "bakım" geçse bile, o kayıtta bir TUTAR/fiyat bilgisi varsa "servis" değil "masraf" say — "servis" SADECE tutar/fiyat bilgisi hiç içermeyen, salt işlem kaydı niteliğindeki kayıtlar içindir), vize/uluslararası belge ise "vize", hiçbiri değilse "diger". Yalnızca plaka ve araç bilgisi içeren, kira/kiracı verisi olmayan belgeleri asla "sozlesme" olarak sınıflandırma. "tarih" o kaydın geçerlilik bitiş tarihi ya da fiş/işlem tarihi (YYYY-MM-DD, bulamazsan null). "tutar" o kayda ait toplam/genel toplam tutar (sadece sayı, TL), bulunamazsa null. "aciklama" o kayıtta yapılan işin/hizmetin çok kısa özeti (en fazla 80 karakter), yoksa null. "tedarikci" o fişi/faturayı KESEN firmanın/servisin/tamircinin adı (SADECE "belgeTuru":"masraf" olan kayıtlarda doldur, sadece isim, adres/telefon yazma; belge zaten tek bir tedarikçiye ait ve başlıkta/logoda geçiyorsa her kayıtta aynı adı tekrar yaz). "kiraTutari"/"kmLimiti"/"kmAsimUcreti"/"teslimTarihi"/"teslimKm" SADECE "belgeTuru":"sozlesme" olan bir kayıtta doldurulur, diğer tüm kayıtlarda null bırak. Emin olmadığın hiçbir alanı tahmin etme, null yaz.';
 async function belgeAnalizEtCoklu(onceden){
   for(let deneme=0; deneme<2; deneme++){
     try{
@@ -16525,19 +16634,28 @@ async function belgeTopluTek(file, fallbackId){
           await belgeMerkeziKaydet({ilgiliTip:'arac', ilgiliId:v.id, tur:merkeziTur, tarih: okunanTarih||todayISO(), sonGecerlilik, dosyaRef:verKey, belgeNo});
         }catch(e){ console.error('Merkezi belge kaydı hatası:', e); }
       }
+    }else if(tur==='masraf' && Number(bilgi&&bilgi.tutar)>0){
+      var masrafSonuc = await belgeMasrafKaydet(v, bilgi, onceden.dataUrl, 'Toplu Belge Yükleme');
     }else{
       await belgeAracaEkle(v, tur, file.name, onceden.mime, onceden.dataUrl, okunanTarih);
     }
     if(tur==='sozlesme') sozlesmeAlanlariUygula(v, bilgi);
     await persist();
-    logActivity('Belge yüklendi', `${esc(v.plaka)} — ${std?std.label:esc(tur)} (${esc(file.name)})`).catch(()=>{});
-    return {durum:'ok', plaka:v.plaka, etiket: std?std.label:(tur==='diger'?'Genel belge':tur), tarih: okunanTarih, celiski: tarihCeliski};
+    // v.252: "masraf" türü artık ayrı işleniyor (bkz. belgeMasrafKaydet) — özet mesajında ayrı say.
+    const etiket = std ? std.label : (tur==='masraf' ? (masrafSonuc && masrafSonuc.atlandi ? 'Masraf fişi (tekrar)' : 'Masraf fişi') : (tur==='diger'?'Genel belge':esc(tur)));
+    logActivity('Belge yüklendi', `${esc(v.plaka)} — ${etiket} (${esc(file.name)})`).catch(()=>{});
+    return {
+      durum:'ok', plaka:v.plaka, etiket, tarih: okunanTarih, celiski: tarihCeliski,
+      masrafTutar: (masrafSonuc && !masrafSonuc.atlandi) ? masrafSonuc.tutar : null,
+      tedarikciAdi: (masrafSonuc && masrafSonuc.tedarikciAdi) || null,
+    };
   }catch(e){ return {durum:'hata', mesaj: e.message||'bilinmeyen hata'}; }
 }
 async function belgeTopluIsle(files, status){
   const fallbackId = otoBelgeFallbackId();
   status.style.display='block';
-  let bitti=0, ok=0, kurtarilan=0, hata=0, genel=0;
+  let bitti=0, ok=0, kurtarilan=0, hata=0, genel=0, masrafSayisi=0, masrafToplam=0;
+  const tedarikciSet = new Set();
   const celiskiler = []; // v.159: mevcut tarihle çakışıp değiştirilmeyen belgeler burada toplanır
   const toplam = files.length;
   const kuyruk = files.slice();
@@ -16550,9 +16668,12 @@ async function belgeTopluIsle(files, status){
     const r = await belgeTopluTek(file, fallbackId);
     bitti++;
     if(r.durum==='ok'){ ok++; if(r.etiket==='Genel belge') kurtarilan++; if(r.celiski) celiskiler.push(`${r.plaka}: ${r.celiski}`);
-      // v.175: standart yuvası olmayan (Genel belge / Masraf fişi / Servis kaydı / Vize belgesi)
-      // türlerin hiçbiri masraf/cari kaydı oluşturmuyor — bu sayı toplu özet mesajında ayrıca belirtiliyor.
-      if(!['Sigorta','Kasko','Muayene','Ruhsat','Sözleşme'].includes(r.etiket)) genel++;
+      // v.175: standart yuvası olmayan (Genel belge / Servis kaydı / Vize belgesi) türlerin hiçbiri
+      // masraf/cari kaydı oluşturmuyor — bu sayı toplu özet mesajında ayrıca belirtiliyor.
+      // v.252: "Masraf fişi" artık GERÇEKTEN masraf + (varsa) tedarikçi cari kaydı oluşturuyor —
+      // bu yüzden "cari/masraf kaydı oluşturmadı" sayacına dahil edilmiyor, kendi sayacı var.
+      if(r.masrafTutar){ masrafSayisi++; masrafToplam += Number(r.masrafTutar)||0; if(r.tedarikciAdi) tedarikciSet.add(r.tedarikciAdi); }
+      else if(!['Sigorta','Kasko','Muayene','Ruhsat','Sözleşme'].includes(r.etiket)) genel++;
     }
     else hata++;
     status.textContent = `${bitti}/${toplam} işlendi · ${ok} kaydedildi${hata?` · ${hata} hata`:''}\nSon: ${file.name} — ${r.durum==='ok'?('✓ '+r.plaka+' ('+r.etiket+')'):('✗ '+r.mesaj)}`;
@@ -16561,11 +16682,16 @@ async function belgeTopluIsle(files, status){
   const isci = async ()=>{ let f; while((f=kuyruk.shift())!==undefined){ await isle(f); } };
   await Promise.all(Array.from({length: Math.min(3, toplam)}, isci));
   const genelNot = genel ? `\nNot: ${genel} belge sadece ilgili aracın "Belgeler" sekmesine dosya olarak eklendi — hiçbiri masraf ya da cari/tedarikçi bakiye kaydı oluşturmadı; tutar varsa Masraf Yönetimi'nden elle girmen gerekir.` : '';
-  status.textContent = `Tamamlandı: ${ok}/${toplam} belge kaydedildi${kurtarilan?` (${kurtarilan} plaka okunamayıp seçili araca kaydedildi)`:''}${hata?`, ${hata} dosya yüklenemedi`:''}.${celiskiler.length?`\n⚠ ${celiskiler.length} belgede tarih çelişkisi bulundu, mevcut kayıt korundu — elle kontrol edin:\n${celiskiler.join('\n')}`:''}${genelNot}`;
-  showToast(`${ok} belge kaydedildi${hata?`, ${hata} başarısız`:''}${celiskiler.length?`, ${celiskiler.length} tarih çelişkisi (kontrol edin)`:''}${genel?`, ${genel} genel belge (cari/masraf kaydı oluşturmadı)`:''}.`, celiskiler.length>0 && ok===0);
+  const masrafNot = masrafSayisi ? `\n✓ ${masrafSayisi} fiş, toplam ${fmtTL2(masrafToplam)} olarak Masraf Yönetimi'ne işlendi${tedarikciSet.size?`; tedarikçi cari hesabına da yazıldı: ${[...tedarikciSet].join(', ')}`:''}.` : '';
+  status.textContent = `Tamamlandı: ${ok}/${toplam} belge kaydedildi${kurtarilan?` (${kurtarilan} plaka okunamayıp seçili araca kaydedildi)`:''}${hata?`, ${hata} dosya yüklenemedi`:''}.${celiskiler.length?`\n⚠ ${celiskiler.length} belgede tarih çelişkisi bulundu, mevcut kayıt korundu — elle kontrol edin:\n${celiskiler.join('\n')}`:''}${masrafNot}${genelNot}`;
+  showToast(`${ok} belge kaydedildi${hata?`, ${hata} başarısız`:''}${celiskiler.length?`, ${celiskiler.length} tarih çelişkisi (kontrol edin)`:''}${masrafSayisi?`, ${masrafSayisi} masraf işlendi (${fmtTL2(masrafToplam)})`:''}${genel?`, ${genel} genel belge (cari/masraf kaydı oluşturmadı)`:''}.`, celiskiler.length>0 && ok===0);
   setTimeout(()=>{ status.style.display='none'; }, 8000);
   topluYuklemeBarGizle(ok, toplam);
   renderDocUploadPage();
+  if(masrafSayisi){
+    if(typeof renderMasrafPage==='function' && window.__currentPage==='masraf') renderMasrafPage();
+    if(tedarikciSet.size && typeof renderTedarikcilerPage==='function' && window.__currentPage==='tedarikciler') renderTedarikcilerPage();
+  }
 }
 
 // ===== Belgeler sayfası =====
@@ -22706,6 +22832,7 @@ async function aiCokluBelgeIsle(file, onceden, kayitlar){
         vehicleId: v.id, plaka: v.plaka,
         tarih: (bilgi && normalizeExtractedDate(bilgi.tarih||'')) || todayISO(),
         tutar: tutar||0, tip:'Tamir', not: (bilgi && bilgi.aciklama) ? String(bilgi.aciklama).slice(0,120) : '',
+        tedarikci: (bilgi && bilgi.tedarikci) ? String(bilgi.tedarikci).trim() : '',
       });
       continue;
     }
@@ -22764,7 +22891,7 @@ async function aiCokluBelgeIsle(file, onceden, kayitlar){
     <div>${parcalar.join(' ')}</div>
     <div style="margin-top:8px;border:1px solid var(--line);border-radius:8px;overflow:hidden;">
       ${masrafAdaylari.map(k=>`<div style="display:flex;justify-content:space-between;gap:10px;padding:6px 10px;border-bottom:1px solid var(--line);font-size:12.5px;">
-        <span><b>${esc(k.plaka)}</b> · ${esc(k.tarih||'—')}${k.not?' · '+esc(k.not):''}</span>
+        <span><b>${esc(k.plaka)}</b> · ${esc(k.tarih||'—')}${k.not?' · '+esc(k.not):''}${k.tedarikci?' · <span style="color:var(--steel-300);">'+esc(k.tedarikci)+' (cari hesaba işlenecek)</span>':''}</span>
         <span style="font-weight:700;white-space:nowrap;">${(Number(k.tutar)||0).toLocaleString('tr-TR')} ₺</span>
       </div>`).join('')}
     </div>
@@ -22781,7 +22908,7 @@ async function aiCokluBelgeIsle(file, onceden, kayitlar){
 async function aiMasrafOner(onceden, v){
   try{
     const system = `Filo masraf belgesi okuma asistanı. Bu belge zaten ${v.plaka} plakalı araca ait olarak tespit edildi. Belgedeki masraf tutarını/tutarlarını çıkar.
-SADECE JSON döndür: {"kayitlar":[{"tarih":"YYYY-MM-DD","tutar":sayı,"tip":"Tamir/Bakım/Lastik/Yakıt/Sigorta/Kasko/Diğer","not":"kısa açıklama"}]}
+SADECE JSON döndür: {"kayitlar":[{"tarih":"YYYY-MM-DD","tutar":sayı,"tip":"Tamir/Bakım/Lastik/Yakıt/Sigorta/Kasko/Diğer","not":"kısa açıklama","tedarikci":"fişi/faturayı kesen firmanın/servisin/tamircinin adı, sadece isim"}]}
 Emin olmadığın alanı null bırak, uydurma.`;
     const result = await callGeminiDirect(system, 'Bu belgeyi analiz et ve masraf kayıtlarını çıkar.', {source:{type:'base64', media_type:onceden.mime, data:onceden.b64}});
     const text = result?.content?.[0]?.text || '';
@@ -22805,7 +22932,7 @@ Emin olmadığın alanı null bırak, uydurma.`;
       <div>Bu bir fatura/fiş — <b>${esc(v.plaka)}</b> aracına ${kayitlar.length>1?`${kayitlar.length} masraf kaydı`:'bir masraf kaydı'} önerdim, onaylarsan kaydederim:</div>
       <div style="margin-top:8px;border:1px solid var(--line);border-radius:8px;overflow:hidden;">
         ${kayitlar.map(k=>`<div style="display:flex;justify-content:space-between;gap:10px;padding:6px 10px;border-bottom:1px solid var(--line);font-size:12.5px;">
-          <span>${esc(k.tarih||'—')} · ${esc(k.tip||'Diğer')}${k.not?' · '+esc(k.not):''}</span>
+          <span>${esc(k.tarih||'—')} · ${esc(k.tip||'Diğer')}${k.not?' · '+esc(k.not):''}${k.tedarikci?' · <span style="color:var(--steel-300);">'+esc(k.tedarikci)+' (cari hesaba işlenecek)</span>':''}</span>
           <span style="font-weight:700;">${(Number(k.tutar)||0).toLocaleString('tr-TR')} ₺</span>
         </div>`).join('')}
       </div>
@@ -22832,6 +22959,7 @@ async function aiMasrafKaydet(batchId, btnEl){
   if(!batch.coklu && !varsayilanV){ showToast('Araç bulunamadı.', true); return; }
   let eklenen = 0, atlanan = 0;
   const etkilenenPlakalar = new Set();
+  const cariyeIslenen = new Set();
   for(const k of batch.kayitlar){
     const v = k.vehicleId ? (vehicles.find(x=>x.id===k.vehicleId) || varsayilanV) : varsayilanV;
     if(!v) continue;
@@ -22841,18 +22969,28 @@ async function aiMasrafKaydet(batchId, btnEl){
     if(dupVar){ atlanan++; continue; }
     const masrafId = cryptoId();
     if(batch.dataUrl){ await withStorageTimeout(storageAPI.set('fis_'+masrafId, batch.dataUrl)).catch(()=>{}); }
-    expenses.push({id:masrafId, vehicleId:v.id, plaka:v.plaka, tip:k.tip||'Diğer', tarih, tutar, not:k.not||'', hasFis: !!batch.dataUrl});
+    const masrafKaydi = {id:masrafId, vehicleId:v.id, plaka:v.plaka, tip:k.tip||'Diğer', tarih, tutar, not:k.not||'', hasFis: !!batch.dataUrl, kaynak:'AI Filo Asistanı'};
+    expenses.push(masrafKaydi);
     eklenen++;
     etkilenenPlakalar.add(v.plaka);
+    // v.252: "TÜM BELGE YÜKLEME İŞLERİ TAM ENTEGRE OLSUN" — belgeden bir tedarikçi adı okunduysa
+    // bu masraf aynı zamanda o tedarikçinin cari hesabına (borç/fiş) da işlenir; tedarikçi
+    // filoda kayıtlı değilse otomatik oluşturulur (bkz. masrafiTedarikciyeBagla).
+    if(k.tedarikci){
+      const t = await masrafiTedarikciyeBagla(masrafKaydi, k.tedarikci, {fisFoto: batch.dataUrl});
+      if(t) cariyeIslenen.add(t.ad);
+    }
   }
   await persistExpenses();
-  logActivity('add', `Masraf eklendi (AI Asistanı): <b>${esc([...etkilenenPlakalar].join(', ')||(varsayilanV?varsayilanV.plaka:''))}</b> · ${eklenen} kayıt`).catch(()=>{});
+  const cariNot = cariyeIslenen.size ? ` · Tedarikçi cari hesabına işlendi: ${[...cariyeIslenen].join(', ')}` : '';
+  logActivity('add', `Masraf eklendi (AI Asistanı): <b>${esc([...etkilenenPlakalar].join(', ')||(varsayilanV?varsayilanV.plaka:''))}</b> · ${eklenen} kayıt${esc(cariNot)}`).catch(()=>{});
   delete window.__aiMasrafBatches[batchId];
   if(btnEl){
     const wrap = btnEl.closest('.ai-masraf-actions');
-    if(wrap) wrap.outerHTML = `<div style="font-size:12px;color:#36A168;font-weight:600;margin-top:8px;">✓ ${eklenen} masraf kaydı eklendi${atlanan?`, ${atlanan} tekrar olduğu için atlandı`:''}.</div>`;
+    if(wrap) wrap.outerHTML = `<div style="font-size:12px;color:#36A168;font-weight:600;margin-top:8px;">✓ ${eklenen} masraf kaydı eklendi${atlanan?`, ${atlanan} tekrar olduğu için atlandı`:''}.${cariNot}</div>`;
   }
-  showToast(`${eklenen} masraf kaydı eklendi${atlanan?`, ${atlanan} atlandı`:''}.`);
+  showToast(`${eklenen} masraf kaydı eklendi${atlanan?`, ${atlanan} atlandı`:''}${cariyeIslenen.size?`, ${cariyeIslenen.size} tedarikçi cari hesabına işlendi`:''}.`);
+  if(window.__currentPage==='tedarikciler' && typeof renderTedarikcilerPage==='function') renderTedarikcilerPage();
 }
 
 function aiMasrafIptal(batchId, btnEl){
