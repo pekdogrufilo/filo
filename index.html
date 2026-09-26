@@ -2480,7 +2480,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-26.252</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-26.253</div>
     </div>
   </div>
 </div>
@@ -2573,8 +2573,11 @@
         <div class="sb-group-body">
           <button class="sb-item" data-page="arac-yonetimi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2v-6l-3-5H4l-3 5v6h2"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="16.5" cy="17.5" r="2.5"/></svg>Araç Yönetimi</button>
           <button class="sb-item" data-page="km-takibi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg>Km Takibi</button>
-          <button class="sb-item" data-page="belgeler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>Belge Arşivi<span class="sb-badge" id="sbBelgelerBadge" style="display:none;background:var(--amber);">0</span></button>
-          <button class="sb-item" id="sbBelgeYukle" data-page="docupload"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg>Belge Yükleme</button>
+          <!-- v.253: "PANEL ÇOK KARIŞTI HERYERE BELGE EKLEME" geri bildirimi — "Belge Arşivi" (görüntüleme)
+               ve "Belge Yükleme" (yükleme) yan yana iki ayrı menü öğesiydi, ikisi de aynı işi (araç
+               belgesi) yapıyordu. Tek sayfada birleştirildi (bkz. renderBelgelerPage) — sidebar'da
+               tek öğe kaldı, hiçbir özellik kaybolmadı. -->
+          <button class="sb-item" data-page="belgeler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>Belgeler<span class="sb-badge" id="sbBelgelerBadge" style="display:none;background:var(--amber);">0</span></button>
         </div>
       </div>
 
@@ -2649,7 +2652,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-26.252</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-26.253</div>
     </div>
   </aside>
 <script>
@@ -2922,7 +2925,6 @@
 
 <section class="page" data-page="bakim" id="page-bakim"></section>
 <section class="page" data-page="belgeler" id="page-belgeler"></section>
-<section class="page" data-page="docupload" id="page-docupload"></section>
 <section class="page" data-page="raporlar" id="page-raporlar"></section>
 <section class="page" data-page="bildirimler" id="page-bildirimler"></section>
 <section class="page" data-page="excel" id="page-excel"></section>
@@ -10537,10 +10539,10 @@ const ROLE_DEFS = [
     currentRoleEsdegeri:'admin', ekipYonet:true, paraGorebilir:true, sayfalar:null },
   { id:'operasyon-muduru', ad:'Operasyon Müdürü', aciklama:'Tüm operasyonel sayfalar (araç, kiralama, bakım, finans); kullanıcı yönetemez.',
     currentRoleEsdegeri:'admin', ekipYonet:false, paraGorebilir:true,
-    sayfalar:['genel-bakis','bildirimler','arac-yonetimi','km-takibi','belgeler','docupload','kiralama','teklifler','ihaleler','musteriler','hasarcezalar','cari','faturalar','finansal-analiz','masraf','tedarikciler','bakim','yakit','lastikler','raporlar','ai','excel','ayarlar'] },
+    sayfalar:['genel-bakis','bildirimler','arac-yonetimi','km-takibi','belgeler','kiralama','teklifler','ihaleler','musteriler','hasarcezalar','cari','faturalar','finansal-analiz','masraf','tedarikciler','bakim','yakit','lastikler','raporlar','ai','excel','ayarlar'] },
   { id:'filo-sorumlusu', ad:'Filo Sorumlusu', aciklama:'Araç ekleme/düzenleme, kiralama, iade, bakım — silme yok, finans göremez.',
     currentRoleEsdegeri:'admin', ekipYonet:false, paraGorebilir:false,
-    sayfalar:['genel-bakis','bildirimler','arac-yonetimi','km-takibi','belgeler','docupload','kiralama','teklifler','musteriler','hasarcezalar','bakim','yakit','lastikler','raporlar'] },
+    sayfalar:['genel-bakis','bildirimler','arac-yonetimi','km-takibi','belgeler','kiralama','teklifler','musteriler','hasarcezalar','bakim','yakit','lastikler','raporlar'] },
   { id:'muhasebe', ad:'Muhasebe / Finans', aciklama:'Masraf, tahsilat, cari, fatura ve finansal analiz — araç kaydı düzenleyemez.',
     currentRoleEsdegeri:'admin', ekipYonet:false, paraGorebilir:true,
     sayfalar:['genel-bakis','bildirimler','cari','faturalar','finansal-analiz','masraf','tedarikciler','raporlar','ihaleler'] },
@@ -10552,7 +10554,7 @@ const ROLE_DEFS = [
     sayfalar:['genel-bakis','bildirimler','kiralama','teklifler','ihaleler','musteriler','raporlar'] },
   { id:'bakim-sorumlusu', ad:'Bakım / Servis Sorumlusu', aciklama:'Bakım kaydı, belge yükleme, lastik/servis — kiralama ve finans göremez.',
     currentRoleEsdegeri:'admin', ekipYonet:false, paraGorebilir:false,
-    sayfalar:['genel-bakis','bildirimler','belgeler','docupload','bakim','yakit','lastikler','hasarcezalar'] },
+    sayfalar:['genel-bakis','bildirimler','belgeler','bakim','yakit','lastikler','hasarcezalar'] },
   { id:'denetci', ad:'Salt Görüntüleme / Denetçi', aciklama:'Her şeyi görür, hiçbir şeyi değiştiremez (ihale/denetim için).',
     currentRoleEsdegeri:'staff', ekipYonet:false, paraGorebilir:true, sayfalar:null },
   { id:'misafir', ad:'Misafir / Stajyer', aciklama:'Sadece genel bakış ve araç arama — hiçbir hassas veri yok.',
@@ -11401,11 +11403,10 @@ const PAGE_META = {
   'lastikler': {title:'Lastikler', sub:'Araçlara takılı/sökülü lastikler ve diş derinliği takibi'},
   'hasarcezalar': {title:'Hasar & Cezalar', sub:'Filo genelinde hasar özeti ve trafik cezası takibi'},
   'ihaleler': {title:'İhaleler', sub:'Kurumlara verilen tekliflerin son teklif tarihi ve durumu'},
-  'belgeler': {title:'Belgeler', sub:'Yüklenen sözleşme, poliçe ve raporlar'},
+  'belgeler': {title:'Belgeler', sub:'Poliçe, ruhsat, sözleşme, fiş ve raporları yükleyin; tüm araçların belge durumunu görün'},
   'raporlar': {title:'Raporlar', sub:'Yazdırılabilir özet ve fatura raporları'},
   'bildirimler': {title:'Bildirimler', sub:'Yaklaşan ve geçmiş tarihli belgeler'},
   'excel': {title:'Veri Aktarımı', sub:'Excel ile içe / dışa aktarım'},
-  'docupload': {title:'Belge Yükleme', sub:'Poliçe, fiş ve raporları otomatik olarak araç kartına yükleyin'},
   'ai': {title:'AI Filo Asistanı', sub:'Filonuzu analiz edin, sorunları önceden görün'},
   'ekip': {title:'Ekip', sub:'Kullanıcıları davet et, rol ata, erişimi yönet'},
   'ayarlar': {title:'Ayarlar', sub:'Kilit, hatırlatma, bulut ve AI ayarları'},
@@ -11628,7 +11629,6 @@ function renderCurrentPage(){
   else if(key==='bildirimler') renderBildirimlerPage();
   else if(key==='ai') renderAiPage();
   else if(key==='excel') renderExcelPage();
-  else if(key==='docupload') renderDocUploadPage();
   else if(key==='ayarlar') renderAyarlarPage();
   else if(key==='ekip') renderEkipPage();
   else if(key==='kiralama') renderKiralamaPage();
@@ -12733,14 +12733,14 @@ function renderDashboard(){
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;">
           <div style="font-size:12.5px;font-weight:700;color:var(--text);margin-bottom:3px;">4️⃣ Belgeleri yükle</div>
           <div style="font-size:11.5px;color:var(--text-3);margin-bottom:8px;">Ruhsat, poliçe, sözleşme gibi belgeleri AI okusun, bilgiler araca işlensin.</div>
-          <button onclick="switchPage('docupload')" style="background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.25);color:var(--accent-blue);padding:5px 11px;border-radius:7px;font-size:11.5px;font-weight:600;cursor:pointer;">Belge Yükleme'ye git</button>
+          <button onclick="switchPage('belgeler')" style="background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.25);color:var(--accent-blue);padding:5px 11px;border-radius:7px;font-size:11.5px;font-weight:600;cursor:pointer;">Belgeler'e git</button>
         </div>
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;">
           <div style="font-size:12.5px;font-weight:700;color:var(--text);margin-bottom:3px;">5️⃣ Masraf &amp; bakım takibi</div>
           <div style="font-size:11.5px;color:var(--text-3);margin-bottom:8px;">Araç kullanımdayken yakıt/tamir masraflarını ve servis giriş-çıkışlarını işle.</div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;">
             <button onclick="switchPage('masraf');setTimeout(()=>document.getElementById('mpPlaka')?.focus(),80)" style="background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.25);color:var(--accent-blue);padding:5px 11px;border-radius:7px;font-size:11.5px;font-weight:600;cursor:pointer;">Masraf Yönetimi</button>
-            <button onclick="switchPage('bakim')" style="background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.25);color:var(--accent-blue);padding:5px 11px;border-radius:7px;font-size:11.5px;font-weight:600;cursor:pointer;">Bakım &amp; Servis</button>
+            <button onclick="switchPage('bakim');setTimeout(()=>{const p=document.getElementById('masrafFisPanel'); if(p){p.open=true; p.scrollIntoView({behavior:'smooth',block:'start'});}},80)" style="background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.25);color:var(--accent-blue);padding:5px 11px;border-radius:7px;font-size:11.5px;font-weight:600;cursor:pointer;">Bakım &amp; Servis → Tamir Fişi Yükle</button>
           </div>
         </div>
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;">
@@ -13078,7 +13078,7 @@ function handleQuickAction(act){
   // ızgarasındaki v.211 notu (iki ayrı hızlı işlem alanı tek alana indirildi).
   else if(act==='hakedis-yukle'){ switchPage('excel'); setTimeout(()=>{const a=document.getElementById('kiraYuklemeArea'); if(a) a.scrollIntoView({behavior:'smooth', block:'center'});}, 80); }
   else if(act==='km-raporu-yukle'){ switchPage('excel'); setTimeout(()=>{const a=document.getElementById('kmYuklemeArea'); if(a) a.scrollIntoView({behavior:'smooth', block:'center'});}, 80); }
-  else if(act==='belge-yukle'){ switchPage('docupload'); }
+  else if(act==='belge-yukle'){ switchPage('belgeler'); }
   else if(act==='gunluk-ozet'){ window.print(); }
   else if(act==='arac-tablosu'){ filoTabloGoster(); }
   else if(act==='rapor-olustur'){ switchPage('raporlar'); }
@@ -16019,7 +16019,8 @@ async function otoBelgeSec(file, statusEl){
     });
 
     // Araç seçimi: önce belgeden plaka okunacak; okunamazsa yandaki seçim fallback.
-    const fallbackId = (document.getElementById('belgeYukleArac')||{}).value || '';
+    // v.253: sayfa birleşmesiyle "belgeYukleArac" kaldırıldı, artık tek fallback seçim "duAracSec".
+    const fallbackId = otoBelgeFallbackId();
 
     if(!getGeminiKey()){
       // Anahtar yoksa otomatik okuma yapılamaz — seçilmiş araca "diğer belge" olarak kaydet
@@ -16256,139 +16257,13 @@ async function belgeMasrafKaydet(v, bilgi, dataUrl, kaynakEtiket){
 
 // ===== Belge Yükleme sayfası =====
 // Kendi başına bir sayfa: sürükle-bırak / dosya seç ile yükleme + son yüklenenler listesi.
-function renderDocUploadPage(){
-  const page = document.getElementById('page-docupload');
-  if(!page) return;
-  // Tüm araçlardaki otomatik yüklenen belgeler, en yeni önce
-  // v.133: "yüklüyorum ama göremiyorum" şikayeti üzerine — standart yuvalı belgeler
-  // (sigorta/kasko/muayene/ruhsat/sözleşme) sadece v[adiF] araç alanına yazılıyordu,
-  // v.otoBelgeler dizisine hiç girmiyordu; bu liste de sadece o diziyi okuduğu için bu
-  // belgeler yüklendikten sonra hiçbir yerde görünmüyordu. Artık ikisi birden taranıyor.
-  const tumu = [];
-  vehicles.forEach(v=>{
-    (v.otoBelgeler||[]).forEach(o=>tumu.push({v, o}));
-    Object.keys(OTO_BELGE_TURLERI).forEach(turKey=>{
-      const std = OTO_BELGE_TURLERI[turKey];
-      const adi = v[std.adiF];
-      if(!adi) return;
-      tumu.push({v, o:{
-        tur: turKey,
-        adi,
-        tarih: (std.tarihF ? v[std.tarihF] : '') || '',
-        yukleme: (v.belgeYuklemeZamanlari && v.belgeYuklemeZamanlari[turKey]) || '',
-        key: std.prefix+v.id,
-        standart: true,
-      }});
-    });
-  });
-  tumu.sort((a,b)=>(b.o.yukleme||'').localeCompare(a.o.yukleme||''));
-  const sonN = tumu.slice(0, 40);
-
-  const turIco = t=>({sigorta:ICO('shieldSm',13),kasko:ICO('receipt',13),muayene:ICO('search',13),ruhsat:ICO('clipboard',13),sozlesme:ICO('filetext',13),masraf:ICO('money',13),servis:ICO('wrench',13),vize:ICO('globe',13),diger:ICO('doc',13)}[t]||ICO('doc',13));
-  const turAd  = t=>({sigorta:'Sigorta',kasko:'Kasko',muayene:'Muayene',ruhsat:'Ruhsat',sozlesme:'Sözleşme',masraf:'Masraf',servis:'Servis',vize:'Vize',diger:'Belge'}[t]||'Belge');
-
-  page.innerHTML = `
-    <!-- v.209: "neyi nereye yükleyeceğimizi şaşırıyoruz" geri bildirimi — uygulamada belge
-         yükleyebileceğiniz 7 ayrı yer var (bu sayfa, Araç Düzenle içindeki 5 ayrı buton, Masraf
-         Yönetimi'ndeki fiş okuma) ve hiçbirinde "hangisi bana lazım" diye yönlendiren tek bir yer
-         yoktu. Bu kart, elinizdeki KAĞIDA göre doğru yere göndersin diye eklendi — kod/otomatik
-         okuma mantığı hiç değişmedi, sadece nereye gideceğinizi netleştiriyor.
-    -->
-    <div class="dcard" style="padding:18px;margin-bottom:16px;border-color:rgba(22,160,134,.35);background:var(--blue-dim,rgba(22,160,134,.04));">
-      <div style="font-size:15px;font-weight:700;margin-bottom:2px;display:flex;align-items:center;gap:8px;">
-        ${ICO('search',16)} Elimde bir belge var — nereye yükleyeyim?
-      </div>
-      <div style="font-size:12px;color:var(--text-2);margin-bottom:14px;">Belgenin TÜRÜNE göre seçin, doğru yere götürelim.</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;">
-        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;">
-          <div style="font-size:12.5px;font-weight:700;color:var(--text);margin-bottom:3px;">🚗 Araç belgesi</div>
-          <div style="font-size:11.5px;color:var(--text-3);margin-bottom:8px;">Ruhsat, sigorta, kasko, muayene, kira sözleşmesi</div>
-          <div style="font-size:11.5px;color:var(--accent-blue);font-weight:600;">↓ Tam buradasınız — aşağıya sürükleyin</div>
-        </div>
-        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;">
-          <div style="font-size:12.5px;font-weight:700;color:var(--text);margin-bottom:3px;">🪪 Müşteri kimliği / vergi levhası</div>
-          <div style="font-size:11.5px;color:var(--text-3);margin-bottom:8px;">Yeni müşteri kaydı açarken kimlik/ehliyet/vergi levhası okutmak için</div>
-          <button onclick="switchPage('musteriler');setTimeout(()=>musteriFormAc(),80);" style="background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.25);color:var(--accent-blue);padding:5px 11px;border-radius:7px;font-size:11.5px;font-weight:600;cursor:pointer;">Müşteriler → Yeni Müşteri</button>
-        </div>
-        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;">
-          <div style="font-size:12.5px;font-weight:700;color:var(--text);margin-bottom:3px;">🧾 Kiracı / kefil kimliği</div>
-          <div style="font-size:11.5px;color:var(--text-3);margin-bottom:8px;">Araç kiraya verirken kiracının/kefilin kimliğini okutmak için</div>
-          <button onclick="openAracKirala()" style="background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.25);color:var(--accent-blue);padding:5px 11px;border-radius:7px;font-size:11.5px;font-weight:600;cursor:pointer;">Araç Kirala sihirbazını aç</button>
-        </div>
-        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;">
-          <div style="font-size:12.5px;font-weight:700;color:var(--text);margin-bottom:3px;">🧰 Tamir / masraf fişi</div>
-          <div style="font-size:11.5px;color:var(--text-3);margin-bottom:8px;">Tutarın masraf olarak kaydedilmesi için — buraya yüklerseniz belge saklanır ama TUTAR masraf olarak kaydedilmez.</div>
-          <button onclick="window.__masrafFisOnAc=true;switchPage('bakim')" style="background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.25);color:var(--accent-blue);padding:5px 11px;border-radius:7px;font-size:11.5px;font-weight:600;cursor:pointer;">Bakım & Servis → Tamir Fişi Yükle</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="dcard" style="padding:18px;margin-bottom:16px;">
-      <div style="font-size:15px;font-weight:700;margin-bottom:4px;">Belge yükle</div>
-      <div style="font-size:12.5px;color:var(--text-2);margin-bottom:14px;">Poliçe, muayene raporu, ruhsat, masraf fişi, servis kağıdı… Dosyayı bırakın — sistem plakayı okur, doğru araç kartına kaydeder ve sizi uyarır. Çoklu seçim desteklenir; plakası okunamayan dosyalar aşağıda seçtiğiniz araca kaydedilir.</div>
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
-        <span style="font-size:12px;color:var(--text-3);">Okunamayan belgeler bu araca kaydedilsin:</span>
-        <select id="duAracSec" style="background:var(--surface-2);border:1px solid transparent;border-radius:10px;color:var(--text);padding:7px 10px;font-size:13px;max-width:170px;font-family:inherit;">
-          <option value="">Araç seç… (zorunlu değil)</option>
-          ${vehicles.map(v=>`<option value="${v.id}">${esc(v.plaka)}</option>`).join('')}
-        </select>
-      </div>
-      <div id="duDrop" style="border:2px dashed var(--border-2);border-radius:14px;padding:28px 16px;text-align:center;cursor:pointer;transition:all .15s ease;background:var(--surface-2);">
-        <div style="color:var(--accent-blue);margin-bottom:8px;display:flex;justify-content:center;">${ICO('download',26,1.6)}</div>
-        <div style="font-size:13.5px;font-weight:600;color:var(--text);">Sürükleip bırakın veya <span style="color:var(--accent-blue);">dosya seçin</span></div>
-        <div style="font-size:11.5px;color:var(--text-3);margin-top:4px;">PDF veya görsel · en fazla 10 MB · birden fazla dosya seçebilirsiniz</div>
-      </div>
-      <input type="file" id="duFile" accept=".pdf,image/*" multiple style="display:none">
-      <div id="duStatus" style="display:none;margin-top:12px;font-size:13px;color:var(--text-2);background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;white-space:pre-line;"></div>
-    </div>
-
-    <div class="dcard" style="padding:18px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-        <div style="font-size:15px;font-weight:700;">Son yüklenenler</div>
-        <span style="font-size:12px;color:var(--text-3);">${tumu.length} belge</span>
-      </div>
-      ${sonN.length ? `<div style="display:flex;flex-direction:column;gap:8px;">
-        ${sonN.map(({v,o})=>{
-          const d = o.yukleme ? new Date(o.yukleme) : null;
-          const dTxt = d ? d.toLocaleDateString('tr-TR')+' '+d.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'}) : '';
-          return `<div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;background:var(--surface-2);border:1px solid var(--border);">
-            <span style="color:var(--accent-blue);flex-shrink:0;display:flex;">${turIco(o.tur)}</span>
-            <div style="flex:1;min-width:0;">
-              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                <span class="plaka" style="font-size:11.5px;padding:1px 7px;">${esc(v.plaka)}</span>
-                <span style="font-size:12.5px;font-weight:600;color:var(--text);">${turAd(o.tur)}</span>
-              </div>
-              <div style="font-size:11.5px;color:var(--text-3);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(o.adi)}${o.tarih?' · '+esc(fmtTarih(o.tarih)):''}${dTxt?' · '+dTxt:''}</div>
-            </div>
-            <button onclick="viewBelgeByKey('${o.key}','${esc(o.adi).replace(/'/g,'')}')" style="background:var(--blue-dim);border:none;color:var(--accent-blue);padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0;">Gör</button>
-            <button onclick="belgeIndir('${o.key}','${esc(o.adi).replace(/'/g,'')}')" style="background:var(--blue-dim);border:none;color:var(--accent-blue);padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0;display:flex;align-items:center;" title="İndir">${ICO('download',13)}</button>
-            <button onclick="${o.standart ? `standartBelgeSil('${v.id}','${o.tur}')` : `otoBelgeSil('${v.id}','${o.key}')`}" style="background:none;border:none;color:var(--text-3);cursor:pointer;padding:6px;display:flex;flex-shrink:0;" title="Sil">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
-            </button>
-          </div>`;
-        }).join('')}
-      </div>` : '<div style="color:var(--text-3);font-size:13px;padding:12px 0;">Henüz belge yüklenmedi. İlk belgenizi yukarıdaki alana bırakın.</div>'}
-    </div>
-  `;
-
-  const inp = document.getElementById('duFile');
-  const drop = document.getElementById('duDrop');
-  const status = document.getElementById('duStatus');
-  drop.onclick = ()=>inp.click();
-  inp.onchange = async ()=>{
-    if(!inp.files.length) return;
-    const files = Array.from(inp.files);
-    inp.value = '';
-    await belgeTopluIsle(files, status);
-  };
-  ['dragover','dragenter'].forEach(ev=>drop.addEventListener(ev, e=>{ e.preventDefault(); drop.style.borderColor='var(--accent-blue)'; drop.style.background='var(--blue-dim)'; }));
-  ['dragleave','drop'].forEach(ev=>drop.addEventListener(ev, e=>{ e.preventDefault(); drop.style.borderColor='var(--border-2)'; drop.style.background='var(--surface-2)'; }));
-  drop.addEventListener('drop', async e=>{
-    const files = Array.from(e.dataTransfer.files||[]);
-    if(!files.length) return;
-    await belgeTopluIsle(files, status);
-  });
-}
+// v.253: "PANEL ÇOK KARIŞTI HERYERE BELGE EKLEME" geri bildirimi — "Belgeler" (görüntüleme) ve
+// "Belge Yükleme" (bu fonksiyonun eskiden hedeflediği ayrı sayfa) yan yana iki ayrı menü öğesiydi
+// ve İKİSİ de araç belgesi yükleme işini yapıyordu (Belgeler'in kendi küçük tek-dosya yükleyicisi
+// vardı, bu sayfanın da sürükle-bırak/toplu yükleyicisi). Artık TEK sayfa var (bkz. aşağıdaki
+// renderBelgelerPage) — bu fonksiyon, mevcut tüm iç çağrı noktalarını (otoBelgeSil,
+// standartBelgeSil, belgeTopluIsle) kırmamak için basit bir takma ad olarak bırakıldı.
+function renderDocUploadPage(){ renderBelgelerPage(); }
 async function otoBelgeSil(vehicleId, key){
   if(!requireAdmin()) return;
   const v = vehicles.find(x=>x.id===vehicleId);
@@ -16401,7 +16276,7 @@ async function otoBelgeSil(vehicleId, key){
   await persist();
   logActivity('del', `Belge silindi: <b>${esc(v.plaka)}</b> · ${esc((silinen&&silinen.adi)||'')}`).catch(()=>{});
   showToast('Belge silindi.');
-  renderDocUploadPage();
+  renderBelgelerPage();
 }
 // v.133: "Son yüklenenler" listesine eklenen standart yuvalı (sigorta/kasko/muayene/
 // ruhsat/sözleşme) belgeler için ayrı silme — otoBelgeSil sadece v.otoBelgeler dizisini
@@ -16423,14 +16298,13 @@ async function standartBelgeSil(vehicleId, tur){
   if(merkeziTur) await belgeMerkeziPasifYap('arac', v.id, merkeziTur).catch(()=>{});
   logActivity('del', `Belge silindi: <b>${esc(v.plaka)}</b> · ${esc(std.label)}`).catch(()=>{});
   showToast('Belge silindi.');
-  renderDocUploadPage();
+  renderBelgelerPage();
 }
 
 // ===== Toplu belge işleme motoru =====
 function otoBelgeFallbackId(){
   const du = document.getElementById('duAracSec');
-  const bl = document.getElementById('belgeYukleArac');
-  return (du&&du.value) || (bl&&bl.value) || '';
+  return (du&&du.value) || '';
 }
 async function belgeVeriOku(file){
   // FAZ10 güvenlik: SVG, script çalıştırabilen bir "resim" türüdür (özellikle bu dosya daha
@@ -16695,6 +16569,38 @@ async function belgeTopluIsle(files, status){
 }
 
 // ===== Belgeler sayfası =====
+// v.253: "Belgeler" ve "Belge Yükleme" sayfaları birleşince buraya taşındı — tüm filodaki
+// otoBelgeler[] öğelerini VE standart yuvalı (sigorta/kasko/muayene/ruhsat/sözleşme) belgeleri
+// tek bir "son yüklenenler" listesinde, yükleme zamanına göre en yeniden eskiye sıralar.
+function belgeSonYuklenenler(n){
+  const TUR_AD = {masraf:'Masraf fişi', servis:'Servis kaydı', vize:'Vize belgesi', diger:'Belge'};
+  const kayitlar = [];
+  vehicles.forEach(v=>{
+    (Array.isArray(v.otoBelgeler)?v.otoBelgeler:[]).forEach(o=>{
+      if(!o.yukleme) return;
+      kayitlar.push({plaka:v.plaka, ad: TUR_AD[o.tur]||'Belge', adi:o.adi, zaman:o.yukleme, key:o.key});
+    });
+    const zt = v.belgeYuklemeZamanlari || {};
+    Object.keys(zt).forEach(tur=>{
+      const std = OTO_BELGE_TURLERI[tur];
+      if(!std) return;
+      kayitlar.push({plaka:v.plaka, ad: std.label, adi: v[std.adiF], zaman: zt[tur], key: std.prefix+v.id});
+    });
+  });
+  kayitlar.sort((a,b)=> new Date(b.zaman) - new Date(a.zaman));
+  return kayitlar.slice(0, n);
+}
+// v.253: tek dosya seçildiğinde otoBelgeSec (plaka bulunamazsa "hangi araca ait?" sorusu sorar),
+// birden fazla dosya seçildiğinde belgeTopluIsle (kuyruklu toplu işleme) çağrılır — sürükle-bırak
+// ve dosya seçme kutusu aynı fonksiyonu kullanır.
+function duDosyalarIsle(fileList){
+  const files = Array.from(fileList||[]).filter(Boolean);
+  if(!files.length) return;
+  const status = document.getElementById('duStatus');
+  if(status){ status.style.display='block'; status.textContent=''; }
+  if(files.length===1) otoBelgeSec(files[0], status);
+  else belgeTopluIsle(files, status);
+}
 function renderBelgelerPage(){
   const page = document.getElementById('page-belgeler');
   const filter = window.__belgeFilter || 'hepsi';
@@ -16749,23 +16655,56 @@ function renderBelgelerPage(){
     </td>`;
   };
 
+  const sonYuklenen = belgeSonYuklenenler(6);
+
   page.innerHTML = `
     <!-- v.215: bu sayfanın kendi "Belgeler" başlığı, kabuğun üstteki genel sayfa başlığıyla
     (bkz. PAGE_META['belgeler']) birebir çakışıyordu — kullanıcı aynı başlığı art arda iki kez
     görüyordu (karışıklık kaynağı). Başlık kaldırıldı, canlı araç/kritik sayısı bilgisi korundu. -->
     <div style="font-size:13px;color:var(--text-3);margin-bottom:14px;">${vehicles.length} araç · ${kritikSayi>0?`<span style="color:#E8A132;font-weight:600;">${kritikSayi} kritik</span>`:'Tümü geçerli'}</div>
-    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">
-      <div style="display:flex;gap:6px;align-items:center;margin-right:8px;">
-        <select id="belgeYukleArac" style="background:var(--surface-2);border:1px solid transparent;border-radius:10px;color:var(--text);padding:8px 10px;font-size:13px;max-width:150px;font-family:inherit;">
-          <option value="">Araç seç…</option>
+
+    <!-- v.253: "PANEL ÇOK KARIŞTI HERYERE BELGE EKLEME" — bu tek kart artık HEM tek dosyalık
+    (AI plaka bulamazsa "hangi araca ait?" diye sorar) HEM toplu/sürükle-bırak yükleme yolu;
+    eskiden burada küçük bir tekli yükleyici, ayrı bir "Belge Yükleme" sayfasında da sürükle-bırak
+    toplu yükleyici vardı — ikisi de aynı işi yapıyordu, artık tek yer. -->
+    <div class="dcard" style="margin-bottom:16px;">
+      <div style="font-size:14px;font-weight:700;margin-bottom:4px;">Belge yükle — AI otomatik okur</div>
+      <div style="font-size:12px;color:var(--text-3);margin-bottom:10px;">PDF veya fotoğraf sürükleyip bırakın ya da seçin: plaka, tarih ve tutar otomatik okunur. Tek dosyada araç bulunamazsa hangi araca ait olduğu sorulur; birden çok dosya seçerseniz toplu işlenir.</div>
+      <div id="duDrop" onclick="document.getElementById('duFile').click()"
+        ondragover="event.preventDefault();this.style.borderColor='var(--accent-blue)';"
+        ondragleave="this.style.borderColor='var(--border)';"
+        ondrop="event.preventDefault();this.style.borderColor='var(--border)';duDosyalarIsle(event.dataTransfer.files);"
+        style="border:2px dashed var(--border);border-radius:12px;padding:18px;text-align:center;cursor:pointer;transition:border-color .15s;">
+        <div style="font-size:13px;color:var(--text-2);">Dosyaları buraya sürükleyin ya da <span style="color:var(--accent-blue);font-weight:600;">seçmek için tıklayın</span></div>
+        <div style="font-size:11px;color:var(--text-3);margin-top:4px;">PDF, JPG, PNG · en fazla 10 MB · birden fazla dosya seçilebilir</div>
+      </div>
+      <input type="file" id="duFile" accept=".pdf,image/*" multiple style="display:none" onchange="duDosyalarIsle(this.files);this.value='';">
+      <div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap;">
+        <label style="font-size:12px;color:var(--text-3);">Plaka okunamazsa kaydedilecek araç (opsiyonel):</label>
+        <select id="duAracSec" style="background:var(--surface-2);border:1px solid transparent;border-radius:10px;color:var(--text);padding:6px 10px;font-size:12.5px;font-family:inherit;">
+          <option value="">Seçilmedi</option>
           ${vehicles.map(v=>`<option value="${v.id}">${esc(v.plaka)}</option>`).join('')}
         </select>
-        <button id="otoBelgeBtn" onclick="document.getElementById('otoBelgeFile').click()" style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:var(--accent-blue);color:#fff;font-family:inherit;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg>
-          <span id="otoBelgeBtnText">Belge Yükle</span>
-        </button>
-        <input type="file" id="otoBelgeFile" accept=".pdf,image/*" style="display:none" onchange="if(this.files[0]) otoBelgeSec(this.files[0]); this.value='';">
       </div>
+      <div id="duStatus" style="display:none;margin-top:10px;font-size:12.5px;color:var(--text-2);white-space:pre-line;background:var(--surface-2);border-radius:8px;padding:8px 10px;"></div>
+    </div>
+
+    ${sonYuklenen.length ? `
+    <div class="dcard" style="margin-bottom:16px;">
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px;">Son yüklenenler</div>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        ${sonYuklenen.map(s=>`<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12.5px;">
+          <div style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+            <span class="mini-plaka" style="font-size:11px;">${esc(s.plaka)}</span>
+            <span style="color:var(--text-2);margin-left:6px;font-weight:600;">${esc(s.ad)}</span>
+            <span style="color:var(--text-3);"> — ${esc(s.adi||'')}</span>
+          </div>
+          <button onclick="viewBelgeByKey('${s.key}','${esc(s.ad)}')" style="background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.2);color:var(--accent-blue);padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;flex-shrink:0;">Gör</button>
+        </div>`).join('')}
+      </div>
+    </div>` : ''}
+
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">
       ${[
         {k:'hepsi', l:'Tümü', c:'var(--text-2)'},
         {k:'kritik', l:`⚠️ Kritik (${kritikSayi})`, c:'#E8A132'},
@@ -16812,8 +16751,15 @@ function renderBelgelerPage(){
     </table></div>
     `}
 
-    ${belgeMerkeziYukleKartiHtml()}
-    ${belgeMerkeziBolumuHtml()}
+    <!-- v.253: Kimlik/Ehliyet/Fatura gibi serbest kategori belgeler + şirket geneli belge arama
+    çok daha az kullanılıyor, sayfayı doldurmasın diye artık kapalı gelen bir <details> içinde. -->
+    <details style="margin-top:4px;">
+      <summary style="cursor:pointer;font-size:13px;font-weight:600;color:var(--text-2);padding:8px 2px;">Kimlik / Ehliyet / Fatura yükle ve şirket geneli belge ara</summary>
+      <div style="margin-top:10px;">
+        ${belgeMerkeziYukleKartiHtml()}
+        ${belgeMerkeziBolumuHtml()}
+      </div>
+    </details>
   `;
   belgeMerkeziIlgiliSecenekleriGuncelle();
 }
@@ -24600,10 +24546,6 @@ initInstallPrompt();
       <button class="bn-tile" onclick="closeMoreSheet();switchPage('belgeler')">
         <div class="bn-tile-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg><span class="bn-tile-badge" id="bnTileBelgeBadge" style="display:none">0</span></div>
         <span>Belgeler</span>
-      </button>
-      <button class="bn-tile" onclick="closeMoreSheet();switchPage('docupload')">
-        <div class="bn-tile-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg></div>
-        <span>Belge Yükleme</span>
       </button>
       <button class="bn-tile" onclick="closeMoreSheet();switchPage('excel')">
         <div class="bn-tile-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="m8 13 2.5 5"/><path d="m13.5 13-2.5 5"/></svg></div>
