@@ -2480,7 +2480,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-26.247</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-26.248</div>
     </div>
   </div>
 </div>
@@ -2648,7 +2648,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-26.247</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-26.248</div>
     </div>
   </aside>
 <script>
@@ -21592,7 +21592,12 @@ if(window.speechSynthesis && !window.__aiSesListenerBagli){
 // düşülüyor, yani en kötü ihtimalle kullanıcı v.228'deki (zaten iyileştirilmiş) tarayıcı sesini
 // duyar — hiçbir zaman sessiz kalmaz. Kullanıcı isterse ayarlardan kapatabilir (aiGeminiSesAcMi).
 const AI_GEMINI_TTS_MODEL = 'gemini-3.8-flash-tts';
-const AI_GEMINI_TTS_VOICE = 'Kore'; // Google'ın önerdiği doğal/sıcak tonlu hazır seslerden biri; dil otomatik metinden algılanıyor
+// v.248: "ses çok kötü/yapay zeka gibi" — istenen "Jarvis" tarzı (derin, sakin, resmi) bir
+// karaktere en yakın hazır Gemini sesine geçildi. NOT: bu, telifli bir film/karakter sesinin
+// birebir taklidi/klonu DEĞİL — sadece Google'ın kendi hazır ses setinden en yakın tonu seçmek.
+// Hem karşılama sesi hem AI Filo Asistanı BU TEK sabiti kullandığı için değişiklik ikisine de
+// otomatik yansıyor.
+const AI_GEMINI_TTS_VOICE = 'Charon'; // derin/resmi/"bilgilendirici" tonlu hazır ses
 function aiGeminiSesAcMi(){
   try{ return localStorage.getItem('aiGeminiSesAcMi') !== '0'; }catch(e){ return true; } // varsayılan AÇIK
 }
