@@ -2462,7 +2462,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-25.238</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-26.239</div>
     </div>
   </div>
 </div>
@@ -2630,7 +2630,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-25.238</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-26.239</div>
     </div>
   </aside>
 <script>
@@ -14477,6 +14477,26 @@ function ykModalGoster(){
   el.innerHTML = ykSihirbaziHtml();
   el.addEventListener('click', e=>{ if(e.target===el) el.remove(); });
   document.body.appendChild(el);
+  ykFiyatOneriGuncelle();
+}
+// v.239: müşteri ve araç seçili olduğunda, müşterinin Fiyat Listesi'nde (bkz.
+// musteriOzelFiyatBul) o araçla aynı marka/modele ait bir özel fiyat var mı diye bakar.
+// Varsa: kira alanı BOŞSA otomatik doldurur (kullanıcının elle girdiği bir değerin ÜZERİNE
+// YAZMAZ), ve alanın altında bilgi notu gösterir. ykMusteri/ykArac onchange'inde ve modal
+// ilk açıldığında (ykDevamEt ile devam edilen kayıtlar dahil) çağrılır.
+function ykFiyatOneriGuncelle(){
+  const kutu = document.getElementById('ykFiyatOneri');
+  if(!kutu) return;
+  const customerId = document.getElementById('ykMusteri')?.value;
+  const vehicleId = document.getElementById('ykArac')?.value;
+  const v = vehicleId ? vehicles.find(x=>x.id===vehicleId) : null;
+  const fiyat = musteriOzelFiyatBul(customerId, v);
+  if(!fiyat){ kutu.innerHTML=''; return; }
+  const kiraInput = document.getElementById('ykKira');
+  if(kiraInput && !kiraInput.disabled && !kiraInput.value){
+    kiraInput.value = fiyat.fiyat;
+  }
+  kutu.innerHTML = `<div style="font-size:11.5px;color:var(--accent-blue);margin:-4px 0 8px;display:flex;align-items:center;gap:5px;">${ICO('money',12)} Bu müşteri için ${esc(fiyat.marka)} ${esc(fiyat.model)} özel fiyatı: <b>${fmtTL2(fiyat.fiyat)}</b>${fiyat.aciklama?' — '+esc(fiyat.aciklama):''}</div>`;
 }
 function ykSihirbaziHtml(){
   const r = (ykSihirbazState && ykSihirbazState.rentalId) ? rentals.find(x=>x.id===ykSihirbazState.rentalId) : null;
@@ -14503,7 +14523,7 @@ function ykSihirbaziHtml(){
         <div class="iade-row">
           <div class="iade-field" style="grid-column:1/-1;">
             <label>Müşteri (gerçek müşteri kaydı — Müşteriler/CRM)</label>
-            <select id="ykMusteri" ${durum?'disabled':''}>
+            <select id="ykMusteri" onchange="ykFiyatOneriGuncelle()" ${durum?'disabled':''}>
               <option value="">— Müşteri seçin (opsiyonel, teklif için zorunlu değil) —</option>
               ${musterileriSirali().map(c=>`<option value="${c.id}" ${r&&r.customerId===c.id?'selected':''}>${esc(musteriGoruntuAdi(c))}</option>`).join('')}
             </select>
@@ -14515,7 +14535,7 @@ function ykSihirbaziHtml(){
         <div class="iade-row">
           <div class="iade-field" style="grid-column:1/-1;">
             <label>Araç ${durum?'':'(sadece "Müsait" araçlar listelenir)'}</label>
-            <select id="ykArac" ${durum?'disabled':''}>
+            <select id="ykArac" onchange="ykFiyatOneriGuncelle()" ${durum?'disabled':''}>
               <option value="">— Araç seçin —</option>
               ${vehicles.filter(x=>durum ? x.id===(r&&r.vehicleId) : x.durum==='Müsait').map(x=>`<option value="${x.id}" ${r&&r.vehicleId===x.id?'selected':''}>${esc(x.plaka)} — ${esc([x.marka,x.model].filter(Boolean).join(' ')||'Araç')}</option>`).join('')}
             </select>
@@ -14531,6 +14551,7 @@ function ykSihirbaziHtml(){
           <div class="iade-field"><label>Kira tutarı (₺)</label><input type="number" id="ykKira" min="0" value="${r&&r.kiraTutari!=null?r.kiraTutari:''}" ${durum?'disabled':''}></div>
           <div class="iade-field"><label>Depozito (₺)</label><input type="number" id="ykDepozito" min="0" value="${r&&r.depozito!=null?r.depozito:''}" ${durum?'disabled':''}></div>
         </div>
+        <div id="ykFiyatOneri"></div>
         <div class="iade-row">
           <div class="iade-field"><label>Aylık km limiti</label><input type="number" id="ykKmLimit" min="0" value="${r&&r.kmLimiti!=null?r.kmLimiti:3000}" ${durum?'disabled':''}></div>
           <div class="iade-field"><label>Fazla km bedeli (₺/km)</label><input type="number" id="ykFazlaKmBedeli" min="0" step="0.5" value="${r&&r.fazlaKmBedeli!=null?r.fazlaKmBedeli:3}" ${durum?'disabled':''}></div>
@@ -18868,6 +18889,83 @@ function customerCariOzet(customerId){
   return {toplamBorc, toplamAlacak, kalan, vadesiGecen};
 }
 
+// v.239: "Doards karşılaştırması" sonrası eklenen özellik — kurumsal/ihale müşterileriyle
+// genelde marka/modele göre sabit, sözleşmeye bağlı bir kira bedeli üzerinde anlaşılıyor
+// (örn. "Fiat Egea aylık 18.000 ₺"), ama panelde bunu bir yerde saklayıp her kiralamada
+// hatırlatacak bir mekanizma yoktu — kira tutarı Adım Adım Kiralama sihirbazında her seferinde
+// sıfırdan elle giriliyordu. Şimdi her müşteriye "Fiyat Listesi" sekibinden marka+model bazlı
+// özel fiyatlar tanımlanabiliyor; musteriOzelFiyatBul() bu listeyi kiralama sihirbazında
+// (bkz. ykFiyatOneriGuncelle) müşteri+araç seçildiğinde eşleştirip kira alanını otomatik
+// dolduruyor (kullanıcı elle bir değer girmişse ÜZERİNE YAZMIYOR, sadece bilgi notu gösteriyor).
+function musteriOzelFiyatBul(customerId, vehicle){
+  if(!customerId || !vehicle) return null;
+  const c = customers.find(x=>x.id===customerId);
+  if(!c || !c.ozelFiyatlar || !c.ozelFiyatlar.length) return null;
+  const norm = s => (s||'').trim().toLocaleLowerCase('tr-TR');
+  const vMarka = norm(vehicle.marka), vModel = norm(vehicle.model);
+  if(!vMarka && !vModel) return null;
+  return c.ozelFiyatlar.find(f => norm(f.marka)===vMarka && norm(f.model)===vModel) || null;
+}
+function musteriDetayFiyatListesiHtml(c){
+  const liste = (c.ozelFiyatlar||[]).slice().sort((a,b)=>(a.marka+' '+a.model).localeCompare(b.marka+' '+b.model,'tr'));
+  const selStyle = 'background:var(--surface-2);border:1px solid var(--line);border-radius:9px;color:var(--paper);padding:7px 9px;font-size:12.5px;font-family:inherit;';
+  const ekleKart = `
+    <div class="dcard" style="margin-bottom:12px;">
+      <div style="font-size:13px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px;">${ICO('money',14)} Yeni özel fiyat ekle</div>
+      <div style="font-size:11.5px;color:var(--text-3);margin-bottom:8px;">Bu müşteriye özel, marka/modele göre sabit aylık kira bedeli tanımlayın — Adım Adım Kiralama sihirbazında bu müşteri ve aynı marka/modelde bir araç seçildiğinde kira tutarı otomatik önerilir.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <input type="text" id="mfpMarka" placeholder="Marka (Fiat, Ford...)" style="${selStyle}width:120px;">
+        <input type="text" id="mfpModel" placeholder="Model (Egea, Transit...)" style="${selStyle}width:120px;">
+        <input type="number" id="mfpFiyat" min="0" placeholder="Aylık kira (₺)" style="${selStyle}width:130px;">
+        <input type="text" id="mfpAciklama" placeholder="Not (opsiyonel)" style="${selStyle}width:140px;">
+        <button onclick="musteriOzelFiyatEkle('${c.id}')" style="background:var(--accent-blue);border:none;color:#fff;padding:7px 14px;border-radius:9px;font-size:12.5px;font-weight:600;cursor:pointer;">Ekle</button>
+      </div>
+    </div>`;
+  if(!liste.length){
+    return ekleKart + '<div class="log-empty">Bu müşteri için özel fiyat tanımlanmadı — kiralama sırasında kira tutarı her seferinde elle girilir.</div>';
+  }
+  const satirlar = liste.map(f=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border);">
+      <span style="font-size:13px;font-weight:700;color:var(--paper);white-space:nowrap;">${esc(f.marka)} ${esc(f.model)}</span>
+      <span style="flex:1;min-width:0;font-size:12px;color:var(--text-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(f.aciklama||'')}</span>
+      <span style="font-size:13px;font-weight:700;white-space:nowrap;color:var(--paper);">${fmtTL2(f.fiyat)}</span>
+      <button onclick="musteriOzelFiyatSil('${c.id}','${f.id}')" style="background:rgba(225,85,78,.1);border:1px solid rgba(225,85,78,.25);color:#E1554E;padding:3px 9px;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;">Sil</button>
+    </div>`).join('');
+  return ekleKart + `<div class="dcard" style="padding:0;overflow:hidden;">${satirlar}</div>`;
+}
+async function musteriOzelFiyatEkle(customerId){
+  if(!requireAdmin()) return;
+  const c = customers.find(x=>x.id===customerId); if(!c) return;
+  const marka = document.getElementById('mfpMarka').value.trim();
+  const model = document.getElementById('mfpModel').value.trim();
+  const fiyat = Number(document.getElementById('mfpFiyat').value);
+  const aciklama = document.getElementById('mfpAciklama').value.trim();
+  if(!marka || !model){ showToast('Lütfen marka ve model girin.', true); return; }
+  if(!fiyat || fiyat<=0){ showToast('Lütfen geçerli bir kira tutarı girin.', true); return; }
+  if(!c.ozelFiyatlar) c.ozelFiyatlar = [];
+  c.ozelFiyatlar.push({ id: yeniId('ofl'), marka, model, fiyat, aciklama });
+  await persistCustomers();
+  showToast('Özel fiyat eklendi.');
+  logActivity('add', `${esc(musteriGoruntuAdi(c))} için özel fiyat eklendi: <b>${esc(marka)} ${esc(model)} — ${fmtTL2(fiyat)}</b>`);
+  const overlay = document.getElementById('musteriDetailOverlay');
+  if(overlay){
+    const panel = overlay.querySelector('.md-tab-panel[data-md-panel="fiyat"]');
+    if(panel) panel.innerHTML = musteriDetayFiyatListesiHtml(c);
+  }
+}
+async function musteriOzelFiyatSil(customerId, fiyatId){
+  if(!requireAdmin()) return;
+  const c = customers.find(x=>x.id===customerId); if(!c) return;
+  c.ozelFiyatlar = (c.ozelFiyatlar||[]).filter(f=>f.id!==fiyatId);
+  await persistCustomers();
+  showToast('Özel fiyat silindi.');
+  const overlay = document.getElementById('musteriDetailOverlay');
+  if(overlay){
+    const panel = overlay.querySelector('.md-tab-panel[data-md-panel="fiyat"]');
+    if(panel) panel.innerHTML = musteriDetayFiyatListesiHtml(c);
+  }
+}
+
 // ----- Fatura yardımcıları -----
 const KDV_ORANLARI = [20,10,1,0];
 const FATURA_DURUM_ETIKET = {Taslak:'Taslak', Kesildi:'Kesildi', Odendi:'Ödendi', KismiOdendi:'Kısmi Ödendi', Gecikti:'Gecikti', Iptal:'İptal'};
@@ -19126,6 +19224,7 @@ function musteriDetayAc(customerId){
           <button class="modal-tab active" data-md-tab="genel" onclick="musteriDetayTabGoster(this,'genel')">Genel</button>
           <button class="modal-tab" data-md-tab="cari" onclick="musteriDetayTabGoster(this,'cari')">Cari</button>
           <button class="modal-tab" data-md-tab="kiralamalar" onclick="musteriDetayTabGoster(this,'kiralamalar')">Kiralamalar</button>
+          <button class="modal-tab" data-md-tab="fiyat" onclick="musteriDetayTabGoster(this,'fiyat')">Fiyat Listesi</button>
           <button class="modal-tab" data-md-tab="faturalar" onclick="musteriDetayTabGoster(this,'faturalar')">Faturalar</button>
           <button class="modal-tab" data-md-tab="tahsilatlar" onclick="musteriDetayTabGoster(this,'tahsilatlar')">Tahsilatlar</button>
           <button class="modal-tab" data-md-tab="hasarlar" onclick="musteriDetayTabGoster(this,'hasarlar')">Hasarlar</button>
@@ -19137,6 +19236,7 @@ function musteriDetayAc(customerId){
         <div class="md-tab-panel" data-md-panel="genel">${musteriDetayGenelHtml(c)}</div>
         <div class="md-tab-panel" data-md-panel="cari" style="display:none;">${musteriDetayCariHtml(c)}</div>
         <div class="md-tab-panel" data-md-panel="kiralamalar" style="display:none;">${musteriDetayKiralamalarHtml(c)}</div>
+        <div class="md-tab-panel" data-md-panel="fiyat" style="display:none;">${musteriDetayFiyatListesiHtml(c)}</div>
         <div class="md-tab-panel" data-md-panel="faturalar" style="display:none;">${musteriDetayFaturalarHtml(c)}</div>
         <div class="md-tab-panel" data-md-panel="tahsilatlar" style="display:none;">${musteriDetayTahsilatlarHtml(c)}</div>
         <div class="md-tab-panel" data-md-panel="hasarlar" style="display:none;">${musteriDetayHasarlarHtml(c)}</div>
