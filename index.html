@@ -2480,7 +2480,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-26.248</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-26.249</div>
     </div>
   </div>
 </div>
@@ -2648,7 +2648,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-26.248</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-26.249</div>
     </div>
   </aside>
 <script>
@@ -21636,13 +21636,44 @@ function pcmToWavBlob(base64Pcm, sampleRate, numChannels, bitsPerSample){
   new Uint8Array(buffer, 44).set(pcmBytes);
   return new Blob([buffer], {type:'audio/wav'});
 }
+// v.249: Google, Gemini TTS API'sinin istek/yanıt şemasını ve endpoint'ini değiştirdi
+// (eski ":generateContent" yerine yeni "/v1beta/interactions" formatı). Sesin "çok kötü/
+// yapay zeka gibi" çıkmasının asıl sebebi büyük olasılıkla buydu: her Gemini çağrısı sessizce
+// başarısız oluyor ve otomatik olarak (daha düşük kaliteli) tarayıcı sesine düşülüyordu.
+// Bu fonksiyon artık YENİ şemayı gönderiyor. NOT: istekler hâlâ aynı GEMINI_PROXY_URL'deki
+// Cloudflare Worker'a gidiyor — Worker'ın bu isteği Google'ın YENİ upstream endpoint'ine
+// ("https://generativelanguage.googleapis.com/v1beta/interactions") yönlendirecek şekilde
+// güncellenmiş olması gerekir; Worker'ın kaynak kodu burada değiştirilemez.
+function aiGeminiSesB64ToBlob(b64, mimeHint){
+  // Yeni API'nin "unary" (akış dışı) yanıtı varsayılan olarak zaten tam bir WAV dosyası
+  // (RIFF başlıklı) döndürüyor — eski API ise başlıksız ham PCM döndürüyordu. Her ikisini de
+  // destekliyoruz: veri zaten "RIFF" ile başlıyorsa doğrudan Blob'a çeviriyoruz, değilse
+  // (eski/başlıksız PCM ihtimaline karşı savunma amaçlı) pcmToWavBlob ile başlık ekliyoruz.
+  const binary = atob(b64);
+  if(binary.slice(0,4) === 'RIFF'){
+    const bytes = new Uint8Array(binary.length);
+    for(let i=0;i<binary.length;i++) bytes[i] = binary.charCodeAt(i);
+    return new Blob([bytes], {type:'audio/wav'});
+  }
+  const mime = mimeHint || 'audio/L16;rate=24000';
+  const rateEslesme = /rate=(\d+)/.exec(mime);
+  const sampleRate = rateEslesme ? Number(rateEslesme[1]) : 24000;
+  return pcmToWavBlob(b64, sampleRate, 1, 16);
+}
 async function aiGeminiSesUret(metin){
   const body = {
     model: AI_GEMINI_TTS_MODEL,
-    contents: [{role:'user', parts:[{text: metin}]}],
-    generationConfig: {
-      responseModalities: ['AUDIO'],
-      speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: AI_GEMINI_TTS_VOICE } } }
+    input: [{
+      type: 'user_input',
+      content: [{
+        type: 'text',
+        text: metin,
+        annotations: [{ type: 'speech_metadata', style: 'calm, deep, professional and warm' }]
+      }]
+    }],
+    response_format: { type: 'audio' },
+    generation_config: {
+      speech_config: [{ voice: AI_GEMINI_TTS_VOICE }]
     }
   };
   const controller = new AbortController();
@@ -21659,13 +21690,24 @@ async function aiGeminiSesUret(metin){
     throw new Error(`Gemini TTS isteği başarısız (HTTP ${res.status})${detay ? ': '+detay : ''}`);
   }
   const data = await res.json();
-  const part = data?.candidates?.[0]?.content?.parts?.[0];
-  const b64 = part?.inlineData?.data;
+  // Yeni şema: steps[] içinde type==='model_output' olan adımın content[]'inde
+  // type==='audio' olan öğenin .data alanı (base64).
+  let b64 = null, mime = null;
+  const adimlar = Array.isArray(data?.steps) ? data.steps : [];
+  for(const adim of adimlar){
+    if(adim?.type !== 'model_output') continue;
+    const icerikler = Array.isArray(adim?.content) ? adim.content : [];
+    const sesOgesi = icerikler.find(o => o?.type === 'audio');
+    if(sesOgesi?.data){ b64 = sesOgesi.data; mime = sesOgesi.mime_type || sesOgesi.mimeType || null; break; }
+  }
+  // Geriye dönük uyumluluk: Worker henüz güncellenmemişse veya eski yanıt şekli gelirse.
+  if(!b64){
+    const part = data?.candidates?.[0]?.content?.parts?.[0];
+    b64 = part?.inlineData?.data || null;
+    mime = part?.inlineData?.mimeType || null;
+  }
   if(!b64) throw new Error('Gemini TTS ses verisi döndürmedi (beklenmeyen yanıt formatı)');
-  const mime = part.inlineData.mimeType || 'audio/L16;rate=24000';
-  const rateEslesme = /rate=(\d+)/.exec(mime);
-  const sampleRate = rateEslesme ? Number(rateEslesme[1]) : 24000;
-  return pcmToWavBlob(b64, sampleRate, 1, 16);
+  return aiGeminiSesB64ToBlob(b64, mime);
 }
 async function aiMetniSesliOku(html, testModu){
   const tmp = document.createElement('div');
