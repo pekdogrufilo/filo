@@ -2480,7 +2480,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-26.249</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-26.250</div>
     </div>
   </div>
 </div>
@@ -2596,6 +2596,7 @@
           <button class="sb-item" data-page="faturalar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>Faturalar</button>
           <button class="sb-item" data-page="finansal-analiz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/><path d="M21 12a9 9 0 1 1-18 0"/></svg>Finans</button>
           <button class="sb-item" data-page="masraf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Masraf Yönetimi</button>
+          <button class="sb-item" data-page="tedarikciler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M8 7h8M8 11h8M8 15h5"/></svg>Tedarikçi Cari Hesabı</button>
         </div>
       </div>
 
@@ -2648,7 +2649,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-26.249</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-26.250</div>
     </div>
   </aside>
 <script>
@@ -2916,6 +2917,7 @@
 <section class="page" data-page="hasarcezalar" id="page-hasarcezalar"></section>
 <section class="page" data-page="ihaleler" id="page-ihaleler"></section>
 <section class="page" data-page="masraf" id="page-masraf"></section>
+<section class="page" data-page="tedarikciler" id="page-tedarikciler"></section>
 <section class="page" data-page="finansal-analiz" id="page-finansal-analiz"></section>
 
 <section class="page" data-page="bakim" id="page-bakim"></section>
@@ -3638,6 +3640,10 @@ let rentals = [];
 // üzerinden). Ayrı Firestore koleksiyonlarına taşımak bu fazın kapsamında değil (FAZ3/FAZ4'te
 // olduğu gibi bilinçli bir tercih).
 let suppliers = [];
+// v.250: tedarikçi (tamirci/yedek parçacı) cari hesabı — bize gönderdikleri fişler (borç) ve
+// yaptığımız ödemeler (borcu azaltma) burada tutulur. Müşteri "ledger"ıyla aynı desen, sadece
+// yön tersinedir (bkz. aşağıdaki "Tedarikçi Cari (ledger) yardımcıları" bölümü).
+let supplierLedger = [];
 let serviceParts = [];
 let tires = [];
 let fuelRecords = [];
@@ -3768,6 +3774,12 @@ async function load(){
         const spr = await storageAPI.get('suppliers').catch(()=>null);
         suppliers = (spr && spr.value) ? JSON.parse(spr.value) : [];
       }catch(e){ suppliers = []; }
+    })(),
+    (async()=>{
+      try{
+        const sldgr = await storageAPI.get('supplierLedger').catch(()=>null);
+        supplierLedger = (sldgr && sldgr.value) ? JSON.parse(sldgr.value) : [];
+      }catch(e){ supplierLedger = []; }
     })(),
     (async()=>{
       try{
@@ -10525,13 +10537,13 @@ const ROLE_DEFS = [
     currentRoleEsdegeri:'admin', ekipYonet:true, paraGorebilir:true, sayfalar:null },
   { id:'operasyon-muduru', ad:'Operasyon Müdürü', aciklama:'Tüm operasyonel sayfalar (araç, kiralama, bakım, finans); kullanıcı yönetemez.',
     currentRoleEsdegeri:'admin', ekipYonet:false, paraGorebilir:true,
-    sayfalar:['genel-bakis','bildirimler','arac-yonetimi','km-takibi','belgeler','docupload','kiralama','teklifler','ihaleler','musteriler','hasarcezalar','cari','faturalar','finansal-analiz','masraf','bakim','yakit','lastikler','raporlar','ai','excel','ayarlar'] },
+    sayfalar:['genel-bakis','bildirimler','arac-yonetimi','km-takibi','belgeler','docupload','kiralama','teklifler','ihaleler','musteriler','hasarcezalar','cari','faturalar','finansal-analiz','masraf','tedarikciler','bakim','yakit','lastikler','raporlar','ai','excel','ayarlar'] },
   { id:'filo-sorumlusu', ad:'Filo Sorumlusu', aciklama:'Araç ekleme/düzenleme, kiralama, iade, bakım — silme yok, finans göremez.',
     currentRoleEsdegeri:'admin', ekipYonet:false, paraGorebilir:false,
     sayfalar:['genel-bakis','bildirimler','arac-yonetimi','km-takibi','belgeler','docupload','kiralama','teklifler','musteriler','hasarcezalar','bakim','yakit','lastikler','raporlar'] },
   { id:'muhasebe', ad:'Muhasebe / Finans', aciklama:'Masraf, tahsilat, cari, fatura ve finansal analiz — araç kaydı düzenleyemez.',
     currentRoleEsdegeri:'admin', ekipYonet:false, paraGorebilir:true,
-    sayfalar:['genel-bakis','bildirimler','cari','faturalar','finansal-analiz','masraf','raporlar','ihaleler'] },
+    sayfalar:['genel-bakis','bildirimler','cari','faturalar','finansal-analiz','masraf','tedarikciler','raporlar','ihaleler'] },
   { id:'saha-personeli', ad:'Saha Personeli / Şoför Koordinatörü', aciklama:'Sadece teslim/iade ve km girişi — finans ve raporları göremez.',
     currentRoleEsdegeri:'staff', ekipYonet:false, paraGorebilir:false,
     sayfalar:['genel-bakis','bildirimler','arac-yonetimi','km-takibi','kiralama','teklifler'] },
@@ -11382,6 +11394,7 @@ const PAGE_META = {
   'cari': {title:'Cari & Tahsilat', sub:'Müşteri bazlı cari bakiye, tahsilat ve ekstre'},
   'faturalar': {title:'Faturalar', sub:'Fatura oluştur, durum takibi yap, yazdır'},
   'masraf': {title:'Masraf Yönetimi', sub:'Tüm araçlardaki masrafları görüntüle ve ekle'},
+  'tedarikciler': {title:'Tedarikçi Cari Hesabı', sub:'Tamirci/yedek parçacı fişleri, ödemeler ve bakiye takibi'},
   'finansal-analiz': {title:'Finans', sub:'Gelir, masraf, kârlılık ve grafiksel özet'},
   'bakim': {title:'Bakım & Servis', sub:'Serviste olan araçlar ve servis planlaması'},
   'yakit': {title:'Yakıt', sub:'Yakıt alımları, L/100km ve araç bazlı tüketim analizi'},
@@ -11607,6 +11620,7 @@ function renderCurrentPage(){
   else if(key==='arac-yonetimi') render();
   else if(key==='km-takibi') renderKmTakibiPage();
   else if(key==='masraf') renderMasrafPage();
+  else if(key==='tedarikciler') renderTedarikcilerPage();
   else if(key==='finansal-analiz') renderFinansalAnalizPage();
   else if(key==='bakim') renderBakimPage();
   else if(key==='belgeler') renderBelgelerPage();
@@ -17915,6 +17929,10 @@ async function persistSuppliers(){
   try{ await withStorageTimeout(storageAPI.set('suppliers', JSON.stringify(suppliers))); return true; }
   catch(e){ showToast((e && /zaman aşımı/i.test(e.message||'')) ? e.message : 'Tedarikçi kaydedilemedi.', true); return false; }
 }
+async function persistSupplierLedger(){
+  try{ await withStorageTimeout(storageAPI.set('supplierLedger', JSON.stringify(supplierLedger))); return true; }
+  catch(e){ showToast((e && /zaman aşımı/i.test(e.message||'')) ? e.message : 'Tedarikçi cari hareketi kaydedilemedi.', true); return false; }
+}
 async function persistServiceParts(){
   try{ await withStorageTimeout(storageAPI.set('serviceParts', JSON.stringify(serviceParts))); return true; }
   catch(e){ showToast((e && /zaman aşımı/i.test(e.message||'')) ? e.message : 'Parça kaydedilemedi.', true); return false; }
@@ -18910,6 +18928,406 @@ function musterileriSirali(){
 function musteriSelectOptionsHtml(secili){
   if(!customers.length) return `<option value="">Önce müşteri ekleyin</option>`;
   return musterileriSirali().map(c=>`<option value="${c.id}" ${c.id===secili?'selected':''}>${esc(musteriGoruntuAdi(c))}</option>`).join('');
+}
+
+// ================================================================================
+// v.250: Tedarikçi Cari Hesabı — tamirci/yedek parçacı gibi tedarikçilerin bize gönderdiği
+// fişlerin (borç) ve yaptığımız ödemelerin (borç azaltma) kaydını tutan ayrı bir cari hesap
+// (ledger) sistemi. Müşteri cari hesabındaki (ledger/cariHareketEkle) desenle birebir aynı
+// mantık, ama yön TERSTİR: fiş = bizim tedarikçiye borcumuz artar; ödeme = borcumuz azalır.
+// Bir fiş, ilgili aracı belirtirse (genelde tamir/parça fişleri tek bir aracı ilgilendirir)
+// otomatik olarak Masraf Yönetimi'ne de (expenses) gerçek bir muhasebe kaydı düşer — böylece
+// "muhasebesinin de kaydı tutulsun" isteği karşılanır. Araca bağlanamayan (toplu/genel)
+// fişler yine cari hesapta görünür, sadece otomatik masraf kaydı oluşturmaz.
+// ================================================================================
+const SUPPLIER_LEDGER_TUR_ETIKET = {fis:'Fiş', odeme:'Ödeme'};
+function tedarikciCariOzet(supplierId){
+  const kayitlar = supplierLedger.filter(l=>l.supplierId===supplierId);
+  const toplamFis = kayitlar.filter(l=>l.yon==='borc').reduce((s,l)=>s+(Number(l.tutar)||0),0);
+  const toplamOdeme = kayitlar.filter(l=>l.yon==='odeme').reduce((s,l)=>s+(Number(l.tutar)||0),0);
+  return {toplamFis, toplamOdeme, bakiye: toplamFis - toplamOdeme};
+}
+function tedarikciServisKayitlari(supplierId){
+  const kayitlar = [];
+  vehicles.forEach(v=>{
+    (v.servisGirisleri||[]).forEach(k=>{ if(k.tedarikciId===supplierId) kayitlar.push(Object.assign({}, k, {plaka:v.plaka})); });
+  });
+  return kayitlar.sort((a,b)=>(b.cikis||b.giris||'').localeCompare(a.cikis||a.giris||''));
+}
+function renderTedarikcilerPage(){
+  const page = document.getElementById('page-tedarikciler');
+  if(!page) return;
+  const arama = (window.__tedarikciArama||'').trim().toLocaleLowerCase('tr-TR');
+  let satirlar = tedarikcileriSirali().map(t=>({t, ozet: tedarikciCariOzet(t.id)}));
+  if(arama) satirlar = satirlar.filter(r=>(r.t.ad||'').toLocaleLowerCase('tr-TR').includes(arama) || (r.t.hizmetTuru||'').toLocaleLowerCase('tr-TR').includes(arama));
+  const siralama = window.__tedarikciSiralama || 'bakiye_desc';
+  const siraliFonksiyonlar = {
+    bakiye_desc:(a,b)=>b.ozet.bakiye-a.ozet.bakiye,
+    bakiye_asc:(a,b)=>a.ozet.bakiye-b.ozet.bakiye,
+    ad:(a,b)=>(a.t.ad||'').localeCompare(b.t.ad||'','tr'),
+  };
+  satirlar.sort(siraliFonksiyonlar[siralama]||siraliFonksiyonlar.bakiye_desc);
+  const toplamBakiye = satirlar.reduce((s,r)=>s+r.ozet.bakiye,0);
+  const bakiyesiOlan = satirlar.filter(r=>r.ozet.bakiye>0).length;
+  page.innerHTML = `
+    <div class="dash-stats" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:16px;">
+      <div class="dstat" style="cursor:default;">
+        <div class="dstat-ic" style="background:rgba(100,116,139,.15);color:#7B7873;">${DASH_ICONS.wrench}</div>
+        <div class="dstat-txt"><div class="l">Tedarikçi</div><div class="n">${suppliers.length}</div></div>
+      </div>
+      <div class="dstat" style="cursor:default;">
+        <div class="dstat-ic" style="background:rgba(232,161,50,.15);color:#E8A132;">${DASH_ICONS.clock}</div>
+        <div class="dstat-txt"><div class="l">Bakiyesi Olan</div><div class="n">${bakiyesiOlan}</div></div>
+      </div>
+      <div class="dstat" style="cursor:default;">
+        <div class="dstat-ic" style="background:rgba(225,85,78,.15);color:#E1554E;">${DASH_ICONS.warn}</div>
+        <div class="dstat-txt"><div class="l">Toplam Borcumuz</div><div class="n" style="color:${toplamBakiye>0?'#E1554E':'var(--paper)'};">${fmtTL2(toplamBakiye)}</div></div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <input type="text" value="${esc(window.__tedarikciArama||'')}" placeholder="Tedarikçi ara..." autocomplete="off"
+          oninput="window.__tedarikciArama=this.value;renderTedarikcilerPage()"
+          style="background:var(--surface-2);border:1px solid var(--line);color:var(--paper);padding:8px 12px;border-radius:8px;font-size:12.5px;min-width:180px;font-family:inherit;">
+        <select onchange="window.__tedarikciSiralama=this.value;renderTedarikcilerPage()" style="background:var(--surface-2);border:1px solid var(--line);color:var(--paper);padding:8px 10px;border-radius:8px;font-size:12.5px;">
+          <option value="bakiye_desc" ${siralama==='bakiye_desc'?'selected':''}>Bakiye (çoktan aza)</option>
+          <option value="bakiye_asc" ${siralama==='bakiye_asc'?'selected':''}>Bakiye (azdan çoğa)</option>
+          <option value="ad" ${siralama==='ad'?'selected':''}>Tedarikçi adı (A-Z)</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="tedarikciFormAc()" style="background:var(--surface-2);border:1px solid var(--line);color:var(--text);padding:8px 14px;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;">+ Yeni Tedarikçi</button>
+        <button class="add-btn" onclick="tedarikciFisFormAc()">Fiş Ekle</button>
+      </div>
+    </div>
+    <div class="dcard" style="padding:0;overflow-x:auto;">
+      ${satirlar.length===0 ? `
+        <div class="empty-state">
+          <div class="empty-state-title">${suppliers.length===0?'Henüz tedarikçi kaydı yok':'Aramanla eşleşen tedarikçi bulunamadı'}</div>
+          <div class="empty-state-desc">${suppliers.length===0?'Tamirci, yedek parçacı gibi tedarikçileri buradan veya Bakım &amp; Servis kaydı sırasında ekleyebilirsiniz.':''}</div>
+          ${suppliers.length===0?'<button class="empty-state-cta" onclick="tedarikciFormAc()">Tedarikçi Ekle</button>':''}
+        </div>` : `
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead><tr style="text-align:left;border-bottom:1px solid var(--border);">
+          <th style="padding:10px 14px;">Tedarikçi</th>
+          <th style="padding:10px 14px;">Hizmet</th>
+          <th style="padding:10px 14px;text-align:right;">Toplam Fiş</th>
+          <th style="padding:10px 14px;text-align:right;">Toplam Ödeme</th>
+          <th style="padding:10px 14px;text-align:right;">Bakiye (Borcumuz)</th>
+          <th style="padding:10px 14px;"></th>
+        </tr></thead>
+        <tbody>
+        ${satirlar.map(r=>`
+          <tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:10px 14px;cursor:pointer;font-weight:600;color:var(--text);" onclick="tedarikciDetayAc('${r.t.id}')">${esc(r.t.ad)}</td>
+            <td style="padding:10px 14px;color:var(--text-3);">${esc(r.t.hizmetTuru||'—')}</td>
+            <td style="padding:10px 14px;text-align:right;">${fmtTL2(r.ozet.toplamFis)}</td>
+            <td style="padding:10px 14px;text-align:right;">${fmtTL2(r.ozet.toplamOdeme)}</td>
+            <td style="padding:10px 14px;text-align:right;font-weight:700;color:${r.ozet.bakiye>0?'#E1554E':'#36A168'};">${fmtTL2(r.ozet.bakiye)}</td>
+            <td style="padding:10px 14px;text-align:right;white-space:nowrap;">
+              <button onclick="tedarikciFisFormAc('${r.t.id}')" style="background:rgba(225,85,78,.08);border:1px solid rgba(225,85,78,.2);color:#E1554E;padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;">Fiş Ekle</button>
+              <button onclick="tedarikciOdemeFormAc('${r.t.id}')" style="background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.2);color:var(--accent-blue);padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;">Ödeme Gir</button>
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`}
+    </div>
+  `;
+}
+function tedarikciFormAc(id){
+  const t = id ? suppliers.find(x=>x.id===id) : null;
+  const eski = document.getElementById('tedarikciFormOverlay'); if(eski) eski.remove();
+  const el = document.createElement('div');
+  el.className = 'overlay show';
+  el.id = 'tedarikciFormOverlay';
+  el.innerHTML = `
+    <div class="modal" style="max-width:440px;">
+      <div class="modal-head">
+        <h2>${t?'Tedarikçiyi Düzenle':'Yeni Tedarikçi'}</h2>
+        <button class="modal-close" onclick="document.getElementById('tedarikciFormOverlay').remove()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </div>
+      <div class="modal-body">
+        <div class="field"><label>Tedarikçi Adı</label><input type="text" id="tfAd" value="${t?esc(t.ad):''}" placeholder="Örn: Yılmaz Oto Tamir"></div>
+        <div class="field-row">
+          <div class="field"><label>Hizmet Türü</label><input type="text" id="tfHizmet" value="${t?esc(t.hizmetTuru||''):''}" placeholder="Tamirci, Yedek Parça, Lastikçi..."></div>
+          <div class="field"><label>Telefon</label><input type="text" id="tfTelefon" value="${t?esc(t.telefon||''):''}"></div>
+        </div>
+        <div class="field"><label>Adres</label><input type="text" id="tfAdres" value="${t?esc(t.adres||''):''}"></div>
+      </div>
+      <div class="err" id="tfFormErr" style="padding:0 22px;"></div>
+      <div class="modal-actions">
+        <button class="cancel" onclick="document.getElementById('tedarikciFormOverlay').remove()">Vazgeç</button>
+        <button class="save" onclick="tedarikciKaydet('${t?t.id:''}')">Kaydet</button>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+  el.onclick = e=>{ if(e.target===el) el.remove(); };
+}
+async function tedarikciKaydet(id){
+  if(!requireAdmin()) return;
+  const errEl = document.getElementById('tfFormErr'); errEl.style.display='none'; errEl.textContent='';
+  const ad = document.getElementById('tfAd').value.trim();
+  if(!ad){ errEl.textContent='Tedarikçi adı girin.'; errEl.style.display='block'; return; }
+  const hizmetTuru = document.getElementById('tfHizmet').value.trim();
+  const telefon = document.getElementById('tfTelefon').value.trim();
+  const adres = document.getElementById('tfAdres').value.trim();
+  let t = id ? suppliers.find(x=>x.id===id) : null;
+  if(t){ Object.assign(t, {ad, hizmetTuru, telefon, adres}); }
+  else{ t = {id:yeniId('sup'), ad, hizmetTuru, telefon, adres}; suppliers.push(t); }
+  await persistSuppliers();
+  document.getElementById('tedarikciFormOverlay').remove();
+  showToast('Tedarikçi kaydedildi.');
+  if(window.__currentPage==='tedarikciler') renderTedarikcilerPage();
+  const detOverlay = document.getElementById('tedarikciDetailOverlay');
+  if(detOverlay) tedarikciDetayAc(t.id);
+}
+async function tedarikciSil(id){
+  if(!requireAdmin()) return;
+  const t = suppliers.find(x=>x.id===id); if(!t) return;
+  if(!confirm(`"${t.ad}" tedarikçisini silmek istediğinize emin misiniz?\n(Cari hareketleri ve fişleri silinmez, sadece tedarikçi kaydı kaldırılır.)`)) return;
+  suppliers = suppliers.filter(x=>x.id!==id);
+  await persistSuppliers();
+  const ov = document.getElementById('tedarikciDetailOverlay'); if(ov) ov.remove();
+  showToast('Tedarikçi kaydı silindi.');
+  logActivity('del', `Tedarikçi silindi: <b>${esc(t.ad)}</b>`).catch(()=>{});
+  if(window.__currentPage==='tedarikciler') renderTedarikcilerPage();
+}
+function tedarikciFisFormAc(supplierId){
+  const eski = document.getElementById('tedarikciFisOverlay'); if(eski) eski.remove();
+  const el = document.createElement('div');
+  el.className = 'overlay show';
+  el.id = 'tedarikciFisOverlay';
+  const vehicleOptions = [...vehicles].sort((a,b)=>(a.plaka||'').localeCompare(b.plaka||'','tr'))
+    .map(v=>`<option value="${v.id}">${esc(v.plaka)}${v.marka?' · '+esc([v.marka,v.model].filter(Boolean).join(' ')):''}</option>`).join('');
+  el.innerHTML = `
+    <div class="modal" style="max-width:480px;">
+      <div class="modal-head">
+        <h2>Tedarikçi Fişi Ekle</h2>
+        <button class="modal-close" onclick="document.getElementById('tedarikciFisOverlay').remove()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </div>
+      <div class="modal-body">
+        <div class="field"><label>Tedarikçi</label>
+          <select id="tfsTedarikci">
+            <option value="">Tedarikçi seçin</option>
+            ${tedarikcileriSirali().map(t=>`<option value="${t.id}" ${t.id===supplierId?'selected':''}>${esc(t.ad)}${t.hizmetTuru?' · '+esc(t.hizmetTuru):''}</option>`).join('')}
+          </select>
+          ${!suppliers.length?`<div style="margin-top:6px;font-size:11.5px;color:var(--steel-500);">Henüz tedarikçi yok — önce <a href="#" onclick="document.getElementById('tedarikciFisOverlay').remove();tedarikciFormAc();return false;" style="color:var(--accent-blue);">bir tedarikçi ekleyin</a>.</div>`:''}
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Fiş Tutarı (₺)</label><input type="number" min="0" id="tfsTutar"></div>
+          <div class="field"><label>Tarih</label><input type="date" id="tfsTarih" value="${todayISO()}"></div>
+        </div>
+        <div class="field"><label>Fiş No <span style="color:var(--steel-500);">(opsiyonel)</span></label><input type="text" id="tfsFisNo" placeholder="Fiş/fatura no"></div>
+        <div class="field"><label>Hangi araca ait? <span style="color:var(--steel-500);">(opsiyonel — seçilirse Masraf Yönetimi'ne de otomatik işlenir)</span></label>
+          <select id="tfsArac"><option value="">Belirli bir araca ait değil / toplu fiş</option>${vehicleOptions}</select>
+        </div>
+        <div class="field"><label>Açıklama</label><input type="text" id="tfsAciklama" placeholder="Yapılan iş / alınan parça"></div>
+        <div class="field"><label>Fiş Fotoğrafı <span style="color:var(--steel-500);">(opsiyonel)</span></label><input type="file" id="tfsFoto" accept="image/*,.pdf"></div>
+      </div>
+      <div class="err" id="tfsErr" style="padding:0 22px;"></div>
+      <div class="modal-actions">
+        <button class="cancel" onclick="document.getElementById('tedarikciFisOverlay').remove()">Vazgeç</button>
+        <button class="save" onclick="tedarikciFisKaydet()">Kaydet</button>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+  el.onclick = e=>{ if(e.target===el) el.remove(); };
+}
+async function tedarikciFisKaydet(){
+  if(!requireAdmin()) return;
+  const errEl = document.getElementById('tfsErr'); errEl.style.display='none'; errEl.textContent='';
+  const supplierId = document.getElementById('tfsTedarikci').value;
+  if(!supplierId){ errEl.textContent='Lütfen tedarikçi seçin.'; errEl.style.display='block'; return; }
+  const tutar = Number(document.getElementById('tfsTutar').value);
+  if(!tutar || tutar<=0){ errEl.textContent='Lütfen geçerli bir fiş tutarı girin.'; errEl.style.display='block'; return; }
+  const tarih = document.getElementById('tfsTarih').value || todayISO();
+  const fisNo = document.getElementById('tfsFisNo').value.trim();
+  const vehicleId = document.getElementById('tfsArac').value || null;
+  const aciklama = document.getElementById('tfsAciklama').value.trim();
+  const t = suppliers.find(x=>x.id===supplierId);
+  const fotoInput = document.getElementById('tfsFoto');
+  let fisFoto = null;
+  if(fotoInput.files && fotoInput.files[0]){
+    try{ fisFoto = await new Promise((res,rej)=>{ const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.onerror=rej; fr.readAsDataURL(fotoInput.files[0]); }); }
+    catch(e){}
+  }
+  const ldgId = yeniId('sldg');
+  let masrafId = null;
+  if(vehicleId){
+    const v = vehicles.find(x=>x.id===vehicleId);
+    if(v){
+      masrafId = cryptoId();
+      expenses.push({
+        id: masrafId, vehicleId: v.id, plaka: v.plaka,
+        tip: (t && t.hizmetTuru) ? t.hizmetTuru : 'Tamir',
+        tarih, tutar,
+        not: [t?t.ad:'', aciklama, fisNo?('Fiş No: '+fisNo):''].filter(Boolean).join(' · '),
+        kaynak:'Tedarikçi Cari', tedarikciId: supplierId, supplierLedgerId: ldgId, hasFis: !!fisFoto,
+      });
+      await persistExpenses();
+    }
+  }
+  supplierLedger.push({
+    id: ldgId, supplierId, tur:'fis', yon:'borc', tutar, tarih,
+    aciklama, fisNo: fisNo||null, fisFoto, vehicleId, masrafId,
+  });
+  await persistSupplierLedger();
+  document.getElementById('tedarikciFisOverlay').remove();
+  showToast(masrafId ? 'Fiş kaydedildi ve Masraf Yönetimi\'ne işlendi.' : 'Fiş kaydedildi.');
+  logActivity('masraf', `Tedarikçi fişi: <b>${esc(t?t.ad:'')}</b> — ${fmtTL2(tutar)}`).catch(()=>{});
+  if(window.__currentPage==='tedarikciler') renderTedarikcilerPage();
+  if(window.__currentPage==='masraf' && typeof renderMasrafPage==='function') renderMasrafPage();
+  const detOverlay = document.getElementById('tedarikciDetailOverlay');
+  if(detOverlay) tedarikciDetayAc(supplierId);
+}
+function tedarikciOdemeFormAc(supplierId){
+  const eski = document.getElementById('tedarikciOdemeOverlay'); if(eski) eski.remove();
+  const el = document.createElement('div');
+  el.className = 'overlay show';
+  el.id = 'tedarikciOdemeOverlay';
+  el.innerHTML = `
+    <div class="modal" style="max-width:460px;">
+      <div class="modal-head">
+        <h2>Tedarikçiye Ödeme Gir</h2>
+        <button class="modal-close" onclick="document.getElementById('tedarikciOdemeOverlay').remove()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </div>
+      <div class="modal-body">
+        <div class="field"><label>Tedarikçi</label>
+          <select id="toTedarikci">
+            <option value="">Tedarikçi seçin</option>
+            ${tedarikcileriSirali().map(t=>`<option value="${t.id}" ${t.id===supplierId?'selected':''}>${esc(t.ad)}${t.hizmetTuru?' · '+esc(t.hizmetTuru):''}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Tutar (₺)</label><input type="number" min="0" id="toTutar"></div>
+          <div class="field"><label>Tarih</label><input type="date" id="toTarih" value="${todayISO()}"></div>
+        </div>
+        <div class="field"><label>Yöntem</label>
+          <select id="toYontem"><option>Nakit</option><option>Havale</option><option>EFT</option><option value="KrediKarti">Kredi Kartı</option><option>Diğer</option></select>
+        </div>
+        <div class="field"><label>Açıklama</label><input type="text" id="toAciklama" placeholder="Not (opsiyonel)"></div>
+      </div>
+      <div class="err" id="toErr" style="padding:0 22px;"></div>
+      <div class="modal-actions">
+        <button class="cancel" onclick="document.getElementById('tedarikciOdemeOverlay').remove()">Vazgeç</button>
+        <button class="save" onclick="tedarikciOdemeKaydet()">Kaydet</button>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+  el.onclick = e=>{ if(e.target===el) el.remove(); };
+}
+async function tedarikciOdemeKaydet(){
+  if(!requireAdmin()) return;
+  const errEl = document.getElementById('toErr'); errEl.style.display='none'; errEl.textContent='';
+  const supplierId = document.getElementById('toTedarikci').value;
+  if(!supplierId){ errEl.textContent='Lütfen tedarikçi seçin.'; errEl.style.display='block'; return; }
+  const tutar = Number(document.getElementById('toTutar').value);
+  if(!tutar || tutar<=0){ errEl.textContent='Lütfen geçerli bir tutar girin.'; errEl.style.display='block'; return; }
+  const tarih = document.getElementById('toTarih').value || todayISO();
+  const yontem = document.getElementById('toYontem').value;
+  const aciklama = document.getElementById('toAciklama').value.trim();
+  const t = suppliers.find(x=>x.id===supplierId);
+  supplierLedger.push({
+    id: yeniId('sldg'), supplierId, tur:'odeme', yon:'odeme', tutar, tarih,
+    aciklama, yontem, fisNo:null, fisFoto:null, vehicleId:null, masrafId:null,
+  });
+  await persistSupplierLedger();
+  document.getElementById('tedarikciOdemeOverlay').remove();
+  showToast('Ödeme kaydedildi.');
+  logActivity('masraf', `Tedarikçiye ödeme: <b>${esc(t?t.ad:'')}</b> — ${fmtTL2(tutar)}`).catch(()=>{});
+  if(window.__currentPage==='tedarikciler') renderTedarikcilerPage();
+  const detOverlay = document.getElementById('tedarikciDetailOverlay');
+  if(detOverlay) tedarikciDetayAc(supplierId);
+}
+function tedarikciDetayAc(supplierId){
+  const t = suppliers.find(x=>x.id===supplierId);
+  if(!t) return;
+  const eski = document.getElementById('tedarikciDetailOverlay'); if(eski) eski.remove();
+  const el = document.createElement('div');
+  el.className = 'overlay show';
+  el.id = 'tedarikciDetailOverlay';
+  el.style.cssText = 'z-index:60;align-items:stretch;padding:0;';
+  el.innerHTML = `
+    <div style="background:var(--bg);width:100%;max-width:760px;height:100vh;overflow-y:auto;margin-left:auto;display:flex;flex-direction:column;">
+      <div style="padding:16px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;background:var(--surface);position:sticky;top:0;z-index:2;">
+        <button onclick="document.getElementById('tedarikciDetailOverlay').remove()" style="background:none;border:none;color:var(--steel-300);cursor:pointer;padding:4px;border-radius:6px;display:flex;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:16px;font-weight:700;color:var(--paper);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(t.ad)}</div>
+          <div style="margin-top:3px;font-size:11.5px;color:var(--steel-300);">${esc(t.hizmetTuru||'Tedarikçi')}${t.telefon?' · '+esc(t.telefon):''}</div>
+        </div>
+        <button onclick="document.getElementById('tedarikciDetailOverlay').remove();tedarikciFormAc('${t.id}')" style="background:var(--accent-blue);color:#fff;border:none;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Düzenle</button>
+        <button onclick="tedarikciSil('${t.id}')" style="background:rgba(225,85,78,.1);border:1px solid rgba(225,85,78,.25);color:#E1554E;padding:7px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Sil</button>
+      </div>
+      <div style="padding:16px 20px;flex:1;">
+        <div style="display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:16px;overflow-x:auto;">
+          <button class="modal-tab active" data-td-tab="genel" onclick="tedarikciDetayTabGoster(this,'genel')">Genel</button>
+          <button class="modal-tab" data-td-tab="cari" onclick="tedarikciDetayTabGoster(this,'cari')">Cari Hesap</button>
+          <button class="modal-tab" data-td-tab="servis" onclick="tedarikciDetayTabGoster(this,'servis')">Servis Kayıtları</button>
+        </div>
+        <div class="md-tab-panel" data-td-panel="genel">${tedarikciDetayGenelHtml(t)}</div>
+        <div class="md-tab-panel" data-td-panel="cari" style="display:none;">${tedarikciDetayCariHtml(t)}</div>
+        <div class="md-tab-panel" data-td-panel="servis" style="display:none;">${tedarikciDetayServisHtml(t)}</div>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+  el.onclick = e=>{ if(e.target===el) el.remove(); };
+}
+function tedarikciDetayTabGoster(btn, tab){
+  const overlay = document.getElementById('tedarikciDetailOverlay');
+  if(!overlay) return;
+  overlay.querySelectorAll('.modal-tab[data-td-tab]').forEach(b=>b.classList.toggle('active', b===btn));
+  overlay.querySelectorAll('.md-tab-panel[data-td-panel]').forEach(p=>{ p.style.display = p.dataset.tdPanel===tab ? '' : 'none'; });
+}
+function tedarikciDetayGenelHtml(t){
+  const satir = (l,v)=>`<div><div style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;">${esc(l)}</div><div style="font-size:13px;font-weight:600;color:var(--paper);">${v?esc(String(v)):'—'}</div></div>`;
+  return `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px 16px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;">
+    ${satir('Tedarikçi Adı', t.ad)}${satir('Hizmet Türü', t.hizmetTuru)}${satir('Telefon', t.telefon)}${satir('Adres', t.adres)}
+  </div>`;
+}
+function tedarikciDetayCariHtml(t){
+  const ozet = tedarikciCariOzet(t.id);
+  const hareketler = supplierLedger.filter(l=>l.supplierId===t.id).sort((a,b)=>(b.tarih||'').localeCompare(a.tarih||''));
+  const kart = (l,v,renk)=>`<div style="background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;"><div style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;">${l}</div><div style="font-size:15px;font-weight:700;color:${renk};">${fmtTL2(v)}</div></div>`;
+  const satirlar = hareketler.map(l=>{
+    const v = l.vehicleId ? vehicles.find(x=>x.id===l.vehicleId) : null;
+    return `
+    <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border);">
+      <span style="font-size:11.5px;color:var(--text-3);white-space:nowrap;">${fmtTarih(l.tarih)}</span>
+      <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--surface-2);color:var(--text-2);white-space:nowrap;">${esc(SUPPLIER_LEDGER_TUR_ETIKET[l.tur]||l.tur)}</span>
+      ${l.fisNo?`<span style="font-family:monospace;font-size:11px;color:var(--text-3);white-space:nowrap;">#${esc(l.fisNo)}</span>`:''}
+      ${v?`<span style="font-size:11px;font-weight:600;padding:2px 7px;border-radius:8px;background:rgba(22,160,134,.1);color:var(--accent-blue);white-space:nowrap;">${esc(v.plaka)}</span>`:''}
+      <span style="flex:1;min-width:0;font-size:12px;color:var(--text-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(l.aciklama||'')}</span>
+      ${l.fisFoto?`<img src="${l.fisFoto}" onclick="window.open(this.src,'_blank')" loading="lazy" decoding="async" style="width:26px;height:26px;object-fit:cover;border-radius:6px;cursor:pointer;border:1px solid var(--line);flex-shrink:0;" title="Fişi görüntüle">`:''}
+      <span style="font-size:13px;font-weight:700;white-space:nowrap;color:${l.yon==='borc'?'#E1554E':'#36A168'};">${l.yon==='borc'?'+':'-'}${fmtTL2(l.tutar)}</span>
+    </div>`;
+  }).join('');
+  return `
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px;">
+      ${kart('Toplam Fiş', ozet.toplamFis, '#E1554E')}
+      ${kart('Toplam Ödeme', ozet.toplamOdeme, '#36A168')}
+      ${kart('Bakiye (Borcumuz)', ozet.bakiye, ozet.bakiye>0?'#E1554E':'#36A168')}
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <button onclick="tedarikciFisFormAc('${t.id}')" style="background:rgba(225,85,78,.08);border:1px solid rgba(225,85,78,.2);color:#E1554E;padding:8px 16px;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;">Fiş Ekle</button>
+      <button onclick="tedarikciOdemeFormAc('${t.id}')" style="background:var(--accent-blue);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;">Ödeme Gir</button>
+    </div>
+    <div class="dcard" style="padding:0;overflow:hidden;">
+      ${satirlar || '<div class="log-empty">Bu tedarikçiye ait cari hareket yok.</div>'}
+    </div>`;
+}
+function tedarikciDetayServisHtml(t){
+  const liste = tedarikciServisKayitlari(t.id);
+  if(!liste.length) return '<div class="log-empty">Bu tedarikçiyle ilişkilendirilmiş servis kaydı yok. Bakım &amp; Servis kaydı eklerken "Kayıtlı tedarikçilerden seç" alanından bu tedarikçiyi seçerseniz burada görünür.</div>';
+  const satirlar = liste.map(k=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border);">
+      <span style="font-size:11.5px;color:var(--text-3);white-space:nowrap;">${fmtTarih(k.cikis||k.giris)}</span>
+      <span style="font-size:11px;font-weight:600;padding:2px 7px;border-radius:8px;background:rgba(22,160,134,.1);color:var(--accent-blue);white-space:nowrap;">${esc(k.plaka)}</span>
+      <span style="flex:1;min-width:0;font-size:12px;color:var(--text-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(k.islem||'')}</span>
+      <span style="font-size:13px;font-weight:700;white-space:nowrap;">${k.tutar?fmtTL2(k.tutar):'—'}</span>
+    </div>`).join('');
+  return `<div class="dcard" style="padding:0;overflow:hidden;">${satirlar}</div>`;
 }
 
 // ----- Cari (ledger) yardımcıları -----
@@ -23541,7 +23959,7 @@ function backupToJson(){
     olusturmaTarihi: new Date().toISOString(),
     vehicles, expenses, activityLog, sozlesmeler, arsiv,
     customers, rentals, invoices, payments, ledger,
-    suppliers, serviceParts, tires, fuelRecords, tolls, trafficFines,
+    suppliers, supplierLedger, serviceParts, tires, fuelRecords, tolls, trafficFines,
     documents, notifications, automationRules, kvkkTalepleri,
   };
   const blob = new Blob([JSON.stringify(backup, null, 2)], {type:'application/json'});
@@ -23582,6 +24000,7 @@ document.getElementById('restoreJsonInput')?.addEventListener('change', async (e
     payments = Array.isArray(data.payments) ? data.payments : [];
     ledger = Array.isArray(data.ledger) ? data.ledger : [];
     suppliers = Array.isArray(data.suppliers) ? data.suppliers : [];
+    supplierLedger = Array.isArray(data.supplierLedger) ? data.supplierLedger : [];
     serviceParts = Array.isArray(data.serviceParts) ? data.serviceParts : [];
     tires = Array.isArray(data.tires) ? data.tires : [];
     fuelRecords = Array.isArray(data.fuelRecords) ? data.fuelRecords : [];
@@ -23602,6 +24021,7 @@ document.getElementById('restoreJsonInput')?.addEventListener('change', async (e
     await persistPayments();
     await persistLedger();
     await persistSuppliers();
+    await persistSupplierLedger();
     await persistServiceParts();
     await persistTires();
     await persistFuelRecords();
@@ -23857,6 +24277,10 @@ initInstallPrompt();
       <button class="bn-tile" onclick="closeMoreSheet();switchPage('cari')">
         <div class="bn-tile-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/><path d="M21 12a9 9 0 1 1-18 0"/></svg></div>
         <span>Cari &amp; Tahsilat</span>
+      </button>
+      <button class="bn-tile" onclick="closeMoreSheet();switchPage('tedarikciler')">
+        <div class="bn-tile-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M8 7h8M8 11h8M8 15h5"/></svg></div>
+        <span>Tedarikçi Cari</span>
       </button>
       <button class="bn-tile" onclick="closeMoreSheet();switchPage('faturalar')">
         <div class="bn-tile-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg></div>
