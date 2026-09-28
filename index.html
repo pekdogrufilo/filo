@@ -2480,7 +2480,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-26.261</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-26.262</div>
     </div>
   </div>
 </div>
@@ -2652,7 +2652,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-26.261</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-26.262</div>
     </div>
   </aside>
 <script>
@@ -6573,7 +6573,11 @@ function getGeminiKey(){
   return 'sunucu-proxy-aktif';
 }
 
-async function callGeminiDirect(system, userText, contentBlock, modelIdx=0, retryCount=0){
+// v.262: "bu sorunu yaşamayalım artık bu panelin en iyi özelliği bu" — bkz. geminiChatFetch'teki
+// aynı düzeltme. turSayisi: tüm modeller (GEMINI_MODELS) bir kez geçici hatayla (503/429/zaman
+// aşımı) tükenirse, pes etmeden önce biraz daha uzun bekleyip TÜM modeller üzerinden bir tur
+// daha deneniyor (en fazla 1 ek tur — toplamda 2 tur).
+async function callGeminiDirect(system, userText, contentBlock, modelIdx=0, retryCount=0, turSayisi=0){
   const GEMINI_MODEL = GEMINI_MODELS[modelIdx] || GEMINI_MODELS[0];
   const base64 = contentBlock?.source?.data;
   const mimeType = contentBlock?.source?.media_type || 'application/pdf';
@@ -6614,14 +6618,20 @@ async function callGeminiDirect(system, userText, contentBlock, modelIdx=0, retr
         // Önce aynı modeli 1 kez daha dene
         if(retryCount < 1){
           await new Promise(r=>setTimeout(r, bekleme));
-          return callGeminiDirect(system, userText, contentBlock, modelIdx, retryCount + 1);
+          return callGeminiDirect(system, userText, contentBlock, modelIdx, retryCount + 1, turSayisi);
         }
         // Sonra bir sonraki modele geç
         const nextModel = modelIdx + 1;
         if(nextModel < GEMINI_MODELS.length){
           console.log('Model degistiriliyor:', GEMINI_MODELS[nextModel]);
           await new Promise(r=>setTimeout(r, 1000));
-          return callGeminiDirect(system, userText, contentBlock, nextModel, 0);
+          return callGeminiDirect(system, userText, contentBlock, nextModel, 0, turSayisi);
+        }
+        // v.262: tüm modeller bu turda da geçici hatayla tükendi — son bir kez daha, en
+        // baştan (ilk modelden) ve biraz daha uzun bir bekleme sonrası dene.
+        if(turSayisi < 1){
+          await new Promise(r=>setTimeout(r, 3000));
+          return callGeminiDirect(system, userText, contentBlock, 0, 0, turSayisi + 1);
         }
       }
       throw new Error(`Gemini hatası (${res.status}): ${err?.error?.message||err?.error||''}`);
@@ -6658,58 +6668,74 @@ async function callGeminiDirect(system, userText, contentBlock, modelIdx=0, retr
 }
 
 // Sohbet/şartname istekleri için ortak Gemini çağrısı: zaman aşımı + model yedeği + boş yanıt teşhisi
+// v.262: "bu sorunu yaşamayalım artık bu panelin en iyi özelliği bu" — v.261'de 429'un da tekrar
+// denenmesi sağlanmıştı ama TÜM modeller (5 tanesi) bir kez tükenirse yine de pes ediliyordu.
+// Worker/Gemini tarafındaki geçici bir yoğunluk/kota dalgalanması birkaç saniyeden UZUN
+// sürebiliyor; tek bir tur (5 model × 1 deneme, aralarında kısa beklemelerle) bunu her zaman
+// aşamayabiliyordu. Artık SADECE geçici görünen hatalarda (503/429/404/zaman aşımı/ağ hatası —
+// gerçek bir 400/401/403 gibi kalıcı bir hata değilse) tüm modeller bir kez tükendiğinde, biraz
+// daha uzun bir bekleme sonrası TÜM modeller üzerinden ikinci bir tur daha deneniyor. Bu, geçici
+// bir kesintiyi aşma şansını önemli ölçüde artırıyor; kalıcı/anlamsız hatalarda (ör. 400) hâlâ
+// hiç beklemeden direkt hata veriliyor.
 async function geminiChatFetch(system, contents, generationConfig){
   let lastErr = 'Yanıt alınamadı.';
-  for(let i=0;i<GEMINI_MODELS.length;i++){
-    const MODEL = GEMINI_MODELS[i];
-    const controller = new AbortController();
-    const timeout = setTimeout(()=>controller.abort(), 60000);
-    try{
-      const res = await fetch(GEMINI_PROXY_URL,{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({
-          model: MODEL,
-          system_instruction:{parts:[{text:system}]},
-          contents,
-          generationConfig
-        }),
-        signal: controller.signal
-      });
-      clearTimeout(timeout);
-      if(!res.ok){
-        const err = await res.json().catch(()=>({}));
-        lastErr = `Gemini hatası (${res.status}): ${err?.error?.message||err?.error||''}`;
-        // 404 model bulunamadı / 503 yoğunluk / 429 kota-hızı aşımı → sıradaki modeli dene.
-        // v.261: bkz. callGeminiDirect'teki aynı düzeltme — 429 burada da hiç yakalanmıyor,
-        // ilk modelde kota dalgalanması yaşanınca sohbet hemen hataya düşüyordu; artık kısa
-        // bir bekleme sonrası sıradaki modele geçiliyor (429'da biraz daha uzun bekleniyor).
-        if(res.status===404 || res.status===503 || res.status===429){
-          await new Promise(r=>setTimeout(r, res.status===429 ? 1500 : 800));
+  for(let tur=0; tur<2; tur++){
+    for(let i=0;i<GEMINI_MODELS.length;i++){
+      const MODEL = GEMINI_MODELS[i];
+      const controller = new AbortController();
+      const timeout = setTimeout(()=>controller.abort(), 60000);
+      try{
+        const res = await fetch(GEMINI_PROXY_URL,{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({
+            model: MODEL,
+            system_instruction:{parts:[{text:system}]},
+            contents,
+            generationConfig
+          }),
+          signal: controller.signal
+        });
+        clearTimeout(timeout);
+        if(!res.ok){
+          const err = await res.json().catch(()=>({}));
+          lastErr = `Gemini hatası (${res.status}): ${err?.error?.message||err?.error||''}`;
+          // 404 model bulunamadı / 503 yoğunluk / 429 kota-hızı aşımı → sıradaki modeli dene.
+          // v.261: bkz. callGeminiDirect'teki aynı düzeltme — 429 burada da hiç yakalanmıyor,
+          // ilk modelde kota dalgalanması yaşanınca sohbet hemen hataya düşüyordu; artık kısa
+          // bir bekleme sonrası sıradaki modele geçiliyor (429'da biraz daha uzun bekleniyor).
+          if(res.status===404 || res.status===503 || res.status===429){
+            await new Promise(r=>setTimeout(r, res.status===429 ? 1500 : 800));
+            continue;
+          }
+          throw new Error(lastErr);
+        }
+        const data = await res.json();
+        const cand = data?.candidates?.[0];
+        const text = (cand?.content?.parts||[]).map(p=>p.text||'').join('');
+        if(text) return text;
+        lastErr = data?.promptFeedback?.blockReason
+          ? `İstek güvenlik filtresine takıldı (${data.promptFeedback.blockReason}).`
+          : `Model yanıt döndürmedi (${cand?.finishReason||'bilinmeyen'}). Tekrar deneyin.`;
+      }catch(e){
+        clearTimeout(timeout);
+        if(e.name==='AbortError'){ lastErr = 'Zaman aşımı — istek 60 saniyede yanıtlanmadı.'; continue; }
+        // v.132: ham "Failed to fetch" (bağlantı sunucuya hiç ulaşamadı) burada da doğrudan
+        // kullanıcıya İngilizce teknik metin olarak sızıyordu — diğer modeli/denemeyi hiç
+        // beklemeden. Kısa bir bekleme sonrası bir sonraki modeli dene (geçici ağ dalgalanması
+        // ihtimaline karşı), tüm modeller tükenirse anlaşılır Türkçe mesajla pes et.
+        if((e instanceof TypeError) || /failed to fetch/i.test(e?.message||'')){
+          lastErr = 'Sunucuya bağlanılamadı — internet bağlantınızı kontrol edip tekrar deneyin.';
+          await new Promise(r=>setTimeout(r, 1200));
           continue;
         }
-        throw new Error(lastErr);
+        throw e;
       }
-      const data = await res.json();
-      const cand = data?.candidates?.[0];
-      const text = (cand?.content?.parts||[]).map(p=>p.text||'').join('');
-      if(text) return text;
-      lastErr = data?.promptFeedback?.blockReason
-        ? `İstek güvenlik filtresine takıldı (${data.promptFeedback.blockReason}).`
-        : `Model yanıt döndürmedi (${cand?.finishReason||'bilinmeyen'}). Tekrar deneyin.`;
-    }catch(e){
-      clearTimeout(timeout);
-      if(e.name==='AbortError'){ lastErr = 'Zaman aşımı — istek 60 saniyede yanıtlanmadı.'; continue; }
-      // v.132: ham "Failed to fetch" (bağlantı sunucuya hiç ulaşamadı) burada da doğrudan
-      // kullanıcıya İngilizce teknik metin olarak sızıyordu — diğer modeli/denemeyi hiç
-      // beklemeden. Kısa bir bekleme sonrası bir sonraki modeli dene (geçici ağ dalgalanması
-      // ihtimaline karşı), tüm modeller tükenirse anlaşılır Türkçe mesajla pes et.
-      if((e instanceof TypeError) || /failed to fetch/i.test(e?.message||'')){
-        lastErr = 'Sunucuya bağlanılamadı — internet bağlantınızı kontrol edip tekrar deneyin.';
-        await new Promise(r=>setTimeout(r, 1200));
-        continue;
-      }
-      throw e;
+    }
+    // v.262: ilk tur (tüm modeller) geçici hatalarla tükendi — ikinci (son) turdan önce biraz
+    // daha uzun bekleyip tekrar deniyoruz.
+    if(tur===0){
+      await new Promise(r=>setTimeout(r, 3000));
     }
   }
   throw new Error(lastErr);
@@ -23488,7 +23514,11 @@ ${JSON.stringify(filoOzet, null, 1)}`;
     aiMessages.push({role:'assistant', content: html});
 
   }catch(e){
-    aiMessages.push({role:'assistant', content:`<span style="color:var(--safety);">Hata: ${esc(e.message)}</span>`});
+    // v.262: "bu sorunu yaşamayalım" — tüm tur/model denemeleri (bkz. geminiChatFetch) yine de
+    // tükenirse kullanıcı mesajı yeniden YAZMAK zorunda kalmasın diye son başarısız mesaj
+    // saklanıyor ve hata balonuna bir "Tekrar Dene" düğmesi ekleniyor (bkz. aiTekrarDene).
+    window.__aiSonBasarisizMesaj = mesaj;
+    aiMessages.push({role:'assistant', content:`<span style="color:var(--safety);">Hata: ${esc(e.message)}</span> <button onclick="aiTekrarDene()" style="margin-left:4px;background:var(--accent-blue);color:#fff;border:none;padding:4px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;">Tekrar Dene</button>`});
     // v.261: "AI Filo Asistanı çalışmıyor" şikayeti — sohbet balonundaki hata mesajı kaydırılmış
     // bir sohbet kutusunun içinde kolayca gözden kaçabiliyordu, kullanıcıya "hiçbir şey olmadı"
     // hissi veriyordu. Aynı hata artık ayrıca kısa bir toast ile de bildiriliyor.
@@ -23496,6 +23526,10 @@ ${JSON.stringify(filoOzet, null, 1)}`;
   }
 
   renderAiPage();
+}
+// v.262: bkz. aiSend'in catch bloğu — hata balonundaki "Tekrar Dene" düğmesi bunu çağırır.
+function aiTekrarDene(){
+  if(window.__aiSonBasarisizMesaj) return aiSend(window.__aiSonBasarisizMesaj);
 }
 
 function renderExcelPage(){
