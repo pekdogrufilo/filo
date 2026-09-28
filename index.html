@@ -2480,7 +2480,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-26.255</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-26.256</div>
     </div>
   </div>
 </div>
@@ -2652,7 +2652,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-26.255</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-26.256</div>
     </div>
   </aside>
 <script>
@@ -16490,10 +16490,26 @@ async function belgeTopluTek(file, fallbackId){
       v[std.tipF] = onceden.mime;
       // v.159: bkz. otoBelgeSec'teki aynı desen — mevcut bir tarih varsa ve belgeden okunan
       // ondan farklıysa sessizce üzerine yazılmıyor, sadece boşsa dolduruluyor.
+      // v.256: "bildirimler hatalı — zaten düzeltilmiş bir şey hâlâ uyarı olarak geliyor" — bu toplu
+      // yükleme yolu, otoBelgeSec'teki (tek dosya) v.189 düzeltmesini hiç almamıştı: yenilenen bir
+      // poliçe/muayene BİRDEN FAZLA belgeyle birlikte (ör. sürükle-bırak çoklu seçim) yüklendiğinde
+      // buraya (belgeTopluTek) düşüyor, okunan tarih eskisinden İLERİDE olsa bile "değiştirilmedi"
+      // deyip eski tarihi koruyordu — bu yüzden v.sigortaTarihi/kaskoBitis/muayeneTarihi hiç
+      // güncellenmiyor, dolayısıyla bildirim motoru (bildirimGecerliMi) belgeyi hâlâ süresi
+      // yaklaşmış/geçmiş sanıp uyarıyı temizlemiyordu. Artık otoBelgeSec ile birebir aynı kural:
+      // ileri tarih = gerçek yenileme, otomatik güncellenir; geriye doğru/anlaşılmaz tarih ise
+      // eskisi gibi değiştirilmeden sadece bilgi notu düşülür.
       if(std.tarihF && okunanTarih){
         if(!v[std.tarihF]){ v[std.tarihF] = okunanTarih; tarihGuncellendi = true; }
         else if(v[std.tarihF] !== okunanTarih){
-          tarihCeliski = `${std.label} tarihi kayıtta ${fmtTarih(v[std.tarihF])} var, belgede ${fmtTarih(okunanTarih)} okundu — değiştirilmedi`;
+          if(okunanTarih > v[std.tarihF]){
+            const eskiTarih = v[std.tarihF];
+            v[std.tarihF] = okunanTarih;
+            tarihGuncellendi = true;
+            tarihCeliski = `${std.label} tarihi güncellendi (önceki: ${fmtTarih(eskiTarih)}, yenileme olarak algılandı).`;
+          }else{
+            tarihCeliski = `${std.label} tarihi kayıtta ${fmtTarih(v[std.tarihF])} var, belgede ${fmtTarih(okunanTarih)} okundu — geriye doğru bir tarih olduğu için değiştirilmedi.`;
+          }
         }
       }
       if(!v.belgeYuklemeZamanlari) v.belgeYuklemeZamanlari = {};
