@@ -1,4 +1,4 @@
-/* PEKDOĞRU Filo Paneli — Service Worker v.119 */
+/* PEKDOĞRU Filo Paneli — Service Worker v.120 */
 const CACHE_NAME = 'filo-panel-v119';
 const SHELL_ASSETS = [
   './',
@@ -26,6 +26,21 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const { request } = event;
+
+  // v.120: Cache API SADECE GET isteklerini destekler — POST (ör. AI Filo Asistanı ve
+  // "otomatik doldur"un kullandığı Gemini proxy istekleri) burada cache.put()'a verilince
+  // "Failed to execute 'put' on 'Cache': Request method 'POST' is unsupported" hatasıyla
+  // patlıyordu. Bu hata bir "unhandled promise rejection" olarak konsolu kirletmenin yanında,
+  // panelin kendi genel hata yakalayıcısını (index.html'deki window.unhandledrejection
+  // dinleyicisi) da tetikleyip kullanıcıya alakasız "Beklenmeyen bir hata oluştu" bildirimleri
+  // gösteriyordu — asıl AI hatasının (503/429) üstüne bir de kafa karıştırıcı gürültü ekliyordu.
+  // GET olmayan istekler artık Service Worker tarafından hiç ele alınmıyor; tarayıcı bunları
+  // doğrudan (önbelleksiz) ağa gönderiyor — zaten POST isteklerinin önbelleğe alınması hem
+  // teknik olarak imkânsız hem de anlamsız (her istek farklı bir gövde taşıyor).
+  if (request.method !== 'GET') {
+    return;
+  }
+
   const url = new URL(request.url);
 
   // Harici CDN kütüphaneleri için network-first
