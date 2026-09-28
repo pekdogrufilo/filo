@@ -2480,7 +2480,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-26.262</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-26.263</div>
     </div>
   </div>
 </div>
@@ -2652,7 +2652,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-26.262</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-26.263</div>
     </div>
   </aside>
 <script>
@@ -12734,17 +12734,20 @@ function renderDashboard(){
   // Araç durumu çipleri kaldırıldı (v.90) — araç listesi Araç Yönetimi'nde
 
   // v.139: ayrı kutu değil — tek şerit içinde sade bölme (karmaşa azaltma)
-  const miniKutu = (n, l, renk)=>`<div style="padding:2px 0 2px 14px;border-left:2px solid var(--border);">
-    <div style="font-size:20px;font-weight:800;color:${renk||'var(--paper)'};line-height:1.2;">${n}</div>
-    <div style="font-size:11px;color:var(--steel-300);margin-top:2px;">${l}</div>
-  </div>`;
+  // v.263: bu mini kutular artık kullanılmıyor — 4 metriği de yukarıdaki tek KPI şeridine taşıdık
+  // (bkz. dash-stats bloğu), miniKutu() fonksiyonu bu yüzden kaldırıldı.
 
   const page = document.getElementById('page-genel-bakis');
   page.innerHTML = `
     <div id="dashYedekUyari"></div>
 
     <!-- FAZ3: Cari & Tahsilat KPI döşemeleri — mevcut .dash-stats/.dstat deseniyle birebir aynı -->
-    <div class="dash-stats" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));margin-bottom:16px;">
+    <!-- v.263: "panel çok karıştı" geri bildirimi — bu 2 kutuluk şerit ile aşağıdaki "Filo Durumu"
+         kartının içindeki 4 ayrı "miniKutu" farklı görsel stildeydi (biri .dstat kartı, diğeri ince
+         bir bölme çizgisi) ve ekranın iki ayrı yerinde duruyordu. Artık tüm 6 KPI (2 tahsilat + 4
+         filo metriği) TEK, tutarlı bir .dstat şeridinde birleşti — "Filo Durumu" kartında sadece
+         toplam araç/doluluk görseli kaldı (bkz. aşağıda). -->
+    <div class="dash-stats" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:16px;">
       <div class="dstat" style="cursor:pointer;" onclick="switchPage('cari')">
         <div class="dstat-ic" style="background:rgba(232,161,50,.15);color:#E8A132;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
         <div class="dstat-txt"><div class="l">Bekleyen Tahsilat</div><div class="n" style="color:#E8A132;">${fmtTL2(dashBekleyenTahsilat)}</div><div class="d">vadesi geçmemiş bakiye</div></div>
@@ -12752,6 +12755,22 @@ function renderDashboard(){
       <div class="dstat" style="cursor:pointer;" onclick="switchPage('cari')">
         <div class="dstat-ic" style="background:rgba(225,85,78,.15);color:#E1554E;">${DASH_ICONS.warn}</div>
         <div class="dstat-txt"><div class="l">Geciken Tahsilat</div><div class="n" style="color:${dashGecikenTahsilat>0?'#E1554E':'var(--paper)'};">${fmtTL2(dashGecikenTahsilat)}</div><div class="d">vadesi geçmiş bakiye</div></div>
+      </div>
+      <div class="dstat" style="cursor:pointer;" onclick="switchPage('musteriler')">
+        <div class="dstat-ic" style="background:rgba(22,160,134,.15);color:var(--accent-blue);">${DASH_ICONS.users}</div>
+        <div class="dstat-txt"><div class="l">Aktif Müşteri</div><div class="n">${aktifMusteri}</div><div class="d">kiracı</div></div>
+      </div>
+      <div class="dstat" style="cursor:pointer;" onclick="switchPage('bildirimler')">
+        <div class="dstat-ic" style="background:${yakindaBitecekPlakalar.size>0?'rgba(232,161,50,.15)':'rgba(54,161,104,.15)'};color:${yakindaBitecekPlakalar.size>0?'#E8A132':'#36A168'};"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg></div>
+        <div class="dstat-txt"><div class="l">Belgesi Bitecek</div><div class="n" style="color:${yakindaBitecekPlakalar.size>0?'#E8A132':'var(--paper)'};">${yakindaBitecekPlakalar.size}</div><div class="d">30 gün içinde</div></div>
+      </div>
+      <div class="dstat" style="cursor:pointer;" onclick="switchPage('bildirimler')">
+        <div class="dstat-ic" style="background:${bugunKritik>0?'rgba(225,85,78,.15)':(bugunUyari>0?'rgba(22,160,134,.15)':'rgba(54,161,104,.15)')};color:${bugunKritik>0?'#E1554E':(bugunUyari>0?'var(--accent-blue)':'#36A168')};"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+        <div class="dstat-txt"><div class="l">Bugün İş</div><div class="n" style="color:${bugunKritik>0?'#E1554E':(bugunUyari>0?'var(--accent-blue)':'var(--paper)')};">${bugunYapilacaklar.length}</div><div class="d">${bugunKritik>0?bugunKritik+' kritik':'bekleyen'}</div></div>
+      </div>
+      <div class="dstat" style="cursor:pointer;" onclick="switchPage('hasarcezalar')">
+        <div class="dstat-ic" style="background:${hasarSayisi>0?'rgba(225,85,78,.15)':'rgba(54,161,104,.15)'};color:${hasarSayisi>0?'#E1554E':'#36A168'};"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+        <div class="dstat-txt"><div class="l">Hasar Kaydı</div><div class="n" style="color:${hasarSayisi>0?'#E1554E':'var(--paper)'};">${hasarSayisi}</div><div class="d">toplam</div></div>
       </div>
     </div>
 
@@ -12773,8 +12792,12 @@ function renderDashboard(){
          GENEL Bakış'ın en üstüne, doğru işlem sırasını (araç → müşteri → kiralama → belge →
          masraf/bakım → fatura) tek bakışta özetliyor, her adımın "Git" butonu doğrudan o işlemi
          başlatıyor. Kapatma/açma durumu (sbGroupsState ile aynı desende) localStorage'da tutulur —
-         ekip bir kere öğrenince kartı kapatıp bir daha görmeyebilir, istediği an tekrar açabilir. -->
-    <details class="dcard" id="isAkisiRehberi" style="margin-bottom:16px;border-color:rgba(22,160,134,.35);background:var(--blue-dim,rgba(22,160,134,.04));" ${(localStorage.getItem('filoPaneli_isAkisiKapali')!=='1')?'open':''}>
+         ekip bir kere öğrenince kartı kapatıp bir daha görmeyebilir, istediği an tekrar açabilir.
+         v.263: "panel çok karıştı" geri bildirimi — bu kart her girişte AÇIK gelip Genel Bakış'ın
+         en üst, en görünür yerini kaplıyordu. Artık varsayılan KAPALI başlıyor (tek satır, tıklanınca
+         açılır); kullanıcı bir kez açarsa bu tercihi hatırlanır (localStorage anahtarı ters çevrildi:
+         'filoPaneli_isAkisiKapali' yerine 'filoPaneli_isAkisiAcik' — varsayılan artık "kapalı"). -->
+    <details class="dcard" id="isAkisiRehberi" style="margin-bottom:16px;border-color:rgba(22,160,134,.35);background:var(--blue-dim,rgba(22,160,134,.04));" ${(localStorage.getItem('filoPaneli_isAkisiAcik')==='1')?'open':''}>
       <summary style="cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;font-size:15px;font-weight:700;">
         ${ICO('search',16)} Panel nasıl çalışır? — Doğru işlem sırası
         <span style="margin-left:auto;font-size:12px;font-weight:500;color:var(--steel-300);">aç / kapat</span>
@@ -12836,28 +12859,22 @@ function renderDashboard(){
         <h3 style="margin:0;">Filo Durumu</h3>
         <span style="font-size:12.5px;color:var(--text-3);">${bugunTarihi}</span>
       </div>
-      <div style="display:flex;gap:24px;flex-wrap:wrap;">
-        <div style="flex:2;min-width:280px;">
-          <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px;">
-            <span style="font-size:40px;font-weight:800;letter-spacing:-1px;color:var(--paper);line-height:1;">${total}</span>
-            <span style="font-size:13px;color:var(--steel-300);">araç · <b style="color:var(--accent-blue);">%${pct(kirada)}</b> doluluk</span>
-          </div>
-          <div style="height:10px;border-radius:5px;overflow:hidden;display:flex;background:var(--surface-2);margin-bottom:12px;">
-            ${total?`<span style="width:${pct(kirada)}%;background:var(--accent-blue)"></span><span style="width:${pct(musait)}%;background:#36A168"></span><span style="width:${pct(serviste)}%;background:#E8A132"></span><span style="width:${pct(pert)}%;background:#7B7873"></span><span style="width:${pct(satildi)}%;background:#9B7ED8"></span>`:''}
-          </div>
-          <div style="display:flex;gap:14px;flex-wrap:wrap;">
-            <span style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--steel-300);"><span style="width:9px;height:9px;border-radius:50%;background:var(--accent-blue);"></span>Kirada <b style="color:var(--paper);">${kirada}</b></span>
-            <span style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--steel-300);"><span style="width:9px;height:9px;border-radius:50%;background:#36A168;"></span>Müsait <b style="color:var(--paper);">${musait}</b></span>
-            <span style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--steel-300);"><span style="width:9px;height:9px;border-radius:50%;background:#E8A132;"></span>Serviste <b style="color:var(--paper);">${serviste}</b></span>
-            <span style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--steel-300);"><span style="width:9px;height:9px;border-radius:50%;background:#7B7873;"></span>Pert <b style="color:var(--paper);">${pert}</b></span>
-            <span style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--steel-300);"><span style="width:9px;height:9px;border-radius:50%;background:#9B7ED8;"></span>Satıldı <b style="color:var(--paper);">${satildi}</b></span>
-          </div>
+      <!-- v.263: sağdaki 4 mini kutu (Aktif Müşteri / Belgesi Bitecek / Bugün İş / Hasar Kaydı)
+           yukarıdaki tek KPI şeridine taşındı — burada sadece toplam araç/doluluk görseli kaldı. -->
+      <div>
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px;">
+          <span style="font-size:40px;font-weight:800;letter-spacing:-1px;color:var(--paper);line-height:1;">${total}</span>
+          <span style="font-size:13px;color:var(--steel-300);">araç · <b style="color:var(--accent-blue);">%${pct(kirada)}</b> doluluk</span>
         </div>
-        <div style="flex:1;min-width:230px;display:grid;grid-template-columns:1fr 1fr;gap:10px;align-content:center;">
-          ${miniKutu(aktifMusteri, 'Aktif Müşteri', null)}
-          ${miniKutu(yakindaBitecekPlakalar.size, 'Belgesi Bitecek (30 gün)', yakindaBitecekPlakalar.size>0?'#E8A132':null)}
-          ${miniKutu(bugunYapilacaklar.length, "Bugün İş", bugunKritik>0?'#E1554E':(bugunUyari>0?'var(--accent-blue)':'#36A168'))}
-          ${miniKutu(hasarSayisi, 'Hasar Kaydı', hasarSayisi>0?'#E1554E':null)}
+        <div style="height:10px;border-radius:5px;overflow:hidden;display:flex;background:var(--surface-2);margin-bottom:12px;">
+          ${total?`<span style="width:${pct(kirada)}%;background:var(--accent-blue)"></span><span style="width:${pct(musait)}%;background:#36A168"></span><span style="width:${pct(serviste)}%;background:#E8A132"></span><span style="width:${pct(pert)}%;background:#7B7873"></span><span style="width:${pct(satildi)}%;background:#9B7ED8"></span>`:''}
+        </div>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;">
+          <span style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--steel-300);"><span style="width:9px;height:9px;border-radius:50%;background:var(--accent-blue);"></span>Kirada <b style="color:var(--paper);">${kirada}</b></span>
+          <span style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--steel-300);"><span style="width:9px;height:9px;border-radius:50%;background:#36A168;"></span>Müsait <b style="color:var(--paper);">${musait}</b></span>
+          <span style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--steel-300);"><span style="width:9px;height:9px;border-radius:50%;background:#E8A132;"></span>Serviste <b style="color:var(--paper);">${serviste}</b></span>
+          <span style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--steel-300);"><span style="width:9px;height:9px;border-radius:50%;background:#7B7873;"></span>Pert <b style="color:var(--paper);">${pert}</b></span>
+          <span style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--steel-300);"><span style="width:9px;height:9px;border-radius:50%;background:#9B7ED8;"></span>Satıldı <b style="color:var(--paper);">${satildi}</b></span>
         </div>
       </div>
     </div>
@@ -12892,21 +12909,30 @@ function renderDashboard(){
              etiketlerle aynı anda duruyordu. O satır tamamen kaldırıldı, kendine özgü 5 eylemi
              (Hakediş/Fatura Yükle, Km Raporu Yükle, Belge Yükle, Günlük Özet Yazdır, Araç Tablosu)
              buraya, TEK bir tutarlı görsel dile taşındı — artık Genel Bakış'ta tek bir hızlı işlem
-             alanı var. -->
+             alanı var.
+             v.263: "panel çok karıştı" geri bildirimi — 12 buton birden Genel Bakış'ı kalabalık
+             gösteriyordu. En sık kullanılan 6'sı (Araç Kirala, İade Al, Yeni Araç Ekle, Masraf Ekle,
+             Belge Yükle, Tahsilat Gir) öncelikli olarak açıkta kalıyor; kalan 6'sı (Araç Ara, Rapor
+             Oluştur, Hakediş/Fatura Yükle, Km Raporu Yükle, Günlük Özet Yazdır, Araç Tablosu)
+             "Diğer İşlemler" ile aç/kapa yapılıyor — hiçbiri kaldırılmadı, sadece bir tık geriye
+             alındı. -->
         <div class="quick-grid">
           <button class="qbtn" data-act="arac-kirala" title="Müsait bir aracı yeni bir kiracıya teslim et"><div class="qic" style="background:var(--accent-blue);color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8v8h6l4 4V4L9 8H3Z"/></svg></div><span>Araç Kirala</span></button>
           <button class="qbtn" data-act="iade-al"><div class="qic" style="background:var(--accent-blue);color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></div><span>İade Al</span></button>
           <button class="qbtn" data-act="yeni-arac"><div class="qic" style="background:var(--accent-blue);color:#fff">${DASH_ICONS.car}</div><span>Yeni Araç Ekle</span></button>
-          <button class="qbtn" data-act="arac-ara"><div class="qic" style="background:var(--accent-blue);color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></div><span>Araç Ara</span></button>
           <button class="qbtn" data-act="masraf-ekle"><div class="qic" style="background:var(--accent-blue);color:#fff">${DASH_ICONS.clock}</div><span>Masraf Ekle</span></button>
-          <button class="qbtn" data-act="rapor-olustur"><div class="qic" style="background:var(--accent-blue);color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg></div><span>Rapor Oluştur</span></button>
+          <button class="qbtn" data-act="belge-yukle"><div class="qic" style="background:var(--accent-blue);color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg></div><span>Belge Yükle</span></button>
           <button class="qbtn" data-act="tahsilat-gir"><div class="qic" style="background:var(--accent-blue);color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><span>Tahsilat Gir</span></button>
+        </div>
+        <div id="dashQuickMore" class="quick-grid" style="display:none;margin-top:8px;">
+          <button class="qbtn" data-act="arac-ara"><div class="qic" style="background:var(--accent-blue);color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></div><span>Araç Ara</span></button>
+          <button class="qbtn" data-act="rapor-olustur"><div class="qic" style="background:var(--accent-blue);color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg></div><span>Rapor Oluştur</span></button>
           <button class="qbtn" data-act="hakedis-yukle"><div class="qic" style="background:var(--accent-blue);color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg></div><span>Hakediş / Fatura Yükle</span></button>
           <button class="qbtn" data-act="km-raporu-yukle"><div class="qic" style="background:var(--accent-blue);color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg></div><span>Km Raporu Yükle</span></button>
-          <button class="qbtn" data-act="belge-yukle"><div class="qic" style="background:var(--accent-blue);color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg></div><span>Belge Yükle</span></button>
           <button class="qbtn" data-act="gunluk-ozet"><div class="qic" style="background:var(--accent-blue);color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg></div><span>Günlük Özet Yazdır</span></button>
           <button class="qbtn" data-act="arac-tablosu"><div class="qic" style="background:var(--accent-blue);color:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg></div><span>Araç Tablosu</span></button>
         </div>
+        <button type="button" id="dashQuickMoreToggle" onclick="const m=document.getElementById('dashQuickMore'); const acik=m.style.display!=='none'; m.style.display=acik?'none':'grid'; this.textContent=acik?'+ Diğer İşlemler (6)':'− Daha Az Göster';" style="margin-top:10px;width:100%;background:none;border:1px dashed var(--border);color:var(--accent-blue);padding:8px;border-radius:8px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:var(--font-ui);">+ Diğer İşlemler (6)</button>
       </div>
     </div>
 
@@ -12931,7 +12957,7 @@ function renderDashboard(){
   applyRoleVisibility();
   // v.210: iş akışı rehber kartının aç/kapat durumunu hatırla (sbGroupsState ile aynı desen).
   document.getElementById('isAkisiRehberi')?.addEventListener('toggle', function(){
-    try{ localStorage.setItem('filoPaneli_isAkisiKapali', this.open ? '0' : '1'); }catch(e){}
+    try{ localStorage.setItem('filoPaneli_isAkisiAcik', this.open ? '1' : '0'); }catch(e){}
   });
 }
 
