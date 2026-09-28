@@ -2480,7 +2480,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-26.256</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-26.257</div>
     </div>
   </div>
 </div>
@@ -2652,7 +2652,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-26.256</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-26.257</div>
     </div>
   </aside>
 <script>
@@ -18554,7 +18554,14 @@ function bildirimUret(){
     });
     // v.157: kiraBitis sadece araç hâlâ kirada iken dikkate alınıyor — iade edilip Müsait'e
     // dönen bir araçta eski kiraBitis tarihi kalmış olsa bile bildirim üretilmesin.
-    const kiraTarih = (v.durum==='Kirada' ? v.kiraBitis : null) || v.sozlesmeBitis;
+    // v.256: "dün iade aldığım araç bugün bildirim atmış iade bekliyor diye" — v.157'nin koruması
+    // SADECE v.kiraBitis alanını durum==='Kirada' ile kısıtlıyordu; hemen ardındaki `|| v.sozlesmeBitis`
+    // yedeği ise durumdan BAĞIMSIZ çalışıyordu. saveIade() (araç iade alma) durumu 'Müsait' yapıyor
+    // ama v.sozlesmeBitis alanını (yüklü kira sözleşmesinin bitiş tarihi) TEMİZLEMİYOR — bu yüzden
+    // iade alınmış, artık kirada olmayan bir araçta eski sözleşme bitiş tarihi geçmişte kaldıysa
+    // "gecikenKira" bildirimi ("iade bekleniyor") hâlâ üretiliyor/temizlenmiyordu. Artık sözleşme
+    // bitiş yedeği de aynı şekilde SADECE araç hâlâ kiradayken dikkate alınıyor.
+    const kiraTarih = v.durum==='Kirada' ? (v.kiraBitis || v.sozlesmeBitis) : null;
     if(kiraTarih){
       const dl = daysLeft(kiraTarih);
       if(dl!==null && dl<=30){
@@ -18664,7 +18671,9 @@ function bildirimGecerliMi(n){
   if(n.tur==='kiraBitis' || n.tur==='gecikenKira'){
     const v = vehicles.find(x=>x.id===n.ilgiliId);
     if(!v) return false;
-    const kiraTarih = (v.durum==='Kirada' ? v.kiraBitis : null) || v.sozlesmeBitis;
+    // v.256: bkz. bildirimUret'teki aynı düzeltme — sözleşme bitiş yedeği de sadece araç hâlâ
+    // kiradayken geçerli; iade alınmış (Müsait'e dönmüş) bir araç için artık geçersiz sayılmalı.
+    const kiraTarih = v.durum==='Kirada' ? (v.kiraBitis || v.sozlesmeBitis) : null;
     if(!kiraTarih) return false;
     const dl = daysLeft(kiraTarih);
     if(dl===null) return false;
