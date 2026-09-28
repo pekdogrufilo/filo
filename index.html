@@ -2480,7 +2480,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-26.259</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-26.261</div>
     </div>
   </div>
 </div>
@@ -2652,7 +2652,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-26.259</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-26.261</div>
     </div>
   </aside>
 <script>
@@ -4167,8 +4167,12 @@ function urgentList(esikGun){
     // v.157: araç iade edilip "Müsait"e dönünce eski kiraBitis tarihi alanda kalabiliyor —
     // artık kirada olmayan bir araç dashboard/bildirimlerde "kirası yaklaşan" diye görünmesin
     // diye Kira Bitişi sadece durum==='Kirada' iken sayılıyor.
+    // v.259b: "eksikler giderilsin" gözden geçirmesi — bu korumanın yanı başındaki "Sözleşme
+    // Bitişi" aynı kirada-koruma guard'ını hiç almamıştı (bkz. bildirimUret/bildirimGecerliMi'de
+    // v.257'de düzeltilen aynı sınıf hata) — iade alınmış bir araçta eski sözleşme bitiş tarihi
+    // geçmişte kalmışsa dashboard'da sonsuza kadar "kritik" görünmeye devam ediyordu.
     const kiradaMi = v.durum==='Kirada';
-    [['Sigorta', v.sigortaTarihi], ['Muayene', v.muayeneTarihi], ['Kira Bitişi', kiradaMi ? v.kiraBitis : null], ['Sözleşme Bitişi', v.sozlesmeBitis], ['Kasko Bitişi', v.kaskoBitis]].forEach(([tip, tarih])=>{
+    [['Sigorta', v.sigortaTarihi], ['Muayene', v.muayeneTarihi], ['Kira Bitişi', kiradaMi ? v.kiraBitis : null], ['Sözleşme Bitişi', kiradaMi ? v.sozlesmeBitis : null], ['Kasko Bitişi', v.kaskoBitis]].forEach(([tip, tarih])=>{
       if(!tarih) return;
       const dl = daysLeft(tarih);
       if(dl<=esik) rows.push({plaka:v.plaka, tip, dl});
@@ -4833,8 +4837,9 @@ function renderAlerts(){
     // v.157: araç iade edilip "Müsait" durumuna dönünce eski kiraBitis tarihi alanda kalabiliyor
     // (temizlenmiyor) — bu yüzden artık kirada olmayan bir araç "Kirası yaklaşan" uyarısında
     // yanlışlıkla görünmesin diye Kira Bitişi sadece durum==='Kirada' iken sayılıyor.
+    // v.259b: bkz. urgentList'teki aynı düzeltme — Sözleşme Bitişi de aynı korumayı almalı.
     const kiradaMi = v.durum==='Kirada';
-    [['Muayene', v.muayeneTarihi], ['Sigorta', v.sigortaTarihi], ['Kira Bitişi', kiradaMi ? v.kiraBitis : null], ['Sözleşme Bitişi', v.sozlesmeBitis], ['Kasko Bitişi', v.kaskoBitis]].forEach(([tip, tarih])=>{
+    [['Muayene', v.muayeneTarihi], ['Sigorta', v.sigortaTarihi], ['Kira Bitişi', kiradaMi ? v.kiraBitis : null], ['Sözleşme Bitişi', kiradaMi ? v.sozlesmeBitis : null], ['Kasko Bitişi', v.kaskoBitis]].forEach(([tip, tarih])=>{
       if(!tarih) return;
       const dl = daysLeft(tarih);
       if(dl<=30) rows.push({plaka:v.plaka, yer:v.yer, tip, tarih, dl});
@@ -4999,11 +5004,15 @@ function render(){
         })()}
 
         ${(()=>{
+          // v.259b: "eksikler giderilsin" — Sözleşme Bitişi, urgentList/renderAlerts'teki aynı
+          // durum==='Kirada' korumasını burada da almalı; aksi halde iade alınmış bir araçta eski
+          // sözleşme tarihi kalmışsa bu kart sonsuza kadar "kritik" rozet göstermeye devam eder.
+          const sozKiradaMi = v.durum==='Kirada';
           const kontroller = [
             ['Sigorta', daysLeft(v.sigortaTarihi), v.sigortaTarihi],
             ['Muayene', daysLeft(v.muayeneTarihi), v.muayeneTarihi],
             ['Kasko', daysLeft(v.kaskoBitis), v.kaskoBitis],
-            ['Sözleşme', daysLeft(v.sozlesmeBitis), v.sozlesmeBitis],
+            ['Sözleşme', sozKiradaMi ? daysLeft(v.sozlesmeBitis) : null, sozKiradaMi ? v.sozlesmeBitis : null],
           ];
           const kritik = kontroller.filter(([,dl])=>dl!==null && dl<=30);
           // Km bazlı bakım uyarısı (son bakım km + periyot dolmuşsa/yaklaşıyorsa)
@@ -6593,10 +6602,18 @@ async function callGeminiDirect(system, userText, contentBlock, modelIdx=0, retr
     if(!res.ok){
       const err = await res.json().catch(()=>({}));
       // 503 yoğunluk hatası — 3 kez tekrar dene
-      if(res.status === 503){
+      // v.261: "AI Filo Asistanı ve otomatik doldurma çalışmıyor" şikayeti üzerine canlı sitede
+      // konsol incelendi — Worker/Gemini şu an 503 (Service Unavailable) VE 429 (Too Many
+      // Requests/kota) döndürüyordu. 429 önceden bu retry/model-değiştirme kademesine hiç
+      // girmiyordu, doğrudan hataya düşüyordu — geçici bir kota/yoğunluk dalgalanmasında bile
+      // ilk denemede pes ediliyordu. 429 artık 503 ile AYNI kademeye alındı (kota hataları
+      // genelde biraz daha uzun beklemeden fayda gördüğü için 429'da bekleme süresi biraz
+      // daha uzun tutuldu).
+      if(res.status === 503 || res.status === 429){
+        const bekleme = res.status === 429 ? 3500 : 2000;
         // Önce aynı modeli 1 kez daha dene
         if(retryCount < 1){
-          await new Promise(r=>setTimeout(r, 2000));
+          await new Promise(r=>setTimeout(r, bekleme));
           return callGeminiDirect(system, userText, contentBlock, modelIdx, retryCount + 1);
         }
         // Sonra bir sonraki modele geç
@@ -6663,8 +6680,14 @@ async function geminiChatFetch(system, contents, generationConfig){
       if(!res.ok){
         const err = await res.json().catch(()=>({}));
         lastErr = `Gemini hatası (${res.status}): ${err?.error?.message||err?.error||''}`;
-        // 404 model bulunamadı / 503 yoğunluk → sıradaki modeli dene
-        if(res.status===404 || res.status===503) continue;
+        // 404 model bulunamadı / 503 yoğunluk / 429 kota-hızı aşımı → sıradaki modeli dene.
+        // v.261: bkz. callGeminiDirect'teki aynı düzeltme — 429 burada da hiç yakalanmıyor,
+        // ilk modelde kota dalgalanması yaşanınca sohbet hemen hataya düşüyordu; artık kısa
+        // bir bekleme sonrası sıradaki modele geçiliyor (429'da biraz daha uzun bekleniyor).
+        if(res.status===404 || res.status===503 || res.status===429){
+          await new Promise(r=>setTimeout(r, res.status===429 ? 1500 : 800));
+          continue;
+        }
         throw new Error(lastErr);
       }
       const data = await res.json();
@@ -7253,6 +7276,19 @@ async function saveIade(id){
   const kmKullanilan = (kmBas>0&&kmBit>kmBas) ? kmBit-kmBas : undefined;
   const kmAsim = (kmHakki!==undefined && kmKullanilan!==undefined) ? (kmKullanilan-kmHakki) : undefined;
   const iadeFotoFields = await buildIadeFotoFields(id);
+  // v.259b: "eksikler giderilsin" genel gözden geçirme — araç iade alındığında bu fonksiyon
+  // durum'u 'Müsait' yapıyor ama kiracıya/mevcut kiralamaya özel alanları (kiraciAdi, teslimTarih,
+  // teslimKm, kmLimiti, kmAsimFiyat, depozito, kira, kiraBitis) hiç TEMİZLEMİYORDU — hatta
+  // kmLimiti'de olduğu gibi bazıları `kmLimiti||v.kmLimiti` ile ESKİ değeri açıkça KORUYORDU. Bu
+  // yüzden bir araç iade alınıp "Müsait" görünse bile araç detay sayfasındaki "Kiralama Bilgileri"
+  // kartı önceki kiracının adını, teslim km'sini, aylık km limitini vb. göstermeye devam ediyordu —
+  // sanki hâlâ aktif/süren bir kiralama varmış gibi. Ayrıca bu eski değerler, bir SONRAKİ kiralamada
+  // (kirayaVerVeSozlesme vb.) form alanı boş bırakılırsa sessizce yeni kiracıya miras kalıyordu.
+  // Gerçek geçmiş zaten kiraGecmisi[] dizisinde (aşağıda) ayrıca ve eksiksiz tutulduğundan, bu
+  // "canlı" alanları iade sonrası temizlemek veri kaybı yaratmıyor. sozlesmeBitis kasıtlı olarak
+  // DOKUNULMADI — o, belge takibi (Kira sözleşmesi belgesi) alanı; bildirim/uyarı ekranlarındaki
+  // benzer durum-bağımlılığı eksiği ayrıca durum bazlı korumayla (bkz. urgentList/renderAlerts/
+  // health-score) giderildi, veri silinmedi.
   vehicles[idx] = {
     ...v,
     durum: 'Müsait',
@@ -7264,10 +7300,18 @@ async function saveIade(id){
     iadeNot: document.getElementById('iadeNot')?.value?.trim()||'',
     kiraBaslama: kiraBas||v.kiraBaslama,
     iadeTarihi: iadeTarih,
-    kmLimiti: kmLimiti||v.kmLimiti,
     iadeKmHakki: kmHakki,
     iadeKmAsim: kmAsim,
     ...iadeFotoFields,
+    // Kiracıya/aktif kiralamaya özel canlı alanlar — bir sonraki kiralama bunları sıfırdan doldurur.
+    kiraciAdi: undefined, teslimTarih: undefined, teslimKm: undefined,
+    kmLimiti: undefined, kmAsimFiyat: undefined, depozito: undefined,
+    kira: undefined, kiraBitis: undefined,
+    // v.259b: iade km'si (kmBit), aracın genel "mevcut km" hesabının okuduğu v.sonKm'ye de
+    // yansısın diye — masrafKmUygula ile aynı "sadece ileri güncelle" kuralıyla (bkz. kmRaporuYukle
+    // ve masrafKmUygula) — aksi halde iade sırasında girilen daha yüksek bir km, bir sonraki bakım
+    // hatırlatıcısı/km hesaplarında hiç görünmüyordu.
+    sonKm: (kmBit>0 && (!v.sonKm || kmBit>Number(v.sonKm))) ? kmBit : v.sonKm,
     kiraGecmisi: [...(v.kiraGecmisi||[]), {
       bas: kiraBas, bitis: iadeTarih,
       kmBas, kmBit, kullanim: kmBit-kmBas,
@@ -12472,7 +12516,11 @@ function filoSaglikSkoruHesapla(){
 
   let belgeToplam=0, belgeGecmis=0;
   vehicles.forEach(v=>{
-    [v.sigortaTarihi, v.muayeneTarihi, v.kaskoBitis, v.sozlesmeBitis, v.kiraBitis].forEach(t=>{
+    // v.259b: "eksikler giderilsin" — bkz. urgentList/renderAlerts'teki aynı düzeltme: kiraBitis
+    // VE sozlesmeBitis, araç iade alınıp artık kirada olmadığında sağlık skorunu sonsuza kadar
+    // düşürmesin diye sadece durum==='Kirada' iken sayılmalı.
+    const kiradaMi = v.durum==='Kirada';
+    [v.sigortaTarihi, v.muayeneTarihi, v.kaskoBitis, kiradaMi?v.sozlesmeBitis:null, kiradaMi?v.kiraBitis:null].forEach(t=>{
       if(!t) return;
       belgeToplam++;
       const dl = daysLeft(t);
@@ -16568,13 +16616,19 @@ async function belgeTopluTek(file, fallbackId){
     }else{
       await belgeAracaEkle(v, tur, file.name, onceden.mime, onceden.dataUrl, okunanTarih);
     }
+    // v.259b: "eksikler giderilsin" — otoBelgeSec/aiBelgeYukle/aiPendingBelgeCozumle/aiCokluBelgeIsle
+    // hepsi ruhsat belgesinden okunan muayene tarihini v.muayeneTarihi'ye işleyen ruhsatMuayeneUygula'yı
+    // çağırıyordu, ama TOPLU (çoklu dosya) yükleme yolu bu çağrıyı hiç almamıştı — çoklu seçimle
+    // yüklenen bir ruhsat belgesindeki muayene tarihi sessizce kayboluyordu (aynı v.256 bug sınıfı).
+    const ruhsatM = ruhsatMuayeneUygula(v, tur, okunanTarih);
     if(tur==='sozlesme') sozlesmeAlanlariUygula(v, bilgi);
     await persist();
     // v.252: "masraf" türü artık ayrı işleniyor (bkz. belgeMasrafKaydet) — özet mesajında ayrı say.
     const etiket = std ? std.label : (tur==='masraf' ? (masrafSonuc && masrafSonuc.atlandi ? 'Masraf fişi (tekrar)' : 'Masraf fişi') : (tur==='diger'?'Genel belge':esc(tur)));
     logActivity('Belge yüklendi', `${esc(v.plaka)} — ${etiket} (${esc(file.name)})`).catch(()=>{});
     return {
-      durum:'ok', plaka:v.plaka, etiket, tarih: okunanTarih, celiski: tarihCeliski,
+      durum:'ok', plaka:v.plaka, etiket, tarih: okunanTarih,
+      celiski: tarihCeliski || (ruhsatM ? `Belgedeki muayene tarihi ${fmtTarih(okunanTarih)} olarak işlendi.` : ''),
       masrafTutar: (masrafSonuc && !masrafSonuc.atlandi) ? masrafSonuc.tutar : null,
       tedarikciAdi: (masrafSonuc && masrafSonuc.tedarikciAdi) || null,
     };
@@ -22795,6 +22849,23 @@ async function aiPendingBelgeCozumle(txt){
       v[std.adiF] = pending.file.name;
       v[std.tipF] = onceden.mime;
       if(std.tarihF && okunanTarih) v[std.tarihF] = okunanTarih;
+      // v.259b: "eksikler giderilsin" — v.190'ın aiBelgeYukle'ye eklediği merkezi Belgeler kaydı
+      // (documents[]) senkronizasyonu bu KARDEŞ fonksiyona (plaka okunamayıp kullanıcının bir
+      // sonraki mesajla plakayı bildirdiği yol) hiç eklenmemişti — bu yüzden bu yoldan yüklenen
+      // sigorta/kasko/muayene/ruhsat/sözleşme belgeleri Belge Merkezi listesinde görünmüyor ve
+      // 'belge' türü bildirimleri bu belgeler için hiç üretilmiyordu. aiBelgeYukle'deki aynı iki
+      // adım (bkz. orada v.190) buraya da eklendi.
+      if(!v.belgeYuklemeZamanlari) v.belgeYuklemeZamanlari = {};
+      v.belgeYuklemeZamanlari[tur] = new Date().toISOString();
+      const merkeziTur = {sigorta:'Sigorta', kasko:'Kasko', muayene:'Muayene', ruhsat:'Ruhsat', sozlesme:'Sözleşme'}[tur];
+      if(merkeziTur){
+        try{
+          const verKey = await belgeDosyaSakla('arac_'+v.id+'_'+tur, onceden.dataUrl);
+          const sonGecerlilik = std.tarihF ? (v[std.tarihF]||null) : null;
+          const belgeNo = bilgi && bilgi.belgeNo ? String(bilgi.belgeNo).trim() : null;
+          await belgeMerkeziKaydet({ilgiliTip:'arac', ilgiliId:v.id, tur:merkeziTur, tarih: okunanTarih||todayISO(), sonGecerlilik, dosyaRef:verKey, belgeNo});
+        }catch(e){ console.error('Merkezi belge kaydı hatası:', e); }
+      }
     }else{
       await belgeAracaEkle(v, tur, pending.file.name, onceden.mime, onceden.dataUrl, okunanTarih);
     }
@@ -23418,6 +23489,10 @@ ${JSON.stringify(filoOzet, null, 1)}`;
 
   }catch(e){
     aiMessages.push({role:'assistant', content:`<span style="color:var(--safety);">Hata: ${esc(e.message)}</span>`});
+    // v.261: "AI Filo Asistanı çalışmıyor" şikayeti — sohbet balonundaki hata mesajı kaydırılmış
+    // bir sohbet kutusunun içinde kolayca gözden kaçabiliyordu, kullanıcıya "hiçbir şey olmadı"
+    // hissi veriyordu. Aynı hata artık ayrıca kısa bir toast ile de bildiriliyor.
+    try{ showToast('AI Filo Asistanı şu anda yanıt veremedi: '+(e.message||'bilinmeyen hata'), true); }catch(e2){}
   }
 
   renderAiPage();
@@ -24126,7 +24201,14 @@ async function kmRaporuYukle(file){
       if(mevcutIdx>=0) kmGecmisi[mevcutIdx] = yeniKayit;
       else kmGecmisi.push(yeniKayit);
 
-      vehicles[i] = {...v, kmGecmisi, sonKm: Math.round(km.bitKm), aykm: Math.round(km.toplamKm)};
+      // v.259b: "eksikler giderilsin" genel gözden geçirme — sonKm burada koşulsuz eziliyordu;
+      // eski/geçmiş dönemli bir Excel raporu (veya sıra dışı düşük bir bitKm) tekrar yüklenirse
+      // aracın güncel km'sini geriye doğru düşürebiliyordu. masrafKmUygula/saveIade'deki aynı
+      // ileri-yönlü (forward-only) kural burada da uygulanıyor: sonKm sadece yeni değer daha
+      // yüksekse güncelleniyor.
+      const yeniSonKm = Math.round(km.bitKm);
+      const sonKmGuncel = (!v.sonKm || yeniSonKm > Number(v.sonKm)) ? yeniSonKm : v.sonKm;
+      vehicles[i] = {...v, kmGecmisi, sonKm: sonKmGuncel, aykm: Math.round(km.toplamKm)};
       eslesme++;
       logLines.push(`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);font-size:12.5px;">
         <span class="mini-plaka">${esc(v.plaka)}</span>
