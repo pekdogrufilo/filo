@@ -2480,7 +2480,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-26.257</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-26.258</div>
     </div>
   </div>
 </div>
@@ -2652,7 +2652,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-26.257</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-26.258</div>
     </div>
   </aside>
 <script>
@@ -4208,20 +4208,12 @@ function splashChimeCal(){
     a.play().catch(()=>{}); // otomatik-oynatma engeline sessizce düş
   }catch(e){}
 }
-function karsilamaSelamCumlesi(){
-  const saat = new Date().getHours();
-  let selam = 'İyi günler';
-  if(saat < 6) selam = 'İyi geceler';
-  else if(saat < 12) selam = 'Günaydın';
-  else if(saat < 18) selam = 'İyi günler';
-  else selam = 'İyi akşamlar';
-  return `${selam}. PEKDOĞRU Filo Yönetim Sistemine hoş geldiniz.`;
-}
+// v.257: "girişteki karşılama iyi günler diyeni değiştirelim veya kaldıralım" — kullanıcı sesli
+// "İyi günler/Günaydın/İyi akşamlar... PEKDOĞRU Filo Yönetim Sistemine hoş geldiniz" cümlesinin
+// tamamen kaldırılmasını istedi; kısa giriş sesi (chime) kalsın istendi. Sesli selam cümlesi ve
+// onu okuyan aiMetniSesliOku çağrısı kaldırıldı, sadece splashChimeCal() çalışıyor.
 function karsilamaSesiCal(){
   splashChimeCal();
-  setTimeout(()=>{
-    try{ aiMetniSesliOku(`<p>${karsilamaSelamCumlesi()}</p>`); }catch(e){}
-  }, 380);
 }
 
 async function finishSplash(){
