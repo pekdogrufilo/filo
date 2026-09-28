@@ -2480,7 +2480,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-26.258</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-26.259</div>
     </div>
   </div>
 </div>
@@ -2652,7 +2652,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-26.258</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-26.259</div>
     </div>
   </aside>
 <script>
@@ -13096,6 +13096,27 @@ function masrafFiltreliSirali(){
     return hay.includes(arama);
   });
 }
+// v.259: "bakım için görüntü gönderiyorum ama örneğin km bilgisi kısmı eklemek istiyorum" —
+// masraf kayıtlarında (özellikle Tamir/Bakım) o anki km bilgisini tutacak bir alan yoktu; ne
+// manuel "Yeni Masraf Ekle" formunda, ne AI Filo Asistanı'nın önerdiği masraf kartında, ne de
+// masraf listesinde. Kullanıcı "ben bişey eklediğimde dolduracak yerleride kendim dolduruyum"
+// dedi — yani AI'nın belgeden km okumaya çalışmasını değil, kendisinin dolduracağı bir alan
+// istiyor. Km girildiğinde ve masraf tipi Tamir/Bakım ise, bu değer aracın sonBakimKm (Bakım &
+// Servis bildirimlerinin hesabının temeli) ve genel sonKm alanlarına da yansıtılır — böylece bir
+// bakım fişiyle km girildiğinde bir sonraki bakım hatırlatıcısı da doğru hesaplanır. Sadece daha
+// İLERİ bir km değeriyle günceller (yanlışlıkla girilen daha düşük bir km mevcut değeri geriye
+// almasın diye — kod tabanındaki tarih alanlarında kullanılan "sadece ileri güncelle" deseniyle
+// tutarlı).
+function masrafKmUygula(v, km, tip){
+  const kmSayi = Number(km);
+  if(!v || !kmSayi || kmSayi<=0) return false;
+  let degisti = false;
+  if(!v.sonKm || kmSayi > Number(v.sonKm)){ v.sonKm = kmSayi; degisti = true; }
+  if((tip==='Tamir' || tip==='Bakım') && (!v.sonBakimKm || kmSayi > Number(v.sonBakimKm))){
+    v.sonBakimKm = kmSayi; degisti = true;
+  }
+  return degisti;
+}
 function masrafRowsHTML(list){
   return list.map(e=>{
     const v = vehicles.find(x=>x.id===e.vehicleId);
@@ -13105,6 +13126,7 @@ function masrafRowsHTML(list){
       <td>${esc(fmtTarih(e.tarih))}</td>
       <td>${esc(e.not||'—')}</td>
       <td style="text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,monospace;font-weight:600;">${fmtTL2(e.tutar)}</td>
+      <td><input type="number" min="0" class="mkm" data-id="${e.id}" value="${e.km||''}" placeholder="km" title="Km bilgisi — girip alandan çıkınca kaydedilir" style="width:82px;background:var(--surface-2);border:1px solid var(--line);color:var(--paper);padding:5px 7px;border-radius:6px;font-family:inherit;font-size:12.5px;"></td>
       <td style="text-align:right;"><button class="mdel" data-id="${e.id}" title="Sil"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg></button></td>
     </tr>`;
   }).join('');
@@ -13122,13 +13144,27 @@ function wireMasrafDeleteButtons(){
     if(exp) logActivity('del', `Masraf silindi: <b>${esc(exp.plaka)}</b> · ${esc(exp.tip)} · ${fmtTL2(exp.tutar)}`);
   });
 }
+function wireMasrafKmInputs(){
+  document.querySelectorAll('.mkm').forEach(inp=>inp.onchange = async ()=>{
+    if(!requireAdmin()) return;
+    const exp = expenses.find(x=>x.id===inp.dataset.id);
+    if(!exp) return;
+    const km = Number(inp.value)||null;
+    exp.km = km;
+    await persistExpenses();
+    const v = vehicles.find(x=>x.id===exp.vehicleId);
+    if(v && masrafKmUygula(v, km, exp.tip)) await persist();
+    showToast('Km bilgisi kaydedildi.');
+  });
+}
 function renderMasrafTable(){
   const filtered = masrafFiltreliSirali();
   const wrap = document.getElementById('masrafTableWrap');
   const count = document.getElementById('masrafSayac');
   if(count) count.textContent = window.__masrafArama ? `${filtered.length} / ${expenses.length} kayıt` : `${expenses.length} kayıt · Toplam ${fmtTL2(expenses.reduce((s,e)=>s+(Number(e.tutar)||0),0))}`;
-  if(wrap) wrap.innerHTML = filtered.length ? `<table class="mini-table"><thead><tr><th>Plaka</th><th>Tip</th><th>Tarih</th><th>Not</th><th style="text-align:right">Tutar</th><th></th></tr></thead><tbody id="masrafTableBody">${masrafRowsHTML(filtered)}</tbody></table>` : `${window.__masrafArama ? '<div class="log-empty">Aramanla eşleşen masraf bulunamadı.</div>' : '<div class="empty-state"><div class="empty-state-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div class="empty-state-title">Henüz masraf kaydedilmedi</div><div class="empty-state-desc">Yakıt, tamir, bakım, lastik gibi araç masraflarını yukarıdaki formdan ekleyerek takibe başlayın.</div></div>'}`;
+  if(wrap) wrap.innerHTML = filtered.length ? `<table class="mini-table"><thead><tr><th>Plaka</th><th>Tip</th><th>Tarih</th><th>Not</th><th style="text-align:right">Tutar</th><th>Km</th><th></th></tr></thead><tbody id="masrafTableBody">${masrafRowsHTML(filtered)}</tbody></table>` : `${window.__masrafArama ? '<div class="log-empty">Aramanla eşleşen masraf bulunamadı.</div>' : '<div class="empty-state"><div class="empty-state-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div class="empty-state-title">Henüz masraf kaydedilmedi</div><div class="empty-state-desc">Yakıt, tamir, bakım, lastik gibi araç masraflarını yukarıdaki formdan ekleyerek takibe başlayın.</div></div>'}`;
   wireMasrafDeleteButtons();
+  wireMasrafKmInputs();
 }
 function renderMasrafPage(){
   const page = document.getElementById('page-masraf');
@@ -13151,7 +13187,10 @@ function renderMasrafPage(){
         <div class="field"><label>Tarih</label><input type="date" id="mpTarih"></div>
         <div class="field"><label>Tutar (₺)</label><input type="number" id="mpTutar" min="0" placeholder="0"></div>
       </div>
-      <div class="field"><label>Not (opsiyonel)</label><input type="text" id="mpNot" placeholder="Not"></div>
+      <div class="field-row">
+        <div class="field"><label>Not (opsiyonel)</label><input type="text" id="mpNot" placeholder="Not"></div>
+        <div class="field"><label>Km (opsiyonel)</label><input type="number" id="mpKm" min="0" placeholder="Güncel km — Tamir/Bakım'da bakım hatırlatıcısını günceller"></div>
+      </div>
       <button class="add-btn" id="mpEkleBtn" style="width:100%;justify-content:center;">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
         Masraf ekle
@@ -13162,11 +13201,12 @@ function renderMasrafPage(){
         <h3 style="margin:0;">Tüm Masraflar <span id="masrafSayac" style="font-weight:400;font-size:13px;color:var(--steel-100)">${expenses.length} kayıt · Toplam ${fmtTL2(toplam)}</span></h3>
         <input type="text" id="mArama" value="${esc(window.__masrafArama||'')}" placeholder="Plaka, tip veya not'a göre ara..." autocomplete="off" style="max-width:260px;background:var(--surface-2);border:1px solid var(--line);color:var(--paper);padding:8px 12px;border-radius:8px;font-family:inherit;font-size:13px;">
       </div>
-      <div id="masrafTableWrap" class="table-scroll">${sorted.length ? `<table class="mini-table"><thead><tr><th>Plaka</th><th>Tip</th><th>Tarih</th><th>Not</th><th style="text-align:right">Tutar</th><th></th></tr></thead><tbody id="masrafTableBody">${rows}</tbody></table>` : `${window.__masrafArama ? '<div class="log-empty">Aramanla eşleşen masraf bulunamadı.</div>' : '<div class="empty-state"><div class="empty-state-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div class="empty-state-title">Henüz masraf kaydedilmedi</div><div class="empty-state-desc">Yakıt, tamir, bakım, lastik gibi araç masraflarını yukarıdaki formdan ekleyerek takibe başlayın.</div></div>'}`}</div>
+      <div id="masrafTableWrap" class="table-scroll">${sorted.length ? `<table class="mini-table"><thead><tr><th>Plaka</th><th>Tip</th><th>Tarih</th><th>Not</th><th style="text-align:right">Tutar</th><th>Km</th><th></th></tr></thead><tbody id="masrafTableBody">${rows}</tbody></table>` : `${window.__masrafArama ? '<div class="log-empty">Aramanla eşleşen masraf bulunamadı.</div>' : '<div class="empty-state"><div class="empty-state-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div class="empty-state-title">Henüz masraf kaydedilmedi</div><div class="empty-state-desc">Yakıt, tamir, bakım, lastik gibi araç masraflarını yukarıdaki formdan ekleyerek takibe başlayın.</div></div>'}`}</div>
     </div>
   `;
   document.getElementById('mArama').oninput = debounce((e)=>{ window.__masrafArama = e.target.value; renderMasrafTable(); }, 180);
   wireMasrafDeleteButtons();
+  wireMasrafKmInputs();
   document.getElementById('mpTarih').value = todayISO();
   // Plaka otomatik tamamlama
   window.mpPlakaSuggest = function(val){
@@ -13198,22 +13238,29 @@ function renderMasrafPage(){
     if(!v){ showToast(`"${rawPlaka}" plakalı araç bulunamadı. Listedeki bir araç plakası girin.`, true); return; }
     const tutar = Number(document.getElementById('mpTutar').value);
     if(!tutar || tutar<=0){ showToast('Lütfen geçerli bir tutar girin.', true); return; }
+    const km = Number(document.getElementById('mpKm').value)||null;
+    const tip = document.getElementById('mpTip').value;
     const entry = {
       id: cryptoId(), vehicleId: v.id, plaka: v.plaka,
-      tip: document.getElementById('mpTip').value,
+      tip,
       tarih: document.getElementById('mpTarih').value || todayISO(),
       tutar, not: document.getElementById('mpNot').value.trim(),
+      km,
     };
     expenses.push(entry);
     await persistExpenses();
+    // v.259: km girildiyse (özellikle Tamir/Bakım) araç kaydındaki km alanlarını da güncelle —
+    // bkz. masrafKmUygula.
+    if(km && masrafKmUygula(v, km, tip)) await persist();
     renderStatMasraf();
     renderMasrafTable();
     document.getElementById('mpPlaka').value='';
     document.getElementById('mpTutar').value='';
     document.getElementById('mpNot').value='';
+    document.getElementById('mpKm').value='';
     document.getElementById('mpTip').selectedIndex = 0;
     document.getElementById('mpTarih').value = todayISO();
-    logActivity('add', `Masraf eklendi: <b>${esc(v.plaka)}</b> · ${esc(entry.tip)} · ${fmtTL2(tutar)}`);
+    logActivity('add', `Masraf eklendi: <b>${esc(v.plaka)}</b> · ${esc(entry.tip)} · ${fmtTL2(tutar)}${km?` · ${km.toLocaleString('tr-TR')} km`:''}`);
   };
 }
 
@@ -22855,9 +22902,12 @@ async function aiCokluBelgeIsle(file, onceden, kayitlar){
   aiMessages.push({role:'assistant', content: `
     <div>${parcalar.join(' ')}</div>
     <div style="margin-top:8px;border:1px solid var(--line);border-radius:8px;overflow:hidden;">
-      ${masrafAdaylari.map(k=>`<div style="display:flex;justify-content:space-between;gap:10px;padding:6px 10px;border-bottom:1px solid var(--line);font-size:12.5px;">
+      ${masrafAdaylari.map((k,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 10px;border-bottom:1px solid var(--line);font-size:12.5px;flex-wrap:wrap;">
         <span><b>${esc(k.plaka)}</b> · ${esc(k.tarih||'—')}${k.not?' · '+esc(k.not):''}${k.tedarikci?' · <span style="color:var(--steel-300);">'+esc(k.tedarikci)+' (cari hesaba işlenecek)</span>':''}</span>
-        <span style="font-weight:700;white-space:nowrap;">${(Number(k.tutar)||0).toLocaleString('tr-TR')} ₺</span>
+        <span style="display:flex;align-items:center;gap:8px;">
+          <input type="number" min="0" id="aikm_${batchId}_${i}" placeholder="km" title="Km bilgisi (opsiyonel) — Tamir/Bakım'da bakım hatırlatıcısını günceller" style="width:76px;background:var(--surface-2);border:1px solid var(--line);color:var(--paper);padding:4px 6px;border-radius:6px;font-family:inherit;font-size:11.5px;">
+          <span style="font-weight:700;white-space:nowrap;">${(Number(k.tutar)||0).toLocaleString('tr-TR')} ₺</span>
+        </span>
       </div>`).join('')}
     </div>
     <div style="margin-top:8px;font-size:12px;color:var(--steel-300);">Toplam: <b style="color:var(--paper);">${toplam.toLocaleString('tr-TR')} ₺</b></div>
@@ -22916,9 +22966,12 @@ Emin olmadığın alanı null bırak, uydurma.`;
     aiMessages.push({role:'assistant', content: `
       <div>Bu bir fatura/fiş — <b>${esc(v.plaka)}</b> aracına ${kayitlar.length>1?`${kayitlar.length} masraf kaydı`:'bir masraf kaydı'} önerdim, onaylarsan kaydederim:</div>
       <div style="margin-top:8px;border:1px solid var(--line);border-radius:8px;overflow:hidden;">
-        ${kayitlar.map(k=>`<div style="display:flex;justify-content:space-between;gap:10px;padding:6px 10px;border-bottom:1px solid var(--line);font-size:12.5px;">
+        ${kayitlar.map((k,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 10px;border-bottom:1px solid var(--line);font-size:12.5px;flex-wrap:wrap;">
           <span>${esc(k.tarih||'—')} · ${esc(k.tip||'Diğer')}${k.not?' · '+esc(k.not):''}${k.tedarikci?' · <span style="color:var(--steel-300);">'+esc(k.tedarikci)+' (cari hesaba işlenecek)</span>':''}</span>
-          <span style="font-weight:700;">${(Number(k.tutar)||0).toLocaleString('tr-TR')} ₺</span>
+          <span style="display:flex;align-items:center;gap:8px;">
+            <input type="number" min="0" id="aikm_${batchId}_${i}" placeholder="km" title="Km bilgisi (opsiyonel) — Tamir/Bakım'da bakım hatırlatıcısını günceller" style="width:76px;background:var(--surface-2);border:1px solid var(--line);color:var(--paper);padding:4px 6px;border-radius:6px;font-family:inherit;font-size:11.5px;">
+            <span style="font-weight:700;">${(Number(k.tutar)||0).toLocaleString('tr-TR')} ₺</span>
+          </span>
         </div>`).join('')}
       </div>
       <div style="margin-top:8px;font-size:12px;color:var(--steel-300);">Toplam: <b style="color:var(--paper);">${toplam.toLocaleString('tr-TR')} ₺</b></div>
@@ -22945,7 +22998,9 @@ async function aiMasrafKaydet(batchId, btnEl){
   let eklenen = 0, atlanan = 0;
   const etkilenenPlakalar = new Set();
   const cariyeIslenen = new Set();
-  for(const k of batch.kayitlar){
+  let aracGuncellendiMi = false;
+  for(let i=0;i<batch.kayitlar.length;i++){
+    const k = batch.kayitlar[i];
     const v = k.vehicleId ? (vehicles.find(x=>x.id===k.vehicleId) || varsayilanV) : varsayilanV;
     if(!v) continue;
     const tutar = Number(k.tutar); if(!tutar || tutar<=0) continue;
@@ -22954,10 +23009,17 @@ async function aiMasrafKaydet(batchId, btnEl){
     if(dupVar){ atlanan++; continue; }
     const masrafId = cryptoId();
     if(batch.dataUrl){ await withStorageTimeout(storageAPI.set('fis_'+masrafId, batch.dataUrl)).catch(()=>{}); }
-    const masrafKaydi = {id:masrafId, vehicleId:v.id, plaka:v.plaka, tip:k.tip||'Diğer', tarih, tutar, not:k.not||'', hasFis: !!batch.dataUrl, kaynak:'AI Filo Asistanı'};
+    // v.259: "bakım için görüntü gönderiyorum ama... km bilgisi kısmı eklemek istiyorum" — AI
+    // belgeden km okumaya çalışmıyor (kullanıcı kendisi dolduruyor), bu yüzden Kaydet'e basılmadan
+    // hemen önce her satırın yanındaki elle doldurulabilir km alanı DOM'dan okunuyor.
+    const kmInput = document.getElementById(`aikm_${batchId}_${i}`);
+    const km = kmInput ? (Number(kmInput.value)||null) : null;
+    const tip = k.tip||'Diğer';
+    const masrafKaydi = {id:masrafId, vehicleId:v.id, plaka:v.plaka, tip, tarih, tutar, not:k.not||'', hasFis: !!batch.dataUrl, kaynak:'AI Filo Asistanı', km};
     expenses.push(masrafKaydi);
     eklenen++;
     etkilenenPlakalar.add(v.plaka);
+    if(km && masrafKmUygula(v, km, tip)) aracGuncellendiMi = true;
     // v.252: "TÜM BELGE YÜKLEME İŞLERİ TAM ENTEGRE OLSUN" — belgeden bir tedarikçi adı okunduysa
     // bu masraf aynı zamanda o tedarikçinin cari hesabına (borç/fiş) da işlenir; tedarikçi
     // filoda kayıtlı değilse otomatik oluşturulur (bkz. masrafiTedarikciyeBagla).
@@ -22967,6 +23029,7 @@ async function aiMasrafKaydet(batchId, btnEl){
     }
   }
   await persistExpenses();
+  if(aracGuncellendiMi) await persist();
   const cariNot = cariyeIslenen.size ? ` · Tedarikçi cari hesabına işlendi: ${[...cariyeIslenen].join(', ')}` : '';
   logActivity('add', `Masraf eklendi (AI Asistanı): <b>${esc([...etkilenenPlakalar].join(', ')||(varsayilanV?varsayilanV.plaka:''))}</b> · ${eklenen} kayıt${esc(cariNot)}`).catch(()=>{});
   delete window.__aiMasrafBatches[batchId];
