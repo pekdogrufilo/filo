@@ -2480,7 +2480,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-26.264</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-26.265</div>
     </div>
   </div>
 </div>
@@ -2657,7 +2657,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-26.264</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-26.265</div>
     </div>
   </aside>
 <script>
@@ -10349,10 +10349,16 @@ document.getElementById('saveBtn').onclick = async ()=>{
 
   // v.208: Tarih tutarlılığı kontrolleri
   const kayitTarihi = document.getElementById('fTarih').value;
-  const muayeneTarihi = document.getElementById('fMuayene').value;
   const sigortaBitis = document.getElementById('fSigorta').value;
   const kaskoBitis = document.getElementById('fKaskoBitis').value;
-  if(muayeneTarihi && tarihKarsilastir(muayeneTarihi, todayISO()) > 0){ fieldErr('fMuayene','Muayene tarihi gelecekte olamaz.'); return; }
+  // v.265: "RUHSAT EKLİYORUM AI DİYOR Kİ MUAYENE TARİHİ İLERİ BİR TARİH OLAMAZ NE ALAKA" — bu satır
+  // v.208'de "tarih tutarlılığı" kontrolü olarak eklenmişti, ama muayeneTarihi alanı bu uygulamada
+  // baştan sona (AI'ın ruhsattan okuduğu "sonrakiMuayeneTarihi", "X gün kaldı" geri sayımları,
+  // urgentList/bugunYapilacaklar uyarıları vb.) HER ZAMAN "SONRAKİ muayene tarihi" (ileri bir tarih)
+  // anlamında kullanılıyor — yani gelecekte olması normal ve BEKLENEN davranış, hata değil. Bu satır
+  // tam tersini varsayıp AI'ın ruhsattan doğru okuduğu (gelecekteki) tarihi reddediyordu. Sigorta/
+  // Kasko bitiş tarihleri için ALTTAKİ kontroller (bitiş tarihi kayıt tarihinden ÖNCE olamaz) farklı
+  // ve doğru bir mantık olduğu için onlara dokunulmadı — sadece bu hatalı muayene kontrolü kaldırıldı.
   if(kayitTarihi && sigortaBitis && tarihKarsilastir(sigortaBitis, kayitTarihi) < 0){ fieldErr('fSigorta','Sigorta bitiş tarihi kayıt tarihinden önce olamaz.'); return; }
   if(kayitTarihi && kaskoBitis && tarihKarsilastir(kaskoBitis, kayitTarihi) < 0){ fieldErr('fKaskoBitis','Kasko bitiş tarihi kayıt tarihinden önce olamaz.'); return; }
 
@@ -12663,7 +12669,15 @@ function renderDashboard(){
   // ===== Bugün Yapılacaklar =====
   const bugunYapilacaklar = (()=>{
     const items=[];
+    // v.265: "İADE ALDIĞIM ARAÇ MÜSAİT GÖRÜNÜYOR HEMDE BİLDİRİM ATIYOR" — saveIade() iade alırken
+    // v.kiraBitis'i temizliyor (bkz. v.259b) ama v.sozlesmeBitis'e kasıtlı DOKUNMUYOR (o, ayrı bir
+    // belge takibi/sözleşme bitiş alanı). Bu yüzden kiraBitis boşalınca aşağıdaki satır ||sozlesmeBitis
+    // yedeğine düşüyor ve geçmişte kalmış bir sözleşme bitiş tarihi varsa, araç zaten "Müsait" olsa
+    // BİLE "İade süresi geçti" uyarısı sonsuza dek çıkmaya devam ediyordu. Bu uyarı zaten "İade Al"
+    // eylemine gidiyor — mantıken sadece HÂLÂ kirada olan araçlar için anlamlı, bu yüzden durum
+    // kontrolü eklendi: Kirada değilse (Müsait/Serviste/Pert/Satıldı vb.) bu uyarı hiç üretilmez.
     vehicles.forEach(v=>{
+      if(v.durum!=='Kirada') return;
       const dl = daysLeft(v.kiraBitis||v.sozlesmeBitis);
       if(dl!==null && dl<0) items.push({kritik:true, renk:'#E1554E', bg:'rgba(225,85,78,.1)', etiket:'İade', plaka:v.plaka, aci:'Süresi '+Math.abs(dl)+' gün geçti', act:`openIadeForm('${v.id}')`, btn:'İade Al'});
     });
@@ -15044,8 +15058,14 @@ function renderKiralamaPage(){
     });
   });
 
+  // v.265: "İADE ALDIĞIM ARAÇ MÜSAİT GÖRÜNÜYOR HEMDE BİLDİRİM ATIYOR" — aynı sınıf hata burada da
+  // vardı: saveIade() iade alırken kiraBitis'i temizliyor ama sozlesmeBitis'e (ayrı bir belge takibi
+  // alanı) kasıtlı dokunmuyor, bu yüzden geçmişte kalan eski bir sözleşme bitiş tarihi varsa, araç
+  // zaten "Müsait" olsa BİLE bu sayfada "Süresi Geçmiş Kiralamalar" kartında İade Al butonuyla
+  // görünmeye devam ediyordu. urgentList()'te (v.157/v.259b) uygulanan aynı kirada-koruma artık
+  // burada da: sadece hâlâ 'Kirada' olan araçlar bu iki listeye giriyor.
   // Yaklaşan bitişler (30 gün içinde)
-  const yaklasanBitis = vehicles.filter(v=>{
+  const yaklasanBitis = kirada.filter(v=>{
     const dl = daysLeft(v.kiraBitis||v.sozlesmeBitis);
     return dl!==null && dl>=0 && dl<=30;
   }).sort((a,b)=>{
@@ -15053,7 +15073,7 @@ function renderKiralamaPage(){
   });
 
   // Süresi geçenler
-  const suresiGecen = vehicles.filter(v=>{
+  const suresiGecen = kirada.filter(v=>{
     const dl = daysLeft(v.kiraBitis||v.sozlesmeBitis);
     return dl!==null && dl<0;
   });
