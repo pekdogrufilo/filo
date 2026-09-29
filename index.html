@@ -2480,7 +2480,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-26.265</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-26.266</div>
     </div>
   </div>
 </div>
@@ -2657,7 +2657,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-26.265</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-26.266</div>
     </div>
   </aside>
 <script>
@@ -4959,12 +4959,19 @@ function render(){
       const m = /^(\d{2})\s*([A-ZÇĞİÖŞÜ]{1,3})\s*(\d{2,4})$/i.exec(String(v.plaka||'').replace(/\s+/g,''));
       return m ? `${m[1]} ${m[2].toLocaleUpperCase('tr-TR')} ${m[3]}` : String(v.plaka||'');
     })();
+    // v.266b: "HATA ARAÇ MÜSAİT AMA SÖZLEŞME VAR" — bu kart aşağıdaki "kritik" rozet satırında
+    // (bkz. v.259b) zaten durum==='Kirada' korumasını sözleşmeBitis için uyguluyordu, ama HEMEN
+    // ÜSTÜNDEKİ bu segment çubuk göstergesi (healthHtml) o düzeltmeyi hiç almamıştı — bu yüzden
+    // iade alınmış (Müsait) bir araçta eski sözleşme bitiş tarihi kalmışsa, kart "Müsait" rozetiyle
+    // yan yana yeşil dolu bir "Sözleşme — 354 gün" çubuğu göstermeye devam ediyordu; sanki hâlâ
+    // aktif bir kiralama sözleşmesi varmış gibi. Aynı korumayla burada da sadece hâlâ Kirada olan
+    // araçlarda sözleşme bitişi gösteriliyor.
     // Belge sağlık göstergesi (Wallet tarzı): 4 belge tek bakışta
     const belgeKontroller = [
       ['Sigorta', v.sigortaTarihi],
       ['Kasko', v.kaskoBitis],
       ['Muayene', v.muayeneTarihi],
-      ['Sözleşme', v.sozlesmeBitis],
+      ['Sözleşme', v.durum==='Kirada' ? v.sozlesmeBitis : null],
     ];
     // Belge sağlık göstergesi (segment çubuklar): her belge tek bakışta
     const healthHtml = `<div class="vk-seg-row">${belgeKontroller.map(([lbl,t])=>{
@@ -12961,7 +12968,12 @@ function renderDashboard(){
         const tipler=[['Sigorta','sigortaTarihi'],['Muayene','muayeneTarihi'],['Kasko','kaskoBitis'],['Sözleşme','sozlesmeBitis'],['Kira','kiraBitis']];
         const say={'Sigorta':0,'Muayene':0,'Kasko':0,'Sözleşme':0,'Kira':0};
         const yak=[];
-        vehicles.forEach(v=>{ tipler.forEach(([ad,alan])=>{ if(ad==='Kira' && v.durum!=='Kirada') return; const t=v[alan]; if(!t) return; const dl=daysLeft(t); if(dl!==null && dl<=30){ say[ad]++; yak.push({p:v.plaka, ad, dl}); } }); });
+        // v.266b: "HATA ARAÇ MÜSAİT AMA SÖZLEŞME VAR" — bu satır 'Kira' tipini zaten Kirada'ya
+        // göre koruyordu ama 'Sözleşme' tipini KORUMUYORDU; iade alınmış (Müsait) bir araçta eski
+        // sözleşme bitiş tarihi 30 gün içindeyse "Yaklaşan Periyot" kutusunu ve listesini yanlışlıkla
+        // şişiriyordu. Diğer tüm yerlerdeki (urgentList, bugunYapilacaklar, vk-seg-row vb.) aynı
+        // korumayla tutarlı olsun diye 'Sözleşme' de artık sadece hâlâ Kirada olan araçlarda sayılıyor.
+        vehicles.forEach(v=>{ tipler.forEach(([ad,alan])=>{ if((ad==='Kira'||ad==='Sözleşme') && v.durum!=='Kirada') return; const t=v[alan]; if(!t) return; const dl=daysLeft(t); if(dl!==null && dl<=30){ say[ad]++; yak.push({p:v.plaka, ad, dl}); } }); });
         yak.sort((a,b)=>a.dl-b.dl);
         const box=(ad,n,renk)=>`<div class="yp-box"><div class="yp-n" style="color:${n>0?renk:'var(--steel-300)'}">${n}</div><div class="yp-l">${ad}</div></div>`;
         const liste=yak.slice(0,6).map(r=>`<div class="yp-row"><span class="mini-plaka" style="font-size:11.5px;">${esc(r.p)}</span><span class="yp-tip">${r.ad}</span><span class="yp-gun" style="color:${r.dl<0?'#E1554E':'var(--accent-blue)'}">${r.dl<0?Math.abs(r.dl)+' gün geçti':r.dl+' gün'}</span></div>`).join('');
@@ -13079,7 +13091,9 @@ function renderFinansalAnalizPage(){
           const tipler=[['Sigorta','sigortaTarihi'],['Muayene','muayeneTarihi'],['Kasko','kaskoBitis'],['Sözleşme','sozlesmeBitis'],['Kira','kiraBitis']];
           const say={'Sigorta':0,'Muayene':0,'Kasko':0,'Sözleşme':0,'Kira':0};
           const yak=[];
-          vehicles.forEach(v=>{ tipler.forEach(([ad,alan])=>{ if(ad==='Kira' && v.durum!=='Kirada') return; const t=v[alan]; if(!t) return; const dl=daysLeft(t); if(dl!==null && dl<=30){ say[ad]++; yak.push({p:v.plaka, ad, dl}); } }); });
+          // v.266b: "HATA ARAÇ MÜSAİT AMA SÖZLEŞME VAR" — bkz. Genel Bakış'taki aynı bloktaki açıklama;
+        // burada da 'Sözleşme' tipi artık sadece hâlâ Kirada olan araçlarda sayılıyor.
+        vehicles.forEach(v=>{ tipler.forEach(([ad,alan])=>{ if((ad==='Kira'||ad==='Sözleşme') && v.durum!=='Kirada') return; const t=v[alan]; if(!t) return; const dl=daysLeft(t); if(dl!==null && dl<=30){ say[ad]++; yak.push({p:v.plaka, ad, dl}); } }); });
           yak.sort((a,b)=>a.dl-b.dl);
           const box=(ad,n,renk)=>`<div class="yp-box"><div class="yp-n" style="color:${n>0?renk:'var(--steel-300)'}">${n}</div><div class="yp-l">${ad}</div></div>`;
           const liste=yak.slice(0,5).map(r=>`<div class="yp-row"><span class="mini-plaka" style="font-size:11.5px;">${esc(r.p)}</span><span class="yp-tip">${r.ad}</span><span class="yp-gun" style="color:${r.dl<0?'#E1554E':'var(--accent-blue)'}">${r.dl<0?Math.abs(r.dl)+' gün geçti':r.dl+' gün'}</span></div>`).join('');
@@ -16097,6 +16111,23 @@ async function saveTeslimBilgisi(){
 function plakaNormalize(s){
   return (s||'').toLocaleUpperCase('tr-TR').replace(/[^0-9A-ZÇĞİÖŞÜ]/g,'');
 }
+// v.266: "ARACI EKLEDİK SİSTEME AMA PLAKA OKUYAMADI" — AI OCR belgeden bazen plakanın başına
+// gerçekte olmayan fazladan bir "0" ekleyerek okuyor (ör. gerçek plaka "34 KRE 655" iken
+// "034KRE655" olarak okunuyor, belgeTuru/tarih doğru okunsa bile). Türk plakalarında il kodu HER
+// ZAMAN tam 2 haneli (01-81) olduğu için 0 ile başlayıp normalden bir hane uzun bir okuma neredeyse
+// kesin bu OCR hatasıdır. Bu eşleştirme (tam eşleşme -> içerir fallback -> baştaki "0" düzeltmesiyle
+// tekrar dene) eskiden 4 farklı yerde (aiBelgeYukle, belgeTopluTek, aiCokluBelgeIsle, pending-belge
+// devam akışı) ayrı ayrı, düzeltmesiz kopyalanmıştı — artık hepsi bu tek fonksiyonu kullanıyor.
+function plakaylaAracBul(okunanPlakaHam){
+  const okunanPlaka = plakaNormalize(okunanPlakaHam);
+  if(!okunanPlaka) return null;
+  const dene = (p)=> vehicles.find(x=>plakaNormalize(x.plaka)===p) || vehicles.find(x=>plakaNormalize(x.plaka).includes(p));
+  let v = dene(okunanPlaka);
+  if(!v && okunanPlaka.length>1 && okunanPlaka[0]==='0'){
+    v = dene(okunanPlaka.slice(1));
+  }
+  return v;
+}
 const OTO_BELGE_TURLERI = {
   sigorta:  {label:'Sigorta poliçesi', prefix:'police_',        adiF:'policeAdi',       tipF:'policeTip',       tarihF:'sigortaTarihi'},
   kasko:    {label:'Kasko poliçesi',   prefix:'kasko_',         adiF:'kaskoBelgeAdi',   tipF:'kaskoBelgeTip',   tarihF:'kaskoBitis'},
@@ -16209,11 +16240,7 @@ async function otoBelgeSec(file, statusEl){
     const okunanTarih = bilgi ? normalizeExtractedDate(bilgi.tarih||'') : '';
 
     // 2) Plakadan aracı bul (yandaki seçim de yedek)
-    let v = null;
-    if(okunanPlaka){
-      v = vehicles.find(x=>plakaNormalize(x.plaka)===okunanPlaka)
-        || vehicles.find(x=>plakaNormalize(x.plaka).includes(okunanPlaka));
-    }
+    let v = okunanPlaka ? plakaylaAracBul(okunanPlaka) : null;
     if(!v && fallbackId) v = vehicles.find(x=>x.id===fallbackId);
     if(!v){
       // v.176: "bana nereye kaydettiğini bilemezse nereye kaydetmesi gerektiğini sormalı" —
@@ -16636,11 +16663,7 @@ async function belgeTopluTek(file, fallbackId){
     const tur = ((bilgi&&bilgi.belgeTuru)||'diger').toLowerCase();
     const okunanPlaka = bilgi ? plakaNormalize(bilgi.plaka) : null;
     const okunanTarih = bilgi ? normalizeExtractedDate(bilgi.tarih||'') : '';
-    let v = null;
-    if(okunanPlaka){
-      v = vehicles.find(x=>plakaNormalize(x.plaka)===okunanPlaka)
-        || vehicles.find(x=>plakaNormalize(x.plaka).includes(okunanPlaka));
-    }
+    let v = okunanPlaka ? plakaylaAracBul(okunanPlaka) : null;
     if(!v && fallbackId) v = vehicles.find(x=>x.id===fallbackId);
     // v.175: bkz. otoBelgeSec'teki aynı açıklama — plaka hiç okunamayan bir belge muhtemelen
     // tek bir araca değil tedarikçiye/filoya ait toplu bir fatura, bu modül onu işlemiyor.
@@ -22831,10 +22854,7 @@ async function aiBelgeYukle(file){
     let tur = ((bilgi&&bilgi.belgeTuru)||'diger').toLowerCase();
     tur = dogrulaBelgeTuru(tur, bilgi);
     const okunanPlaka = bilgi ? plakaNormalize(bilgi.plaka) : null;
-    let v = null;
-    if(okunanPlaka){
-      v = vehicles.find(x=>plakaNormalize(x.plaka)===okunanPlaka) || vehicles.find(x=>plakaNormalize(x.plaka).includes(okunanPlaka));
-    }
+    let v = okunanPlaka ? plakaylaAracBul(okunanPlaka) : null;
 
     if(!v){
       window.__aiPendingBelge = {file, onceden, bilgi, tur};
@@ -22906,7 +22926,7 @@ async function aiPendingBelgeCozumle(txt){
   // burada da esc(txt) yapılırsa çift kaçış oluşur (örn. "&" → "&amp;" → "&amp;amp;").
   aiMessages.push({role:'user', content: txt});
   const plakaTxt = plakaNormalize(txt);
-  const v = plakaTxt ? (vehicles.find(x=>plakaNormalize(x.plaka)===plakaTxt) || vehicles.find(x=>plakaNormalize(x.plaka).includes(plakaTxt))) : null;
+  const v = plakaTxt ? plakaylaAracBul(plakaTxt) : null;
   if(!v){
     aiMessages.push({role:'assistant', content: `"${esc(txt)}" filoda bir araçla eşleşmedi. Doğru plakayı tekrar yazar mısın? (Belgeyi tekrar yüklemene gerek yok.)`});
     window.__aiPendingBelge = pending;
@@ -22978,10 +22998,7 @@ async function aiCokluBelgeIsle(file, onceden, kayitlar){
     let tur = ((bilgi&&bilgi.belgeTuru)||'diger').toLowerCase();
     tur = dogrulaBelgeTuru(tur, bilgi);
     const okunanPlaka = bilgi ? plakaNormalize(bilgi.plaka) : null;
-    let v = null;
-    if(okunanPlaka){
-      v = vehicles.find(x=>plakaNormalize(x.plaka)===okunanPlaka) || vehicles.find(x=>plakaNormalize(x.plaka).includes(okunanPlaka));
-    }
+    let v = okunanPlaka ? plakaylaAracBul(okunanPlaka) : null;
     if(!v){
       eslesmeyen.push(bilgi&&bilgi.plaka ? String(bilgi.plaka) : '(plakasız bir kayıt)');
       continue;
