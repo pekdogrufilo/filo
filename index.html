@@ -2480,7 +2480,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-26.267</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-26.268</div>
     </div>
   </div>
 </div>
@@ -2657,7 +2657,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-26.267</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-26.268</div>
     </div>
   </aside>
 <script>
@@ -3623,6 +3623,7 @@ const FIRMA_UNVANI = 'Pekdoğru Otomotiv Turizm Taşımacılık Nakliye Hayvanc�
 
 let vehicles = [];
 let arsiv = [];
+let arsivSilinenler = []; // v.268: kalıcı silinen arşiv kayıtları (30 gün geri alınabilir)
 let activityLog = [];
 let expenses = [];
 let sozlesmeler = [];
@@ -3687,7 +3688,166 @@ let belgeFilterType = null; // null | 'sigorta' | 'muayene' | 'kira'
 let alertOpen = false;
 let alertShowAll = false;
 
+// v.268: "ARŞİV YANLIŞLIKLA SİLİNDİ" incelenirken bulunan veri kaybı açığı. load() her koleksiyonu
+// storageAPI.get(...).catch(()=>null) ile okuyordu — yani "bu anahtar hiç yok" (ilk açılış) ile
+// "okunamadı" (zayıf bağlantıda 20 sn zaman aşımı, Firestore hatası) AYNI şey sayılıyordu. Okuma
+// başarısız olursa arşiv/müşteriler/kiralamalar vb. boş dizi sanılıyor, kullanıcının o oturumdaki
+// İLK kaydetme işlemi de bu boş (ya da tek kayıtlı) listeyi buluttaki GERÇEK verinin üzerine
+// yazıyordu. Araç listesinde durum daha da ağırdı: okuma hatasında örnek (IMPORTED_DATA) veri
+// yüklenip HEMEN buluta yazılıyor, gerçek filo örnek veriyle eziliyordu.
+// Artık: (1) guvenliOku yalnızca gerçekten "bulunamadı" durumunda null döner, diğer tüm hatalarda
+// anahtarı yuklenemeyenAnahtarlar'a ekler; (2) depolamaYazmaKorumasiKur, okunamamış bir anahtara
+// o oturum boyunca YAZMAYI reddeder (bulutta ne varsa korunur); (3) kullanıcıya açık bir uyarı
+// ve "Yeniden Dene" düğmesi gösterilir.
+const yuklenemeyenAnahtarlar = new Set();
+function yuklemeHatasiIsaretle(key, e){
+  yuklenemeyenAnahtarlar.add(key);
+  console.error('Açılışta okunamadı:', key, e);
+}
+async function guvenliOku(key){
+  try{
+    const r = await storageAPI.get(key);
+    if(key in KOLEKSIYONLAR) tabanDeger[key] = (r && r.value!=null) ? r.value : '';
+    return r;
+  }
+  catch(e){
+    if(e && e.message==='bulunamadı'){ if(key in KOLEKSIYONLAR) tabanDeger[key] = ''; return null; }
+    yuklemeHatasiIsaretle(key, e);
+    return null;
+  }
+}
+
+// v.268: "34KRE884 İÇİN SÖZLEŞME YAPTIM AMA ARAÇ HALA MÜSAİT GÖRÜNÜYOR" — panel her kayıtta bir
+// koleksiyonun TAMAMINI (ör. tüm araç listesi) buluta yazıyor. Panel iki cihazda/sekmede açıkken,
+// önce açılmış (eski veriyi hafızasında tutan) ekranda yapılan HERHANGİ bir kayıt, diğer cihazda o
+// arada yapılmış değişiklikleri (yeni sözleşme, aracın Kirada olması, arşiv vb.) sessizce eski
+// haline döndürüyordu. Artık yazmadan hemen önce buluttaki güncel hali okunuyor; açılıştan/son
+// yazmadan beri başkası değiştirmişse iki tarafın değişiklikleri kayıt (id) bazında BİRLEŞTİRİLİYOR:
+// sadece bu cihazın değiştirdiği kayıtta bu cihazınki, sadece diğerinin değiştirdiğinde onunki,
+// ikisinin de değiştirdiğinde bu cihazınki (en son yapılan) geçerli olur; hiçbir taraf ezilmez.
+const KOLEKSIYONLAR = {
+  vehicles:[()=>vehicles, v=>{vehicles=v;}], arsiv:[()=>arsiv, v=>{arsiv=v;}],
+  arsivSilinenler:[()=>arsivSilinenler, v=>{arsivSilinenler=v;}],
+  customers:[()=>customers, v=>{customers=v;}], rentals:[()=>rentals, v=>{rentals=v;}],
+  expenses:[()=>expenses, v=>{expenses=v;}], sozlesmeler:[()=>sozlesmeler, v=>{sozlesmeler=v;}],
+  sozlesmeGruplari:[()=>sozlesmeGruplari, v=>{sozlesmeGruplari=v;}], invoices:[()=>invoices, v=>{invoices=v;}],
+  payments:[()=>payments, v=>{payments=v;}], ledger:[()=>ledger, v=>{ledger=v;}],
+  suppliers:[()=>suppliers, v=>{suppliers=v;}], supplierLedger:[()=>supplierLedger, v=>{supplierLedger=v;}],
+  serviceParts:[()=>serviceParts, v=>{serviceParts=v;}], tires:[()=>tires, v=>{tires=v;}],
+  fuelRecords:[()=>fuelRecords, v=>{fuelRecords=v;}], tolls:[()=>tolls, v=>{tolls=v;}],
+  trafficFines:[()=>trafficFines, v=>{trafficFines=v;}], documents:[()=>documents, v=>{documents=v;}],
+  notifications:[()=>notifications, v=>{notifications=v;}], automationRules:[()=>automationRules, v=>{automationRules=v;}],
+  kvkkTalepleri:[()=>kvkkTalepleri, v=>{kvkkTalepleri=v;}], ihaleler:[()=>ihaleler, v=>{ihaleler=v;}],
+  activityLog:[()=>activityLog, v=>{activityLog=v;}],
+};
+const tabanDeger = {};   // anahtar -> bu cihazın en son okuduğu/yazdığı bulut hali (JSON metni)
+const yazmaKuyrugu = {}; // anahtar -> aynı anahtara üst üste yazmaları sıraya sokan promise zinciri
+function kayitBirlestir(key, taban, benim, onlarin){
+  if(!Array.isArray(taban) || !Array.isArray(benim) || !Array.isArray(onlarin)) return null;
+  const kimlik = key==='activityLog' ? (x=>JSON.stringify(x)) : (x=>(x && x.id!=null) ? String(x.id) : null);
+  const haritala = (a)=>{ const m = new Map(); for(const x of a){ const k = kimlik(x); if(k==null || m.has(k)) return null; m.set(k, x); } return m; };
+  const B = haritala(taban), M = haritala(benim), T = haritala(onlarin);
+  if(!B || !M || !T) return null; // kimliksiz/çift kayıt varsa güvenli birleştirme yapılamaz
+  const S = x => x===undefined ? undefined : JSON.stringify(x);
+  const karar = (id)=>{
+    const b = S(B.get(id)), m = S(M.get(id)), t = S(T.get(id));
+    if(m===b) return T.get(id);           // bu cihaz dokunmamış -> diğerininki (silinmişse silinmiş)
+    if(t===b) return M.get(id);           // diğeri dokunmamış -> bu cihazınki
+    return M.get(id)!==undefined ? M.get(id) : T.get(id); // ikisi de değiştirmiş -> bu cihazınki
+  };
+  const sonuc = [], gorulen = new Set();
+  for(const kaynak of [benim, onlarin]){
+    for(const x of kaynak){
+      const id = kimlik(x); if(gorulen.has(id)) continue; gorulen.add(id);
+      const r = karar(id); if(r!==undefined) sonuc.push(r);
+    }
+  }
+  if(key==='activityLog'){ sonuc.sort((a,b)=>(b.ts||0)-(a.ts||0)); return sonuc.slice(0,200); }
+  return sonuc;
+}
+function canliyaUygula(key, liste){
+  const [al, ver] = KOLEKSIYONLAR[key];
+  const canli = al() || [];
+  const kimlik = key==='activityLog' ? (x=>JSON.stringify(x)) : (x=>x && x.id!=null ? String(x.id) : null);
+  const canliHarita = new Map(canli.map(x=>[kimlik(x), x]));
+  ver(liste.map(x=>{ const c = canliHarita.get(kimlik(x)); return (c && JSON.stringify(c)===JSON.stringify(x)) ? c : x; }));
+}
+let __birlesmeBildirimTs = 0;
+async function koleksiyonuBirlestirerekYaz(ham, key, gelenDeger){
+  const [al] = KOLEKSIYONLAR[key];
+  let yazilacak = gelenDeger;
+  try{ const canli = al(); if(Array.isArray(canli)) yazilacak = JSON.stringify(canli); }catch(e){}
+  let uzak = null;
+  try{ const r = await ham.get(key); uzak = (r && r.value!=null) ? r.value : ''; }
+  catch(e){ uzak = (e && e.message==='bulunamadı') ? '' : null; }
+  let birlesti = false;
+  if(uzak!==null && uzak!==tabanDeger[key] && uzak!==yazilacak){
+    const coz = (t)=>{ if(!t) return []; try{ return JSON.parse(t); }catch(e){ return null; } };
+    const liste = kayitBirlestir(key, coz(tabanDeger[key]), coz(yazilacak), coz(uzak));
+    if(liste){
+      const yeni = JSON.stringify(liste);
+      if(yeni!==yazilacak){ yazilacak = yeni; canliyaUygula(key, liste); birlesti = true; }
+    }
+  }
+  const sonuc = await ham.set(key, yazilacak);
+  tabanDeger[key] = yazilacak;
+  if(birlesti && key!=='activityLog'){
+    try{
+      render();
+      if(window.__currentPage && window.__currentPage!=='arac-yonetimi') renderCurrentPage();
+      updateArsivSayi();
+    }catch(e){}
+    if(Date.now()-__birlesmeBildirimTs > 15000){
+      __birlesmeBildirimTs = Date.now();
+      showToast('Başka bir cihazda yapılan değişiklikler bu ekrana da işlendi (hiçbiri ezilmedi).');
+    }
+  }
+  return sonuc;
+}
+function depolamaYazmaKorumasiKur(){
+  if(!storageAPI || storageAPI.__yazmaKorumali) return;
+  const ham = storageAPI;
+  storageAPI = Object.assign({}, ham, {
+    get: (k)=>ham.get(k),
+    delete: (k)=>ham.delete(k),
+    list: (p)=>ham.list(p),
+    set: (k, v)=>{
+      if(yuklenemeyenAnahtarlar.has(k)){
+        return Promise.reject(new Error('Bu bölümün verisi açılışta okunamadığı için, buluttaki kaydın üzerine yazılması engellendi. Sayfayı yenileyip tekrar deneyin.'));
+      }
+      if(!(k in KOLEKSIYONLAR) || tabanDeger[k]===undefined) return ham.set(k, v);
+      // Aynı anahtara üst üste yazmalar sıraya girer; her biri buluttaki güncel hali görüp birleştirir.
+      const onceki = yazmaKuyrugu[k] || Promise.resolve();
+      const bu = onceki.catch(()=>{}).then(()=>koleksiyonuBirlestirerekYaz(ham, k, v));
+      yazmaKuyrugu[k] = bu;
+      return bu;
+    },
+    __yazmaKorumali: true,
+  });
+}
+function veriYuklemeUyarisiGoster(){
+  const ADLAR = {vehicles:'Araçlar', arsiv:'Arşiv', arsivSilinenler:'Son silinenler', customers:'Müşteriler', rentals:'Kiralamalar', expenses:'Masraflar',
+    sozlesmeler:'Sözleşmeler', invoices:'Faturalar', payments:'Tahsilatlar', ledger:'Cari hareketler', documents:'Belgeler',
+    suppliers:'Tedarikçiler', supplierLedger:'Tedarikçi cari', tires:'Lastikler', fuelRecords:'Yakıt', tolls:'HGS/OGS',
+    trafficFines:'Trafik cezaları', serviceParts:'Servis parçaları', ihaleler:'İhaleler', notifications:'Bildirimler',
+    activityLog:'İşlem geçmişi', automationRules:'Otomasyon kuralları', kvkkTalepleri:'KVKK talepleri', sozlesmeGruplari:'Sözleşme grupları'};
+  const liste = [...yuklenemeyenAnahtarlar].map(k=>ADLAR[k]||k).join(', ');
+  let el = document.getElementById('veriYuklemeUyari');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'veriYuklemeUyari';
+    el.style.cssText = 'position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:9999;width:min(94vw,560px);background:#3B1414;color:#FFE3E0;border:1px solid #E1554E;border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.45;box-shadow:0 10px 30px rgba(0,0,0,.35);display:flex;gap:10px;align-items:flex-start;';
+    document.body.appendChild(el);
+  }
+  el.innerHTML = `<div style="flex:1;"><b>Bazı veriler buluttan okunamadı</b> (bağlantı zayıf olabilir): ${esc(liste)}.<br>Verileriniz silinmedi. Yanlışlıkla üzerine yazılmasın diye bu bölümlerde kaydetme durduruldu. Lütfen sayfayı yenileyin.</div>
+    <button onclick="location.reload()" style="background:#E1554E;color:#fff;border:none;border-radius:8px;padding:7px 12px;font-weight:700;cursor:pointer;white-space:nowrap;">Yeniden Dene</button>`;
+}
+
 async function load(){
+  // v.268: bkz. guvenliOku/depolamaYazmaKorumasiKur açıklaması.
+  yuklenemeyenAnahtarlar.clear();
+  for(const k in tabanDeger) delete tabanDeger[k];
+  depolamaYazmaKorumasiKur();
   if(window.__storageDegraded && !window.__cloudSyncActive){
     document.getElementById('storageWarn').classList.add('show');
   }
@@ -3706,157 +3866,172 @@ async function load(){
   await Promise.all([
     (async()=>{
       try{
-        const vr = await storageAPI.get('vehicles').catch(()=>null);
+        const vr = await guvenliOku('vehicles');
         if(vr && vr.value){
           vehicles = JSON.parse(vr.value);
+        }else if(yuklenemeyenAnahtarlar.has('vehicles')){
+          // v.268: okuma HATASI (zaman aşımı/bağlantı) — "kayıt yok" ile aynı şey değil. Eskiden bu
+          // durumda da aşağıdaki ilk-açılış dalına düşülüp örnek veri buluttaki GERÇEK filonun
+          // üzerine yazılıyordu. Artık boş başlanır ve bu anahtara yazma engellenir.
+          vehicles = [];
         }else{
           // hafızada kayıtlı veri yoksa (ilk açılış) Excel'den aktarılan veriyle başla
           vehicles = IMPORTED_DATA.map(v=>({...v}));
           await persist();
         }
-      }catch(e){ vehicles = IMPORTED_DATA.map(v=>({...v})); }
+      }catch(e){ vehicles = []; yuklemeHatasiIsaretle('vehicles', e); }
     })(),
     (async()=>{
       try{
-        const lr = await storageAPI.get('activityLog').catch(()=>null);
+        const lr = await guvenliOku('activityLog');
         activityLog = (lr && lr.value) ? JSON.parse(lr.value) : [];
-      }catch(e){ activityLog = []; }
+      }catch(e){ activityLog = []; yuklemeHatasiIsaretle('activityLog', e); }
     })(),
     (async()=>{
       try{
-        const er = await storageAPI.get('expenses').catch(()=>null);
+        const er = await guvenliOku('expenses');
         expenses = (er && er.value) ? JSON.parse(er.value) : [];
-      }catch(e){ expenses = []; }
+      }catch(e){ expenses = []; yuklemeHatasiIsaretle('expenses', e); }
     })(),
     (async()=>{
       try{
-        const sr = await storageAPI.get('sozlesmeler').catch(()=>null);
+        const sr = await guvenliOku('sozlesmeler');
         sozlesmeler = (sr && sr.value) ? JSON.parse(sr.value) : [];
-      }catch(e){ sozlesmeler = []; }
+      }catch(e){ sozlesmeler = []; yuklemeHatasiIsaretle('sozlesmeler', e); }
     })(),
     (async()=>{
       try{
-        const sgr = await storageAPI.get('sozlesmeGruplari').catch(()=>null);
+        const sgr = await guvenliOku('sozlesmeGruplari');
         sozlesmeGruplari = (sgr && sgr.value) ? JSON.parse(sgr.value) : [];
-      }catch(e){ sozlesmeGruplari = []; }
+      }catch(e){ sozlesmeGruplari = []; yuklemeHatasiIsaretle('sozlesmeGruplari', e); }
     })(),
     (async()=>{
       try{
-        const ar = await storageAPI.get('arsiv').catch(()=>null);
+        const ar = await guvenliOku('arsiv');
         arsiv = (ar && ar.value) ? JSON.parse(ar.value) : [];
-      }catch(e){ arsiv = []; }
+      }catch(e){ arsiv = []; yuklemeHatasiIsaretle('arsiv', e); }
     })(),
     (async()=>{
       try{
-        const cr = await storageAPI.get('customers').catch(()=>null);
+        const asr = await guvenliOku('arsivSilinenler');
+        arsivSilinenler = (asr && asr.value) ? JSON.parse(asr.value) : [];
+      }catch(e){ arsivSilinenler = []; yuklemeHatasiIsaretle('arsivSilinenler', e); }
+    })(),
+    (async()=>{
+      try{
+        const cr = await guvenliOku('customers');
         customers = (cr && cr.value) ? JSON.parse(cr.value) : [];
-      }catch(e){ customers = []; }
+      }catch(e){ customers = []; yuklemeHatasiIsaretle('customers', e); }
     })(),
     (async()=>{
       try{
-        const lgr = await storageAPI.get('ledger').catch(()=>null);
+        const lgr = await guvenliOku('ledger');
         ledger = (lgr && lgr.value) ? JSON.parse(lgr.value) : [];
-      }catch(e){ ledger = []; }
+      }catch(e){ ledger = []; yuklemeHatasiIsaretle('ledger', e); }
     })(),
     (async()=>{
       try{
-        const ir = await storageAPI.get('invoices').catch(()=>null);
+        const ir = await guvenliOku('invoices');
         invoices = (ir && ir.value) ? JSON.parse(ir.value) : [];
-      }catch(e){ invoices = []; }
+      }catch(e){ invoices = []; yuklemeHatasiIsaretle('invoices', e); }
     })(),
     (async()=>{
       try{
-        const pr = await storageAPI.get('payments').catch(()=>null);
+        const pr = await guvenliOku('payments');
         payments = (pr && pr.value) ? JSON.parse(pr.value) : [];
-      }catch(e){ payments = []; }
+      }catch(e){ payments = []; yuklemeHatasiIsaretle('payments', e); }
     })(),
     (async()=>{
       try{
-        const rtr = await storageAPI.get('rentals').catch(()=>null);
+        const rtr = await guvenliOku('rentals');
         rentals = (rtr && rtr.value) ? JSON.parse(rtr.value) : [];
-      }catch(e){ rentals = []; }
+      }catch(e){ rentals = []; yuklemeHatasiIsaretle('rentals', e); }
     })(),
     (async()=>{
       try{
-        const spr = await storageAPI.get('suppliers').catch(()=>null);
+        const spr = await guvenliOku('suppliers');
         suppliers = (spr && spr.value) ? JSON.parse(spr.value) : [];
-      }catch(e){ suppliers = []; }
+      }catch(e){ suppliers = []; yuklemeHatasiIsaretle('suppliers', e); }
     })(),
     (async()=>{
       try{
-        const sldgr = await storageAPI.get('supplierLedger').catch(()=>null);
+        const sldgr = await guvenliOku('supplierLedger');
         supplierLedger = (sldgr && sldgr.value) ? JSON.parse(sldgr.value) : [];
-      }catch(e){ supplierLedger = []; }
+      }catch(e){ supplierLedger = []; yuklemeHatasiIsaretle('supplierLedger', e); }
     })(),
     (async()=>{
       try{
-        const scpr = await storageAPI.get('serviceParts').catch(()=>null);
+        const scpr = await guvenliOku('serviceParts');
         serviceParts = (scpr && scpr.value) ? JSON.parse(scpr.value) : [];
-      }catch(e){ serviceParts = []; }
+      }catch(e){ serviceParts = []; yuklemeHatasiIsaretle('serviceParts', e); }
     })(),
     (async()=>{
       try{
-        const tr2 = await storageAPI.get('tires').catch(()=>null);
+        const tr2 = await guvenliOku('tires');
         tires = (tr2 && tr2.value) ? JSON.parse(tr2.value) : [];
-      }catch(e){ tires = []; }
+      }catch(e){ tires = []; yuklemeHatasiIsaretle('tires', e); }
     })(),
     (async()=>{
       try{
-        const fr = await storageAPI.get('fuelRecords').catch(()=>null);
+        const fr = await guvenliOku('fuelRecords');
         fuelRecords = (fr && fr.value) ? JSON.parse(fr.value) : [];
-      }catch(e){ fuelRecords = []; }
+      }catch(e){ fuelRecords = []; yuklemeHatasiIsaretle('fuelRecords', e); }
     })(),
     (async()=>{
       try{
-        const tor = await storageAPI.get('tolls').catch(()=>null);
+        const tor = await guvenliOku('tolls');
         tolls = (tor && tor.value) ? JSON.parse(tor.value) : [];
-      }catch(e){ tolls = []; }
+      }catch(e){ tolls = []; yuklemeHatasiIsaretle('tolls', e); }
     })(),
     (async()=>{
       try{
-        const tfr = await storageAPI.get('trafficFines').catch(()=>null);
+        const tfr = await guvenliOku('trafficFines');
         trafficFines = (tfr && tfr.value) ? JSON.parse(tfr.value) : [];
-      }catch(e){ trafficFines = []; }
+      }catch(e){ trafficFines = []; yuklemeHatasiIsaretle('trafficFines', e); }
     })(),
     (async()=>{
       try{
-        const dr = await storageAPI.get('documents').catch(()=>null);
+        const dr = await guvenliOku('documents');
         documents = (dr && dr.value) ? JSON.parse(dr.value) : [];
-      }catch(e){ documents = []; }
+      }catch(e){ documents = []; yuklemeHatasiIsaretle('documents', e); }
     })(),
     (async()=>{
       try{
-        const nr = await storageAPI.get('notifications').catch(()=>null);
+        const nr = await guvenliOku('notifications');
         notifications = (nr && nr.value) ? JSON.parse(nr.value) : [];
-      }catch(e){ notifications = []; }
+      }catch(e){ notifications = []; yuklemeHatasiIsaretle('notifications', e); }
     })(),
     // FAZ8: automationRules — storageAPI'de kayıt HİÇ yoksa (ilk açılış, vehicles/IMPORTED_DATA
     // ile AYNI ilke) örnek/varsayılan kurallarla başlar; kullanıcı hepsini silmişse (kayıt var
     // ama boş dizi) o tercihe saygı gösterilir, yeniden seed EDİLMEZ.
     (async()=>{
       try{
-        const arr = await storageAPI.get('automationRules').catch(()=>null);
+        const arr = await guvenliOku('automationRules');
         if(arr && arr.value){
           automationRules = JSON.parse(arr.value);
+        }else if(yuklenemeyenAnahtarlar.has('automationRules')){
+          automationRules = [];
         }else{
           automationRules = OTOMASYON_VARSAYILAN_KURALLAR.map(r=>({...r, id: yeniId('rule'), sonCalismaTarihi: null}));
           await persistAutomationRules();
         }
-      }catch(e){ automationRules = []; }
+      }catch(e){ automationRules = []; yuklemeHatasiIsaretle('automationRules', e); }
     })(),
     (async()=>{
       try{
-        const kvr = await storageAPI.get('kvkkTalepleri').catch(()=>null);
+        const kvr = await guvenliOku('kvkkTalepleri');
         kvkkTalepleri = (kvr && kvr.value) ? JSON.parse(kvr.value) : [];
-      }catch(e){ kvkkTalepleri = []; }
+      }catch(e){ kvkkTalepleri = []; yuklemeHatasiIsaretle('kvkkTalepleri', e); }
     })(),
     (async()=>{
       try{
-        const ihr = await storageAPI.get('ihaleler').catch(()=>null);
+        const ihr = await guvenliOku('ihaleler');
         ihaleler = (ihr && ihr.value) ? JSON.parse(ihr.value) : [];
-      }catch(e){ ihaleler = []; }
+      }catch(e){ ihaleler = []; yuklemeHatasiIsaretle('ihaleler', e); }
     })(),
   ]);
+  if(yuklenemeyenAnahtarlar.size) veriYuklemeUyarisiGoster();
+  arsivSilinenleriTemizle().catch(e=>console.error('arsivSilinenleriTemizle hatası:', e));
   // FAZ6: bildirim kayıtlarını (dedupe'lu) üret — sayfa her açıldığında değil, sadece burada,
   // uygulama yüklenirken bir kez çalışır. Yeni kayıt eklendiyse kalıcı olarak saklanır.
   try{
@@ -4180,7 +4355,7 @@ function urgentList(esikGun){
     [['Sigorta', v.sigortaTarihi], ['Muayene', v.muayeneTarihi], ['Kira Bitişi', kiradaMi ? v.kiraBitis : null], ['Sözleşme Bitişi', kiradaMi ? v.sozlesmeBitis : null], ['Kasko Bitişi', v.kaskoBitis]].forEach(([tip, tarih])=>{
       if(!tarih) return;
       const dl = daysLeft(tarih);
-      if(dl<=esik) rows.push({plaka:v.plaka, tip, dl});
+      if(dl<=esik) rows.push({plaka:v.plaka, tip, dl, id:v.id});
     });
     // Km bazlı bakım uyarısı
     if(v.sonBakimKm && v.bakimPeriyotKm){
@@ -4196,6 +4371,10 @@ function urgentList(esikGun){
   // Kayıtlı sözleşme bitişleri (arşivden — toplu kiralamalar dahil)
   (sozlesmeler||[]).forEach(r=>{
     if(!r.bitisISO) return;
+    // v.268: yukarıdaki araç bazlı kontrollerle aynı ilke — sözleşmedeki araçların HİÇBİRİ artık
+    // kirada değilse (iade alınmış, satılmış vb.) bu eski sözleşme kaydı uyarı üretmez. Eskiden iade
+    // alınmış araçların kayıtlı sözleşmeleri Bugün Yapılacaklar/Bildirimler'de görünmeye devam ediyordu.
+    if(Array.isArray(r.plakalar) && r.plakalar.length && !r.plakalar.some(p=>vehicles.some(v=>v.plaka===p && v.durum==='Kirada'))) return;
     const dl = daysLeft(r.bitisISO);
     if(dl<=esik) rows.push({plaka:r.aracOzet||'—', tip:'Sözleşme bitişi '+r.sozNo, dl, kiraci:r.kiraci||''});
   });
@@ -4655,6 +4834,10 @@ function arsivAc(){
   const el = document.createElement('div');
   el.className='overlay show'; el.id='arsivOverlay'; el.style.cssText='z-index:70;';
   const liste = [...arsiv].sort((a,b)=>(b.arşivlenme||'').localeCompare(a.arşivlenme||''));
+  const silinenler = [...arsivSilinenler].sort((a,b)=>(b.silinmeTarihi||'').localeCompare(a.silinmeTarihi||''));
+  const btn = (renk, bg, metin, onclick)=>`<button onclick="${onclick}" style="background:${bg};border:1px solid ${renk}40;color:${renk};padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">${metin}</button>`;
+  // v.268: butonlar artık dizi SIRASI (idx) yerine araç id'si ile çalışıyor — liste arka planda
+  // (başka cihazdan gelen birleştirme ile) güncellenirse yanlış araç silinmesin/geri yüklenmesin.
   el.innerHTML = `
     <div style="background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px;width:min(94vw,640px);max-height:88vh;overflow-y:auto;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
@@ -4663,23 +4846,35 @@ function arsivAc(){
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
         </button>
       </div>
-      <p style="margin:0 0 14px;font-size:12.5px;color:var(--text-3);">Silinen, satılan veya pert olan araçlar burada saklanır. "Geri Yükle" aracı aktif filoya döndürür; "Kalıcı Sil" tüm belgeleriyle birlikte tamamen siler.</p>
-      ${liste.length ? liste.map((a)=>{
-        const idx = arsiv.indexOf(a);
-        return `<div style="display:flex;align-items:center;gap:12px;padding:11px 12px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;background:var(--surface-2);">
+      <p style="margin:0 0 14px;font-size:12.5px;color:var(--text-3);">Silinen, satılan veya pert olan araçlar burada saklanır. "Geri Yükle" aracı aktif filoya döndürür. "Kalıcı Sil" aracı ${ARSIV_SILINEN_GUN} gün boyunca aşağıdaki "Son silinenler" bölümünde bekletir; bu süre içinde geri alınabilir.</p>
+      ${liste.length ? liste.map((a)=>`<div style="display:flex;align-items:center;gap:12px;padding:11px 12px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;background:var(--surface-2);flex-wrap:wrap;">
           <div style="min-width:0;flex:1;">
             <div style="font-size:13.5px;font-weight:700;color:var(--paper);">${esc(a.plaka||'—')} <span style="font-size:12px;font-weight:400;color:var(--steel-300);">${esc([a.marka,a.model].filter(Boolean).join(' '))}</span></div>
             <div style="font-size:11.5px;color:var(--text-3);margin-top:2px;">${esc(a.durum||'—')}${a.arşivlenme?' · Arşivlenme: '+fmtTarih(a.arşivlenme):''}${a.arşivNot?' · '+esc(a.arşivNot):''}</div>
           </div>
-          <button onclick="arsivdenGeriYukle(${idx})" style="background:rgba(54,161,104,.12);border:1px solid rgba(54,161,104,.25);color:#36A168;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">Geri Yükle</button>
-          <button onclick="arsivdenKaliciSil(${idx})" style="background:rgba(225,85,78,.1);border:1px solid rgba(225,85,78,.2);color:#E1554E;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">Kalıcı Sil</button>
-        </div>`;
-      }).join('') : '<div class="log-empty">Arşiv boş.</div>'}
+          ${btn('#36A168','rgba(54,161,104,.12)','Geri Yükle',`arsivdenGeriYukle('${esc(String(a.id))}')`)}
+          ${btn('#E1554E','rgba(225,85,78,.1)','Kalıcı Sil',`arsivdenKaliciSil('${esc(String(a.id))}')`)}
+        </div>`).join('') : '<div class="log-empty">Arşiv boş.</div>'}
+      ${silinenler.length ? `<div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--line);">
+        <div style="font-size:13px;font-weight:700;color:var(--paper);margin-bottom:8px;">🗑 Son silinenler <span style="font-weight:400;color:var(--text-3);font-size:12px;">— ${ARSIV_SILINEN_GUN} gün sonra tamamen silinir</span></div>
+        ${silinenler.map(s=>{ const k=s.kayit||{}; const kalan = Math.max(0, ARSIV_SILINEN_GUN - Math.floor((Date.now()-new Date(s.silinmeTarihi).getTime())/86400000));
+          return `<div style="display:flex;align-items:center;gap:12px;padding:9px 12px;border:1px dashed var(--line);border-radius:10px;margin-bottom:6px;flex-wrap:wrap;">
+            <div style="min-width:0;flex:1;"><div style="font-size:13px;font-weight:700;color:var(--paper);">${esc(k.plaka||'—')} <span style="font-size:12px;font-weight:400;color:var(--steel-300);">${esc([k.marka,k.model].filter(Boolean).join(' '))}</span></div>
+            <div style="font-size:11.5px;color:var(--text-3);">Silinme: ${fmtTarih((s.silinmeTarihi||'').slice(0,10))} · ${(s.masraflar||[]).length} masraf · ${kalan} gün kaldı</div></div>
+            ${btn('#36A168','rgba(54,161,104,.12)','Geri Al',`arsivSilineniGeriAl('${esc(String(s.id))}')`)}
+          </div>`; }).join('')}
+      </div>` : ''}
+      <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--line);display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:200px;font-size:12px;color:var(--text-3);">Daha önce silinmiş bir kaydı, Ayarlar'dan alınmış bir yedek dosyasından (filo-yedek-....json) geri getirebilirsiniz. Mevcut verilere dokunulmaz.</div>
+        ${btn('var(--accent-blue)','rgba(22,160,134,.1)','Yedekten Kurtar',"document.getElementById('arsivYedekInput').click()")}
+        <input type="file" id="arsivYedekInput" accept=".json,application/json" style="display:none" onchange="arsivYedektenKurtarDosya(this)">
+      </div>
     </div>`;
   document.body.appendChild(el);
   el.onclick = e=>{ if(e.target===el) el.remove(); };
 }
-async function arsivdenGeriYukle(idx){
+async function arsivdenGeriYukle(id){
+  const idx = arsiv.findIndex(x=>String(x.id)===String(id));
   const a = arsiv[idx]; if(!a) return;
   vehicles.push(a);
   arsiv.splice(idx,1);
@@ -4690,14 +4885,24 @@ async function arsivdenGeriYukle(idx){
   logActivity('add', `Araç arşivden geri yüklendi: <b>${esc(a.plaka||'—')}</b>`);
   showToast('Araç filoya geri yüklendi.');
 }
-async function arsivdenKaliciSil(idx){
+// v.268: "ARŞİV YANLIŞLIKLA SİLİNDİ" — "Kalıcı Sil" eskiden aracın arşiv kaydını, o araca ait TÜM
+// masrafları ve belge dosyalarını anında ve geri dönüşsüz siliyordu. Artık kayıt + masrafları
+// ARSIV_SILINEN_GUN gün boyunca "Son silinenler"de (arsivSilinenler) bekletiliyor, belge dosyalarına
+// da bu süre dolana kadar dokunulmuyor; süre dolunca (açılışta, arsivSilinenleriTemizle) gerçekten
+// siliniyor. Bu sürede Arşiv penceresinden tek tıkla geri alınabilir.
+const ARSIV_SILINEN_GUN = 30;
+async function persistArsivSilinenler(){
+  await storageAPI.set('arsivSilinenler', JSON.stringify(arsivSilinenler)).catch(()=>showToast('Silinenler listesi kaydedilemedi.', true));
+}
+async function arsivdenKaliciSil(id){
   if(!requireAdmin()) return;
+  const idx = arsiv.findIndex(x=>String(x.id)===String(id));
   const a = arsiv[idx]; if(!a) return;
-  if(!confirm(a.plaka+' plakalı araç TÜM belgeleriyle birlikte kalıcı olarak silinecek. Bu işlem geri alınamaz. Emin misiniz?')) return;
-  for(const d of DOC_TYPES){
-    if(a[d.vehicleAdiField]) await storageAPI.delete(d.storagePrefix+a.id).catch(()=>{});
-  }
-  if(expenses.some(e=>e.vehicleId===a.id)){
+  if(!confirm(a.plaka+' plakalı araç, belgeleri ve masraflarıyla birlikte arşivden silinecek.\n\n'+ARSIV_SILINEN_GUN+' gün boyunca Arşiv > "Son silinenler" bölümünden geri alınabilir; bu süre sonunda tamamen silinir. Devam edilsin mi?')) return;
+  const masraflar = expenses.filter(e=>e.vehicleId===a.id);
+  arsivSilinenler.push({id: 'sil_'+a.id+'_'+Date.now().toString(36), kayit: a, masraflar, silinmeTarihi: new Date().toISOString()});
+  await persistArsivSilinenler();
+  if(masraflar.length){
     expenses = expenses.filter(e=>e.vehicleId!==a.id);
     await persistExpenses();
   }
@@ -4706,8 +4911,88 @@ async function arsivdenKaliciSil(idx){
   updateArsivSayi();
   const ov = document.getElementById('arsivOverlay');
   if(ov){ ov.remove(); arsivAc(); }
-  logActivity('del', `Arşivden kalıcı silindi: <b>${esc(a.plaka||'—')}</b>`);
-  showToast('Araç kalıcı olarak silindi.');
+  logActivity('del', `Arşivden silindi (${ARSIV_SILINEN_GUN} gün geri alınabilir): <b>${esc(a.plaka||'—')}</b>`);
+  showToast('Araç silindi — '+ARSIV_SILINEN_GUN+' gün içinde Arşiv > Son silinenler\'den geri alabilirsiniz.');
+}
+async function arsivSilineniGeriAl(silId){
+  if(!requireAdmin()) return;
+  const i = arsivSilinenler.findIndex(x=>String(x.id)===String(silId));
+  const s = arsivSilinenler[i]; if(!s) return;
+  const k = s.kayit||{};
+  if(!arsiv.some(x=>x.id===k.id) && !vehicles.some(x=>x.id===k.id)) arsiv.push(k);
+  const mevcutMasrafId = new Set(expenses.map(e=>e.id));
+  const geri = (s.masraflar||[]).filter(e=>!mevcutMasrafId.has(e.id));
+  if(geri.length){ expenses.push(...geri); await persistExpenses(); }
+  arsivSilinenler.splice(i,1);
+  await persistArsiv(); await persistArsivSilinenler();
+  updateArsivSayi();
+  const ov = document.getElementById('arsivOverlay'); if(ov){ ov.remove(); arsivAc(); }
+  logActivity('add', `Silinen araç arşive geri alındı: <b>${esc(k.plaka||'—')}</b>${geri.length?' · '+geri.length+' masraf':''}`);
+  showToast((k.plaka||'Araç')+' arşive geri alındı.');
+}
+// Açılışta: süresi dolmuş "son silinenler" kayıtlarını ve belge dosyalarını gerçekten sil.
+async function arsivSilinenleriTemizle(){
+  if(yuklenemeyenAnahtarlar.has('arsivSilinenler')) return;
+  const sinir = Date.now() - ARSIV_SILINEN_GUN*86400000;
+  const eski = arsivSilinenler.filter(s=>new Date(s.silinmeTarihi).getTime() < sinir);
+  if(!eski.length) return;
+  for(const s of eski){
+    const a = s.kayit||{};
+    for(const d of DOC_TYPES){
+      if(a[d.vehicleAdiField]) await storageAPI.delete(d.storagePrefix+a.id).catch(()=>{});
+    }
+  }
+  const eskiId = new Set(eski.map(s=>s.id));
+  arsivSilinenler = arsivSilinenler.filter(s=>!eskiId.has(s.id));
+  await persistArsivSilinenler();
+}
+// Yedekten kurtarma: yedekteki arşiv kayıtlarından, şu an ne arşivde ne filoda olanları listeler;
+// seçilenleri (ve o araçlara ait, şu an olmayan masrafları) mevcut verilere EKLER — hiçbir şeyi ezmez.
+async function arsivYedektenKurtarDosya(input){
+  if(!requireAdmin()){ input.value=''; return; }
+  const file = input.files && input.files[0]; input.value = '';
+  if(!file) return;
+  let data;
+  try{ data = JSON.parse(await file.text()); }catch(e){ showToast('Yedek dosyası okunamadı: '+e.message, true); return; }
+  if(!data || !Array.isArray(data.vehicles)){ showToast('Bu dosya panelin yedek dosyası gibi görünmüyor.', true); return; }
+  const mevcut = new Set([...arsiv.map(x=>x.id), ...vehicles.map(x=>x.id)]);
+  const adaylar = (Array.isArray(data.arsiv) ? data.arsiv : []).filter(x=>x && x.id!=null && !mevcut.has(x.id));
+  window.__arsivKurtarVeri = {adaylar, expenses: Array.isArray(data.expenses) ? data.expenses : []};
+  document.getElementById('arsivKurtarModal')?.remove();
+  const el = document.createElement('div');
+  el.className='overlay show'; el.id='arsivKurtarModal'; el.style.cssText='z-index:75;';
+  el.innerHTML = `<div style="background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;width:min(94vw,520px);max-height:86vh;overflow-y:auto;">
+    <h3 style="margin:0 0 6px;font-size:16px;color:var(--paper);">Yedekten Arşiv Kurtar</h3>
+    <p style="margin:0 0 12px;font-size:12.5px;color:var(--text-3);">${adaylar.length ? 'Bu yedekte olup şu an panelde bulunmayan '+adaylar.length+' arşiv kaydı bulundu. Geri getirmek istediklerinizi seçin.' : 'Bu yedekte, şu an panelde olmayan bir arşiv kaydı yok.'}</p>
+    ${adaylar.map((a,i)=>{ const m = window.__arsivKurtarVeri.expenses.filter(e=>e.vehicleId===a.id).length;
+      return `<label style="display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid var(--line);border-radius:9px;margin-bottom:6px;cursor:pointer;">
+        <input type="checkbox" class="arsivKurtarChk" value="${i}" checked>
+        <span style="flex:1;font-size:13px;color:var(--paper);"><b>${esc(a.plaka||'—')}</b> ${esc([a.marka,a.model].filter(Boolean).join(' '))}<br><span style="font-size:11.5px;color:var(--text-3);">${esc(a.durum||'—')}${a.arşivlenme?' · Arşivlenme: '+fmtTarih(a.arşivlenme):''} · ${m} masraf</span></span></label>`; }).join('')}
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
+      <button class="settings-btn" onclick="document.getElementById('arsivKurtarModal').remove()">Vazgeç</button>
+      ${adaylar.length ? `<button class="add-btn" onclick="arsivYedektenKurtarUygula()">Seçilenleri Geri Getir</button>` : ''}
+    </div></div>`;
+  document.body.appendChild(el);
+  el.onclick = e=>{ if(e.target===el) el.remove(); };
+}
+async function arsivYedektenKurtarUygula(){
+  if(!requireAdmin()) return;
+  const v = window.__arsivKurtarVeri; if(!v) return;
+  const secilen = [...document.querySelectorAll('.arsivKurtarChk:checked')].map(c=>v.adaylar[Number(c.value)]).filter(Boolean);
+  if(!secilen.length){ showToast('En az bir kayıt seçin.', true); return; }
+  const mevcut = new Set([...arsiv.map(x=>x.id), ...vehicles.map(x=>x.id)]);
+  const eklenecek = secilen.filter(a=>!mevcut.has(a.id));
+  const idler = new Set(eklenecek.map(a=>a.id));
+  const mevcutMasraf = new Set(expenses.map(e=>e.id));
+  const masraflar = v.expenses.filter(e=>idler.has(e.vehicleId) && !mevcutMasraf.has(e.id));
+  arsiv.push(...eklenecek);
+  if(masraflar.length){ expenses.push(...masraflar); await persistExpenses(); }
+  await persistArsiv();
+  updateArsivSayi();
+  document.getElementById('arsivKurtarModal')?.remove();
+  const ov = document.getElementById('arsivOverlay'); if(ov){ ov.remove(); arsivAc(); }
+  logActivity('add', `Yedekten arşive geri getirildi: ${eklenecek.map(a=>'<b>'+esc(a.plaka||'—')+'</b>').join(', ')}${masraflar.length?' · '+masraflar.length+' masraf':''}`);
+  showToast(eklenecek.length+' araç arşive geri getirildi'+(masraflar.length?', '+masraflar.length+' masraf ile':'')+'.');
 }
 
 // ===== Kayıtlı Sözleşmeler =====
@@ -5691,11 +5976,7 @@ function printSummary(){
 <div class="foot"><span>PEKDOĞRU GRUP · Filo Kontrol Paneli</span><span>Oluşturulma: ${bugun}</span></div>
   </body></html>`;
 
-  const w = window.open('', '_blank');
-  w.document.open();
-  w.document.write(html);
-  w.document.close();
-  w.onload = ()=>{ w.focus(); w.print(); };
+  htmlYazdirVeyaIndir(html, 'printSummary.html'); // v.268: ekran-gitme koruması (bkz. htmlYazdirVeyaIndir)
 }
 
 function printInventory(){
@@ -5773,11 +6054,7 @@ function printInventory(){
 <div class="foot"><span>PEKDOĞRU GRUP · Filo Kontrol Paneli</span><span>Oluşturulma: ${bugun}</span></div>
   </body></html>`;
 
-  const w = window.open('', '_blank');
-  w.document.open();
-  w.document.write(html);
-  w.document.close();
-  w.onload = ()=>{ w.focus(); w.print(); };
+  htmlYazdirVeyaIndir(html, 'printInventory.html'); // v.268: ekran-gitme koruması (bkz. htmlYazdirVeyaIndir)
 }
 
 function printBilling(donem, kdvOran){
@@ -5881,11 +6158,7 @@ function printBilling(donem, kdvOran){
 <div class="foot"><span>PEKDOĞRU GRUP · Filo Kontrol Paneli · Bu rapor kayıtlı aylık kira tutarlarına göre otomatik oluşturulmuştur, resmi fatura yerine geçmez.</span><span>Oluşturulma: ${bugun}</span></div>
   </body></html>`;
 
-  const w = window.open('', '_blank');
-  w.document.open();
-  w.document.write(html);
-  w.document.close();
-  w.onload = ()=>{ w.focus(); w.print(); };
+  htmlYazdirVeyaIndir(html, 'printBilling.html'); // v.268: ekran-gitme koruması (bkz. htmlYazdirVeyaIndir)
 }
 
 function printMasrafRaporu(){
@@ -5967,11 +6240,7 @@ function printMasrafRaporu(){
 <div class="foot"><span>PEKDOĞRU GRUP · Filo Kontrol Paneli</span><span>Oluşturulma: ${bugun}</span></div>
   </body></html>`;
 
-  const w = window.open('', '_blank');
-  w.document.open();
-  w.document.write(html);
-  w.document.close();
-  w.onload = ()=>{ w.focus(); w.print(); };
+  htmlYazdirVeyaIndir(html, 'printMasrafRaporu.html'); // v.268: ekran-gitme koruması (bkz. htmlYazdirVeyaIndir)
 }
 
 // ===== QR kodlu araç etiketi =====
@@ -7290,8 +7559,7 @@ ${logoTag}
 }
 function iadeTutanakAc(v, b){
   const html = iadeTutanakHtml(v, b);
-  let w = null;
-  try{ w = window.open('','_blank'); }catch(e){}
+  let w = guvenliYazdirmaPenceresi(); // v.268: ekran-gitme koruması
   if(w && w.document){
     w.document.open('text/html');
     w.document.write(html);
@@ -8056,8 +8324,7 @@ ${logoTag}
 }
 function teslimTutanakAc(d){
   const html = teslimTutanakHtml(d);
-  let w = null;
-  try{ w = window.open('','_blank'); }catch(e){}
+  let w = guvenliYazdirmaPenceresi(); // v.268: ekran-gitme koruması
   if(w && w.document){
     w.document.open('text/html');
     w.document.write(html);
@@ -8146,17 +8413,10 @@ async function kirayaVerVeSozlesme(format){
       kiraGecmisi: [...(v.kiraGecmisi||[]), {bas, bitis, yer: kiraci, teslimKm: teslimKm||v.teslimKm||0, iadeKm:0, yakit:'', hasar:'', not: notlar||''}],
     };
   });
-  // v.267: "SÖZLEŞME HAZIRLARKEN EKRAN GİDİYOR" — sozlesmeHtmlPdf() en altta window.open('','_blank')
-  // ile yeni bir pencere/sekme açıp sözleşmeyi oraya yazıyordu, ama bu çağrı burada birkaç await'ten
-  // (persist, sozKaydet, storageAPI.set...) SONRA yapılıyordu. Tarayıcı, bir butona tıklamadan sonra
-  // geçen "kullanıcı etkileşimi" hakkını birkaç await sonrasında genelde kaybeder; bu durumda bazı
-  // tarayıcılar (özellikle iPhone'a "Ana Ekrana Ekle" ile kurulmuş PWA modunda Safari) window.open'ı
-  // engellemek yerine YENİ pencere AÇMADAN doğrudan MEVCUT uygulama ekranını sözleşme belgesiyle
-  // DEĞİŞTİRİYORDU — kullanıcının "ekran gidiyor" dediği tam olarak buydu: panel kayboluyor, yerine
-  // çıplak sözleşme sayfası geliyordu. Düzeltme: pencereyi, kullanıcının tıklamasıyla hâlâ doğrudan
-  // bağlantılı olduğu bu noktada (ilk await'ten ÖNCE) hemen açıp referansını saklıyoruz; aşağıda
-  // sozlesmeHtmlPdf bu hazır pencereyi kullanır, kendisi tekrar window.open çağırmaz.
-  const sozPdfPencere = format==='pdf' ? acSozlesmePenceresi() : null;
+  // v.268: v.267'de burada sözleşme penceresi kayıttan ÖNCE açılıyordu (tıklama hakkını korumak
+  // için). Ancak telefonda yeni pencere açılınca panel arka plana düşüp kayıt (persist) yarıda
+  // kalabiliyordu. Artık önce HER ŞEY kaydediliyor, sonra "Sözleşme hazır" penceresi çıkıyor ve PDF
+  // kullanıcının oradaki yeni dokunuşuyla açılıyor (bkz. sozlesmeHazirGoster).
   await persist();
   render();
   if(window.__currentPage && window.__currentPage!=='arac-yonetimi') renderCurrentPage();
@@ -8234,8 +8494,7 @@ async function kirayaVerVeSozlesme(format){
   if(sozData.imzaKiraci) await storageAPI.set('imza_'+sozData.sozNo+'_kiraci', sozData.imzaKiraci).catch(()=>{});
   if(sozData.imzaKirayaVeren) await storageAPI.set('imza_'+sozData.sozNo+'_kirayaVeren', sozData.imzaKirayaVeren).catch(()=>{});
   const sozRec = await sozKaydet(sozData, bas, bitis);
-  if(format==='pdf') sozlesmeHtmlPdf(sozData, sozPdfPencere);
-  else sozlesmeDocx(sozData);
+  if(format!=='pdf') sozlesmeDocx(sozData);
   // FAZ4 Part B.2: Hızlı "Araç Kirala" akışı da diğer tüm kiralamalarla aynı rentals
   // koleksiyonuna yazar. teklif/rezervasyon adımları atlanıp doğrudan 'teslimEdildi'
   // durumuna geçilir çünkü bu akış zaten personel için bilinçli bir kısayoldur.
@@ -8254,9 +8513,9 @@ async function kirayaVerVeSozlesme(format){
       sozlesmeId: sozRec ? sozRec.id : null,
     });
   }
-  if(tutanakIstendi){
-    setTimeout(()=>teslimTutanakAc(sozData), 1200);
-  }
+  // v.268: PDF ve teslim tutanağı artık kayıtlar BİTTİKTEN sonra, kullanıcının kendi dokunuşuyla açılır.
+  sozlesmeHazirGoster(sozData, {pdf: format==='pdf', tutanak: !!tutanakIstendi,
+    baslik: secilen.length===1 ? secilen[0].plaka+' kiraya verildi' : secilen.length+' araç kiraya verildi'});
 }
 
 async function fisBelgeGor(masrafId){
@@ -8973,8 +9232,7 @@ function aracServisGecmisiPdf(id){
   ].filter(b=>b.tarih);
 
   const html = aracServisGecmisiHtml(v, {vMasraf, toplamMasraf, kmGecmisi, hakedisGecmisi:(isAdmin()?hakedisGecmisi:[]), gecmis, belgeler});
-  let w = null;
-  try{ w = window.open('','_blank'); }catch(e){}
+  let w = guvenliYazdirmaPenceresi(); // v.268: ekran-gitme koruması
   if(w && w.document){
     w.document.open('text/html');
     w.document.write(html);
@@ -9480,13 +9738,7 @@ function sozGrupRaporYazdir(grupId){
     <div class="foot"><span>PEKDOĞRU GRUP · Filo Kontrol Paneli</span><span>Oluşturulma: ${bugun}</span></div>
   </body></html>`;
 
-  let w;
-  try{ w = window.open('', '_blank'); }catch(e){}
-  if(!w){ showToast('Rapor penceresi açılamadı — tarayıcınız pop-up engelliyor olabilir.', true); return; }
-  w.document.open();
-  w.document.write(html);
-  w.document.close();
-  w.onload = ()=>{ w.focus(); w.print(); };
+  htmlYazdirVeyaIndir(html, 'sozGrupRaporYazdir.html'); // v.268: ekran-gitme koruması (bkz. htmlYazdirVeyaIndir)
 }
 // Yeni km girişinde canlı önceki→yeni→fark gösterimi (araç detay Bakım sekmesindeki hızlı giriş kartı).
 function kmManuelFarkGuncelle(id){
@@ -12714,6 +12966,14 @@ function renderDashboard(){
       if(dl!==null && dl<0) items.push({kritik:true, renk:'#E1554E', bg:'rgba(225,85,78,.1)', etiket:'İade', plaka:v.plaka, aci:'Süresi '+Math.abs(dl)+' gün geçti', act:`openIadeForm('${v.id}')`, btn:'İade Al'});
     });
     urgent.forEach(u=>{
+      // v.268: kira/sözleşme bitişleri "Belge" değil "Kira" uyarısıdır ve doğrudan "Uzat" eylemiyle
+      // gelir. Süresi geçmiş olanlar zaten yukarıda "İade" satırıyla listelendiği için tekrar edilmez.
+      if(u.id && (u.tip==='Kira Bitişi' || u.tip==='Sözleşme Bitişi')){
+        if(u.dl<0) return;
+        if(items.some(i=>i.etiket==='Kira' && i.plaka===u.plaka)) return;
+        items.push({kritik:false, renk:'#E8A132', bg:'rgba(232,161,50,.1)', etiket:'Kira', plaka:u.plaka, aci:'Kira bitişine '+u.dl+' gün kaldı', act:`openUzatForm('${u.id}')`, btn:'Uzat'});
+        return;
+      }
       if(u.dl<0) items.push({kritik:true, renk:'#E1554E', bg:'rgba(225,85,78,.1)', etiket:'Belge', plaka:u.plaka, aci:u.tip+' — '+Math.abs(u.dl)+' gün geçti', act:"switchPage('bildirimler')", btn:''});
       else items.push({kritik:false, renk:'var(--accent-blue)', bg:'rgba(22,160,134,.1)', etiket:'Belge', plaka:u.plaka, aci:u.tip+' — '+u.dl+' gün kaldı', act:"switchPage('bildirimler')", btn:''});
     });
@@ -14133,9 +14393,6 @@ async function sozlesmeOlustur(format){
   // belge/kayıt listesine (sozlesmeler) düşüyordu, aracın durum/kira bilgilerine hiç
   // işlenmiyordu; bu yüzden sözleşmesi olan bir araç sistemde "Müsait" görünmeye devam
   // edebiliyordu. "Araç Kirala" (kirayaVerVeSozlesme) ile aynı alanlar burada da yazılıyor.
-  // v.267: "SÖZLEŞME HAZIRLARKEN EKRAN GİDİYOR" — bkz. kirayaVerVeSozlesme()'deki aynı düzeltmenin
-  // açıklaması: pencere, kullanıcının tıklamasına hâlâ bağlıyken (ilk await'ten ÖNCE) burada açılır.
-  const sozPdfPencere = format==='pdf' ? acSozlesmePenceresi() : null;
   const vIdx = vehicles.findIndex(x=>x.id===vehicleId);
   if(vIdx>-1){
     const kiraNum = kira ? Number(kira) : (v.kira||0);
@@ -14189,8 +14446,8 @@ async function sozlesmeOlustur(format){
     });
   }
   if(format==='pdf'){
-    if(log) log.innerHTML = '<div style="color:var(--text-3);font-size:13px;">✅ PDF sözleşme açıldı — yazdır penceresinden kaydedin.</div>';
-    sozlesmeHtmlPdf(sozData, sozPdfPencere);
+    if(log) log.innerHTML = '<div style="color:#36A168;font-size:13px;font-weight:600;">✅ Sözleşme kaydedildi — açılan pencereden PDF\'i açın.</div>';
+    sozlesmeHazirGoster(sozData, {pdf:true, baslik: v.plaka+' kiraya verildi'});
   } else {
     sozlesmeDocx(sozData);
   }
@@ -14228,11 +14485,71 @@ function sozMaddeListesi(d){
   ];
 }
 
-// v.267: "SÖZLEŞME HAZIRLARKEN EKRAN GİDİYOR" — kirayaVerVeSozlesme() ve sozlesmeOlustur() bu
-// pencereyi kullanıcının tıklamasıyla hâlâ doğrudan bağlantılıyken (ilk await'ten ÖNCE) açar; aşağı
-// bkz. sozlesmeHtmlPdf'teki ayrıntılı açıklama.
-function acSozlesmePenceresi(){
-  try{ return window.open('','_blank'); }catch(e){ return null; }
+// v.268: Sözleşme kaydı tamamlandıktan SONRA gösterilen pencere. PDF/tutanak, kullanıcının buradaki
+// dokunuşuyla (taze bir tıklama — tarayıcı engellemez) açılır; böylece hem "ekran gidiyor" hem de
+// "PDF açılırken telefon paneli arka plana attı, kayıt yarıda kaldı" riskleri ortadan kalkar.
+function sozlesmeHazirGoster(sozData, opts){
+  opts = opts||{};
+  document.getElementById('sozHazirModal')?.remove();
+  window.__sozHazirData = sozData;
+  const el = document.createElement('div');
+  el.className = 'overlay show'; el.id = 'sozHazirModal'; el.style.cssText = 'z-index:80;';
+  el.innerHTML = `
+    <div style="background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;width:min(92vw,420px);text-align:center;">
+      <div style="width:46px;height:46px;border-radius:50%;background:rgba(54,161,104,.15);color:#36A168;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;font-size:24px;font-weight:700;">✓</div>
+      <h3 style="margin:0 0 6px;font-size:16px;color:var(--paper);">${esc(opts.baslik||'Sözleşme hazır')}</h3>
+      <p style="margin:0 0 16px;font-size:12.5px;color:var(--text-3);">Kayıt tamamlandı${sozData && sozData.sozNo ? ' · '+esc(sozData.sozNo) : ''}.${opts.not ? ' '+esc(opts.not) : ''}</p>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        ${opts.pdf ? `<button class="add-btn" style="justify-content:center;width:100%;" onclick="sozlesmeHtmlPdf(window.__sozHazirData)">Sözleşmeyi Aç (PDF / Yazdır)</button>` : ''}
+        ${opts.tutanak ? `<button class="settings-btn" style="justify-content:center;width:100%;" onclick="teslimTutanakAc(window.__sozHazirData)">Teslim Tutanağını Aç</button>` : ''}
+        <button class="settings-btn" style="justify-content:center;width:100%;" onclick="document.getElementById('sozHazirModal').remove()">Kapat</button>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+  el.onclick = e=>{ if(e.target===el) el.remove(); };
+}
+
+// v.268: "EKSİKLERİ TAMAMLAYALIM" — v.267'deki "SÖZLEŞME HAZIRLARKEN EKRAN GİDİYOR" düzeltmesi
+// yalnızca sözleşme PDF'ini kapsıyordu. Oysa panelde yazdırma/PDF penceresi açan 12 yer daha
+// vardı (teslim/iade tutanağı, araç servis geçmişi, envanter/özet/fatura/masraf raporları, teklif
+// PDF'i, fatura, cari ekstre, sözleşme grubu raporu, Raporlar sayfasındaki tüm raporlar) ve
+// hepsi aynı açığı taşıyordu: window.open sonucu mevcut pencere dönerse (iPhone PWA'da Safari)
+// document.write tüm paneli siliyordu; 9'unda ise pencere hiç açılamazsa (pop-up engeli) null
+// kontrolü bile yoktu, buton sessizce JS hatası verip hiçbir şey yapmıyordu. Artık hepsi bu iki
+// ortak fonksiyondan geçiyor.
+// guvenliYazdirmaPenceresi: GERÇEKTEN ayrı bir pencere açılabildiyse onu, aksi halde null döner —
+// asla mevcut panel penceresini döndürmez.
+function guvenliYazdirmaPenceresi(onceAcilan){
+  let w = onceAcilan || null;
+  if(!w){ try{ w = window.open('','_blank'); }catch(e){ w = null; } }
+  if(!w || w === window) return null;
+  try{ if(!w.document || w.document === document) return null; }catch(e){ return null; }
+  return w;
+}
+// htmlYazdirVeyaIndir: belgeyi yeni pencerede açıp yazdır penceresini getirir; pencere açılamazsa
+// paneli hiç bozmadan belgeyi HTML dosyası olarak indirir ve kullanıcıya ne yapacağını söyler.
+function htmlYazdirVeyaIndir(html, dosyaAdi, onceAcilan){
+  const w = guvenliYazdirmaPenceresi(onceAcilan);
+  if(w){
+    w.document.open('text/html');
+    w.document.write(html);
+    w.document.close();
+    setTimeout(()=>{ try{ w.focus(); w.print(); }catch(e){} }, 600);
+    return true;
+  }
+  try{
+    const blob = new Blob([html], {type:'text/html'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = dosyaAdi || 'belge.html';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 5000);
+    showToast('Tarayıcı yeni pencere açmayı engelledi — belge HTML dosyası olarak indirildi. Dosyayı açıp Ctrl+P ile PDF yapabilirsiniz.', true);
+  }catch(e){
+    showToast('Belge oluşturulamadı: '+e.message, true);
+  }
+  return false;
 }
 
 function sozlesmeHtmlPdf(d, preOpenedWin){
@@ -14249,11 +14566,8 @@ function sozlesmeHtmlPdf(d, preOpenedWin){
   // Düzeltme iki parçalı: (1) çağıranlar artık pencereyi tıklamayla hâlâ bağlantılıyken erkenden
   // açıp preOpenedWin olarak buraya veriyor; (2) burada da, her ihtimale karşı, w'nin GERÇEKTEN
   // mevcut pencereden ayrı olduğu (w!==window) doğrulanmadan asla document.write çağrılmaz.
-  let w = preOpenedWin || null;
-  if(!w){
-    try{ w = window.open('','_blank'); }catch(e){}
-  }
-  if(w && w.document && w !== window){
+  const w = guvenliYazdirmaPenceresi(preOpenedWin); // v.268: ortak korumalı açıcı
+  if(w){
     w.document.open('text/html');
     w.document.write(html);
     w.document.close();
@@ -15037,12 +15351,11 @@ async function ykSozlesmeyeIlerle(){
     sozNo: 'SOZ-'+new Date().getFullYear()+'-'+Date.now().toString().slice(-4),
   };
   const sozRec = await sozKaydet(sozData, r.baslangic, r.bitis);
-  sozlesmeHtmlPdf(sozData);
   r.durum = 'sozlesmeHazir';
   r.sozlesmeId = sozRec ? sozRec.id : null;
   await persistRentals();
   ykSihirbazState.sozData = sozData;
-  showToast('Sözleşme oluşturuldu — PDF açıldı. Bir sonraki adımda aracı teslim edebilirsiniz.');
+  sozlesmeHazirGoster(sozData, {pdf:true, baslik:'Sözleşme hazır — '+v.plaka, not:'Araç, bir sonraki adımda "Teslim Et" dediğinizde Kirada olarak işaretlenir.'});
   logActivity('edit', `Sözleşme hazırlandı (adım adım akış): <b>${esc(v.plaka)}</b> · ${esc(kiraci)}`);
   const modal = document.getElementById('ykModal'); if(modal) modal.innerHTML = ykSihirbaziHtml();
 }
@@ -15831,10 +16144,7 @@ function tkPdfAc(rentalId){
       <div class="disclaimer">Bu belge bilgilendirme amaçlı bir fiyat teklifidir; kesin satış/kira sözleşmesi niteliği taşımaz. Fiyatlar ${fmtTarih(gecerlilik)} tarihine kadar geçerlidir.</div>
     </div>
   </div></body></html>`;
-  const w = window.open('', '_blank');
-  if(!w){ showToast('PDF penceresi açılamadı — tarayıcı pop-up engelleyicisini kontrol edin.', true); return; }
-  w.document.open(); w.document.write(html); w.document.close();
-  w.onload = ()=>{ w.focus(); w.print(); };
+  htmlYazdirVeyaIndir(html, 'tkPdfAc.html'); // v.268: ekran-gitme koruması (bkz. htmlYazdirVeyaIndir)
 }
 // v.95: Kiralama iç sekmeleri
 window.krTabSet = function(t){
@@ -17675,9 +17985,7 @@ function raporYazdirAc(baslik, altBaslik, grandBoxlar, theadHtml, tbodyHtml, dip
     ${extraHtml||''}
     <div class="foot">PEKDOĞRU GRUP · Filo Kontrol Paneli${dipnot?' · '+esc(dipnot):''}</div>
   </body></html>`;
-  const w = window.open('', '_blank');
-  w.document.open(); w.document.write(html); w.document.close();
-  w.onload = ()=>{ w.focus(); w.print(); };
+  htmlYazdirVeyaIndir(html, 'raporYazdirAc.html'); // v.268: ekran-gitme koruması (bkz. htmlYazdirVeyaIndir)
 }
 
 // ----- Araç Doluluk Raporu -----
@@ -20488,9 +20796,7 @@ function faturaYazdir(id){
     </div>
     <div class="foot">PEKDOĞRU GRUP · Filo Kontrol Paneli · Bu belge kayıtlı kira/hizmet tutarlarına göre otomatik oluşturulmuştur, resmi fatura (e-Fatura/e-Arşiv) yerine geçmez. · Oluşturulma: ${bugun}</div>
   </body></html>`;
-  const w = window.open('', '_blank');
-  w.document.open(); w.document.write(html); w.document.close();
-  w.onload = ()=>{ w.focus(); w.print(); };
+  htmlYazdirVeyaIndir(html, 'faturaYazdir.html'); // v.268: ekran-gitme koruması (bkz. htmlYazdirVeyaIndir)
 }
 function faturaExcelDisaAktar(){
   if(!invoices.length){ showToast('Aktarılacak fatura kaydı yok.', true); return; }
@@ -20746,9 +21052,7 @@ function cariEkstreYazdir(customerId){
     </table>
     <div class="foot">PEKDOĞRU GRUP · Filo Kontrol Paneli · Bu ekstre kayıtlı cari hareketlere göre otomatik oluşturulmuştur, resmi fatura yerine geçmez.</div>
   </body></html>`;
-  const w = window.open('', '_blank');
-  w.document.open(); w.document.write(html); w.document.close();
-  w.onload = ()=>{ w.focus(); w.print(); };
+  htmlYazdirVeyaIndir(html, 'cariEkstreYazdir.html'); // v.268: ekran-gitme koruması (bkz. htmlYazdirVeyaIndir)
 }
 function cariExcelDisaAktar(){
   if(!customers.length){ showToast('Aktarılacak müşteri kaydı yok.', true); return; }
@@ -24559,7 +24863,7 @@ function sonYedekMetni(k){
 function backupToJson(){
   const backup = {
     olusturmaTarihi: new Date().toISOString(),
-    vehicles, expenses, activityLog, sozlesmeler, arsiv,
+    vehicles, expenses, activityLog, sozlesmeler, arsiv, arsivSilinenler,
     customers, rentals, invoices, payments, ledger,
     suppliers, supplierLedger, serviceParts, tires, fuelRecords, tolls, trafficFines,
     documents, notifications, automationRules, kvkkTalepleri,
@@ -24596,6 +24900,7 @@ document.getElementById('restoreJsonInput')?.addEventListener('change', async (e
     activityLog = Array.isArray(data.activityLog) ? data.activityLog : [];
     sozlesmeler = Array.isArray(data.sozlesmeler) ? data.sozlesmeler : [];
     arsiv = Array.isArray(data.arsiv) ? data.arsiv : [];
+    arsivSilinenler = Array.isArray(data.arsivSilinenler) ? data.arsivSilinenler : arsivSilinenler;
     customers = Array.isArray(data.customers) ? data.customers : [];
     rentals = Array.isArray(data.rentals) ? data.rentals : [];
     invoices = Array.isArray(data.invoices) ? data.invoices : [];
@@ -24617,6 +24922,7 @@ document.getElementById('restoreJsonInput')?.addEventListener('change', async (e
     await storageAPI.set('activityLog', JSON.stringify(activityLog)).catch(()=>{});
     await persistSozlesmeler();
     await persistArsiv();
+    await persistArsivSilinenler();
     await persistCustomers();
     await persistRentals();
     await persistInvoices();
