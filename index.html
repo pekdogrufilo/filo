@@ -2480,7 +2480,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-26.268</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-26.269</div>
     </div>
   </div>
 </div>
@@ -2657,7 +2657,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-26.268</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-26.269</div>
     </div>
   </aside>
 <script>
@@ -4031,6 +4031,111 @@ async function load(){
     })(),
   ]);
   if(yuklenemeyenAnahtarlar.size) veriYuklemeUyarisiGoster();
+  // v.268 self-heal: "34KRE884 için sözleşme yapıldı ama araç Müsait görünüyor" olayının veride
+  // kalan izlerini temizler. yukarıdaki birleştirerek-yazma koruması gelecekteki ezilmeleri önler;
+  // ama daha önce ezilmiş kayıtlar (araç "Müsait", rentals'ta aynı araç için açık bir
+  // 'teslimEdildi' kiralama var) bozuk halde kalmış olabilir. Rentals FAZ4'ten beri tek doğru
+  // kaynaktır (bkz. aracSuAndaKiradaMi) — açılışta "Müsait" görünen ama aktif kiralaması olan
+  // araçlar rentals'tan geri onarılır. Yalnızca "Müsait"/boş durum onarılır; Serviste/Pert/Satıldı
+  // gibi elle seçilmiş durumlara dokunulmaz.
+  try{
+    const onarilan = [];
+    rentals.forEach(r=>{
+      if(r.durum!=='teslimEdildi') return;
+      const idx = vehicles.findIndex(v=>v.id===r.vehicleId);
+      if(idx<0) return;
+      const v = vehicles[idx];
+      if(!v || (v.durum!=='Müsait' && v.durum)) return;
+      const musteri = r.customerId ? customers.find(c=>c.id===r.customerId) : null;
+      vehicles[idx] = {
+        ...v,
+        durum: 'Kirada',
+        kiraciAdi: v.kiraciAdi || musteriGoruntuAdi(musteri),
+        kira: Number(r.kiraTutari)||v.kira||0,
+        kiraBitis: r.bitis||v.kiraBitis||'',
+        sozlesmeBitis: r.bitis||v.sozlesmeBitis||'',
+        teslimTarih: r.baslangic||v.teslimTarih||'',
+      };
+      onarilan.push(v.plaka);
+    });
+    if(onarilan.length){
+      await persist();
+      showToast(onarilan.join(', ')+' — açık kiralaması olan araç(lar)ın durumu "Kirada" olarak eşitlendi.');
+    }
+  }catch(e){ console.error('kirada eşitleme hatası:', e); }
+  // v.269 self-heal 2: AYNI PLAKADAN İKİ KAYIT — "34KRE884 hem Kirada hem Müsait görünüyor".
+  // v.268 birleştirmesi kayıt (id) bazında çalıştığı için, iki cihaz aynı aracı farklı id altında
+  // tutuyorsa her iki kayıt da hayatta kalıyordu (biri eski/Müsait, diğeri güncel/Kirada). Plaka
+  // gerçek dünyada tekildir ve ekleme formu da zaten mükerrer plakayı reddeder (bkz. fPlaka
+  // doğrulaması) — bu yüzden açılışta aynı plakalı kayıtlar TEK kayda birleştirilir: sıralama
+  // aktif kiralaması olana / "Kirada" olana / daha dolu kayda öncelik verir; boş alanlar diğer
+  // kayıttan doldurulur, kiraGecmisi/kmGecmisi gibi diziler tekilleştirilerek birleştirilir;
+  // eski kaydın id'sine bağlı masraf/kiralama/belge vb. tüm kayıtlar hayatta kalana bağlanır;
+  // birleştirilen gereksiz kopya 30 gün geri alınabilsin diye "Son silinenler"e yazılır.
+  if(!yuklenemeyenAnahtarlar.has('vehicles')){
+    try{
+      const plakaNorm = (p)=>String(p||'').replace(/\s+/g,'').toLocaleUpperCase('tr-TR');
+      const plakaGruplari = new Map();
+      vehicles.forEach(v=>{ const k=plakaNorm(v.plaka); if(!k) return; if(!plakaGruplari.has(k)) plakaGruplari.set(k,[]); plakaGruplari.get(k).push(v); });
+      const yeniSilinenler = [];
+      for(const [,ayniPlakalar] of plakaGruplari){
+        if(ayniPlakalar.length<2) continue;
+        const aktifKiralamaAraclari = new Set(rentals.filter(r=>r.durum==='teslimEdildi'||r.durum==='sozlesmeHazir').map(r=>r.vehicleId));
+        const doluluk = (v)=>Object.values(v).filter(x=>x!==''&&x!=null&&!(Array.isArray(x)&&!x.length)).length;
+        const oncelik = (v)=>((aktifKiralamaAraclari.has(v.id)?2:0)+(v.durum==='Kirada'?1:0));
+        const sirali = [...ayniPlakalar].sort((a,b)=>(oncelik(b)-oncelik(a))||(doluluk(b)-doluluk(a)));
+        const kalan = {...sirali[0]};
+        const kopanlar = sirali.slice(1);
+        const bosMu = (x)=>x==null||x==='';
+        kopanlar.forEach(d=>{
+          Object.keys(d).forEach(alan=>{
+            if(alan==='id') return;
+            if(Array.isArray(d[alan])){
+              const birlesik = Array.isArray(kalan[alan]) ? kalan[alan] : [];
+              const gorulen = new Set(birlesik.map(x=>JSON.stringify(x)));
+              d[alan].forEach(x=>{ const j=JSON.stringify(x); if(!gorulen.has(j)){ gorulen.add(j); birlesik.push(x); } });
+              kalan[alan] = birlesik;
+            }else if(bosMu(kalan[alan]) && !bosMu(d[alan])){
+              kalan[alan] = d[alan];
+            }
+          });
+        });
+        const kopanIdler = kopanlar.map(d=>d.id);
+        const bagla = (dizi)=>{ let degisti=false; (dizi||[]).forEach(x=>{ if(x && kopanIdler.includes(x.vehicleId)){ x.vehicleId=kalan.id; degisti=true; } }); return degisti; };
+        if(bagla(expenses)) await persistExpenses();
+        if(bagla(rentals)) await persistRentals();
+        if(bagla(fuelRecords)) await persistFuelRecords();
+        if(bagla(tolls)) await persistTolls();
+        if(bagla(trafficFines)) await persistTrafficFines();
+        if(bagla(tires)) await persistTires();
+        if(bagla(serviceParts)) await persistServiceParts();
+        if(bagla(documents)) await persistDocuments();
+        if(bagla(ihaleler)) await persistIhaleler();
+        if(bagla(ledger)) await persistLedger();
+        let grupDegisti=false;
+        sozlesmeGruplari.forEach(g=>{
+          if((g.araclar||[]).some(id=>kopanIdler.includes(id))){
+            g.araclar = [...(g.araclar||[]).filter(id=>!kopanIdler.includes(id)), kalan.id];
+            grupDegisti = true;
+          }
+        });
+        if(grupDegisti) await persistSozlesmeGruplari();
+        kopanlar.forEach(d=>{
+          yeniSilinenler.push({id:'sil_'+d.id+'_'+Date.now().toString(36), kayit:d, masraflar:[], silinmeTarihi:new Date().toISOString(), neden:'Aynı plakalı kayıtla birleştirildi'});
+        });
+        const kalanIdx = vehicles.findIndex(v=>v.id===kalan.id);
+        if(kalanIdx>-1) vehicles[kalanIdx] = kalan;
+      }
+      if(yeniSilinenler.length){
+        const cikarilanIdler = new Set(yeniSilinenler.map(s=>s.kayit.id));
+        vehicles = vehicles.filter(v=>!cikarilanIdler.has(v.id));
+        arsivSilinenler.push(...yeniSilinenler);
+        await persistArsivSilinenler();
+        await persist();
+        showToast(yeniSilinenler.map(s=>s.kayit.plaka).filter(Boolean).join(', ')+' — aynı plakalı mükerrer kayıt(lar) tek kayıtta birleştirildi ('+ARSIV_SILINEN_GUN+' gün geri alınabilir).');
+      }
+    }catch(e){ console.error('plaka birleştirme hatası:', e); }
+  }
   arsivSilinenleriTemizle().catch(e=>console.error('arsivSilinenleriTemizle hatası:', e));
   // FAZ6: bildirim kayıtlarını (dedupe'lu) üret — sayfa her açıldığında değil, sadece burada,
   // uygulama yüklenirken bir kez çalışır. Yeni kayıt eklendiyse kalıcı olarak saklanır.
