@@ -757,6 +757,9 @@
   .th-cloud b{color:var(--paper);font-size:13px;}
   .th-cloud .dot{width:8px;height:8px;border-radius:50%;background:var(--steel-600);}
   .th-cloud.on .dot{background:#36A168;box-shadow:0 0 8px rgba(54,161,104,.6);}
+  /* v.272: yedek 7 günden eskiyse rozet turuncuya döner — tek bakışta "yedek al" sinyali */
+  .th-cloud.stale .dot{background:#E8A132;box-shadow:0 0 8px rgba(232,161,50,.65);}
+  .th-cloud.stale b{color:#C9861F;}
   .th-avatar{width:32px;height:32px;border-radius:50%;background:var(--accent-blue);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-ui);font-weight:600;font-size:13px;flex-shrink:0;}
   .th-user-block{display:flex;align-items:center;gap:10px;}
   .th-user-text{display:flex;flex-direction:column;line-height:1.25;}
@@ -770,6 +773,14 @@
   .page.active{display:block;}
 
   .dash-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:20px;margin-bottom:24px;}
+  /* v.272: düzgün KPI satırları — "auto-fit" 4+2 / 4+1 gibi yarım satırlar üretiyordu.
+     Kart sayısı bilinen şeritlerde sütun sayısını kart sayısının bölenine sabitliyoruz
+     (6 kart → 3+3, 5 kart → tek satır 5). Mobilde mevcut 2 sütun kuralı aynen geçerli. */
+  .dash-stats.cols-3{grid-template-columns:repeat(3,1fr);}
+  .dash-stats.cols-5{grid-template-columns:repeat(5,1fr);}
+  @media (max-width:860px){
+    .dash-stats.cols-3,.dash-stats.cols-5{grid-template-columns:1fr 1fr;}
+  }
   .dstat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;display:flex;align-items:flex-start;gap:12px;transition:border-color .15s ease, transform .15s ease;cursor:pointer;min-width:0;}
   .dstat:hover{border-color:var(--border-2);transform:translateY(-1px);}
   .dstat:hover{border-color:var(--accent-blue);transform:translateY(-2px);}
@@ -2483,7 +2494,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-26.271</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-26.272</div>
     </div>
   </div>
 </div>
@@ -2582,10 +2593,10 @@
       <div class="sb-group" data-group="kiralama">
         <button class="sb-group-head" type="button">Kiralama<svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
         <div class="sb-group-body">
+          <!-- v.272: Teklifler ve Hasar & Cezalar, Kiralama İşlemleri'nin grup sekmelerine taşındı
+               (#pageGrupBar) — sayfalar aynen duruyor, menüde sadece Kiralama İşlemleri öğesi var. -->
           <button class="sb-item" data-page="kiralama"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Kiralama İşlemleri</button>
-          <button class="sb-item" data-page="teklifler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z"/></svg>Teklifler<span class="sb-badge" id="sbTekliflerBadge" style="display:none;background:var(--amber);">0</span></button>
           <button class="sb-item" data-page="musteriler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Müşteriler</button>
-          <button class="sb-item" data-page="hasarcezalar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Hasar &amp; Cezalar</button>
           <button class="sb-item" data-page="ihaleler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 3 8v2h18V8Z"/><path d="M5 21h14M6 21v-9M10 21v-9M14 21v-9M18 21v-9"/></svg>İhaleler<span class="sb-badge" id="sbIhalelerBadge" style="display:none;background:var(--amber);">0</span></button>
         </div>
       </div>
@@ -2593,8 +2604,8 @@
       <div class="sb-group" data-group="para">
         <button class="sb-group-head" type="button">Para<svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
         <div class="sb-group-body">
+          <!-- v.272: Faturalar, Cari & Tahsilat'ın grup sekmelerine taşındı (#pageGrupBar). -->
           <button class="sb-item" data-page="cari"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/><path d="M21 12a9 9 0 1 1-18 0"/></svg>Cari &amp; Tahsilat</button>
-          <button class="sb-item" data-page="faturalar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>Faturalar</button>
           <button class="sb-item" data-page="finansal-analiz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/><path d="M21 12a9 9 0 1 1-18 0"/></svg>Finansal Analiz</button>
           <button class="sb-item" data-page="masraf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Masraf Yönetimi</button>
           <button class="sb-item" data-page="tedarikciler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M8 7h8M8 11h8M8 15h5"/></svg>Tedarikçi Cari Hesabı</button>
@@ -2605,9 +2616,9 @@
       <div class="sb-group" data-group="servis">
         <button class="sb-group-head" type="button">Servis<svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
         <div class="sb-group-body">
-          <button class="sb-item" data-page="bakim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14.7 6.3-6.4 6.4a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l6.4-6.4a4 4 0 1 0-3-3Z"/><path d="M8 12 4 16l4 4 4-4"/></svg>Bakım &amp; Servis<span class="sb-badge" id="sbBakimBadge" style="display:none;background:var(--amber);">0</span></button>
-          <button class="sb-item" data-page="yakit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22h12"/><path d="M4 9h8V4a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1Z"/><path d="M4 22V9"/><path d="M12 22V9"/><path d="M16 8h1a2 2 0 0 1 2 2v1a2 2 0 0 0 2 2v6.5a1.5 1.5 0 0 1-3 0V15a1 1 0 0 0-1-1h-1"/></svg>Yakıt</button>
-          <button class="sb-item" data-page="lastikler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg>Lastikler<span class="sb-badge" id="sbLastikBadge" style="display:none;background:var(--amber);">0</span></button>
+          <!-- v.272: Yakıt ve Lastikler, Bakım & Servis'in grup sekmelerine taşındı (#pageGrupBar) —
+               menüde tek öğe: "Servis & Bakım" (data-page bakim korunur, sayfalar aynen duruyor). -->
+          <button class="sb-item" data-page="bakim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14.7 6.3-6.4 6.4a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l6.4-6.4a4 4 0 1 0-3-3Z"/><path d="M8 12 4 16l4 4 4-4"/></svg>Servis &amp; Bakım<span class="sb-badge" id="sbBakimBadge" style="display:none;background:var(--amber);">0</span></button>
         </div>
       </div>
 
@@ -2646,7 +2657,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-26.271</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-26.272</div>
     </div>
   </aside>
 <script>
@@ -2710,7 +2721,10 @@
         </div>
       </div>
       <div class="th-right">
-        <div class="th-cloud" id="thCloud">
+        <!-- v.272: tek durum rozeti — senkron + yedek durumu tek noktada. Nokta rengi:
+             yeşil = senkron açık, gri = kapalı; yedek 7 günden eskiyse nokta turuncuya döner ve
+             etiket "Yedek Gerekli" olur. Tıklayınca yedek/senkron ayarlarına (Veri Aktarımı) gider. -->
+        <div class="th-cloud" id="thCloud" onclick="switchPage('excel')" style="cursor:pointer;" title="Durum: senkron ve yedek. Tıklayınca yedek al / bulut ayarları açılır.">
           <span class="dot"></span>
           <span>Bulut Senkronizasyonu<br><b id="thCloudStatus">Kapalı</b></span>
         </div>
@@ -2730,6 +2744,12 @@
     </header>
 
     <div id="pageContainer">
+
+    <!-- v.272: grup sekme çubuğu — birbirine yakın sayfalar tek sidebar öğesinde toplanınca
+         (Servis & Bakım = Bakım/Yakıt/Lastikler; Kiralama = İşlemler/Teklifler/Hasar & Cezalar;
+         Cari = Cari & Tahsilat/Faturalar) sayfalar arası geçiş bu çubukla yapılır. switchPage
+         her geçişte bu çubuğu tazeler; grup dışı sayfalarda çubuk gizlenir. -->
+    <div id="pageGrupBar"></div>
 
 <section class="page active" data-page="genel-bakis" id="page-genel-bakis"></section>
 
@@ -4296,8 +4316,14 @@ function updateShellChrome(){
   const cloudEl = document.getElementById('thCloud');
   const statusEl = document.getElementById('thCloudStatus');
   if(cloudEl && statusEl){
+    // v.272: tek durum rozeti — senkron + yedek. window.__sonYedekBilgi, dashYedekUyarisiGoster
+    // (Genel Bakış her çizildiğinde) tarafından güncellenir: {gerekli:boolean, gun:number|null}.
+    // Yedek 7 günden eski/hiç alınmamışsa rozet turuncuya döner ve etikete "Yedek Gerekli" eklenir.
+    const yb = window.__sonYedekBilgi || null;
+    const yedekGerekli = !!(yb && yb.gerekli);
     cloudEl.classList.toggle('on', !!window.__cloudSyncActive);
-    statusEl.textContent = window.__cloudSyncActive ? 'Aktif' : 'Kapalı';
+    cloudEl.classList.toggle('stale', yedekGerekli);
+    statusEl.textContent = (window.__cloudSyncActive ? 'Aktif' : 'Kapalı') + (yedekGerekli ? ' · Yedek Gerekli' : '');
   }
   // v.188: her chrome güncellemesinde, koşulu artık geçerli olmayan eski bildirimler
   // (belge yenilendi, ceza ödendi, araç iade edildi vb.) sessizce temizlenir — böylece
@@ -11869,6 +11895,29 @@ const PAGE_META = {
 // sayfaya geçildiğinde alt çubukta "Daha Fazla" sekmesi aktif görünür.
 const BN_CORE_PAGES = ['genel-bakis','arac-yonetimi','kiralama','masraf'];
 
+// v.272: Sayfa grupları — menüyü kısaltmak için birbirine yakın sayfalar tek sidebar öğesinde
+// toplanır, sayfa içi geçiş #pageGrupBar'daki sekmelerle yapılır. Tüm sayfalar ve render
+// fonksiyonları AYNEN korunur; sadece menüde kaç öğe göründüğü değişir.
+const PAGE_GROUPS = [
+  {id:'servis',  pages:['bakim','yakit','lastikler']},
+  {id:'kiralamagr', pages:['kiralama','teklifler','hasarcezalar']},
+  {id:'cari',    pages:['cari','faturalar']},
+];
+function sayfaGrubu(key){ return PAGE_GROUPS.find(g=>g.pages.includes(key)) || null; }
+// Sekme etiketleri: PAGE_META başlıkları uzun olduğu için grup içinde kısa etiketler kullanılır.
+const PAGE_GROUP_ETIKET = {'bakim':'Bakım & Servis','yakit':'Yakıt','lastikler':'Lastikler','kiralama':'İşlemler','teklifler':'Teklifler','hasarcezalar':'Hasar & Cezalar','cari':'Cari & Tahsilat','faturalar':'Faturalar'};
+function pageGrupBarCiz(key){
+  const bar = document.getElementById('pageGrupBar');
+  if(!bar) return;
+  const g = sayfaGrubu(key);
+  const gorunen = g ? g.pages.filter(p=>sayfaGorunurMu(p)) : [];
+  if(!g || gorunen.length<2){ bar.style.display='none'; bar.innerHTML=''; return; }
+  bar.style.display='';
+  bar.innerHTML = `<div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;">${gorunen.map(p=>{
+    const on = p===key;
+    return `<button onclick="switchPage('${p}')" style="padding:9px 20px;border-radius:999px;font-size:13px;font-weight:${on?700:600};cursor:pointer;border:1px solid ${on?'var(--accent-blue)':'var(--border-2)'};background:${on?'var(--accent-blue)':'var(--surface)'};color:${on?'#fff':'var(--text-2)'};">${esc(PAGE_GROUP_ETIKET[p]||PAGE_META[p].title)}</button>`;
+  }).join('')}</div>`;
+}
 function switchPage(key){
   if(!PAGE_META[key]) return;
   // FAZ9: savunma amaçlı ikinci kontrol — sidebar'daki [data-superadmin-only] öğesi CSS ile
@@ -11896,13 +11945,20 @@ function switchPage(key){
     aiMikrofonDurdur();
   }
   document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active', p.dataset.page===key));
-  document.querySelectorAll('.sb-item').forEach(b=>b.classList.toggle('active', b.dataset.page===key));
+  // v.272: grup üyesi sayfalarda (ör. Yakıt), grupyı temsil eden sidebar öğesi (ör. Servis & Bakım → bakim)
+  // aktif görünür — grup dışı öğeler söner.
+  document.querySelectorAll('.sb-item').forEach(b=>{
+    const g = sayfaGrubu(b.dataset.page);
+    const eski = g && g.pages.includes(key) && sayfaGorunurMu(b.dataset.page);
+    b.classList.toggle('active', b.dataset.page===key || !!eski);
+  });
   document.querySelectorAll('.bn-item[data-page]').forEach(b=>b.classList.toggle('active', b.dataset.page===key));
   const bnMore = document.getElementById('bnMoreBtn');
   if(bnMore) bnMore.classList.toggle('active', !BN_CORE_PAGES.includes(key));
   document.getElementById('thTitle').textContent = PAGE_META[key].title;
   document.getElementById('thSub').textContent = PAGE_META[key].sub;
   window.__currentPage = key;
+  pageGrupBarCiz(key);
   renderCurrentPage();
   // Mobilde sayfa değişince açık hamburger menüsünü otomatik kapat
   if(window.innerWidth<=900){
@@ -12152,6 +12208,10 @@ function dashYedekUyarisiGoster(){
   sonYedekOku().then(k=>{
     if(!el.isConnected) return;
     const gun = k ? Math.floor((Date.now()-new Date(k.zaman).getTime())/86400000) : null;
+    // v.272: tek durum rozeti — son yedek bilgisini globalde yayınla; updateShellChrome her
+    // tazelendiğinde rozet bunu okur (senkron + yedek tek rozette birleşir).
+    window.__sonYedekBilgi = {gerekli: (!k || gun===null || gun>7), gun};
+    if(typeof updateShellChrome==='function') updateShellChrome();
     if(k && gun<=7) return;
     const bulut = !!window.__cloudSyncActive;
     const ilkMetin = bulut
@@ -13074,6 +13134,13 @@ function renderDashboard(){
     });
     // Km aşımı uyarısı — aktif kirada (veya kiracısı olup geçici olarak serviste olan) araçlarda
     // erken uyarı: hak edilen km ile gerçek kullanım karşılaştırılır.
+    // v.272: teslim bekleyen adım adım kiralamalar da "Bugün İş"e eklendi — sözleşme hazır ama
+    // Teslim Et atlanmışsa araç Müsait kalıyor; kullanıcı Genel Bakış'tan tek tıkla Teslim Et'e gidebilsin.
+    rentals.filter(r=>r.durum==='sozlesmeHazir').forEach(r=>{
+      const v = vehicles.find(x=>x.id===r.vehicleId);
+      items.push({kritik:false, renk:'#E8A132', bg:'rgba(232,161,50,.1)', etiket:'Teslim', plaka:v?v.plaka:'',
+        aci:'Sözleşme hazır — araç hâlâ Müsait görünüyor, teslim bekliyor', act:`ykDevamEt('${esc(r.id)}')`, btn:'Teslim Et'});
+    });
     vehicles.forEach(v=>{
       if(!(v.durum==='Kirada' || v.durum==='Serviste')) return;
       const kmLimiti = Number(v.kmLimiti)||0;
@@ -13153,7 +13220,7 @@ function renderDashboard(){
          bir bölme çizgisi) ve ekranın iki ayrı yerinde duruyordu. Artık tüm 6 KPI (2 tahsilat + 4
          filo metriği) TEK, tutarlı bir .dstat şeridinde birleşti — "Filo Durumu" kartında sadece
          toplam araç/doluluk görseli kaldı (bkz. aşağıda). -->
-    <div class="dash-stats" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:16px;">
+    <div class="dash-stats cols-3" style="margin-bottom:16px;">
       <div class="dstat" style="cursor:pointer;" onclick="switchPage('cari')">
         <div class="dstat-ic" style="background:rgba(232,161,50,.15);color:#E8A132;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
         <div class="dstat-txt"><div class="l">Bekleyen Tahsilat</div><div class="n" style="color:#E8A132;">${fmtTL2(dashBekleyenTahsilat)}</div><div class="d">vadesi geçmemiş bakiye</div></div>
@@ -15556,6 +15623,31 @@ function renderKiralamaPage(){
       <button onclick="krTabSet('gecmis')" data-kr="gecmis" style="padding:9px 20px;border-radius:999px;font-size:13px;font-weight:${krAktif==='gecmis'?700:600};cursor:pointer;border:1px solid ${krAktif==='gecmis'?'var(--accent-blue)':'var(--border-2)'};background:${krAktif==='gecmis'?'var(--accent-blue)':'var(--surface)'};color:${krAktif==='gecmis'?'#fff':'var(--text-2)'};">③ Geçmiş</button>
       <button onclick="openYeniKiralamaSihirbazi()" style="margin-left:auto;padding:9px 16px;border-radius:999px;font-size:12.5px;font-weight:700;cursor:pointer;border:1px solid rgba(54,161,104,.35);background:rgba(54,161,104,.12);color:#36A168;">+ Yeni Kiralama (Adım Adım)</button>
     </div>
+    ${(()=>{
+      // v.272: "sözleşme yaptım ama araç Müsait görünüyor" — adım adım akışta sözleşme
+      // kaydedilip Teslim Et atlanınca araç Müsait kalıyor (tasarım geregi), ama kullanıcıya
+      // bunu HİÇBİR yerde büyük ve net söylemiyorduk (yalnızca yardım ikonunda küçük not).
+      // Sözleşme hazır ama teslim edilmemiş kiralama varsa sayfanın en üstünde turuncu bir
+      // uyarı bandı gösterilir; her kayıt için tek tıkla "Teslim Et"e devam edilebilir.
+      const bekleyenTeslim = rentals.filter(r=>r.durum==='sozlesmeHazir');
+      if(!bekleyenTeslim.length) return '';
+      const satirlar = bekleyenTeslim.map(r=>{
+        const v = vehicles.find(x=>x.id===r.vehicleId);
+        const plaka = v? v.plaka : '(araç silinmiş)';
+        return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;">
+          <span style="font-weight:700;font-size:13px;">${esc(plaka)}</span>
+          <span style="font-size:12.5px;color:var(--text-2);flex:1;">Sözleşme hazır — araç hâlâ "Müsait" görünüyor</span>
+          <button onclick="ykDevamEt('${esc(r.id)}')" style="padding:7px 14px;border-radius:999px;font-size:12.5px;font-weight:700;cursor:pointer;border:1px solid #E8A132;background:rgba(232,161,50,.14);color:#C9861F;">Teslim Et →</button>
+        </div>`;
+      }).join('');
+      return `<div style="background:rgba(232,161,50,.12);border:1.5px solid rgba(232,161,50,.45);border-radius:14px;padding:12px 16px;margin-bottom:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C9861F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <b style="color:#C9861F;font-size:13.5px;">Teslim bekleyen sözleşme${bekleyenTeslim.length>1?'ler':''} var (${bekleyenTeslim.length})</b>
+        </div>
+        ${satirlar}
+      </div>`;
+    })()}
     <div class="kr-pane" data-kr="islem" style="${krAktif==='islem'?'':'display:none;'}">
     <div class="dcard" style="margin-bottom:16px;">
       <div style="display:flex;align-items:flex-start;gap:10px;">
@@ -15667,7 +15759,7 @@ function renderKiralamaPage(){
     </div>`;
     })()}
 
-    <div class="dash-stats" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:20px;">
+    <div class="dash-stats cols-5" style="margin-bottom:20px;">
       <div class="dstat" style="cursor:default;">
         <div class="dstat-ic" style="background:rgba(22,160,134,.12);color:var(--accent-blue);">${DASH_ICONS.car}</div>
         <div class="dstat-txt"><div class="l">Şu An Müsait</div><div class="n" style="color:var(--accent-blue);">${musait.length}</div><div class="d">hemen teklif edilebilir</div></div>
