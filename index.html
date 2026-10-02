@@ -2494,7 +2494,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-26.274</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-26.275</div>
     </div>
   </div>
 </div>
@@ -2657,7 +2657,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-26.274</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-26.275</div>
     </div>
   </aside>
 <script>
@@ -2878,16 +2878,29 @@
       <option value="kira-asc">Kira (artan)</option>
       <option value="kira-desc">Kira (azalan)</option>
     </select>
-    <div class="filter-chips">
-      <div class="chip active" data-f="hepsi">Hepsi</div>
-      <div class="chip" data-f="Kirada">Kirada</div>
-      <div class="chip" data-f="Müsait">Müsait</div>
-      <div class="chip" data-f="Serviste">Serviste</div>
-      <div class="chip" data-f="Satıldı">Satıldı</div>
-      <div class="chip" id="chipArsiv" onclick="arsivAc()"><span class="chip-dot chip-dot-gray"></span>Arşiv (<span id="arsivSayi">0</span>)</div>
-      <div class="chip" id="chipSigorta"><span class="chip-dot chip-dot-blue"></span>Sigortası yaklaşan</div>
-      <div class="chip" id="chipMuayene"><span class="chip-dot chip-dot-amber"></span>Muayenesi yaklaşan</div>
-      <div class="chip" id="chipKira"><span class="chip-dot chip-dot-purple"></span>Kirası yaklaşan</div>
+    <!-- v.274: filtre çipleri iki etiketli satıra ayrıldı — durum filtreleri (Kirada/Müsait...)
+         ile belge-risk filtreleri (Sigortası yaklaşan...) aynı satırda karışıp iki satıra taşınca
+         hangi çubuğun ne yaptığı belirsizleşiyordu. Tüm id/data-f/onclick AYNEN korunur. -->
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <span style="font-size:10.5px;font-weight:700;letter-spacing:.5px;color:var(--text-3);text-transform:uppercase;min-width:44px;">Durum</span>
+        <div class="filter-chips" style="gap:6px;">
+          <div class="chip active" data-f="hepsi">Hepsi</div>
+          <div class="chip" data-f="Kirada">Kirada</div>
+          <div class="chip" data-f="Müsait">Müsait</div>
+          <div class="chip" data-f="Serviste">Serviste</div>
+          <div class="chip" data-f="Satıldı">Satıldı</div>
+          <div class="chip" id="chipArsiv" onclick="arsivAc()"><span class="chip-dot chip-dot-gray"></span>Arşiv (<span id="arsivSayi">0</span>)</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <span style="font-size:10.5px;font-weight:700;letter-spacing:.5px;color:var(--text-3);text-transform:uppercase;min-width:44px;">Risk</span>
+        <div class="filter-chips" style="gap:6px;">
+          <div class="chip" id="chipSigorta"><span class="chip-dot chip-dot-blue"></span>Sigortası yaklaşan</div>
+          <div class="chip" id="chipMuayene"><span class="chip-dot chip-dot-amber"></span>Muayenesi yaklaşan</div>
+          <div class="chip" id="chipKira"><span class="chip-dot chip-dot-purple"></span>Kirası yaklaşan</div>
+        </div>
+      </div>
     </div>
   </div>
 
