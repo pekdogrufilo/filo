@@ -2494,7 +2494,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-26.273</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-26.274</div>
     </div>
   </div>
 </div>
@@ -2657,7 +2657,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-26.273</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-26.274</div>
     </div>
   </aside>
 <script>
@@ -8051,6 +8051,12 @@ function openAracKirala(vehicleId){
           <div id="krStepTitle" style="font-size:13px;font-weight:700;color:var(--text);">Araç(lar)ı Seç</div>
         </div>
         <div id="krWizardErr" style="display:none;color:#E1554E;font-size:12.5px;padding:8px 10px;background:rgba(225,85,78,.08);border:1px solid rgba(225,85,78,.25);border-radius:8px;margin-bottom:10px;"></div>
+        <!-- v.274: TEK KİRALAMA GİRİŞİ — hızlı akış bu modal; müşteri kaydı + teklif/sözleşme/teslim
+             takibi gerekiyorsa buradan adım adım akışa geçilir (araç seçimi aktarılır). Böylece
+             Kiralama sayfasında artık iki ayrı buton yok: hangi kapıdan girersen gir, aynı modal. -->
+        <div style="display:flex;justify-content:flex-end;margin:-4px 0 10px;">
+          <button type="button" onclick="kiralaModalAdimAdim()" style="background:none;border:none;color:var(--accent-blue);font-size:11.5px;font-weight:600;cursor:pointer;padding:2px 0;text-decoration:underline dotted;">Müşteri kaydı + teklif/sözleşme takibi gerekli → Adım adım akış</button>
+        </div>
 
         <div class="kr-step" data-step="1">
         <div class="iade-row">
@@ -15266,8 +15272,20 @@ function sozChipRenk(f){
 // ================================================================================
 let ykSihirbazState = null; // {rentalId, sozData}
 const YK_DURUM_ETIKET = {teklif:'Teklif', rezervasyon:'Rezervasyon', sozlesmeHazir:'Sözleşme Hazır', teslimEdildi:'Teslim Edildi', iadeAlindi:'İade Alındı', kapandi:'Kapandı', iptal:'İptal'};
-function openYeniKiralamaSihirbazi(){
+// v.274: hızlı kiralama modalından adım adım akışa geçiş — açık kiralaModal kapatılır,
+// hızlı modalda 1. adımda işaretli TEK araç varsa seçim sihirbaza taşınır (birden çok araç
+// seçiliyse taşınamaz, uyarı verilir; sihirbaz tek araçla çalışır).
+function kiralaModalAdimAdim(){
+  const secilen = [...document.querySelectorAll('#kiralaModal .krCheck:checked')].map(c=>c.value);
+  document.getElementById('kiralaModal')?.remove();
+  if(secilen.length>1){ showToast('Adım adım akış tek araçla çalışır — birden çok araç kiralamak için hızlı akışı kullanın.', true); }
+  openYeniKiralamaSihirbazi(secilen.length===1 ? secilen[0] : undefined);
+}
+function openYeniKiralamaSihirbazi(vehicleId){
   if(!requireAdmin()){ showToast('Bu işlem için yönetici girişi gerekir.', true); return; }
+  // v.274: araç kartından/kiralama sayfasından ön-seçimle açılış — araç Müsait ise sihirbazın
+  // 2. adımında (Araç) baştan seçili gelir; geçersizse sessizce yok sayılır.
+  window.__ykAracOnSecim = (vehicleId && vehicles.find(v=>v.id===vehicleId && v.durum==='Müsait')) ? vehicleId : null;
   ykSihirbazState = { rentalId: null, sozData: null };
   ykModalGoster();
 }
@@ -15324,6 +15342,9 @@ function ykSihirbaziHtml(){
   const r = (ykSihirbazState && ykSihirbazState.rentalId) ? rentals.find(x=>x.id===ykSihirbazState.rentalId) : null;
   const durum = r ? r.durum : null;
   const v = r ? vehicles.find(x=>x.id===r.vehicleId) : null;
+  // v.274: hızlı akıştan gelen ön-seçim — yeni kayıtta araç baştan seçili gelir, sonra temizlenir
+  const onSecim = (!r && window.__ykAracOnSecim) ? window.__ykAracOnSecim : null;
+  window.__ykAracOnSecim = null;
   return `
     <div class="iade-card" style="max-width:620px;">
       <div class="iade-head">
@@ -15359,7 +15380,7 @@ function ykSihirbaziHtml(){
             <label>Araç ${durum?'':'(sadece "Müsait" araçlar listelenir)'}</label>
             <select id="ykArac" onchange="ykFiyatOneriGuncelle()" ${durum?'disabled':''}>
               <option value="">— Araç seçin —</option>
-              ${vehicles.filter(x=>durum ? x.id===(r&&r.vehicleId) : x.durum==='Müsait').map(x=>`<option value="${x.id}" ${r&&r.vehicleId===x.id?'selected':''}>${esc(x.plaka)} — ${esc([x.marka,x.model].filter(Boolean).join(' ')||'Araç')}</option>`).join('')}
+              ${vehicles.filter(x=>durum ? x.id===(r&&r.vehicleId) : x.durum==='Müsait').map(x=>`<option value="${x.id}" ${(r&&r.vehicleId===x.id)||(onSecim===x.id)?'selected':''}>${esc(x.plaka)} — ${esc([x.marka,x.model].filter(Boolean).join(' ')||'Araç')}</option>`).join('')}
             </select>
           </div>
         </div>
@@ -15621,7 +15642,7 @@ function renderKiralamaPage(){
       <button onclick="krTabSet('islem')" data-kr="islem" style="padding:9px 20px;border-radius:999px;font-size:13px;font-weight:${krAktif==='islem'?700:600};cursor:pointer;border:1px solid ${krAktif==='islem'?'var(--accent-blue)':'var(--border-2)'};background:${krAktif==='islem'?'var(--accent-blue)':'var(--surface)'};color:${krAktif==='islem'?'#fff':'var(--text-2)'};">① İşlemler</button>
       <button onclick="krTabSet('sozlesme')" data-kr="sozlesme" style="padding:9px 20px;border-radius:999px;font-size:13px;font-weight:${krAktif==='sozlesme'?700:600};cursor:pointer;border:1px solid ${krAktif==='sozlesme'?'var(--accent-blue)':'var(--border-2)'};background:${krAktif==='sozlesme'?'var(--accent-blue)':'var(--surface)'};color:${krAktif==='sozlesme'?'#fff':'var(--text-2)'};">② Sözleşmeler</button>
       <button onclick="krTabSet('gecmis')" data-kr="gecmis" style="padding:9px 20px;border-radius:999px;font-size:13px;font-weight:${krAktif==='gecmis'?700:600};cursor:pointer;border:1px solid ${krAktif==='gecmis'?'var(--accent-blue)':'var(--border-2)'};background:${krAktif==='gecmis'?'var(--accent-blue)':'var(--surface)'};color:${krAktif==='gecmis'?'#fff':'var(--text-2)'};">③ Geçmiş</button>
-      <button onclick="openYeniKiralamaSihirbazi()" style="margin-left:auto;padding:9px 16px;border-radius:999px;font-size:12.5px;font-weight:700;cursor:pointer;border:1px solid rgba(54,161,104,.35);background:rgba(54,161,104,.12);color:#36A168;">+ Yeni Kiralama (Adım Adım)</button>
+      <button onclick="openAracKirala()" style="margin-left:auto;padding:9px 16px;border-radius:999px;font-size:12.5px;font-weight:700;cursor:pointer;border:1px solid rgba(54,161,104,.35);background:rgba(54,161,104,.12);color:#36A168;">+ Yeni Kiralama</button>
     </div>
     ${(()=>{
       // v.272: "sözleşme yaptım ama araç Müsait görünüyor" — adım adım akışta sözleşme
