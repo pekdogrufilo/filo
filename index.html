@@ -2480,7 +2480,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-26.269</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-26.270</div>
     </div>
   </div>
 </div>
@@ -2561,10 +2561,10 @@
         <span>Ara...</span>
         <span class="sb-kbd">⌘K</span>
       </button>
-      <!-- v.158: sol menü kullanıcı talebiyle mantıksal gruplara ayrıldı — GENEL / FİLO / KİRALAMA /
-           FİNANS / SERVİS / RAPORLAR / SİSTEM. TÜM data-page değerleri, buton id'leri (sbBelgeYukle),
-           rozet id'leri (sbBakimBadge/sbLastikBadge/sbBelgelerBadge/sbBildirimBadge) ve ikonlar AYNEN
-           korunur — sadece hangi grup altında göründükleri değişti, hiçbir sayfa/işlev kaldırılmadı. -->
+      <!-- v.270: menü tekrar sadeleştirildi — 4 mantıksal grup. Raporlar Servis'ten çıkarılıp
+           Para bölümüne alındı; Finans & Ödeme grubunun içindeki "Finans" sayfası ile grup adı
+           artık çakışmıyor. Süper Admin ve Bildirimler ayrı öğeler olarak korundu. Tüm data-page
+           değerleri, rozet id'leri ve ikonlar aynen kalıyor. -->
       <button class="sb-item active" data-page="genel-bakis"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M9 22V12h6v10"/></svg>Genel Bakış</button>
 
       <div class="sb-group" data-group="filo">
@@ -2572,10 +2572,6 @@
         <div class="sb-group-body">
           <button class="sb-item" data-page="arac-yonetimi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2v-6l-3-5H4l-3 5v6h2"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="16.5" cy="17.5" r="2.5"/></svg>Araç Yönetimi</button>
           <button class="sb-item" data-page="km-takibi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg>Km Takibi</button>
-          <!-- v.253: "PANEL ÇOK KARIŞTI HERYERE BELGE EKLEME" geri bildirimi — "Belge Arşivi" (görüntüleme)
-               ve "Belge Yükleme" (yükleme) yan yana iki ayrı menü öğesiydi, ikisi de aynı işi (araç
-               belgesi) yapıyordu. Tek sayfada birleştirildi (bkz. renderBelgelerPage) — sidebar'da
-               tek öğe kaldı, hiçbir özellik kaybolmadı. -->
           <button class="sb-item" data-page="belgeler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>Belgeler<span class="sb-badge" id="sbBelgelerBadge" style="display:none;background:var(--amber);">0</span></button>
         </div>
       </div>
@@ -2591,14 +2587,15 @@
         </div>
       </div>
 
-      <div class="sb-group" data-group="finans">
-        <button class="sb-group-head" type="button">Finans &amp; Ödeme<svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+      <div class="sb-group" data-group="para">
+        <button class="sb-group-head" type="button">Para<svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
         <div class="sb-group-body">
           <button class="sb-item" data-page="cari"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/><path d="M21 12a9 9 0 1 1-18 0"/></svg>Cari &amp; Tahsilat</button>
           <button class="sb-item" data-page="faturalar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>Faturalar</button>
-          <button class="sb-item" data-page="finansal-analiz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/><path d="M21 12a9 9 0 1 1-18 0"/></svg>Finans</button>
+          <button class="sb-item" data-page="finansal-analiz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/><path d="M21 12a9 9 0 1 1-18 0"/></svg>Finansal Analiz</button>
           <button class="sb-item" data-page="masraf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Masraf Yönetimi</button>
           <button class="sb-item" data-page="tedarikciler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M8 7h8M8 11h8M8 15h5"/></svg>Tedarikçi Cari Hesabı</button>
+          <button class="sb-item" data-page="raporlar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg>Raporlar</button>
         </div>
       </div>
 
@@ -2611,29 +2608,18 @@
         </div>
       </div>
 
-      <button class="sb-item" data-page="raporlar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg>Raporlar</button>
-
       <div class="sb-group" data-group="sistem">
         <button class="sb-group-head" type="button">Sistem<svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
         <div class="sb-group-body">
           <button class="sb-item" data-page="ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a4 4 0 0 1 4 4v1h1a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3v-8a3 3 0 0 1 3-3h1V6a4 4 0 0 1 4-4z"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17c1 1 5 1 6 0"/></svg>AI Filo Asistanı</button>
           <button class="sb-item" data-page="excel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="m8 13 2.5 5"/><path d="m13.5 13-2.5 5"/></svg>Veri Aktarımı</button>
-          <!-- v.196: "genişletilmiş rol/izin sistemi" — Ekip sayfası, sadece ekipYonet iznine sahip
-               rollerde görünür (bkz. applyRoleVisibility()'deki [data-ekip-only] kuralı). -->
           <button class="sb-item" data-page="ekip" data-ekip-only><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Ekip</button>
           <button class="sb-item" data-page="ayarlar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.04 1.56V21a2 2 0 0 1-4 0v-.09A1.7 1.7 0 0 0 9 19.36a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.64 15a1.7 1.7 0 0 0-1.56-1.04H3a2 2 0 0 1 0-4h.09A1.7 1.7 0 0 0 4.64 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.64a1.7 1.7 0 0 0 1.04-1.56V3a2 2 0 0 1 4 0v.09a1.7 1.7 0 0 0 1.04 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.36 9a1.7 1.7 0 0 0 1.56 1.04H21a2 2 0 0 1 0 4h-.09a1.7 1.7 0 0 0-1.56 1.04Z"/></svg>Ayarlar</button>
         </div>
       </div>
 
-      <!-- v.264: "Bildirimler modülü en aşağıda olsun" — önceden Genel Bakış'ın hemen altında,
-           menünün en üstünde duruyordu. Artık normal kullanıcı menüsünün en altında (Süper Admin,
-           sadece o rolde görünen ayrı bir bölüm olduğu için ondan önce) — data-page, id'ler ve rozet
-           (sbBildirimBadge) AYNEN korunur, sadece konumu değişti. -->
       <button class="sb-item" data-page="bildirimler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>Bildirimler<span class="sb-badge" id="sbBildirimBadge" style="display:none">0</span></button>
 
-      <!-- FAZ9: yalnızca users/{uid}.superAdmin===true olan gerçek Firestore kullanıcıları görür
-           (applyRoleVisibility() içindeki [data-superadmin-only] kuralı). Bu bayrak uygulama
-           içinden HİÇBİR yerden atanamaz — bkz. renderSuperAdminPage() üstündeki not. -->
       <div class="sb-group" data-group="superadmin" data-superadmin-only>
         <button class="sb-group-head" type="button">Süper Admin<svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
         <div class="sb-group-body">
@@ -2657,7 +2643,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-26.269</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-26.270</div>
     </div>
   </aside>
 <script>
@@ -2670,14 +2656,9 @@
       try{const st=JSON.parse(localStorage.getItem(KEY)||'{}');st[g.dataset.group]=g.classList.contains('open');localStorage.setItem(KEY,JSON.stringify(st));}catch(e){}
     });
   });
-  // v.210: "tüm ekranlar çok karıştı / menü çok kalabalık" geri bildirimi — önceden TÜM gruplar
-  // ilk açılışta varsayılan olarak AÇIK geliyordu, yani menü fiilen düz 19 maddelik bir liste gibi
-  // görünüyordu (gruplama sadece küçük başlık etiketleriyle görsel bir ayraçtı, gerçek bir
-  // daraltma sağlamıyordu). Artık en sık kullanılan iki grup (Filo, Kiralama) ilk açılışta açık,
-  // diğerleri (Finans & Ödeme, Servis, Sistem) kapalı geliyor — hiçbir sayfa kaldırılmadı, sadece
-  // ilk görünümdeki madde sayısı azaldı. Kullanıcının kendi aç/kapat tercihi (localStorage,
-  // sbGroupsState) her zaman bu varsayılanın önüne geçer; aktif sayfanın grubu her zaman açılır.
-  const DEFAULT_ACIK = {filo:true, kiralama:true, finans:false, servis:false, sistem:false};
+  // v.270: yeni 4-grup yapısına göre varsayılanlar. En sık kullanılan Filo ve Kiralama açık;
+  // Para (yeni) ve Servis/Sistem kapalı. Kullanıcının kendi tercihi yine önceliklidir.
+  const DEFAULT_ACIK = {filo:true, kiralama:true, para:false, servis:false, sistem:false};
   // v.212: yukarıdaki v.210 düzeltmesi, panel AYLARDIR açık kullanan cihazlarda hiç fark
   // etmiyordu — çünkü o cihazların localStorage'ında zaten "tüm gruplar açık" kaydı vardı ve
   // "kullanıcının kendi tercihi yeni varsayılanın önüne geçer" kuralı bunu koruyordu (istenen
@@ -2758,12 +2739,14 @@
   <div class="topbar" style="border-bottom:none;margin-bottom:0;padding-bottom:0;">
     <span id="cloudBadge" class="cloud-badge" style="display:none;">☁ Bulutta senkronize</span>
     <div class="btn-row">
-      <button class="bell-btn" id="logBtn" title="Etkinlik geçmişi">
+      <button class="bell-btn" id="logBtn" title="Etkinlik geçmişi" style="display:flex;align-items:center;gap:6px;">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 5v4h4"/><path d="M12 7v5l3.5 2"/></svg>
+        <span style="font-size:12px;font-weight:600;">Geçmiş</span>
       </button>
       <div class="settings-wrap">
-        <button class="lock-btn print-btn" id="lockToggleBtn" title="Kilitle / Şifre ayarları">
+        <button class="lock-btn print-btn" id="lockToggleBtn" title="Kilitle / Şifre ayarları" style="display:flex;align-items:center;gap:6px;">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+          <span style="font-size:12px;font-weight:600;">Kilit</span>
         </button>
         <div class="settings-menu" id="settingsMenu">
           <button id="menuLockNow">
@@ -4891,8 +4874,12 @@ async function persist(){
     // v.134: withStorageTimeout — bkz. tanımındaki not — bir depolama isteği hata vermeden
     // sonsuza dek askıda kalırsa artık en geç 20 saniyede zaman aşımı hatasına dönüşüyor.
     await withStorageTimeout(storageAPI.set('vehicles', JSON.stringify(vehicles)));
+    // v.270: başarılı persist sonrası "Kaydet" bekleme bayrağını sıfırla
+    if(typeof window.filoKaydetBekliyor === 'function') window.filoKaydetBekliyor(false);
   }catch(e){
     console.error('Veri kaydetme hatası:', e);
+    // v.270: otomatik kayıt başarısız olursa manuel Kaydet butonunu göster
+    if(typeof window.filoKaydetBekliyor === 'function') window.filoKaydetBekliyor(true);
     // Uyarıyı en fazla 30 saniyede bir göster — toplu işlemlerde spam olmasın
     const now = Date.now();
     if(now - __persistWarnTs > 30000){
@@ -11178,7 +11165,7 @@ function renderLock(mode){
     document.getElementById('lpNew').focus();
   }else if(mode==='login'){
     body.innerHTML = `
-      <h2 style="margin-bottom:18px;">Giriş <i>Yap</i></h2>
+      <h2 style="margin-bottom:18px;color:#fff;">Giriş Yap</h2>
       <div class="lock-field has-icon">
         <label>Kullanıcı Adı</label>
         <span class="lf-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
@@ -15568,8 +15555,12 @@ function renderKiralamaPage(){
     </div>
     <div class="kr-pane" data-kr="islem" style="${krAktif==='islem'?'':'display:none;'}">
     <div class="dcard" style="margin-bottom:16px;">
-      <h3 style="margin-bottom:2px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8v8h6l4 4V4L9 8H3Z"/></svg>Kira İşlemleri</h3>
-      <p style="font-size:13px;color:var(--text-2);margin:2px 0 14px;">Bir araç seçip kiralama, teslim veya iade işlemini buradan yönetin. Bu, personelin en sık kullandığı hızlı akıştır — hiçbir alanı/etiketi değişmedi. Müşteri kaydına bağlı, teklif/sözleşme/teslim adımlarını tek tek izleyen bir akış isterseniz sağ üstteki "Yeni Kiralama (Adım Adım)" butonunu kullanın.</p>
+      <div style="display:flex;align-items:flex-start;gap:10px;">
+        <h3 style="margin-bottom:2px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8v8h6l4 4V4L9 8H3Z"/></svg>Kira İşlemleri</h3>
+        <button type="button" onclick="showKiraYardim()" title="Bu sayfa nasıl kullanılır?" style="margin-left:auto;background:none;border:none;color:var(--accent-blue);cursor:pointer;padding:4px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </button>
+      </div>
       <div class="field" style="max-width:420px;position:relative;margin-bottom:0;">
         <label>Araç seç</label>
         <input type="text" id="kiOpAra" placeholder="Plaka veya model ara..." autocomplete="off" oninput="kiOpFiltrele()" onfocus="kiOpFiltrele()">
@@ -16262,6 +16253,29 @@ window.krTabSet = function(t){
     b.style.fontWeight = on ? '700' : '600';
     b.style.borderColor = on ? 'var(--accent-blue)' : 'var(--border-2)';
   });
+};
+
+// v.270: Kiralama sayfası yardım metni (önceki açılış paragrafı buraya taşındı, sayfa açılışı sadeleşti)
+window.showKiraYardim = function(){
+  const icerik = `
+    <div style="font-size:13px;color:var(--text-2);line-height:1.6;">
+      <p style="margin:0 0 8px;"><b>Hızlı akış:</b> Araç seçin → Kiralama/Teslim/İfade işlemini tamamlayın. Bu ekran personelin en sık kullandığı akıştır.</p>
+      <p style="margin:0 0 8px;"><b>Adım adım akış:</b> Müşteri kaydına bağlı, teklif → sözleşme → teslim adımlarını tek tek izlemek isterseniz sağ üstteki <b>+ Yeni Kiralama (Adım Adım)</b> butonunu kullanın.</p>
+      <p style="margin:0;"><b>Not:</b> "Sözleşme hazır" durumundaki araç, <b>Teslim Et</b> işlemi yapılmadığı sürece filoda "Müsait" görünmeye devam eder.</p>
+    </div>
+  `;
+  const mdl = document.createElement('div');
+  mdl.id = 'kiraYardimModal';
+  mdl.innerHTML = `
+    <div class="modal-overlay" style="z-index:2000;" onclick="if(event.target===this) document.getElementById('kiraYardimModal').remove();">
+      <div class="modal" style="max-width:480px;" onclick="event.stopPropagation();">
+        <div class="modal-head"><h3>Yardım: Kiralama İşlemleri</h3><button class="modal-close" onclick="document.getElementById('kiraYardimModal').remove();">×</button></div>
+        <div class="modal-body">${icerik}</div>
+        <div class="modal-foot"><button class="btn-primary" onclick="document.getElementById('kiraYardimModal').remove();">Kapat</button></div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(mdl);
 };
 
 // ===== v.191: Sözleşme Grupları (Havuz Km) — Kiralama İşlemleri > Sözleşmeler sekmesi =====
@@ -17835,11 +17849,11 @@ function renderRaporlarPage(){
           </tr>`;
         }).join('')}</tbody>
       </table></div>` : '<div class="log-empty">Karlılık analizi için araçlara kira tutarı ve masraf ekleyin.</div>'}
-      <div style="margin-top:12px;font-size:12px;color:var(--steel-100)">* Aylık masraf artık yalnızca masraf kayıtlarını değil, o aya ait yakıt, müşteriye yansıtılmamış HGS/ceza ve takılma ayındaki lastik maliyetini de içerir (bkz. "Gider Detayı"). Servis/bakım maliyeti ayrıca eklenmez çünkü zaten masraf kayıtlarına otomatik işlenmiştir (çift sayım önlenir). Kayıt olan en güncel ay baz alınır (bu ay kayıt yoksa önceki ay). Araç kartında alış fiyatı girilmişse, ${VARSAYILAN_KULLANIM_OMRU_AY} aylık varsayılan kullanım ömrü üzerinden düz-oranlı bir amortisman gideri de ("<span title="Amortisman dahil" style="border:1px solid var(--line);border-radius:8px;padding:0 4px;">A</span>" işaretiyle) dahil edilir. "<span title="Fatura kaynaklı gelir" style="border:1px solid var(--line);border-radius:8px;padding:0 4px;">F</span>" işareti, o aracın gelirinin tahmini kira yerine gerçek fatura verisinden alındığını gösterir (yalnızca müşterinin başka aracı kirada değilse kullanılır — bkz. vehicleGercekGelirHesapla).</div>
+      <div style="margin-top:12px;font-size:12px;color:var(--steel-100)">* Aylık masraf yalnızca masraf kayıtlarını değil; o aya ait yakıt, müşteriye yansıtılmamış HGS/ceza ve takılma ayındaki lastik maliyetini de içerir. Servis/bakım maliyeti ayrıca eklenmez çünkü zaten masraf kayıtlarına otomatik işlenmiştir (çift sayım önlenir). Kayıt olan en güncel ay baz alınır (bu ay kayıt yoksa önceki ay). Araç kartında alış fiyatı girilmişse, ${VARSAYILAN_KULLANIM_OMRU_AY} aylık varsayılan kullanım ömrü üzerinden düz-oranlı bir amortisman gideri de ("<span title="Amortisman dahil" style="border:1px solid var(--line);border-radius:8px;padding:0 4px;">A</span>" işaretiyle) dahil edilir. "<span title="Fatura kaynaklı gelir" style="border:1px solid var(--line);border-radius:8px;padding:0 4px;">F</span>" işareti, o aracın gelirinin tahmini kira yerine gerçek fatura verisinden alındığını gösterir.</div>
     </div>
 
     <div class="dcard" style="margin-bottom:16px;">
-      <h3>Gelişmiş Analitik <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;background:rgba(22,160,134,.12);color:var(--accent-blue);">FAZ8</span></h3>
+      <h3>Gelişmiş Analitik</h3>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
         <div>
           <h4 style="margin:0 0 8px;font-size:13px;color:var(--text-2);">Kârlılık Trendi (Son 6 Ay)</h4>
@@ -17851,7 +17865,7 @@ function renderRaporlarPage(){
         <div>
           <h4 style="margin:0 0 8px;font-size:13px;color:var(--text-2);">Filo Doluluk Oranı (Son 6 Ay)</h4>
           ${svgBarChart(dolulukTrend.map(x=>x.yuzde), dolulukTrend.map(x=>x.label), 320, 170, '#36A168')}
-          <div style="margin-top:8px;font-size:11px;color:var(--text-3);">Birim: %. FAZ4 kiralama kayıtları (rentals) üzerinden hesaplanır — bu modülden önceki kiralamalar için veri yoktur (Araç Doluluk Raporu'yla AYNI sınırlama).</div>
+          <div style="margin-top:8px;font-size:11px;color:var(--text-3);">Birim: %. Kiralama kayıtları (rentals) üzerinden hesaplanır — bu modülden önceki kiralamalar için veri yoktur.</div>
         </div>
       </div>
       <h4 style="margin:0 0 8px;font-size:13px;color:var(--text-2);">En Yüksek Gider Kalemleri (Son 6 Ay)</h4>
@@ -25391,17 +25405,41 @@ window.filoTabloGoster = function(){
 
 // v.92: Sabit "Kaydet" düğmesi — tüm sayfalarda görünür, veriyi kalıcı depoya yazar
 (function(){
+  // v.270: "Kaydet" butonu artık yalnızca bekleyen kaydedilmemiş değişiklik varken görünür.
+  // persist() çağrıları başarılı olduğunda bayrak sıfırlanır; herhangi bir data-mutasyonel
+  // kaydetme işlevi çağrıldığında (örn. araç/müşteri/kiralama ekleme/düzenleme) bayrak set edilir.
+  let kaydetBekliyor = false;
+  window.filoKaydetBekliyor = function(v){ kaydetBekliyor = v!==false; updateKaydetBtn(); };
+
+  function updateKaydetBtn(){
+    const b = document.getElementById('filoKaydetBtn');
+    if(!b) return;
+    if(kaydetBekliyor){
+      b.style.display = 'flex';
+      b.classList.add('pending');
+    } else {
+      b.style.display = 'none';
+      b.classList.remove('pending');
+    }
+  }
+
   function kaydet(){
-    persist().then(()=>showToast('Değişiklikler kaydedildi.')).catch(()=>showToast('Kaydetme başarısız oldu.', true));
+    persist().then(()=>{
+      kaydetBekliyor = false;
+      updateKaydetBtn();
+      showToast('Değişiklikler kaydedildi.');
+    }).catch(()=>showToast('Kaydetme başarısız oldu.', true));
   }
   window.filoKaydet = kaydet;
+
   function butonEkle(){
     if(document.getElementById('filoKaydetBtn')) return;
     const b = document.createElement('button');
     b.id = 'filoKaydetBtn';
     b.setAttribute('onclick','filoKaydet()');
-    b.title = 'Tüm veriyi kalıcı depoya kaydet';
+    b.title = 'Bekleyen değişiklikleri kaydet';
     b.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>Kaydet';
+    b.style.display = 'none';
     document.body.appendChild(b);
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', butonEkle);
