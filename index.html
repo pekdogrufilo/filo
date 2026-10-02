@@ -262,7 +262,7 @@
   .result-count{color:var(--steel-100);font-size:13px;margin-bottom:14px;}
   .result-count b{color:var(--paper);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',monospace;}
 
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;}
   .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:0;position:relative;transition:transform .18s var(--ease), box-shadow .25s var(--ease);animation:fadeSlideUp .3s var(--ease) backwards;overflow:hidden;display:flex;flex-direction:column;}
   .card:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(0,0,0,.35);}
   .card.flash{box-shadow:0 0 0 2px var(--accent-blue);}
@@ -1393,7 +1393,8 @@
   /* Gerçek TR plakası görünümü */
   .plaka-tr{display:inline-flex;align-items:stretch;border:1.5px solid #1D1D1F;border-radius:7px;overflow:hidden;background:#FFFFFF;box-shadow:0 1px 3px rgba(0,0,0,.10);width:max-content;max-width:100%;}
   .ptr-band{background:#003399;color:#FFFFFF;font-size:9px;font-weight:700;display:flex;align-items:center;padding:0 4px;letter-spacing:.5px;flex-shrink:0;}
-  .ptr-no{font-family:'SF Mono',SFMono-Regular,Consolas,monospace;font-weight:700;font-size:14.5px;letter-spacing:.8px;color:#1D1D1F;padding:3px 9px;white-space:nowrap;display:flex;align-items:center;}
+  .ptr-no{font-family:'SF Mono',SFMono-Regular,Consolas,monospace;font-weight:700;font-size:15.5px;letter-spacing:.9px;color:#1D1D1F;padding:4px 10px;white-space:nowrap;display:flex;align-items:center;}
+  .vk-head .ptr-no{font-size:16.5px;}
   /* Durum rozeti: renkli nokta + metin */
   .badge{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;padding:4px 11px;border-radius:20px;text-transform:none;letter-spacing:0;white-space:nowrap;flex-shrink:0;}
   .badge::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;}
@@ -1435,19 +1436,21 @@
   .vk-body-pad .seri-copy{background:rgba(124,184,255,.18);color:#7cb8ff;}
   .vk-body-pad .seri-copy.copied{background:rgba(76,196,128,.22);color:#4CC480;}
   /* ===== Premium Wallet araç kartı (A tasarımı) ===== */
-  .card.vk{padding:0;overflow:hidden;border-radius:20px;}
+  /* v.270 cila: görsel öncelik — daha büyük araç fotoğrafı, daha güçlü tipografi,
+     daha fazla nefes alanı. Yapı (HTML) aynen korunur. */
+  .card.vk{padding:0;overflow:hidden;border-radius:22px;}
   .vk-head{
     background:linear-gradient(135deg,#1A1C22 0%,#20252E 45%,#2A3340 100%);
-    padding:16px 16px 14px;position:relative;color:#fff;
+    padding:18px 18px 16px;position:relative;color:#fff;
   }
   .vk-head::after{content:'';position:absolute;top:-40px;right:-30px;width:140px;height:140px;border-radius:50%;
     background:radial-gradient(circle,rgba(255,255,255,.10),transparent 65%);pointer-events:none;}
   .vk-st{
-    position:absolute;top:13px;right:13px;z-index:2;
+    position:absolute;top:14px;right:14px;z-index:2;
     display:inline-flex;align-items:center;gap:6px;
     background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.65);
     backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
-    padding:4px 11px;border-radius:20px;font-size:11.5px;font-weight:700;color:#fff;
+    padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;color:#fff;
   }
   .vk-st .n{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
   .vk-st.kirada .n{background:#4CC480;box-shadow:0 0 8px #4CC480;}
@@ -1456,30 +1459,30 @@
   .vk-st.pert .n{background:#9ca3af;box-shadow:0 0 8px #9ca3af;}
   .vk-st.satis .n{background:#9B7ED8;box-shadow:0 0 8px #9B7ED8;}
   .vk-head .plaka-tr{border-color:#0c2340;box-shadow:0 2px 8px rgba(0,0,0,.3);position:relative;z-index:1;}
-  .vk-head .arac-adi{margin-top:9px;font-size:14.5px;font-weight:700;color:#fff;letter-spacing:.1px;}
-  .vk-head .model{font-size:11.5px;color:rgba(255,255,255,.62);margin-top:2px;letter-spacing:.2px;}
-  .vk-head .arac-adi,.vk-head .model{max-width:calc(100% - 104px);}
-  .vk-head .vk-car{position:absolute;right:14px;bottom:10px;width:92px;height:60px;object-fit:cover;
-    border-radius:10px;border:1.5px solid rgba(255,255,255,.28);
-    box-shadow:0 4px 10px rgba(0,0,0,.35);z-index:1;background:rgba(255,255,255,.08);}
+  .vk-head .arac-adi{margin-top:10px;font-size:16px;font-weight:700;color:#fff;letter-spacing:.1px;}
+  .vk-head .model{font-size:12px;color:rgba(255,255,255,.62);margin-top:3px;letter-spacing:.2px;}
+  .vk-head .arac-adi,.vk-head .model{max-width:calc(100% - 128px);}
+  .vk-head .vk-car{position:absolute;right:16px;bottom:12px;width:118px;height:76px;object-fit:cover;
+    border-radius:12px;border:1.5px solid rgba(255,255,255,.28);
+    box-shadow:0 6px 14px rgba(0,0,0,.4);z-index:1;background:rgba(255,255,255,.08);}
   .vk-head-row{display:flex;align-items:center;gap:10px;position:relative;z-index:1;}
-  .vk-logo .marka-logo{width:34px;height:34px;border-radius:9px;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  .vk-logo .marka-logo{width:36px;height:36px;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;
     box-shadow:0 2px 6px rgba(0,0,0,.32), inset 0 0 0 1px rgba(255,255,255,.65);}
-  .vk-logo .marka-logo img{width:26px;height:26px;object-fit:contain;display:block;}
-  .vk-logo .ml-fb{display:none;width:100%;height:100%;border-radius:9px;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#fff;}
+  .vk-logo .marka-logo img{width:28px;height:28px;object-fit:contain;display:block;}
+  .vk-logo .ml-fb{display:none;width:100%;height:100%;border-radius:10px;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#fff;}
   .vk-logo .marka-logo.ml-err .ml-fb{display:flex;}
-  .vk-seg .gun{font-size:9.5px;text-align:center;margin-top:2px;color:rgba(255,255,255,.65);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .vk-seg .gun{font-size:10px;text-align:center;margin-top:2px;color:rgba(255,255,255,.65);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .vk-seg.ok .gun{color:#4CC480;font-weight:700;}
   .vk-seg.kotu .gun{color:#EC8E85;font-weight:700;}
   .vk-seg.uyari .gun{color:#E8A132;font-weight:700;}
   /* Seçenek 3 — Tam Wallet: gövde ve alt bar lacivert */
-  .vk-seg-row{display:flex;gap:10px;padding:13px 16px 14px;background:#1A1C22;}
+  .vk-seg-row{display:flex;gap:12px;padding:14px 18px 15px;background:#1A1C22;}
   .vk-seg{flex:1;min-width:0;}
   .vk-seg .bar{height:5px;border-radius:3px;background:rgba(255,255,255,.14);overflow:hidden;}
   .vk-seg .bar span{display:block;height:100%;border-radius:3px;transition:width .5s ease;}
-  .vk-seg .lbl{font-size:9.5px;font-weight:600;color:rgba(255,255,255,.75);margin-top:5px;text-align:center;letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .vk-body-pad{padding:8px 16px 14px;background:#1A1C22;}
-  .vk-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 16px 14px;background:#20252E;border-top:1px solid rgba(255,255,255,.08);}
+  .vk-seg .lbl{font-size:10px;font-weight:600;color:rgba(255,255,255,.75);margin-top:5px;text-align:center;letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .vk-body-pad{padding:10px 18px 16px;background:#1A1C22;}
+  .vk-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 18px 15px;background:#20252E;border-top:1px solid rgba(255,255,255,.08);}
   .vk-price{font-size:16.5px;font-weight:800;color:#fff;font-variant-numeric:tabular-nums;}
   .vk-price small{font-size:11px;font-weight:500;color:rgba(255,255,255,.55);}
   .vk-acts{display:flex;gap:7px;flex-shrink:0;}
@@ -2480,7 +2483,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-26.270</div>
+      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-09-26.271</div>
     </div>
   </div>
 </div>
@@ -2643,7 +2646,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-26.270</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-09-26.271</div>
     </div>
   </aside>
 <script>
