@@ -15461,13 +15461,34 @@ function musteriAdEslesir(turetilmis, gercek){
   if(!a || !b) return false;
   if(a===b) return true;
   if(a.length<6 || b.length<6) return false;
-  return a.includes(b) || b.includes(a);
+  if(a.includes(b) || b.includes(a)) return true;
+  // v.284: kapsama yetmezse kelime tabanlı alias eşleşmesi ("Anadolu Ecza (6)" ↔ tam unvan).
+  return musteriTokenEslesir(turetilmis, gercek);
 }
 // v.283: VKN olmadan da şirket unvanını ayırt etmeye yarayan kaba kural — otomatik
 // oluşturulan müşteri kayıtlarında "LTD/Limited/A.Ş/Sanayi/Ticaret/Şirket/Deposu" geçen
 // adlar "bireysel" yerine "kurum" olarak işaretlenir.
 function isimKurumsalMu(ad){
   return /ltd|limited|a\.ş|a\.s\.|sanayi|ticaret|şirket|deposu/i.test(String(ad||''));
+}
+// v.284: KELİME (token) tabanlı alias eşleşmesi — Excel'in kısa "yer" adları tam unvanla
+// birebir veya kapsama yoluyla eşleşemeyebiliyor ("Anadolu Ecza (6)" ↔ "ANADOLU İTRİYAT VE
+// ECZA DEPOSU ... LTD. ŞTİ.", "HAYATİ DÜNDAR İNŞAAT" ↔ "HAYATİ DÜNDAR İNŞ. MÜH. ... LTD. ŞTİ.").
+// Kural: parantez içi atılır, kurum kalıpları (ltd/şti/sanayi/ticaret/şirket/inş/müh/nak/hafr
+// gibi) ve 3 karakterden kısa kelimeler yok sayılır; 2+ ortak anlamlı kelime = aynı müşteri.
+function musteriTokenlar(ad){
+  const s = String(ad||'').toLocaleLowerCase('tr-TR')
+    .replace(/\([^)]*\)/g,' ')
+    .replace(/[^a-zçğıöşü0-9]+/gi,' ');
+  const stop = new Set(['ve','ltd','şti','sti','limited','şirketi','şirket','sanayi','ticaret','inş','ins','müh','muh','nak','hafr','orman','ürn','maden','şubesi','kurumsal']);
+  return new Set(s.split(/\s+/).filter(t=>t.length>=3 && !stop.has(t)));
+}
+function musteriTokenEslesir(a, b){
+  const ta = musteriTokenlar(a), tb = musteriTokenlar(b);
+  if(!ta.size || !tb.size) return false;
+  let n = 0;
+  ta.forEach(t=>{ if(tb.has(t)) n++; });
+  return n >= 2;
 }
 
 function renderMusterilerPage(){
@@ -16506,7 +16527,37 @@ async function musteriBaglantilariOnar(){
     const norm = (s)=>String(s||'').trim().toLocaleLowerCase('tr-TR');
     // v.283: daha önce "bireysel" oluşmuş ama adı şirket unvanı olan otomatik kayıtları düzelt.
     for(const c of customers){
-      if(c && c.otomatikOlusturuldu && c.tip==='bireysel' && isimKurumsalMu(musteriGoruntuAdi(c))){ c.tip='kurum'; degisti=true; }
+      if(c && c.otomatikOlusturuldu && (c.tip==='bireysel' && isimKurumsalMu(musteriGoruntuAdi(c)) || c.tip==='kurumsal')){ c.tip='kurum'; degisti=true; }
+    }
+    // v.284: KOPYA OTOMATİK KAYITLARI BİRLEŞTİR — bulut senkron yarışı nedeniyle aynı isimden
+    // birden çok otomatik kayıt oluşabildiği tespit edildi ("şirket şirket diye boş kayıtlar").
+    // Kiralamaya bağlı olan (veya en eski) kayıt tutulur; kopyalara bağlı kiralamalar tutulana
+    // taşınır ve kopyalar silinir. Her açılışta idempotent çalışır.
+    const otomatikGrup = {};
+    customers.forEach(c=>{
+      if(!c || !c.otomatikOlusturuldu) return;
+      const k = norm(musteriGoruntuAdi(c));
+      if(!k) return;
+      (otomatikGrup[k] = otomatikGrup[k] || []).push(c);
+    });
+    const silinecekler = new Set();
+    Object.values(otomatikGrup).forEach(list=>{
+      if(list.length < 2) return;
+      list.sort((a,b)=>{
+        const ab = rentals.some(r=>r.customerId===a.id) ? 0 : 1;
+        const bb = rentals.some(r=>r.customerId===b.id) ? 0 : 1;
+        return ab-bb || String(a.olusturmaTarihi||'').localeCompare(String(b.olusturmaTarihi||''));
+      });
+      const tut = list[0];
+      list.slice(1).forEach(x=>{
+        rentals.forEach(r=>{ if(r.customerId===x.id){ r.customerId = tut.id; } });
+        silinecekler.add(x.id);
+      });
+    });
+    if(silinecekler.size){
+      customers = customers.filter(c=>!silinecekler.has(c.id));
+      degisti = true;
+      logActivity('del', `Kopya müşteri kayıtları birleştirildi: ${silinecekler.size} boş kopya silindi`);
     }
     const adaGoreBul = (ad)=>customers.find(c=>norm(musteriGoruntuAdi(c))===norm(ad));
     const olustur = (ad, ekstra)=>{
@@ -16542,7 +16593,14 @@ async function musteriBaglantilariOnar(){
       if(v.durum!=='Kirada' || String(v.kiraciAdi||'').trim()) continue;
       const r = rentals.find(x=>x.vehicleId===v.id && (x.durum==='teslimEdildi'||x.durum==='sozlesmeHazir'));
       const c = (r && r.customerId) ? customers.find(x=>x.id===r.customerId) : null;
-      if(c && musteriGoruntuAdi(c)){ v.kiraciAdi = musteriGoruntuAdi(c); degisti = true; }
+      if(c && musteriGoruntuAdi(c)){ v.kiraciAdi = musteriGoruntuAdi(c); degisti = true; continue; }
+      // v.284: kiralaması olmayan Excel araçlarında kiracı adı "yer" alanından çözümlenir —
+      // kelime tabanlı alias eşleşmesi mevcut bir müşteriyle bağlar ("Anadolu Ecza (6)" →
+      // ANADOLU İTRİYAT tam unvanı). Eşleşme yoksa alan olduğu gibi bırakılır.
+      if(String(v.yer||'').trim()){
+        const hit = customers.find(c2=>musteriTokenEslesir(v.yer, musteriGoruntuAdi(c2)));
+        if(hit){ v.kiraciAdi = musteriGoruntuAdi(hit); degisti = true; }
+      }
     }
     if(degisti){
       await persistCustomers();
