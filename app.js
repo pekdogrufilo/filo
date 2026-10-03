@@ -11543,7 +11543,7 @@ function sozlesmeHtml(d){
   // v.279: müşteriye giden belge tasarımı yükseltildi — sözleşme artık teklifle AYNI marka dilini
   // kullanıyor (turkuaz antetli kağıt, marka renkli bölüm başlıkları, stilize tablolar). Hukuki
   // içerik ve veri alanları AYNEN korundu; yalnızca görsel katman değişti.
-  const logoSrc = (document.querySelector('.lock-logo-wrap img')||{}).src || (window.SIRKET_LOGOS && SIRKET_LOGOS['PEKDOĞRU GRUP']) || '';
+  const logoSrc = (document.querySelector('.lock-logo-wrap img')||{}).src || (typeof SIRKET_LOGOS!=='undefined' && SIRKET_LOGOS['PEKDOĞRU GRUP']) || '';
   const logoTag = logoSrc ? `<img src="${logoSrc}" alt="" style="width:100%;height:100%;object-fit:contain;">` : '';
   const altIletisim = [d.firmaTelefon?'Tel: '+esc(d.firmaTelefon):'', d.firmaEposta?esc(d.firmaEposta):''].filter(Boolean).join('  ·  ');
   return `<!DOCTYPE html>
@@ -11574,9 +11574,13 @@ function sozlesmeHtml(d){
   .imza-line{border-top:1px solid #333;margin-top:60px;padding-top:5px;}
   .belge-alt{margin-top:28px;padding-top:12px;border-top:1px solid #D8E6E4;font-size:10.5px;color:#7A8A88;display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px;}
   .belge-alt b{color:#4B6B67;}
-  @media print{body{padding:0;background:#fff;} @page{margin:15mm;}}
+  .wm{position:fixed;top:50%;left:50%;width:460px;height:460px;transform:translate(-50%,-50%);opacity:.055;pointer-events:none;z-index:0;}
+  .wm img{width:100%;height:100%;object-fit:contain;}
+  body>*:not(.wm){position:relative;z-index:1;}
+  @media print{body{padding:0;background:#fff;} .wm{opacity:.045;} @page{margin:15mm;}}
 </style></head>
 <body>
+${logoSrc?`<div class="wm"><img src="${logoSrc}" alt=""></div>`:''}
 <div class="letterhead">
   <div class="lh-left">
     <div class="lh-logo">${logoTag}</div>
@@ -13095,7 +13099,7 @@ function tkPdfAc(rentalId){
   <style>
     *{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     body{font-family:Arial,Helvetica,sans-serif;color:#15171A;margin:0;padding:0;background:#EAF6F4;}
-    .sayfa{max-width:760px;margin:0 auto;background:#fff;}
+    .sayfa{max-width:760px;margin:0 auto;background:#fff;position:relative;z-index:1;}
     .letterhead{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:26px 34px;background:linear-gradient(120deg,#00A99D,#017F76);color:#fff;flex-wrap:wrap;}
     .lh-left{display:flex;align-items:center;gap:14px;}
     .lh-logo{width:44px;height:44px;border-radius:11px;background:#fff;padding:5px;display:flex;align-items:center;justify-content:center;}
@@ -13129,8 +13133,10 @@ function tkPdfAc(rentalId){
     .foot .sep{margin:0 6px;color:#BBB;}
     .foot .disclaimer{margin-top:6px;color:#A5A5A5;}
     @media print{ body{padding:0;background:#fff;} .sayfa{max-width:none;} }
+    .wm{position:fixed;top:50%;left:50%;width:440px;height:440px;transform:translate(-50%,-50%);opacity:.055;pointer-events:none;z-index:0;}
+    .wm img{width:100%;height:100%;object-fit:contain;}
   </style></head>
-  <body><div class="sayfa">
+  <body><div class="wm"><img src="${SIRKET_LOGOS['PEKDOĞRU GRUP']}" alt=""></div><div class="sayfa">
     <div class="letterhead">
       <div class="lh-left">
         <div class="lh-logo"><img src="${SIRKET_LOGOS['PEKDOĞRU GRUP']}" alt=""></div>
