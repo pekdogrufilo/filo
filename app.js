@@ -16617,17 +16617,30 @@ async function musteriBaglantilariOnar(){
       if(!c) c = olustur(ad, sz ? { vkn: sz.kiraciVergi, tel: sz.kiraciTel, adres: sz.kiraciAdres } : null);
       if(c){ r.customerId = c.id; degisti = true; }
     }
+    // v.284: kiralaması olmayan Excel araçlarında kiracı adı "yer" alanından çözümlenir —
+    // kelime tabanlı alias eşleşmesi mevcut bir müşteriyle bağlar ("Anadolu Ecza (6)" →
+    // ANADOLU İTRİYAT tam unvanı). Eşleşme yoksa alan olduğu gibi bırakılır.
+    // v.289: "Kirada" araçların kiracıları ARTIK HER DURUMDA gerçek müşteri kaydına bağlanır —
+    // eskiden kiraciAdi dolu olanlara dokunulmuyordu; Excel'den aktarılan kısa kiracı adları
+    // ("Konya Hastane", "Eskişehir", "Karayolları"...) için hiç müşteri kaydı oluşmuyor ve bu
+    // araçlar ne Müşteriler sayfasında düzgün görünüyordu ne de otomatik faturalandırılabiliyordu.
+    // Sıra: kiralamasının müşterisi → birebir ad eşleşmesi → token eşleşmesi → yoksa otomatik
+    // oluştur. Araç kiraciAdi alanı, bulunan kaydın görüntü adına (tam unvana) normalize edilir.
     for(const v of vehicles){
-      if(v.durum!=='Kirada' || String(v.kiraciAdi||'').trim()) continue;
-      const r = rentals.find(x=>x.vehicleId===v.id && (x.durum==='teslimEdildi'||x.durum==='sozlesmeHazir'));
-      const c = (r && r.customerId) ? customers.find(x=>x.id===r.customerId) : null;
-      if(c && musteriGoruntuAdi(c)){ v.kiraciAdi = musteriGoruntuAdi(c); degisti = true; continue; }
-      // v.284: kiralaması olmayan Excel araçlarında kiracı adı "yer" alanından çözümlenir —
-      // kelime tabanlı alias eşleşmesi mevcut bir müşteriyle bağlar ("Anadolu Ecza (6)" →
-      // ANADOLU İTRİYAT tam unvanı). Eşleşme yoksa alan olduğu gibi bırakılır.
-      if(String(v.yer||'').trim()){
-        const hit = customers.find(c2=>musteriTokenEslesir(v.yer, musteriGoruntuAdi(c2)));
-        if(hit){ v.kiraciAdi = musteriGoruntuAdi(hit); degisti = true; }
+      if(!v || v.durum!=='Kirada') continue;
+      const ad = String(v.kiraciAdi||'').trim() || String(v.yer||'').trim();
+      if(!ad) continue;
+      const r = rentals.find(x=>x.vehicleId===v.id && (x.durum==='teslimEdildi'||x.durum==='sozlesmeHazir') && x.customerId);
+      const rc = r ? customers.find(x=>x.id===r.customerId) : null;
+      if(rc && musteriGoruntuAdi(rc)){
+        if(String(v.kiraciAdi||'').trim()!==musteriGoruntuAdi(rc)){ v.kiraciAdi = musteriGoruntuAdi(rc); degisti = true; }
+        continue;
+      }
+      let c = adaGoreBul(ad) || customers.find(c2=>musteriTokenEslesir(ad, musteriGoruntuAdi(c2))) || null;
+      if(!c) c = olustur(ad, null);
+      if(c){
+        const gAd = musteriGoruntuAdi(c);
+        if(String(v.kiraciAdi||'').trim()!==gAd){ v.kiraciAdi = gAd; degisti = true; }
       }
     }
     if(degisti){
@@ -16653,10 +16666,13 @@ async function excelFiloFaturalariSenkronizeEt(){
     const curYM = bugun.slice(0,7);
     const mevcut = new Set(invoices.map(f=>f.otoKaynak||f.excelKaynak).filter(Boolean));
     let uretildi = 0;
+    // v.289: token eşleşmesi fallback'i — kısa Excel kiracı adı tam unvanla birebir
+    // eşleşmiyorsa ("Anadolu Ecza (6)" gibi) kelime tabanlı eşleşme denenir.
     const musteriBul = (v)=>{
       const ad = (v.kiraciAdi||'').trim() || (v.yer||'').trim();
       if(!ad) return null;
-      return customers.find(c=>musteriAdEslesir(ad, musteriGoruntuAdi(c))) || null;
+      return customers.find(c=>musteriAdEslesir(ad, musteriGoruntuAdi(c)))
+          || customers.find(c=>musteriTokenEslesir(ad, musteriGoruntuAdi(c))) || null;
     };
     for(const v of vehicles){
       if(!v || v.durum!=='Kirada') continue;
