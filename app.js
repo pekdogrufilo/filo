@@ -921,6 +921,21 @@ async function load(){
       }
     }catch(e){ console.error('plaka birleştirme hatası:', e); }
   }
+  // v.281 self-heal 3: MÜŞTERİ BAĞLANTISI BOŞ KİRALAMALAR — v.280 ve öncesi hızlı kiralama
+  // akışı müşteri kaydını OLUŞTURMUYORDU; kayıt yoksa rental.customerId boş kalıyor ve
+  // Müşteriler sayfası bu isimleri "Kayıtsız (araç kayıtlarından)" olarak gösteriyordu.
+  // Açılışta: (a) customerId boş/ölü olan kiralamalar, bağlı sözleşmenin kiracısından ya da
+  // aracın kiraciAdi'nden isim çözümlenip gerçek müşteri kaydına bağlanır; (b) isme ait
+  // müşteri kaydı hiç yoksa kiralama verisinden otomatik oluşturulur (kvkkOnay:false —
+  // Ayarlar > KVKK'dan sonradan onaylanabilir); (c) "Kirada" ama kiracı adı boş araçların
+  // kiraciAdi alanı aktif kiralamasının müşterisinden doldurulur.
+  if(!yuklenemeyenAnahtarlar.has('rentals') && !yuklenemeyenAnahtarlar.has('customers')){
+    try{
+      if(await musteriBaglantilariOnar()){
+        showToast('Müşteri bağlantıları onarıldı: müşteri kaydı olmayan kiracılar otomatik oluşturulup kiralamalara bağlandı.');
+      }
+    }catch(e){ console.error('müşteri bağlantı onarımı hatası:', e); }
+  }
   arsivSilinenleriTemizle().catch(e=>console.error('arsivSilinenleriTemizle hatası:', e));
   // FAZ6: bildirim kayıtlarını (dedupe'lu) üret — sayfa her açıldığında değil, sadece burada,
   // uygulama yüklenirken bir kez çalışır. Yeni kayıt eklendiyse kalıcı olarak saklanır.
@@ -5404,7 +5419,27 @@ async function kirayaVerVeSozlesme(format){
   // FAZ4 Part B.2: Hızlı "Araç Kirala" akışı da diğer tüm kiralamalarla aynı rentals
   // koleksiyonuna yazar. teklif/rezervasyon adımları atlanıp doğrudan 'teslimEdildi'
   // durumuna geçilir çünkü bu akış zaten personel için bilinçli bir kısayoldur.
-  const krCustomerId = customerIdAdaGoreBul(kiraci);
+  // v.281: hızlı akış artık müşteri kaydını OTOMATİK oluşturuyor — daha önce yalnızca aynı
+  // isimli kayıt ZATEN varsa bağlanıyordu; kayıt yoksa customerId boş kalıyor, Müşteriler
+  // sayfası bu isimleri "Kayıtsız (araç kayıtlarından)" olarak gösteriyor ve müşteri-araca
+  // eşleştirmesi kopuk kalıyordu ("Anadolu İtriyat'ın 7 aracı var ama 34KRE884 görünmüyor"
+  // vakasının kök nedeni). Oluşturulan kayıt kvkkOnay:false ile işaretlenir — Ayarlar > KVKK
+  // kartından sonradan onaylanabilir. Doğrulanmış VKN varsa kayıt "kurum", yoksa "bireysel"
+  // olarak açılır.
+  let krCustomerId = customerIdAdaGoreBul(kiraci);
+  if(!krCustomerId){
+    const yeniC = {
+      id: yeniId('cus'), olusturmaTarihi: todayISO(),
+      tip: kiraciVKN ? 'kurum' : 'bireysel',
+      ...(kiraciVKN ? { firmaAdi: kiraci, vkn: kiraciVKN } : { ad: kiraci, soyad: '' }),
+      telefon: kiraciTel||'', adres: kiraciAdres||'',
+      kvkkOnay: false, otomatikOlusturuldu: true,
+    };
+    customers.push(yeniC);
+    krCustomerId = yeniC.id;
+    await persistCustomers();
+    logActivity('add', `Müşteri otomatik oluşturuldu: <b>${esc(kiraci)}</b> (hızlı kiralama akışından)`);
+  }
   for(const {v, kira, teslimKm} of aracVerileri){
     await rentalOlusturVeyaGuncelle(v.id, {
       customerId: krCustomerId,
@@ -16433,6 +16468,59 @@ function customerIdAdaGoreBul(ad){
   if(!q) return null;
   const bul = customers.find(c=>musteriGoruntuAdi(c).trim().toLocaleLowerCase('tr-TR')===q);
   return bul ? bul.id : null;
+}
+// v.281: açılışta bir kez çalışan müşteri bağlantısı onarımı — bkz. çağrı yerindeki yorum.
+// (a) customerId boş ya da silinmiş kaydı gösteren kiralamalar isim çözümlenip bağlanır,
+// (b) isim için müşteri kaydı yoksa kiralama/sözleşme verisinden otomatik oluşturulur,
+// (c) "Kirada" ama kiracı adı boş araçların kiraciAdi alanı aktif kiralamadan doldurulur.
+// İptal kiralamalara dokunulmaz; hiçbir isim çözümlenemeyen kayıt olduğu gibi bırakılır.
+async function musteriBaglantilariOnar(){
+  try{
+    let degisti = false;
+    const norm = (s)=>String(s||'').trim().toLocaleLowerCase('tr-TR');
+    const adaGoreBul = (ad)=>customers.find(c=>norm(musteriGoruntuAdi(c))===norm(ad));
+    const olustur = (ad, ekstra)=>{
+      const temiz = String(ad||'').trim();
+      if(!temiz) return null;
+      const vkn = (ekstra&&String(ekstra.vkn||'').trim())||'';
+      const c = {
+        id: yeniId('cus'), olusturmaTarihi: todayISO(),
+        tip: vkn ? 'kurum' : 'bireysel',
+        ...(vkn ? { firmaAdi: temiz, vkn } : { ad: temiz, soyad: '' }),
+        telefon: (ekstra&&String(ekstra.tel||'').trim())||'',
+        adres: (ekstra&&String(ekstra.adres||'').trim())||'',
+        kvkkOnay: false, otomatikOlusturuldu: true,
+      };
+      customers.push(c); degisti = true;
+      logActivity('add', `Müşteri otomatik oluşturuldu (veri onarımı): <b>${esc(temiz)}</b>`);
+      return c;
+    };
+    for(const r of rentals){
+      if(!r || r.durum==='iptal') continue;
+      const mevcutC = r.customerId ? customers.find(c=>c.id===r.customerId) : null;
+      if(mevcutC && norm(musteriGoruntuAdi(mevcutC))) continue;
+      const v = vehicles.find(x=>x.id===r.vehicleId);
+      const sz = r.sozlesmeId ? (sozlesmeler||[]).find(s=>s.id===r.sozlesmeId) : null;
+      const ad = (sz && (String(sz.kiraci||'').trim() || String(sz.musteri||'').trim()))
+        || (v && String(v.kiraciAdi||'').trim()) || '';
+      if(!ad) continue;
+      let c = adaGoreBul(ad);
+      if(!c) c = olustur(ad, sz ? { vkn: sz.kiraciVergi, tel: sz.kiraciTel, adres: sz.kiraciAdres } : null);
+      if(c){ r.customerId = c.id; degisti = true; }
+    }
+    for(const v of vehicles){
+      if(v.durum!=='Kirada' || String(v.kiraciAdi||'').trim()) continue;
+      const r = rentals.find(x=>x.vehicleId===v.id && (x.durum==='teslimEdildi'||x.durum==='sozlesmeHazir'));
+      const c = (r && r.customerId) ? customers.find(x=>x.id===r.customerId) : null;
+      if(c && musteriGoruntuAdi(c)){ v.kiraciAdi = musteriGoruntuAdi(c); degisti = true; }
+    }
+    if(degisti){
+      await persistCustomers();
+      await persistRentals();
+      await persist();
+    }
+    return degisti;
+  }catch(e){ console.error('müşteri bağlantı onarımı hatası:', e); return false; }
 }
 // Hızlı/adım-adım akışların ortak köprüsü: bir araç için açık kaydı günceller, yoksa yeni
 // oluşturur. Var olan alanlar korunur (Object.assign ile yalnızca patch'teki alanlar değişir).
