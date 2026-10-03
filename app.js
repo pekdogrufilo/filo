@@ -936,11 +936,17 @@ async function load(){
       }
     }catch(e){ console.error('müşteri bağlantı onarımı hatası:', e); }
   }
-  // v.287: müşteri bağlantıları oturduktan sonra Excel filosunun aylık kira faturalarını üret.
+  // v.287/v.288: müşteri bağlantıları oturduktan sonra aylık kira faturalarını üret —
+  // hem Excel'den aktarılan filo hem de panel içinden kiraya verilen araçlar.
   if(!yuklenemeyenAnahtarlar.has('rentals') && !yuklenemeyenAnahtarlar.has('customers')){
     try{
-      await excelFiloFaturalariSenkronizeEt();
-    }catch(e){ console.error('excel filo fatura senkronu hatası:', e); }
+      const excelAdet = await excelFiloFaturalariSenkronizeEt();
+      const panelAdet = await panelKiralamaFaturalariSenkronizeEt();
+      if(excelAdet+panelAdet>0){
+        logActivity('add', `Aylık kira faturaları üretildi: <b>${excelAdet+panelAdet}</b> kayıt (Excel filosu ${excelAdet}, panel kiralaması ${panelAdet}) — Cari & Tahsilat'a işlendi`);
+        showToast(`Aylık kira faturaları üretildi: ${excelAdet+panelAdet} kayıt Cari & Tahsilat'a işlendi (Excel filosu ${excelAdet} + panel kiralaması ${panelAdet}).`);
+      }
+    }catch(e){ console.error('kira fatura senkronu hatası:', e); }
   }
   arsivSilinenleriTemizle().catch(e=>console.error('arsivSilinenleriTemizle hatası:', e));
   // FAZ6: bildirim kayıtlarını (dedupe'lu) üret — sayfa her açıldığında değil, sadece burada,
@@ -16645,7 +16651,7 @@ async function excelFiloFaturalariSenkronizeEt(){
   try{
     const bugun = todayISO();
     const curYM = bugun.slice(0,7);
-    const mevcut = new Set(invoices.map(f=>f.excelKaynak).filter(Boolean));
+    const mevcut = new Set(invoices.map(f=>f.otoKaynak||f.excelKaynak).filter(Boolean));
     let uretildi = 0;
     const musteriBul = (v)=>{
       const ad = (v.kiraciAdi||'').trim() || (v.yer||'').trim();
@@ -16687,11 +16693,67 @@ async function excelFiloFaturalariSenkronizeEt(){
     if(uretildi){
       await persistInvoices();
       await persistLedger();
-      logActivity('add', `Excel filosu aylık kira faturaları üretildi: <b>${uretildi}</b> kayıt (Cari & Tahsilat'a işlendi)`);
-      showToast(`Excel filosu için ${uretildi} aylık kira faturası Cari & Tahsilat'a işlendi.`);
     }
     return uretildi;
   }catch(e){ console.error('excel filo fatura senkronu hatası:', e); return 0; }
+}
+// v.288: PANEL KİRALAMALARI AYLIK TAHSİLAT — v.287 yalnızca Excel'den aktarılan araçları
+// faturalandırıyordu; panel içinden kiraya verilen (rental.durum='teslimEdildi') kiralamaların
+// aylık kiraları için otomatik fatura ÜRETİLMİYORDU (FAZ3 akışı yalnızca bildirim üretir,
+// fatura kesmez). Artık panel kiralamaları da aynı idempotent mimariyle faturalanır.
+// Çifte faturalama koruması: (1) otoKaynak imzası panelRental|<rentalId>|<YM> ile ay başına
+// TEK fatura, (2) aynı müşteriye aynı ayda açıklamasında araç plakası geçen ELLE kesilmiş
+// bir fatura varsa o ay atlanır (kullanıcının kendi kestiği faturanın üzerine yazılmaz),
+// (3) kiraTutari boşsa aracın güncel kira alanına düşülür, o da yoksa atlanır.
+function plakaNormalize(p){
+  return String(p||'').replace(/\s+/g,'').toLocaleUpperCase('tr-TR');
+}
+async function panelKiralamaFaturalariSenkronizeEt(){
+  try{
+    const bugun = todayISO();
+    const curYM = bugun.slice(0,7);
+    const mevcut = new Set(invoices.map(f=>f.otoKaynak||f.excelKaynak).filter(Boolean));
+    let uretildi = 0;
+    for(const r of rentals){
+      if(!r || r.durum!=='teslimEdildi' || !r.customerId) continue;
+      const v = vehicles.find(x=>x.id===r.vehicleId);
+      if(!v || !v.plaka) continue;
+      const kira = Number(r.kiraTutari)||Number(v.kira)||0;
+      if(kira<=0) continue;
+      const bas = (r.baslangic||'').trim();
+      if(!bas || bas>bugun) continue;
+      const bitis = (r.bitis||'').trim() || bugun;
+      const sonYM = bitis.slice(0,7) < curYM ? bitis.slice(0,7) : curYM;
+      const plakaN = plakaNormalize(v.plaka);
+      let y = Number(bas.slice(0,4)), m = Number(bas.slice(5,7));
+      const endY = Number(sonYM.slice(0,4)), endM = Number(sonYM.slice(5,7));
+      while(y<endY || (y===endY && m<=endM)){
+        const ym = y+'-'+String(m).padStart(2,'0');
+        const ref = 'panelRental|'+r.id+'|'+ym;
+        const elleVar = invoices.some(f=> f.customerId===r.customerId && (f.tarih||'').slice(0,7)===ym
+          && (f.kalemler||[]).some(k=>plakaNormalize(k.aciklama).includes(plakaN)));
+        if(!mevcut.has(ref) && !elleVar){
+          const gun = Math.min(Number(bas.slice(8,10))||1, 28);
+          const tarih = ym+'-'+String(gun).padStart(2,'0');
+          const vade = new Date(Date.UTC(Number(ym.slice(0,4)), Number(ym.slice(5,7)), gun)).toISOString().slice(0,10);
+          const f = { id: yeniId('inv'), faturaNo: sonrakiFaturaNo(), customerId: r.customerId, tarih, vade,
+            kalemler:[{ aciklama: v.plaka+' plakalı araç '+ym+' dönemi aylık kira bedeli', tutar: kira, kdvOrani: 0 }],
+            araToplam: kira, kdvToplam: 0, genelToplam: kira, durum: 'Kesildi', otoKaynak: ref };
+          invoices.push(f);
+          ledger.push({ id: yeniId('ldg'), customerId: r.customerId, tur: 'kira', tutar: kira, yon: 'borc', tarih,
+            aciklama: v.plaka+' — '+ym+' dönemi aylık kira', kaynakRef: f.id });
+          mevcut.add(ref);
+          uretildi++;
+        }
+        m++; if(m>12){ m=1; y++; }
+      }
+    }
+    if(uretildi){
+      await persistInvoices();
+      await persistLedger();
+    }
+    return uretildi;
+  }catch(e){ console.error('panel kiralama fatura senkronu hatası:', e); return 0; }
 }
 // Hızlı/adım-adım akışların ortak köprüsü: bir araç için açık kaydı günceller, yoksa yeni
 // oluşturur. Var olan alanlar korunur (Object.assign ile yalnızca patch'teki alanlar değişir).
