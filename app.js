@@ -10674,7 +10674,9 @@ function renderMasrafPage(){
 // kullanıcı aynı kira dönemini 3-4 kez tekrar eden bir liste görmüyor, hem de bu diziden toplam
 // alan istatistikler (kira süresi/km toplamı, bakım tahmini vb.) tekrarlardan şişmiyor.
 function kiraGecmisiTekil(v){
-  const liste = (v && v.kiraGecmisi) || [];
+  // v.286: kiraGecmisi nadiren dizi dışı değer olarak kaydedilmiş olabilir (eski sürüm/senkron
+  // kalıntısı) — dizi değilse boş döner, sayfa render'ı patlamaz.
+  const liste = (v && Array.isArray(v.kiraGecmisi)) ? v.kiraGecmisi : [];
   if(!liste.length) return liste;
   const gorulen = new Set();
   const sonuc = [];
@@ -12736,7 +12738,7 @@ function renderKiralamaPage(){
           return `<tr>
             <td><span class="mini-plaka">${esc(v.plaka)}</span></td>
             <td>${esc([v.marka,v.model].filter(Boolean).join(' ')||'—')}</td>
-            <td>${esc(v.yer||v.kiraciAdi||'—')}</td>
+            <td>${esc(v.kiraciAdi||v.yer||'—')}</td>
             <td>${turLabel}</td>
             <td>${teslimTarih}${gun!==null?`<span style="font-size:12px;color:var(--steel-100);margin-left:5px;">(${gun} gün)</span>`:''}</td>
             <td style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${teslimKm}</td>
@@ -12755,7 +12757,7 @@ function renderKiralamaPage(){
           </div>
           <div class="m-card-rows">
             <div class="m-card-row"><span class="m-card-label">Araç</span><span class="m-card-val">${esc([v.marka,v.model].filter(Boolean).join(' ')||'—')}</span></div>
-            <div class="m-card-row"><span class="m-card-label">Çalıştığı Yer</span><span class="m-card-val">${esc(v.yer||'—')}</span></div>
+            <div class="m-card-row"><span class="m-card-label">Çalıştığı Yer</span><span class="m-card-val">${esc(v.kiraciAdi||v.yer||'—')}</span></div>
             ${v.teslimTarih?`<div class="m-card-row"><span class="m-card-label">Teslim</span><span class="m-card-val">${fmtTarih(v.teslimTarih)}${gun!==null?' ('+gun+' gün)':''}</span></div>`:''}
             ${v.teslimKm?`<div class="m-card-row"><span class="m-card-label">Teslim km</span><span class="m-card-val" style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${v.teslimKm.toLocaleString('tr-TR')} km</span></div>`:''}
             <div class="m-card-row"><span class="m-card-label">Aylık Kira</span><span class="m-card-val" style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${fmtTL2_role(v.kira)}</span></div>
@@ -15413,7 +15415,9 @@ function musteriListesiOlustur(){
     return mapa.get(key);
   }
   vehicles.forEach(v=>{
-    const ad = (v.yer||'').trim() || (v.kiraciAdi||'').trim();
+    // v.286: kiraciAdi birincil — self-heal bu alanı tam unvanla dolduruyor; Excel'in kısa
+    // "yer" adı yalnızca kiraciAdi hiç yoksa kullanılır.
+    const ad = (v.kiraciAdi||'').trim() || (v.yer||'').trim();
     if(!ad) return;
     const m = kaydet(ad);
     m.araclar.push(v);
@@ -15507,7 +15511,11 @@ function renderMusterilerPage(){
   // türetilmiş girdileri gösterir (birebir + kapsama). Önceden birebir eşleşme arandığı için
   // Excel'in kısa "yer" adları ("Anadolu İtriyat") gerçek kaydın yanında ikinci bir kayıtsız
   // satır olarak görünüyordu — müşteri karışıklığının ikinci katmanı buydu.
-  const musterilerKayitsiz = musteriler.filter(m=>!gercekMusteriler.some(c=>musteriAdEslesir(m.ad, musteriGoruntuAdi(c))));
+  // v.286: eşleşme testi TÜM gerçek kayıtlara karşı yapılır — arama filtresine (q) göre değil.
+  // Aksi halde arama yaparken, bağlantılı gerçek kaydı aramayla eşleşmeyen türetilmiş gruplar
+  // yanlışlıkla "KAYITSIZ" listesine düşüyordu.
+  const tumGercekler = musterileriSirali();
+  const musterilerKayitsiz = musteriler.filter(m=>!tumGercekler.some(c=>musteriAdEslesir(m.ad, musteriGoruntuAdi(c))));
   window.__musterilerKayitsizGecici = musterilerKayitsiz;
   const aktif = musteriler.filter(m=>m.kirada>0).length;
   const toplamKira = musteriler.reduce((s,m)=>s+m.toplamKira,0);
