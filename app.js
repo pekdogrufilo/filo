@@ -5430,7 +5430,7 @@ async function kirayaVerVeSozlesme(format){
   if(!krCustomerId){
     const yeniC = {
       id: yeniId('cus'), olusturmaTarihi: todayISO(),
-      tip: kiraciVKN ? 'kurum' : 'bireysel',
+      tip: (kiraciVKN || isimKurumsalMu(kiraci)) ? 'kurum' : 'bireysel',
       ...(kiraciVKN ? { firmaAdi: kiraci, vkn: kiraciVKN } : { ad: kiraci, soyad: '' }),
       telefon: kiraciTel||'', adres: kiraciAdres||'',
       kvkkOnay: false, otomatikOlusturuldu: true,
@@ -15463,6 +15463,12 @@ function musteriAdEslesir(turetilmis, gercek){
   if(a.length<6 || b.length<6) return false;
   return a.includes(b) || b.includes(a);
 }
+// v.283: VKN olmadan da şirket unvanını ayırt etmeye yarayan kaba kural — otomatik
+// oluşturulan müşteri kayıtlarında "LTD/Limited/A.Ş/Sanayi/Ticaret/Şirket/Deposu" geçen
+// adlar "bireysel" yerine "kurum" olarak işaretlenir.
+function isimKurumsalMu(ad){
+  return /ltd|limited|a\.ş|a\.s\.|sanayi|ticaret|şirket|deposu/i.test(String(ad||''));
+}
 
 function renderMusterilerPage(){
   const page = document.getElementById('page-musteriler');
@@ -15528,6 +15534,8 @@ function renderMusterilerPage(){
       const ozet = customerCariOzet(c.id);
       const initial = (musteriGoruntuAdi(c)||'?').trim().charAt(0).toLocaleUpperCase('tr-TR');
       const tipEtiket = c.tip==='bireysel'?'Bireysel':c.tip==='kurumsal'?'Kurumsal':'Şirket';
+      // v.283: kartta bağlı araç sayısı — kapsama eşleşmesiyle birleştirilmiş toplam.
+      const bagliArac = tumu.filter(m=>musteriAdEslesir(m.ad, musteriGoruntuAdi(c))).reduce((s,m)=>s+m.araclar.length,0);
       return `
       <div class="dcard" style="padding:0;overflow:hidden;margin-bottom:10px;cursor:pointer;" onclick="musteriDetayAc('${c.id}')">
         <div style="display:flex;align-items:center;gap:12px;padding:13px 16px;">
@@ -15538,6 +15546,7 @@ function renderMusterilerPage(){
               <span style="flex-shrink:0;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:12px;background:rgba(22,160,134,.1);color:var(--accent-blue);">${esc(tipEtiket)}</span>
             </div>
             <div style="font-size:12px;color:var(--text-3);margin-top:2px;">${c.telefon?'📞 '+esc(c.telefon):'telefon yok'}${c.eposta?' · '+esc(c.eposta):''}</div>
+            <div style="font-size:11.5px;color:var(--text-2);margin-top:2px;">🚗 <b>${bagliArac}</b> araç</div>
           </div>
           <div style="text-align:right;flex-shrink:0;">
             <div style="font-size:11px;color:var(--text-3);">Kalan Bakiye</div>
@@ -16495,6 +16504,10 @@ async function musteriBaglantilariOnar(){
   try{
     let degisti = false;
     const norm = (s)=>String(s||'').trim().toLocaleLowerCase('tr-TR');
+    // v.283: daha önce "bireysel" oluşmuş ama adı şirket unvanı olan otomatik kayıtları düzelt.
+    for(const c of customers){
+      if(c && c.otomatikOlusturuldu && c.tip==='bireysel' && isimKurumsalMu(musteriGoruntuAdi(c))){ c.tip='kurum'; degisti=true; }
+    }
     const adaGoreBul = (ad)=>customers.find(c=>norm(musteriGoruntuAdi(c))===norm(ad));
     const olustur = (ad, ekstra)=>{
       const temiz = String(ad||'').trim();
@@ -16502,7 +16515,7 @@ async function musteriBaglantilariOnar(){
       const vkn = (ekstra&&String(ekstra.vkn||'').trim())||'';
       const c = {
         id: yeniId('cus'), olusturmaTarihi: todayISO(),
-        tip: vkn ? 'kurum' : 'bireysel',
+        tip: (vkn || isimKurumsalMu(temiz)) ? 'kurum' : 'bireysel',
         ...(vkn ? { firmaAdi: temiz, vkn } : { ad: temiz, soyad: '' }),
         telefon: (ekstra&&String(ekstra.tel||'').trim())||'',
         adres: (ekstra&&String(ekstra.adres||'').trim())||'',
