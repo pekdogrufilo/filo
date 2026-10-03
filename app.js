@@ -15450,6 +15450,20 @@ function musteriDurumRenk(durum){
   return durum==='Kirada' ? '#36A168' : durum==='Serviste' ? '#E1554E' : '#7B7873';
 }
 
+// v.282: türetilmiş ad ile gerçek müşteri adının AYNI müşteriyi gösterip göstermediğini
+// belirler — birebir eşleşmenin yanında KAPSAMA eşleşmesi de kabul edilir: Excel'den gelen
+// araçlarda "yer" alanı kısa ad ("Anadolu İtriyat"), sözleşme/müşteri kaydında tam unvan
+// ("ANADOLU İTRİYAT VE ECZA DEPOSU ... LTD. ŞTİ.") olabiliyor; ikisi aynı müşteridir.
+// Kısa adlar (<6 karakter) yanlış pozitif eşleşmeyi önlemek için kapsamaya sokulmaz.
+function musteriAdEslesir(turetilmis, gercek){
+  const a = String(turetilmis||'').trim().toLocaleLowerCase('tr-TR');
+  const b = String(gercek||'').trim().toLocaleLowerCase('tr-TR');
+  if(!a || !b) return false;
+  if(a===b) return true;
+  if(a.length<6 || b.length<6) return false;
+  return a.includes(b) || b.includes(a);
+}
+
 function renderMusterilerPage(){
   const page = document.getElementById('page-musteriler');
   const q = (window.__musteriArama||'').toLocaleLowerCase('tr-TR');
@@ -15461,9 +15475,12 @@ function renderMusterilerPage(){
   // "Kayıtsız (araç kayıtlarından)" olarak ayrıca listeleniyor. Üstteki istatistik kartları
   // (Müşteri/Kurum, Aktif, Çok Araçlı, Problemli) davranışını KORUMAK için hâlâ `musteriler`
   // (tüm türetilmiş liste) üzerinden hesaplanıyor — sayılar değişmiyor.
-  const gercekAdSet = new Set(customers.map(c=>musteriGoruntuAdi(c).trim().toLocaleLowerCase('tr-TR')).filter(Boolean));
   const gercekMusteriler = musterileriSirali().filter(c=>!q || musteriGoruntuAdi(c).toLocaleLowerCase('tr-TR').includes(q));
-  const musterilerKayitsiz = musteriler.filter(m=>!gercekAdSet.has(m.ad.trim().toLocaleLowerCase('tr-TR')));
+  // v.282: "Kayıtsız" listesi artık yalnızca GERÇEK bir kayıtla isim eşleşmesi YAPAMAYAN
+  // türetilmiş girdileri gösterir (birebir + kapsama). Önceden birebir eşleşme arandığı için
+  // Excel'in kısa "yer" adları ("Anadolu İtriyat") gerçek kaydın yanında ikinci bir kayıtsız
+  // satır olarak görünüyordu — müşteri karışıklığının ikinci katmanı buydu.
+  const musterilerKayitsiz = musteriler.filter(m=>!gercekMusteriler.some(c=>musteriAdEslesir(m.ad, musteriGoruntuAdi(c))));
   window.__musterilerKayitsizGecici = musterilerKayitsiz;
   const aktif = musteriler.filter(m=>m.kirada>0).length;
   const toplamKira = musteriler.reduce((s,m)=>s+m.toplamKira,0);
@@ -17584,11 +17601,18 @@ function musteriDetayCariHtml(c){
     </div>`;
 }
 function musteriDetayKiralamalarHtml(c){
-  const ad = musteriGoruntuAdi(c).trim().toLocaleLowerCase('tr-TR');
-  const tumu = musteriListesiOlustur();
-  const m = tumu.find(x=>x.ad.trim().toLocaleLowerCase('tr-TR')===ad);
-  if(!m) return '<div class="log-empty">Bu isimle eşleşen araç kiralama kaydı bulunamadı. Araç kartında "Kiracı" adı bu müşteri adıyla birebir aynı olduğunda kiralama geçmişi burada görünür.</div>';
-  return musteriDetayHtml(m);
+  // v.282: birebir + kapsama eşleşmesiyle TÜM türetilmiş gruplar birleştirilir — Excel'in
+  // kısa "yer" adı ("Anadolu İtriyat") ile sözleşmedeki tam unvan aynı müşteridir; aksi
+  // halde detayda yalnız bir yazımın araçları görünür, diğerleri "kayıp" sanılır.
+  const eslesen = musteriListesiOlustur().filter(x=>musteriAdEslesir(x.ad, musteriGoruntuAdi(c)));
+  if(!eslesen.length) return '<div class="log-empty">Bu isimle eşleşen araç kiralama kaydı bulunamadı. Araç kartında "Kiracı" adı bu müşteri adıyla aynı olduğunda kiralama geçmişi burada görünür.</div>';
+  const birlesik = { ad: musteriGoruntuAdi(c), araclar: [], tel: '', gecmisSayi: 0 };
+  eslesen.forEach(g=>{
+    g.araclar.forEach(v=>{ if(!birlesik.araclar.some(x=>x.id===v.id)) birlesik.araclar.push(v); });
+    if(!birlesik.tel && g.tel) birlesik.tel = g.tel;
+    birlesik.gecmisSayi += g.gecmisSayi||0;
+  });
+  return musteriDetayHtml(birlesik);
 }
 function musteriDetayNotlarHtml(c){
   return `<div class="dcard"><div style="font-size:13px;color:var(--text-2);white-space:pre-wrap;">${c.notlar?esc(c.notlar):'<span style="color:var(--text-3);">Not girilmemiş. "Düzenle" ile notlar alanını doldurabilirsiniz.</span>'}</div></div>`;
