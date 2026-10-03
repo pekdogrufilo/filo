@@ -936,6 +936,12 @@ async function load(){
       }
     }catch(e){ console.error('müşteri bağlantı onarımı hatası:', e); }
   }
+  // v.287: müşteri bağlantıları oturduktan sonra Excel filosunun aylık kira faturalarını üret.
+  if(!yuklenemeyenAnahtarlar.has('rentals') && !yuklenemeyenAnahtarlar.has('customers')){
+    try{
+      await excelFiloFaturalariSenkronizeEt();
+    }catch(e){ console.error('excel filo fatura senkronu hatası:', e); }
+  }
   arsivSilinenleriTemizle().catch(e=>console.error('arsivSilinenleriTemizle hatası:', e));
   // FAZ6: bildirim kayıtlarını (dedupe'lu) üret — sayfa her açıldığında değil, sadece burada,
   // uygulama yüklenirken bir kez çalışır. Yeni kayıt eklendiyse kalıcı olarak saklanır.
@@ -16625,6 +16631,67 @@ async function musteriBaglantilariOnar(){
     }
     return degisti;
   }catch(e){ console.error('müşteri bağlantı onarımı hatası:', e); return false; }
+}
+// v.287: EXCEL FİLOSU AYLIK TAHSİLAT — panel dışından (Excel'den) aktarılmış "Kirada" araçların
+// aylık kiraları için otomatik fatura üretir; böylece Cari & Tahsilat sayfası yalnızca panelde
+// işlenen kiralamaları değil, filonun tamamını izler.
+// Kurallar: (1) yalnız aktif kiralaması OLMAYAN Kirada araçlar (panel kiralamaları kendi
+// akışından izlenir), (2) ay başına TEK fatura — excelKaynak imzası (araç+dönem) ile
+// idempotent; kullanıcı faturayı iptal etse bile yeniden üretilmez, (3) dönem aralığı
+// teslimTarih (yoksa bu ayın 1'i) → kiraBitis (yoksa bugün), gelecek ay için fatura üretilmez,
+// (4) KDV'siz kayıt (kdvOrani 0) — vergi beyanı kullanıcıya bırakılır, (5) fatura 'Kesildi'
+// durumuyla oluşur ve cariye borç işlenir; Tahsilat Gir ile kapatılır.
+async function excelFiloFaturalariSenkronizeEt(){
+  try{
+    const bugun = todayISO();
+    const curYM = bugun.slice(0,7);
+    const mevcut = new Set(invoices.map(f=>f.excelKaynak).filter(Boolean));
+    let uretildi = 0;
+    const musteriBul = (v)=>{
+      const ad = (v.kiraciAdi||'').trim() || (v.yer||'').trim();
+      if(!ad) return null;
+      return customers.find(c=>musteriAdEslesir(ad, musteriGoruntuAdi(c))) || null;
+    };
+    for(const v of vehicles){
+      if(!v || v.durum!=='Kirada') continue;
+      const kira = Number(v.kira)||0;
+      if(kira<=0) continue;
+      if(rentals.some(r=>r.vehicleId===v.id && (r.durum==='teslimEdildi'||r.durum==='sozlesmeHazir'))) continue;
+      const c = musteriBul(v);
+      if(!c) continue;
+      const baslangic = (v.teslimTarih||'').trim() || curYM+'-01';
+      if(baslangic > bugun) continue;
+      const bitis = (v.kiraBitis||'').trim() || bugun;
+      const sonYM = bitis.slice(0,7) < curYM ? bitis.slice(0,7) : curYM;
+      let y = Number(baslangic.slice(0,4)), m = Number(baslangic.slice(5,7));
+      const endY = Number(sonYM.slice(0,4)), endM = Number(sonYM.slice(5,7));
+      while(y<endY || (y===endY && m<=endM)){
+        const ym = y+'-'+String(m).padStart(2,'0');
+        const ref = 'excelFilo|'+v.id+'|'+ym;
+        if(!mevcut.has(ref)){
+          const gun = Math.min(Number(baslangic.slice(8,10))||1, 28);
+          const tarih = ym+'-'+String(gun).padStart(2,'0');
+          const vade = new Date(Date.UTC(Number(ym.slice(0,4)), Number(ym.slice(5,7)), gun)).toISOString().slice(0,10);
+          const f = { id: yeniId('inv'), faturaNo: sonrakiFaturaNo(), customerId: c.id, tarih, vade,
+            kalemler:[{ aciklama: v.plaka+' plakalı araç '+ym+' dönemi aylık kira bedeli', tutar: kira, kdvOrani: 0 }],
+            araToplam: kira, kdvToplam: 0, genelToplam: kira, durum: 'Kesildi', excelKaynak: ref };
+          invoices.push(f);
+          ledger.push({ id: yeniId('ldg'), customerId: c.id, tur: 'kira', tutar: kira, yon: 'borc', tarih,
+            aciklama: v.plaka+' — '+ym+' dönemi aylık kira (Excel filosu)', kaynakRef: f.id });
+          mevcut.add(ref);
+          uretildi++;
+        }
+        m++; if(m>12){ m=1; y++; }
+      }
+    }
+    if(uretildi){
+      await persistInvoices();
+      await persistLedger();
+      logActivity('add', `Excel filosu aylık kira faturaları üretildi: <b>${uretildi}</b> kayıt (Cari & Tahsilat'a işlendi)`);
+      showToast(`Excel filosu için ${uretildi} aylık kira faturası Cari & Tahsilat'a işlendi.`);
+    }
+    return uretildi;
+  }catch(e){ console.error('excel filo fatura senkronu hatası:', e); return 0; }
 }
 // Hızlı/adım-adım akışların ortak köprüsü: bir araç için açık kaydı günceller, yoksa yeni
 // oluşturur. Var olan alanlar korunur (Object.assign ile yalnızca patch'teki alanlar değişir).
