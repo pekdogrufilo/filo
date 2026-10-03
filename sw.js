@@ -1,10 +1,10 @@
-/* PEKDOĞRU Filo Paneli — Service Worker v.136 */
-const CACHE_NAME = 'filo-panel-v135';
+/* PEKDOĞRU Filo Paneli — Service Worker v.137 */
+const CACHE_NAME = 'filo-panel-v136';
 const SHELL_ASSETS = [
   './',
   './index.html',
-  './style.css?v=284',
-  './app.js?v=284',
+  './style.css?v=285',
+  './app.js?v=285',
   './manifest.json'
 ];
 

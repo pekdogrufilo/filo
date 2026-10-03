@@ -5431,7 +5431,7 @@ async function kirayaVerVeSozlesme(format){
     const yeniC = {
       id: yeniId('cus'), olusturmaTarihi: todayISO(),
       tip: (kiraciVKN || isimKurumsalMu(kiraci)) ? 'kurum' : 'bireysel',
-      ...(kiraciVKN ? { firmaAdi: kiraci, vkn: kiraciVKN } : { ad: kiraci, soyad: '' }),
+      ...( (kiraciVKN || isimKurumsalMu(kiraci)) ? { firmaAdi: kiraci, ...(kiraciVKN?{vkn:kiraciVKN}:{}) } : { ad: kiraci, soyad: '' } ),
       telefon: kiraciTel||'', adres: kiraciAdres||'',
       kvkkOnay: false, otomatikOlusturuldu: true,
     };
@@ -16526,8 +16526,16 @@ async function musteriBaglantilariOnar(){
     let degisti = false;
     const norm = (s)=>String(s||'').trim().toLocaleLowerCase('tr-TR');
     // v.283: daha önce "bireysel" oluşmuş ama adı şirket unvanı olan otomatik kayıtları düzelt.
+    // v.285: kurum/kurumsal ama adı bireysel `ad` alanında kalmış kayıtlar firmaAdi'ya taşınır —
+    // aksi halde Cari listesinde boş satırlar görünüyordu (bu oturumda yaşanan hata).
     for(const c of customers){
-      if(c && c.otomatikOlusturuldu && (c.tip==='bireysel' && isimKurumsalMu(musteriGoruntuAdi(c)) || c.tip==='kurumsal')){ c.tip='kurum'; degisti=true; }
+      if(!c) continue;
+      const gAd = musteriGoruntuAdi(c);
+      if(c.otomatikOlusturuldu && (c.tip==='bireysel' && isimKurumsalMu(gAd) || c.tip==='kurumsal')){ c.tip='kurum'; degisti=true; }
+      if(c.tip!=='bireysel' && !String(c.firmaAdi||'').trim() && String(c.ad||'').trim()){
+        c.firmaAdi = String(c.ad).trim();
+        degisti = true;
+      }
     }
     // v.284: KOPYA OTOMATİK KAYITLARI BİRLEŞTİR — bulut senkron yarışı nedeniyle aynı isimden
     // birden çok otomatik kayıt oluşabildiği tespit edildi ("şirket şirket diye boş kayıtlar").
@@ -16567,7 +16575,7 @@ async function musteriBaglantilariOnar(){
       const c = {
         id: yeniId('cus'), olusturmaTarihi: todayISO(),
         tip: (vkn || isimKurumsalMu(temiz)) ? 'kurum' : 'bireysel',
-        ...(vkn ? { firmaAdi: temiz, vkn } : { ad: temiz, soyad: '' }),
+        ...( (vkn || isimKurumsalMu(temiz)) ? { firmaAdi: temiz, ...(vkn?{vkn}:{}) } : { ad: temiz, soyad: '' } ),
         telefon: (ekstra&&String(ekstra.tel||'').trim())||'',
         adres: (ekstra&&String(ekstra.adres||'').trim())||'',
         kvkkOnay: false, otomatikOlusturuldu: true,
@@ -16837,7 +16845,10 @@ function vknFormatGecerliMi(vkn){
 // ----- Müşteri yardımcıları -----
 function musteriGoruntuAdi(c){
   if(!c) return '';
-  return c.tip==='bireysel' ? [c.ad,c.soyad].filter(Boolean).join(' ') : (c.firmaAdi||'');
+  // v.285: kurum kayıtlarında firmaAdi boşsa ad alanına düş — VKN'siz şirket kayıtları
+  // (isimKurumsalMu ile kurum işaretlenenler) ad alanına yazılabiliyordu; aksi halde
+  // Cari/Müşteriler listelerinde boş satırlar görünüyordu.
+  return c.tip==='bireysel' ? [c.ad,c.soyad].filter(Boolean).join(' ') : (String(c.firmaAdi||'').trim() || String(c.ad||'').trim() || '');
 }
 function musterileriSirali(){
   return [...customers].sort((a,b)=>musteriGoruntuAdi(a).localeCompare(musteriGoruntuAdi(b),'tr'));
