@@ -11540,28 +11540,61 @@ function sozlesmeHtmlPdf(d, preOpenedWin){
 }
 
 function sozlesmeHtml(d){
-  const logoSrc = (document.querySelector('.lock-logo-wrap img')||{}).src||'';
-  const logoTag = logoSrc ? `<img src="${logoSrc}" alt="" style="display:block;margin:0 auto 10px;max-height:72px;">` : '';
+  // v.279: müşteriye giden belge tasarımı yükseltildi — sözleşme artık teklifle AYNI marka dilini
+  // kullanıyor (turkuaz antetli kağıt, marka renkli bölüm başlıkları, stilize tablolar). Hukuki
+  // içerik ve veri alanları AYNEN korundu; yalnızca görsel katman değişti.
+  const logoSrc = (document.querySelector('.lock-logo-wrap img')||{}).src || (window.SIRKET_LOGOS && SIRKET_LOGOS['PEKDOĞRU GRUP']) || '';
+  const logoTag = logoSrc ? `<img src="${logoSrc}" alt="" style="width:100%;height:100%;object-fit:contain;">` : '';
+  const altIletisim = [d.firmaTelefon?'Tel: '+esc(d.firmaTelefon):'', d.firmaEposta?esc(d.firmaEposta):''].filter(Boolean).join('  ·  ');
   return `<!DOCTYPE html>
 <html lang="tr"><head><meta charset="UTF-8"><title>Kira Sözleşmesi — ${esc(d.plaka)}</title>
 <style>
-  body{font-family:Arial,sans-serif;font-size:12px;line-height:1.6;color:#000;max-width:800px;margin:0 auto;padding:20px;}
-  h1{text-align:center;font-size:16px;text-transform:uppercase;border-bottom:2px solid #000;padding-bottom:8px;}
-  h2{font-size:13px;text-transform:uppercase;border-bottom:1px solid #333;margin-top:20px;}
-  table{width:100%;border-collapse:collapse;margin:10px 0;}
-  td,th{border:1px solid #999;padding:6px 8px;font-size:12px;}
-  th{background:#F0EDE7;font-weight:bold;}
-  .madde{margin:12px 0;}
-  .madde-no{font-weight:bold;}
-  .imza{display:flex;justify-content:space-between;margin-top:60px;}
+  *{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  body{font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;color:#1A1A1A;max-width:800px;margin:0 auto;padding:24px;background:#fff;}
+  .letterhead{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 26px;background:linear-gradient(120deg,#00A99D,#017F76);color:#fff;border-radius:12px;margin-bottom:4px;flex-wrap:wrap;}
+  .lh-left{display:flex;align-items:center;gap:14px;}
+  .lh-logo{width:46px;height:46px;border-radius:11px;background:#fff;padding:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .lh-name{font-size:17px;font-weight:800;letter-spacing:.2px;}
+  .lh-tag{font-size:11px;color:rgba(255,255,255,.85);margin-top:2px;}
+  .lh-right{text-align:right;}
+  .soz-badge{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.6px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);border-radius:20px;padding:4px 13px;}
+  .soz-no{font-size:15px;font-weight:800;margin-top:7px;}
+  .soz-tarih{font-size:11px;color:rgba(255,255,255,.85);margin-top:2px;}
+  .belge-baslik{text-align:center;margin:20px 0 8px;}
+  .belge-baslik .bb-t{font-size:16px;font-weight:800;letter-spacing:2.5px;color:#003E3A;text-transform:uppercase;}
+  .belge-baslik .bb-c{width:64px;height:3px;background:#00A99D;border-radius:2px;margin:8px auto 0;}
+  h2{font-size:12.5px;text-transform:uppercase;letter-spacing:.5px;margin-top:22px;padding:8px 12px;background:#F0FAF9;border-left:4px solid #00A99D;color:#017F76;border-radius:0 6px 6px 0;page-break-after:avoid;}
+  table{width:100%;border-collapse:collapse;margin:10px 0 14px;page-break-inside:avoid;}
+  td,th{border:1px solid #D8E6E4;padding:7px 10px;font-size:12px;vertical-align:top;}
+  th{background:#F0FAF9;color:#017F76;font-weight:bold;font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;text-align:left;}
+  .madde{margin:12px 0;padding-left:12px;border-left:2px solid #D8E6E4;}
+  .madde-no{font-weight:bold;color:#017F76;}
+  .imza{display:flex;justify-content:space-between;margin-top:60px;gap:20px;}
   .imza-box{text-align:center;width:40%;}
-  .imza-line{border-top:1px solid #000;margin-top:60px;padding-top:5px;}
-  @media print{body{padding:0;} @page{margin:15mm;}}
+  .imza-line{border-top:1px solid #333;margin-top:60px;padding-top:5px;}
+  .belge-alt{margin-top:28px;padding-top:12px;border-top:1px solid #D8E6E4;font-size:10.5px;color:#7A8A88;display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px;}
+  .belge-alt b{color:#4B6B67;}
+  @media print{body{padding:0;background:#fff;} @page{margin:15mm;}}
 </style></head>
 <body>
-${logoTag}
-<h1>${d.sozlesmeTip}</h1>
-<p style="text-align:center;font-size:11px;">Sözleşme No: ${d.sozNo} | Tarih: ${d.tarih}</p>
+<div class="letterhead">
+  <div class="lh-left">
+    <div class="lh-logo">${logoTag}</div>
+    <div>
+      <div class="lh-name">PEKDOĞRU GRUP</div>
+      <div class="lh-tag">Filo Kiralama Hizmetleri</div>
+    </div>
+  </div>
+  <div class="lh-right">
+    <span class="soz-badge">KİRA SÖZLEŞMESİ</span>
+    <div class="soz-no">${esc(d.sozNo)}</div>
+    <div class="soz-tarih">Düzenleme: ${d.tarih}</div>
+  </div>
+</div>
+<div class="belge-baslik">
+  <div class="bb-t">${d.sozlesmeTip}</div>
+  <div class="bb-c"></div>
+</div>
 
 <h2>1. Taraflar</h2>
 <table>
@@ -11654,6 +11687,11 @@ ${d.notlar?`<div class="madde"><span class="madde-no">ÖZEL ŞARTLAR:</span> ${e
     <div style="font-size:10.5px;color:#333;margin-top:8px;">Ad Soyad / Unvan: ..............................<br>Tarih: ....../....../..........<br>Kaşe:</div>
     ${d.imzaKiraci?'<div style="font-size:8.5px;color:#777;margin-top:4px;">Dijital imza yakalama — nitelikli elektronik imza değildir.</div>':''}
   </div>
+</div>
+
+<div class="belge-alt">
+  <span><b>${d.firmaAdi ? esc(d.firmaAdi) : 'PEKDOĞRU OTOMOTİV TURİZM TAŞIMACILIK NAKLİYE HAYVANCILIK TİCARET LİMİTED ŞİRKETİ'}</b></span>
+  <span>${esc(d.firmaAdres||'')}${altIletisim?'  ·  '+altIletisim:''}</span>
 </div>
 </body></html>`;
 }
@@ -13075,6 +13113,10 @@ function tkPdfAc(rentalId){
     .hero-lbl{font-size:11.5px;font-weight:700;letter-spacing:.5px;color:#017F76;text-transform:uppercase;}
     .hero-val{font-size:30px;font-weight:800;color:#003E3A;margin-top:3px;}
     .hero-sub{font-size:12px;color:#4B6B67;max-width:280px;text-align:right;}
+    .mini-stats{display:flex;gap:10px;margin-bottom:22px;flex-wrap:wrap;}
+    .ms{flex:1;min-width:150px;border:1px solid #E2EFED;border-radius:10px;padding:12px 16px;text-align:center;background:#FBFDFD;}
+    .ms-v{font-size:17px;font-weight:800;color:#017F76;}
+    .ms-l{font-size:10.5px;font-weight:700;letter-spacing:.5px;color:#8AA5A2;text-transform:uppercase;margin-top:3px;}
     table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:20px;}
     td{padding:8px 12px;border-bottom:1px solid #E4E4E4;}
     td.lbl{width:38%;background:#F7F8F8;font-weight:700;font-size:11.5px;text-transform:uppercase;letter-spacing:.3px;color:#5A5A5A;}
@@ -13112,6 +13154,12 @@ function tkPdfAc(rentalId){
           <div class="hero-val">${r.kiraTutari!=null ? Number(r.kiraTutari).toLocaleString('tr-TR',{maximumFractionDigits:2})+' ₺' : 'Belirlenmedi'}</div>
         </div>
         <div class="hero-sub">${aracEtiket}<br>${esc(donemEtiket)}</div>
+      </div>
+
+      <div class="mini-stats">
+        <div class="ms"><div class="ms-v">${r.depozito!=null ? Number(r.depozito).toLocaleString('tr-TR',{maximumFractionDigits:2})+' ₺' : '—'}</div><div class="ms-l">Depozito</div></div>
+        <div class="ms"><div class="ms-v">${r.kmLimiti!=null ? Number(r.kmLimiti).toLocaleString('tr-TR')+' km' : '—'}</div><div class="ms-l">Aylık KM Limiti</div></div>
+        <div class="ms"><div class="ms-v">${r.fazlaKmBedeli!=null ? Number(r.fazlaKmBedeli).toLocaleString('tr-TR',{maximumFractionDigits:2})+' ₺' : '—'}</div><div class="ms-l">Fazla KM Bedeli</div></div>
       </div>
 
       <table>
