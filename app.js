@@ -18376,7 +18376,10 @@ function renderCariPage(){
   const page = document.getElementById('page-cari');
   if(!page) return;
   const siralama = window.__cariSiralama || 'kalan_desc';
+  const filtre = window.__cariFiltre || 'tumu';
   let satirlar = customers.map(c=>({ c, ozet: customerCariOzet(c.id) }));
+  if(filtre==='borclu') satirlar = satirlar.filter(r=>r.ozet.kalan>0);
+  else if(filtre==='vadesiGecen') satirlar = satirlar.filter(r=>r.ozet.vadesiGecen>0);
   const siraliFonksiyonlar = {
     kalan_desc: (a,b)=>b.ozet.kalan-a.ozet.kalan,
     kalan_asc: (a,b)=>a.ozet.kalan-b.ozet.kalan,
@@ -18416,6 +18419,11 @@ function renderCariPage(){
           <option value="kalan_asc" ${siralama==='kalan_asc'?'selected':''}>Kalan (azdan çoğa)</option>
           <option value="vadesiGecen" ${siralama==='vadesiGecen'?'selected':''}>Vadesi geçen (çoktan aza)</option>
           <option value="ad" ${siralama==='ad'?'selected':''}>Müşteri adı (A-Z)</option>
+        </select>
+        <select onchange="window.__cariFiltre=this.value;renderCariPage()" style="background:var(--surface-2);border:1px solid var(--line);color:var(--paper);padding:8px 10px;border-radius:8px;font-size:12.5px;">
+          <option value="tumu" ${filtre==='tumu'?'selected':''}>Tümü</option>
+          <option value="borclu" ${filtre==='borclu'?'selected':''}>Sadece borçlu müşteriler</option>
+          <option value="vadesiGecen" ${filtre==='vadesiGecen'?'selected':''}>Vadesi geçen bakiyesi olanlar</option>
         </select>
         <button onclick="cariExcelDisaAktar()" style="background:var(--surface-2);border:1px solid var(--line);color:var(--text);padding:8px 14px;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;">Excel'e Aktar</button>
       </div>
@@ -18509,7 +18517,7 @@ function cariExcelDisaAktar(){
     const ozet = customerCariOzet(c.id);
     return {
       'Müşteri': musteriGoruntuAdi(c),
-      'Tür': c.tip==='bireysel'?'Bireysel':c.tip==='kurumsal'?'Kurumsal':'Şirket',
+      'Tür': c.tip==='bireysel'?'Bireysel':c.tip==='kurumsal'?'Kurumsal':'Kurum',
       'Telefon': c.telefon||'',
       'Toplam Borç (TL)': ozet.toplamBorc,
       'Toplam Alacak (TL)': ozet.toplamAlacak,
