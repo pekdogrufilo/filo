@@ -17413,10 +17413,11 @@ function tedarikciDetayServisHtml(t){
 
 // ----- Cari (ledger) yardımcıları -----
 const LEDGER_TUR_ETIKET = {kira:'Kira', fatura:'Fatura', tahsilat:'Tahsilat', hasar:'Hasar', hgs:'HGS', ceza:'Ceza', yakit:'Yakıt', ekUcret:'Ek Ücret', iade:'İade', diger:'Diğer'};
-async function cariHareketEkle(customerId, tur, tutar, yon, aciklama, kaynakRef){
+async function cariHareketEkle(customerId, tur, tutar, yon, aciklama, kaynakRef, tarih){
   ledger.push({
     id: yeniId('ldg'), customerId, tur, tutar: Number(tutar)||0, yon,
-    tarih: todayISO(), aciklama: aciklama||'', kaynakRef: kaynakRef||null,
+    tarih: (tarih && String(tarih).match(/^\d{4}-\d{2}-\d{2}$/)) ? tarih : todayISO(),
+    aciklama: aciklama||'', kaynakRef: kaynakRef||null,
   });
   await persistLedger();
 }
@@ -18314,27 +18315,41 @@ async function tahsilatKaydet(){
   const yontem = document.getElementById('tfYontem').value;
   const aciklama = document.getElementById('tfAciklama').value.trim();
 
-  const p = { id: yeniId('pay'), customerId, invoiceId, tutar, tarih, yontem, aciklama };
-  payments.push(p);
-  await persistPayments();
-  await cariHareketEkle(customerId, 'tahsilat', tutar, 'alacak', aciklama || (invoiceId?'Fatura tahsilatı':'Genel tahsilat'), p.id);
-
   if(invoiceId){
     const f = invoices.find(x=>x.id===invoiceId);
-    if(f){
-      const toplamOdenen = faturaOdenenToplam(f.id);
-      if(toplamOdenen >= Number(f.genelToplam)) f.durum = 'Odendi';
-      else if(toplamOdenen > 0) f.durum = 'KismiOdendi';
-      await persistInvoices();
-    }
+    if(!f){ errEl.textContent='Seçili fatura bulunamadı.'; errEl.style.display='block'; return; }
+    if(f.customerId!==customerId){ errEl.textContent='Seçili fatura bu müşteriye ait değil.'; errEl.style.display='block'; return; }
+    if(f.durum==='Iptal'){ errEl.textContent='İptal edilmiş faturaya tahsilat girilemez.'; errEl.style.display='block'; return; }
+    if(faturaKalan(f)<=0){ errEl.textContent='Bu faturanın kalan bakiyesi yok.'; errEl.style.display='block'; return; }
   }
-  const overlay = document.getElementById('tahsilatFormOverlay'); if(overlay) overlay.remove();
-  showToast('Tahsilat kaydedildi.');
-  const c = customers.find(x=>x.id===customerId);
-  logActivity('add', `Tahsilat alındı: <b>${esc(c?musteriGoruntuAdi(c):'—')}</b> · ${fmtTL2(tutar)}`);
-  if(window.__currentPage==='cari') renderCariPage();
-  if(window.__currentPage==='faturalar') renderFaturalarPage();
-  if(window.__currentPage==='musteriler') renderMusterilerPage();
+
+  try{
+    const p = { id: yeniId('pay'), customerId, invoiceId, tutar, tarih, yontem, aciklama };
+    payments.push(p);
+    await persistPayments();
+    await cariHareketEkle(customerId, 'tahsilat', tutar, 'alacak', aciklama || (invoiceId?'Fatura tahsilatı':'Genel tahsilat'), p.id, tarih);
+
+    if(invoiceId){
+      const f = invoices.find(x=>x.id===invoiceId);
+      if(f){
+        const toplamOdenen = faturaOdenenToplam(f.id);
+        if(toplamOdenen >= Number(f.genelToplam)) f.durum = 'Odendi';
+        else if(toplamOdenen > 0) f.durum = 'KismiOdendi';
+        await persistInvoices();
+      }
+    }
+    const overlay = document.getElementById('tahsilatFormOverlay'); if(overlay) overlay.remove();
+    showToast('Tahsilat kaydedildi.');
+    const c = customers.find(x=>x.id===customerId);
+    logActivity('add', `Tahsilat alındı: <b>${esc(c?musteriGoruntuAdi(c):'—')}</b> · ${fmtTL2(tutar)}`);
+    if(window.__currentPage==='cari') renderCariPage();
+    if(window.__currentPage==='faturalar') renderFaturalarPage();
+    if(window.__currentPage==='musteriler') renderMusterilerPage();
+  }catch(e){
+    console.error('tahsilatKaydet hatası:', e);
+    errEl.textContent='Tahsilat kaydedilirken bir hata oluştu: '+(e.message||'');
+    errEl.style.display='block';
+  }
 }
 
 // ----- "Cari & Tahsilat" sayfası -----
