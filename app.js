@@ -15484,8 +15484,11 @@ function musteriAdEslesir(turetilmis, gercek){
 // v.283: VKN olmadan da şirket unvanını ayırt etmeye yarayan kaba kural — otomatik
 // oluşturulan müşteri kayıtlarında "LTD/Limited/A.Ş/Sanayi/Ticaret/Şirket/Deposu" geçen
 // adlar "bireysel" yerine "kurum" olarak işaretlenir.
+// v.291: kurumsal kalıplar genişletildi (müdürlük, belediye, işkur, karayolları, şube,
+// turizm, hastane, sağlık, inşaat, harfiyat, gıda, bank, holding, kurumsal...).
 function isimKurumsalMu(ad){
-  return /ltd|limited|a\.ş|a\.s\.|sanayi|ticaret|şirket|deposu/i.test(String(ad||''));
+  const s = String(ad||'').toLocaleLowerCase('tr-TR');
+  return /ltd|limited|a\.ş|a\.s\.|sanayi|ticaret|şirket|deposu|müdürlüğü|belediye|işkur|iskur|karayolları|şubesi|turizm|hastane|sağlık|inşaat|harfiyat|gıda|bank|holding|kurumsal|ecza|fabrika|vakfı|üniversite|hastanesi|çevre|şehircilik|dönercim/i.test(s);
 }
 // v.284: KELİME (token) tabanlı alias eşleşmesi — Excel'in kısa "yer" adları tam unvanla
 // birebir veya kapsama yoluyla eşleşemeyebiliyor ("Anadolu Ecza (6)" ↔ "ANADOLU İTRİYAT VE
@@ -16548,9 +16551,16 @@ async function musteriBaglantilariOnar(){
     // v.283: daha önce "bireysel" oluşmuş ama adı şirket unvanı olan otomatik kayıtları düzelt.
     // v.285: kurum/kurumsal ama adı bireysel `ad` alanında kalmış kayıtlar firmaAdi'ya taşınır —
     // aksi halde Cari listesinde boş satırlar görünüyordu (bu oturumda yaşanan hata).
+    // v.291: küçük harfle başlayan otomatik isimleri başlık haline getir ("çorum" → "Çorum").
     for(const c of customers){
       if(!c) continue;
-      const gAd = musteriGoruntuAdi(c);
+      let gAd = musteriGoruntuAdi(c);
+      if(c.otomatikOlusturuldu && gAd && gAd[0]===gAd[0].toLocaleLowerCase('tr-TR')){
+        const baslikHali = (s)=>String(s||'').trim().replace(/[^\s]+/g, t=> t===t.toLocaleUpperCase('tr-TR') ? t : t.charAt(0).toLocaleUpperCase('tr-TR')+t.slice(1).toLocaleLowerCase('tr-TR'));
+        const yeni = baslikHali(gAd);
+        if(c.tip==='bireysel') c.ad = yeni; else c.firmaAdi = yeni;
+        gAd = yeni; degisti = true;
+      }
       if(c.otomatikOlusturuldu && (c.tip==='bireysel' && isimKurumsalMu(gAd) || c.tip==='kurumsal')){ c.tip='kurum'; degisti=true; }
       if(c.tip!=='bireysel' && !String(c.firmaAdi||'').trim() && String(c.ad||'').trim()){
         c.firmaAdi = String(c.ad).trim();
@@ -16588,14 +16598,20 @@ async function musteriBaglantilariOnar(){
       logActivity('del', `Kopya müşteri kayıtları birleştirildi: ${silinecekler.size} boş kopya silindi`);
     }
     const adaGoreBul = (ad)=>customers.find(c=>norm(musteriGoruntuAdi(c))===norm(ad));
+    const baslikHali = (s)=>String(s||'').trim().replace(/[^\s]+/g, t=> t===t.toLocaleUpperCase('tr-TR') ? t : t.charAt(0).toLocaleUpperCase('tr-TR')+t.slice(1).toLocaleLowerCase('tr-TR'));
     const olustur = (ad, ekstra)=>{
-      const temiz = String(ad||'').trim();
+      let temiz = String(ad||'').trim();
       if(!temiz) return null;
+      // v.291: kısa adlar düzgün baş harflerle yazılır ("çorum" → "Çorum", "eskişehir" → "Eskişehir").
+      // Büyük harfli kurum unvanlarına ("ANADOLU İTRİYAT...") dokunulmaz.
+      const hepsiBuyuk = temiz === temiz.toLocaleUpperCase('tr-TR');
+      if(!hepsiBuyuk) temiz = baslikHali(temiz);
       const vkn = (ekstra&&String(ekstra.vkn||'').trim())||'';
+      const kurumsal = vkn || isimKurumsalMu(temiz);
       const c = {
         id: yeniId('cus'), olusturmaTarihi: todayISO(),
-        tip: (vkn || isimKurumsalMu(temiz)) ? 'kurum' : 'bireysel',
-        ...( (vkn || isimKurumsalMu(temiz)) ? { firmaAdi: temiz, ...(vkn?{vkn}:{}) } : { ad: temiz, soyad: '' } ),
+        tip: kurumsal ? 'kurum' : 'bireysel',
+        ...( kurumsal ? { firmaAdi: temiz, ...(vkn?{vkn}:{}) } : { ad: temiz, soyad: '' } ),
         telefon: (ekstra&&String(ekstra.tel||'').trim())||'',
         adres: (ekstra&&String(ekstra.adres||'').trim())||'',
         kvkkOnay: false, otomatikOlusturuldu: true,
@@ -16633,7 +16649,9 @@ async function musteriBaglantilariOnar(){
       const r = rentals.find(x=>x.vehicleId===v.id && (x.durum==='teslimEdildi'||x.durum==='sozlesmeHazir') && x.customerId);
       const rc = r ? customers.find(x=>x.id===r.customerId) : null;
       if(rc && musteriGoruntuAdi(rc)){
-        if(String(v.kiraciAdi||'').trim()!==musteriGoruntuAdi(rc)){ v.kiraciAdi = musteriGoruntuAdi(rc); degisti = true; }
+        const gAd = musteriGoruntuAdi(rc);
+        if(String(v.kiraciAdi||'').trim()!==gAd){ v.kiraciAdi = gAd; degisti = true; }
+        if(v.customerId!==rc.id){ v.customerId = rc.id; degisti = true; }
         continue;
       }
       let c = adaGoreBul(ad) || customers.find(c2=>musteriTokenEslesir(ad, musteriGoruntuAdi(c2))) || null;
@@ -16641,6 +16659,7 @@ async function musteriBaglantilariOnar(){
       if(c){
         const gAd = musteriGoruntuAdi(c);
         if(String(v.kiraciAdi||'').trim()!==gAd){ v.kiraciAdi = gAd; degisti = true; }
+        if(v.customerId!==c.id){ v.customerId = c.id; degisti = true; }
       }
     }
     if(degisti){
