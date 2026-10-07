@@ -207,6 +207,27 @@ function withStorageTimeout(promise, ms=20000){
   ]);
 }
 
+// v.293: Bulut okumalarında geçici ağ kopuklukleri / Firestore gecikmeleri için otomatik yeniden
+// deneme. 3 deneme; 1sn, 2sn, 4sn aralıklarla. 'retryable' hatalarda çalışır (zaman aşımı,
+// ağ, unavailable, resource-exhausted). permission-denied veya bulunamadı gibi kalıcı hatalarda
+// denemez.
+async function withRetry(fn, deneme=3, tabanMs=1000){
+  let sonHata;
+  for(let i=0;i<deneme;i++){
+    try{ return await fn(); }
+    catch(e){
+      sonHata = e;
+      const msg = String(e.message||e.code||'');
+      const kalici = /permission|izin|bulunamadı|not-found|invalid|yanlış/i.test(msg);
+      if(kalici) throw e;
+      if(i < deneme-1){
+        await new Promise(r=>setTimeout(r, tabanMs * Math.pow(2, i)));
+      }
+    }
+  }
+  throw sonHata;
+}
+
 // ===== Bulut senkronizasyonu (Firebase Firestore) =====
 // Cihaz-bazlı localStorage yerine paylaşımlı bir buluta yazıp okumak için.
 // Kurulmamışsa uygulama her zamanki gibi (tek cihaz, yerel) çalışmaya devam eder.
@@ -304,14 +325,20 @@ async function makeFirestoreAdapter(config){
 
   const rawAdapter = {
     async get(key){
-      const snap = await col.doc(key).get();
-      if(!snap.exists) throw new Error('bulunamadı');
-      const data = snap.data();
+      const data = await withRetry(async () => {
+        const snap = await col.doc(key).get();
+        if(!snap.exists) throw new Error('bulunamadı');
+        return snap.data();
+      });
       if(!data.chunked) return {key, value: data.value};
       let full = '';
       for(let i=0;i<data.count;i++){
-        const cs = await col.doc(`${key}__chunk_${i}`).get();
-        full += cs.exists ? cs.data().value : '';
+        const cData = await withRetry(async () => {
+          const cs = await col.doc(`${key}__chunk_${i}`).get();
+          if(!cs.exists) throw new Error(`chunk ${i} bulunamadı`);
+          return cs.data();
+        });
+        full += cData.value || '';
       }
       return {key, value: full};
     },
@@ -491,7 +518,8 @@ function yuklemeHatasiIsaretle(key, e){
 }
 async function guvenliOku(key){
   try{
-    const r = await storageAPI.get(key);
+    // v.293: geçici ağ hatalarında otomatik yeniden dene (3 deneme, 1.2sn başlangıç).
+    const r = await withRetry(()=>withStorageTimeout(storageAPI.get(key)), 3, 1200);
     if(key in KOLEKSIYONLAR) tabanDeger[key] = (r && r.value!=null) ? r.value : '';
     return r;
   }
@@ -617,6 +645,7 @@ function veriYuklemeUyarisiGoster(){
     trafficFines:'Trafik cezaları', serviceParts:'Servis parçaları', ihaleler:'İhaleler', notifications:'Bildirimler',
     activityLog:'İşlem geçmişi', automationRules:'Otomasyon kuralları', kvkkTalepleri:'KVKK talepleri', sozlesmeGruplari:'Sözleşme grupları'};
   const liste = [...yuklenemeyenAnahtarlar].map(k=>ADLAR[k]||k).join(', ');
+  const zaman = new Date().toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'});
   let el = document.getElementById('veriYuklemeUyari');
   if(!el){
     el = document.createElement('div');
@@ -624,8 +653,43 @@ function veriYuklemeUyarisiGoster(){
     el.style.cssText = 'position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:9999;width:min(94vw,560px);background:#3B1414;color:#FFE3E0;border:1px solid #E1554E;border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.45;box-shadow:0 10px 30px rgba(0,0,0,.35);display:flex;gap:10px;align-items:flex-start;';
     document.body.appendChild(el);
   }
-  el.innerHTML = `<div style="flex:1;"><b>Bazı veriler buluttan okunamadı</b> (bağlantı zayıf olabilir): ${esc(liste)}.<br>Verileriniz silinmedi. Yanlışlıkla üzerine yazılmasın diye bu bölümlerde kaydetme durduruldu. Lütfen sayfayı yenileyin.</div>
-    <button onclick="location.reload()" style="background:#E1554E;color:#fff;border:none;border-radius:8px;padding:7px 12px;font-weight:700;cursor:pointer;white-space:nowrap;">Yeniden Dene</button>`;
+  el.innerHTML = `<div style="flex:1;"><b>Bazı veriler buluttan okunamadı</b> (${zaman}) — bağlantı zayıf veya Firestore geçici yavaş olabilir: <b>${esc(liste)}</b>.<br>Verileriniz silinmedi. Bu bölümlere yazma geçici olarak durduruldu. Aşağıdaki butonla sadece verileri yeniden yüklemeyi deneyin; sayfayı kapatmadan önce bir yedek almak güvenlidir.</div>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <button onclick="veriYuklemeyiYenidenDene()" style="background:var(--accent-blue);color:#fff;border:none;border-radius:8px;padding:7px 12px;font-weight:700;cursor:pointer;white-space:nowrap;">Verileri Yeniden Dene</button>
+      <button onclick="location.reload()" style="background:#E1554E;color:#fff;border:none;border-radius:8px;padding:7px 12px;font-weight:700;cursor:pointer;white-space:nowrap;">Sayfayı Yenile</button>
+    </div>`;
+}
+
+// v.293: Kullanıcı "Verileri Yeniden Dene" dediğinde sadece okunamayan anahtarları tekrar dener,
+// başarılı olanları yükler ve uyarıyı günceller. Sayfa yenileme gerekmez.
+async function veriYuklemeyiYenidenDene(){
+  const kalan = new Set();
+  for(const key of yuklenemeyenAnahtarlar){
+    try{
+      const r = await withRetry(()=>withStorageTimeout(storageAPI.get(key)), 3, 1500);
+      if(r && r.value){
+        const deger = JSON.parse(r.value);
+        if(window[key] !== undefined && Array.isArray(window[key])) window[key] = deger;
+        yuklenemeyenAnahtarlar.delete(key);
+      }else if(!r){
+        yuklenemeyenAnahtarlar.delete(key);
+      }else{
+        kalan.add(key);
+      }
+    }catch(e){ kalan.add(key); }
+  }
+  if(yuklenemeyenAnahtarlar.size === 0){
+    const el = document.getElementById('veriYuklemeUyari');
+    if(el){
+      el.style.background = '#143B1E';
+      el.style.borderColor = '#36A168';
+      el.style.color = '#E3FFE8';
+      el.innerHTML = '<div style="flex:1;"><b>Tüm veriler başarıyla yüklendi.</b> Şimdi normal şekilde çalışabilirsiniz.</div><button onclick="this.parentElement.remove()" style="background:#36A168;color:#fff;border:none;border-radius:8px;padding:7px 12px;font-weight:700;cursor:pointer;">Tamam</button>';
+    }
+    renderDashboard && renderDashboard();
+  }else{
+    veriYuklemeUyarisiGoster();
+  }
 }
 
 async function load(){
