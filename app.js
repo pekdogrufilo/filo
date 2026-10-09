@@ -11735,7 +11735,9 @@ function sozlesmeHtml(d){
   // v.279: müşteriye giden belge tasarımı yükseltildi — sözleşme artık teklifle AYNI marka dilini
   // kullanıyor (turkuaz antetli kağıt, marka renkli bölüm başlıkları, stilize tablolar). Hukuki
   // içerik ve veri alanları AYNEN korundu; yalnızca görsel katman değişti.
-  const logoSrc = (document.querySelector('.lock-logo-wrap img')||{}).src || (typeof SIRKET_LOGOS!=='undefined' && SIRKET_LOGOS['PEKDOĞRU GRUP']) || '';
+  const logoSrc = (document.querySelector('.lock-logo-wrap img')||{}).src
+    || (typeof SIRKET_LOGOS!=='undefined' && SIRKET_LOGOS['PEKDOĞRU GRUP'])
+    || '';
   const logoTag = logoSrc ? `<img src="${logoSrc}" alt="" style="width:100%;height:100%;object-fit:contain;">` : '';
   const altIletisim = [d.firmaTelefon?'Tel: '+esc(d.firmaTelefon):'', d.firmaEposta?esc(d.firmaEposta):''].filter(Boolean).join('  ·  ');
   return `<!DOCTYPE html>
@@ -13440,10 +13442,10 @@ function tkPdfAc(rentalId){
     .wm{position:fixed;top:50%;left:50%;width:440px;height:440px;transform:translate(-50%,-50%);opacity:.055;pointer-events:none;z-index:0;}
     .wm img{width:100%;height:100%;object-fit:contain;}
   </style></head>
-  <body><div class="wm"><img src="${SIRKET_LOGOS['PEKDOĞRU GRUP']}" alt=""></div><div class="sayfa">
+  <body>${logoSrc?`<div class="wm"><img src="${logoSrc}" alt=""></div>`:''}<div class="sayfa">
     <div class="letterhead">
       <div class="lh-left">
-        <div class="lh-logo"><img src="${SIRKET_LOGOS['PEKDOĞRU GRUP']}" alt=""></div>
+        <div class="lh-logo">${logoSrc?`<img src="${logoSrc}" alt="">`:''}</div>
         <div>
           <div class="lh-name">PEKDOĞRU GRUP</div>
           <div class="lh-tag">Filo Kiralama Hizmetleri</div>
