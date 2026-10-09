@@ -9193,10 +9193,10 @@ function dashYedekUyarisiGoster(){
       ? '<b>Henüz hiç yedek almadınız</b> — veriler bulutta senkronize ediliyor ama dosya yedeği her zaman iyi bir güvencedir.'
       : '<b>Henüz hiç yedek almadınız</b> — veriler yalnızca bu cihazda saklanıyor, cihaz değişince kaybolur.';
     el.innerHTML = `
-      <div style="display:flex;align-items:center;gap:10px;margin:0 0 12px;padding:10px 14px;border-radius:10px;background:rgba(232,161,50,.1);border:1px solid rgba(232,161,50,.3);cursor:pointer;" onclick="switchPage('excel')">
+      <div class="dash-yedek-band" style="display:flex;align-items:center;gap:10px;margin:0 0 12px;padding:10px 14px;border-radius:10px;background:rgba(232,161,50,.1);border:1px solid rgba(232,161,50,.3);cursor:pointer;" onclick="switchPage('excel')">
         <span style="color:#E8A132;flex-shrink:0;display:flex;">${ICO('download',16)}</span>
         <span style="font-size:13px;color:var(--text-2);flex:1;">${!k ? ilkMetin : `<b>Son yedek ${gun} gün önce alındı</b> (${esc(k.kullanici)}). Yedek almak için dokunun.`}</span>
-        <span style="font-size:12px;font-weight:600;color:#E8A132;white-space:nowrap;">Yedekle →</span>
+        <span class="yedekle-lbl" style="font-size:12px;font-weight:600;color:#E8A132;white-space:nowrap;">Yedekle →</span>
       </div>`;
   });
 }
