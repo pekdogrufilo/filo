@@ -2343,6 +2343,21 @@
     margin:0 !important;
   }
   .dash-stats > .dstat:last-child, .dash-stats > .dstat-strong:last-child{border-right:none !important;}
+  /* v.303: Dar ekranda KPI'lar 2x2 sarılır; ayraçlar buna göre çizilir */
+  @media (max-width:860px){
+    .dash-stats{flex-wrap:wrap !important;}
+    .dash-stats > .dstat, .dash-stats > .dstat-strong{
+      flex:1 1 46% !important;
+      min-width:46% !important;
+      border-right:1px solid var(--border) !important;
+    }
+    .dash-stats > .dstat:nth-child(even), .dash-stats > .dstat-strong:nth-child(even){
+      border-right:none !important;
+    }
+    .dash-stats > .dstat:nth-child(n+3), .dash-stats > .dstat-strong:nth-child(n+3){
+      border-top:1px solid var(--border) !important;
+    }
+  }
   .dstat-ic{
     background:transparent !important;
     color:var(--lux-accent) !important;

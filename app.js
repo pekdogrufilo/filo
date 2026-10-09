@@ -10205,7 +10205,7 @@ function renderDashboard(){
       </div>
       <div class="dstat" style="cursor:pointer;" onclick="switchPage('cari')">
         <div class="dstat-ic" style="background:${dashGecikenTahsilat>0?'rgba(225,85,78,.15)':'rgba(232,161,50,.15)'};color:${dashGecikenTahsilat>0?'#E1554E':'#E8A132'};">${DASH_ICONS.warn}</div>
-        <div class="dstat-txt"><div class="l">Tahsilat</div><div class="n" style="color:${dashGecikenTahsilat>0?'#E1554E':'var(--paper)'};">${fmtTL2(dashGecikenTahsilat)}</div><div class="d">geciken · ${fmtTL2(dashBekleyenTahsilat)} bekleyen</div></div>
+        <div class="dstat-txt"><div class="l">Tahsilat</div><div class="n" style="color:${dashGecikenTahsilat>0?'#E1554E':'var(--paper)'};">${fmtTL2(dashGecikenTahsilat)}</div><div class="d">${dashGecikenTahsilat>0?'geciken':(dashBekleyenTahsilat>0?fmtTL2(dashBekleyenTahsilat)+' bekleyen':'bekleyen yok')}</div></div>
       </div>
       <div class="dstat" style="cursor:pointer;" onclick="switchPage('bildirimler')">
         <div class="dstat-ic" style="background:${yakindaBitecekPlakalar.size>0?'rgba(232,161,50,.15)':'rgba(54,161,104,.15)'};color:${yakindaBitecekPlakalar.size>0?'#E8A132':'#36A168'};"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg></div>
