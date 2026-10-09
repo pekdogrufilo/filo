@@ -12761,9 +12761,9 @@ function renderKiralamaPage(){
   page.innerHTML = `
     <!-- v.95: Sayfa üç sekmeye bölündü: İşlemler / Sözleşmeler / Geçmiş -->
     <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;" id="krTabBar">
-      <button onclick="krTabSet('islem')" data-kr="islem" style="padding:9px 20px;border-radius:999px;font-size:13px;font-weight:${krAktif==='islem'?700:600};cursor:pointer;border:1px solid ${krAktif==='islem'?'var(--accent-blue)':'var(--border-2)'};background:${krAktif==='islem'?'var(--accent-blue)':'var(--surface)'};color:${krAktif==='islem'?'#fff':'var(--text-2)'};">① İşlemler</button>
-      <button onclick="krTabSet('sozlesme')" data-kr="sozlesme" style="padding:9px 20px;border-radius:999px;font-size:13px;font-weight:${krAktif==='sozlesme'?700:600};cursor:pointer;border:1px solid ${krAktif==='sozlesme'?'var(--accent-blue)':'var(--border-2)'};background:${krAktif==='sozlesme'?'var(--accent-blue)':'var(--surface)'};color:${krAktif==='sozlesme'?'#fff':'var(--text-2)'};">② Sözleşmeler</button>
-      <button onclick="krTabSet('gecmis')" data-kr="gecmis" style="padding:9px 20px;border-radius:999px;font-size:13px;font-weight:${krAktif==='gecmis'?700:600};cursor:pointer;border:1px solid ${krAktif==='gecmis'?'var(--accent-blue)':'var(--border-2)'};background:${krAktif==='gecmis'?'var(--accent-blue)':'var(--surface)'};color:${krAktif==='gecmis'?'#fff':'var(--text-2)'};">③ Geçmiş</button>
+      <button onclick="krTabSet('islem')" data-kr="islem" style="padding:9px 20px;border-radius:999px;font-size:13px;font-weight:${krAktif==='islem'?700:600};cursor:pointer;border:1px solid ${krAktif==='islem'?'var(--accent-blue)':'var(--border-2)'};background:${krAktif==='islem'?'var(--accent-blue)':'var(--surface)'};color:${krAktif==='islem'?'#fff':'var(--text-2)'};">İşlemler</button>
+      <button onclick="krTabSet('sozlesme')" data-kr="sozlesme" style="padding:9px 20px;border-radius:999px;font-size:13px;font-weight:${krAktif==='sozlesme'?700:600};cursor:pointer;border:1px solid ${krAktif==='sozlesme'?'var(--accent-blue)':'var(--border-2)'};background:${krAktif==='sozlesme'?'var(--accent-blue)':'var(--surface)'};color:${krAktif==='sozlesme'?'#fff':'var(--text-2)'};">Sözleşmeler</button>
+      <button onclick="krTabSet('gecmis')" data-kr="gecmis" style="padding:9px 20px;border-radius:999px;font-size:13px;font-weight:${krAktif==='gecmis'?700:600};cursor:pointer;border:1px solid ${krAktif==='gecmis'?'var(--accent-blue)':'var(--border-2)'};background:${krAktif==='gecmis'?'var(--accent-blue)':'var(--surface)'};color:${krAktif==='gecmis'?'#fff':'var(--text-2)'};">Geçmiş</button>
       <button onclick="openAracKirala()" style="margin-left:auto;padding:9px 16px;border-radius:999px;font-size:12.5px;font-weight:700;cursor:pointer;border:1px solid rgba(54,161,104,.35);background:rgba(54,161,104,.12);color:#36A168;">+ Yeni Kiralama</button>
     </div>
     ${(()=>{
@@ -12794,14 +12794,14 @@ function renderKiralamaPage(){
     <div class="kr-pane" data-kr="islem" style="${krAktif==='islem'?'':'display:none;'}">
     <div class="dcard" style="margin-bottom:16px;">
       <div style="display:flex;align-items:flex-start;gap:10px;">
-        <h3 style="margin-bottom:2px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8v8h6l4 4V4L9 8H3Z"/></svg>Kira İşlemleri</h3>
+        <h3 style="margin-bottom:2px;">Araç Seç &amp; İşlem</h3>
         <button type="button" onclick="showKiraYardim()" title="Bu sayfa nasıl kullanılır?" style="margin-left:auto;background:none;border:none;color:var(--accent-blue);cursor:pointer;padding:4px;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
         </button>
       </div>
       <div class="field" style="max-width:420px;position:relative;margin-bottom:0;">
-        <label>Araç seç</label>
-        <input type="text" id="kiOpAra" placeholder="Plaka veya model ara..." autocomplete="off" oninput="kiOpFiltrele()" onfocus="kiOpFiltrele()">
+        <label>Plaka veya model ara</label>
+        <input type="text" id="kiOpAra" placeholder="Plaka veya model..." autocomplete="off" oninput="kiOpFiltrele()" onfocus="kiOpFiltrele()">
         <div id="kiOpListe" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:5;max-height:220px;overflow-y:auto;background:var(--surface);border:1px solid var(--border-2);border-radius:8px;box-shadow:var(--shadow-md,0 8px 24px rgba(0,0,0,.25));margin-top:2px;"></div>
       </div>
       <div id="kiOpSecili" style="display:none;margin-top:16px;">
@@ -12814,12 +12814,11 @@ function renderKiralamaPage(){
           </button>
         </div>
         <div style="display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:14px;">
-          <button type="button" class="kiop-tab active" data-t="kirala" onclick="kiOpSetTab('kirala')" style="background:none;border:none;color:var(--text-3);font-family:inherit;font-size:12.5px;font-weight:600;padding:9px 4px;margin-right:20px;cursor:pointer;border-bottom:2px solid transparent;">① Kiralama</button>
-          <button type="button" class="kiop-tab" data-t="teslim" onclick="kiOpSetTab('teslim')" style="background:none;border:none;color:var(--text-3);font-family:inherit;font-size:12.5px;font-weight:600;padding:9px 4px;margin-right:20px;cursor:pointer;border-bottom:2px solid transparent;">② Teslim</button>
-          <button type="button" class="kiop-tab" data-t="iade" onclick="kiOpSetTab('iade')" style="background:none;border:none;color:var(--text-3);font-family:inherit;font-size:12.5px;font-weight:600;padding:9px 4px;cursor:pointer;border-bottom:2px solid transparent;">③ İade</button>
+          <button type="button" class="kiop-tab active" data-t="kirala" onclick="kiOpSetTab('kirala')" style="background:none;border:none;color:var(--text-3);font-family:inherit;font-size:12.5px;font-weight:600;padding:9px 4px;margin-right:20px;cursor:pointer;border-bottom:2px solid transparent;">Kiralama</button>
+          <button type="button" class="kiop-tab" data-t="teslim" onclick="kiOpSetTab('teslim')" style="background:none;border:none;color:var(--text-3);font-family:inherit;font-size:12.5px;font-weight:600;padding:9px 4px;margin-right:20px;cursor:pointer;border-bottom:2px solid transparent;">Teslim</button>
+          <button type="button" class="kiop-tab" data-t="iade" onclick="kiOpSetTab('iade')" style="background:none;border:none;color:var(--text-3);font-family:inherit;font-size:12.5px;font-weight:600;padding:9px 4px;cursor:pointer;border-bottom:2px solid transparent;">İade</button>
         </div>
         <div class="kiop-pane" data-p="kirala">
-          <p style="font-size:13px;color:var(--text-2);margin:0 0 12px;">Bu aracı yeni bir kiracıya vermek için "Araç Kirala" akışını başlatın — kiracı bilgileri ve kira koşulları girilir, 23 maddelik sözleşme otomatik hazırlanır.</p>
           <button class="add-btn" onclick="openAracKirala(kiOpSelectedId)">Araç Kirala — Sözleşme Oluştur</button>
         </div>
         <div class="kiop-pane" data-p="teslim" style="display:none;">
@@ -12868,7 +12867,6 @@ function renderKiralamaPage(){
           <button class="add-btn" onclick="saveTeslimBilgisi()">Teslim Bilgilerini Kaydet</button>
         </div>
         <div class="kiop-pane" data-p="iade" style="display:none;">
-          <p style="font-size:13px;color:var(--text-2);margin:0 0 12px;">Bu aracı kiradan iade almak, km kullanım hakkını/aşımını hesaplamak ve iade tutanağı oluşturmak için:</p>
           <button class="add-btn" style="background:#E8A132;" onclick="openIadeForm(kiOpSelectedId)">İade Al</button>
         </div>
       </div>
