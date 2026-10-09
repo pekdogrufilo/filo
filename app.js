@@ -12194,6 +12194,113 @@ function sozFiltrele(list){
   return list.filter(r=>sozDurumOf(r).key===f);
 }
 function sozFiltreSet(f){ window.__sozFiltre=f; renderKiralamaPage(); }
+
+// v.294: Kiralama kaydının (rental) tarih/kiracı/kira tutar bilgilerini düzenlemek için modal.
+// Kullanıcı hatası: tarihi yanlış girmiş, kiracı değişmiş ama araç kartında eski kiracı görünüyordu.
+// Bu fonksiyon rental + vehicle + ilgili sözleşme kaydını aynı anda senkronize eder.
+function kiralamaDuzenleAc(rentalId){
+  if(!requireAdmin()) return;
+  const r = rentals.find(x=>x.id===rentalId);
+  if(!r){ showToast('Kiralama kaydı bulunamadı.', true); return; }
+  const v = vehicles.find(x=>x.id===r.vehicleId);
+  if(!v){ showToast('Araç bulunamadı.', true); return; }
+
+  // Mevcut müşteri seçili gelsin
+  const musteriOpts = customers.map(c=>`<option value="${c.id}" ${c.id===r.customerId?'selected':''}>${esc(musteriGoruntuAdi(c))}</option>`).join('');
+
+  const overlay = document.createElement('div');
+  overlay.id = 'kiralamaDuzenleOverlay';
+  overlay.className = 'overlay show';
+  overlay.innerHTML = `
+    <div class="modal" style="max-width:520px;width:92vw;">
+      <div class="modal-head"><h3>Kiralama Düzenle — ${esc(v.plaka)}</h3><button class="modal-close" onclick="document.getElementById('kiralamaDuzenleOverlay').remove()">×</button></div>
+      <div class="modal-body" style="padding:18px;">
+        <div class="field"><label>Kiracı (Müşteri)</label><select id="kdMusteri">${musteriOpts}</select></div>
+        <div class="field-row">
+          <div class="field"><label>Başlangıç Tarihi</label><input type="date" id="kdBaslangic" value="${r.baslangic||''}"></div>
+          <div class="field"><label>Bitiş Tarihi</label><input type="date" id="kdBitis" value="${r.bitis||''}"></div>
+        </div>
+        <div class="field"><label>Aylık Kira Tutarı (₺)</label><input type="number" id="kdKira" value="${r.kiraTutari||''}" min="0" step="1"></div>
+        <div id="kdHata" style="display:none;color:#E1554E;font-size:12.5px;margin-top:8px;"></div>
+      </div>
+      <div class="modal-foot" style="padding:12px 18px;display:flex;justify-content:flex-end;gap:8px;">
+        <button class="btn-secondary" onclick="document.getElementById('kiralamaDuzenleOverlay').remove()">İptal</button>
+        <button class="btn-primary" onclick="kiralamaDuzenleKaydet('${esc(rentalId)}')">Kaydet</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+async function kiralamaDuzenleKaydet(rentalId){
+  if(!requireAdmin()) return;
+  const r = rentals.find(x=>x.id===rentalId);
+  if(!r){ showToast('Kiralama kaydı bulunamadı.', true); return; }
+  const v = vehicles.find(x=>x.id===r.vehicleId);
+  if(!v){ showToast('Araç bulunamadı.', true); return; }
+
+  const hataEl = document.getElementById('kdHata');
+  hataEl.style.display='none'; hataEl.textContent='';
+
+  const customerId = document.getElementById('kdMusteri').value;
+  const baslangic = document.getElementById('kdBaslangic').value;
+  const bitis = document.getElementById('kdBitis').value;
+  const kiraTutari = Number(document.getElementById('kdKira').value)||0;
+
+  if(!customerId){ hataEl.textContent='Lütfen kiracı seçin.'; hataEl.style.display='block'; return; }
+  if(!baslangic || !bitis){ hataEl.textContent='Başlangıç ve bitiş tarihleri gereklidir.'; hataEl.style.display='block'; return; }
+  if(baslangic > bitis){ hataEl.textContent='Bitiş tarihi başlangıçtan önce olamaz.'; hataEl.style.display='block'; return; }
+  if(kiraTutari <= 0){ hataEl.textContent='Geçerli bir kira tutarı girin.'; hataEl.style.display='block'; return; }
+
+  const c = customers.find(x=>x.id===customerId);
+  if(!c){ hataEl.textContent='Seçili müşteri bulunamadı.'; hataEl.style.display='block'; return; }
+  const kiraciAdi = musteriGoruntuAdi(c);
+
+  try{
+    // 1) rental kaydını güncelle
+    r.customerId = customerId;
+    r.baslangic = baslangic;
+    r.bitis = bitis;
+    r.kiraTutari = kiraTutari;
+    if(r.durum==='teslimEdildi' && !r.teslimTarih) r.teslimTarih = baslangic;
+
+    // 2) araç kartını senkronize et
+    v.customerId = customerId;
+    v.kiraciAdi = kiraciAdi;
+    v.kira = kiraTutari;
+    v.kiraBitis = bitis;
+    v.sozlesmeBitis = bitis;
+    if(v.durum==='Kirada'){
+      v.teslimTarih = baslangic;
+    }
+
+    // 3) İlgili sözleşme varsa onu da güncelle
+    const s = sozlesmeler.find(x=>x.vehicleId===v.id && x.rentalId===r.id);
+    if(s){
+      s.customerId = customerId;
+      s.kiraciAdi = kiraciAdi;
+      s.baslangic = baslangic;
+      s.bitis = bitis;
+      s.kira = kiraTutari;
+      await persistSozlesmeler();
+    }
+
+    await persistRentals();
+    await persistVehicles();
+
+    document.getElementById('kiralamaDuzenleOverlay').remove();
+    showToast('Kiralama bilgileri güncellendi.');
+    logActivity('edit', `Kiralama düzenlendi: <b>${esc(v.plaka)}</b> — ${esc(kiraciAdi)} (${fmtTarih(baslangic)} - ${fmtTarih(bitis)})`);
+
+    renderKiralamaPage();
+    if(window.__currentPage==='arac-yonetimi') renderAracYonetimi();
+    if(window.__currentPage==='dashboard') renderDashboard();
+  }catch(e){
+    console.error('kiralamaDuzenleKaydet hatası:', e);
+    hataEl.textContent='Kaydedilirken hata oluştu: '+(e.message||'');
+    hataEl.style.display='block';
+  }
+}
+
 function sozChipRenk(f){
   const m = {tumu:'var(--accent-blue)', aktif:'#36A168', gecmis:'#E1554E', iade:'var(--accent-blue)'};
   return m[f]||'var(--steel-300)';
@@ -12802,7 +12909,7 @@ function renderKiralamaPage(){
       <h3>Şu An Kiradaki Araçlar <span style="font-weight:400;font-size:13px;color:var(--text-3);">${kirada.length}</span></h3>
       ${kirada.length ? `
       <div class="table-scroll"><table class="mini-table">
-        <thead><tr><th>Plaka</th><th>Araç</th><th>Çalıştığı Yer</th><th>Tür</th><th>Teslim Tarihi</th><th>Teslim km</th><th>Aylık Kira</th><th>Sözleşme Bitiş</th></tr></thead>
+        <thead><tr><th>Plaka</th><th>Araç</th><th>Çalıştığı Yer</th><th>Tür</th><th>Teslim Tarihi</th><th>Teslim km</th><th>Aylık Kira</th><th>Sözleşme Bitiş</th><th>İşlem</th></tr></thead>
         <tbody>${kirada.map(v=>{
           const teslimTarih = v.teslimTarih ? fmtTarih(v.teslimTarih) : '—';
           const teslimKm = v.teslimKm ? v.teslimKm.toLocaleString('tr-TR')+' km' : '—';
@@ -12820,12 +12927,16 @@ function renderKiralamaPage(){
             <td style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${teslimKm}</td>
             <td style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${fmtTL2_role(v.kira)}</td>
             <td>${sozBitis}</td>
+            <td>
+              ${(()=>{ const rAktif = rentals.find(x=>x.vehicleId===v.id && (x.durum==='teslimEdildi'||x.durum==='sozlesmeHazir')); return rAktif ? `<button onclick="kiralamaDuzenleAc('${esc(rAktif.id)}')" style="background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.2);color:var(--accent-blue);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Düzenle</button>` : ''; })()}
+            </td>
           </tr>`;
         }).join('')}</tbody>
       </table></div>
       <div class="m-card-list">${kirada.map(v=>{
         const gun = v.teslimTarih ? Math.round((Date.now()-new Date(v.teslimTarih))/(86400000)) : null;
         const turLabel = v.kiralamaTuru==='şoförlü' ? '<span style="color:#4CC480;font-weight:600;">Şoförlü</span>' : '<span style="color:var(--accent-blue);font-weight:600;">Şoförsüz</span>';
+        const rAktif = rentals.find(x=>x.vehicleId===v.id && (x.durum==='teslimEdildi'||x.durum==='sozlesmeHazir'));
         return `<div class="m-card">
           <div class="m-card-head">
             <span class="mini-plaka">${esc(v.plaka)}</span>
@@ -12838,6 +12949,7 @@ function renderKiralamaPage(){
             ${v.teslimKm?`<div class="m-card-row"><span class="m-card-label">Teslim km</span><span class="m-card-val" style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${v.teslimKm.toLocaleString('tr-TR')} km</span></div>`:''}
             <div class="m-card-row"><span class="m-card-label">Aylık Kira</span><span class="m-card-val" style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${fmtTL2_role(v.kira)}</span></div>
           </div>
+          ${rAktif ? `<div style="margin-top:10px;"><button onclick="kiralamaDuzenleAc('${esc(rAktif.id)}')" style="width:100%;background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.2);color:var(--accent-blue);padding:7px 0;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Kiralamayı Düzenle</button></div>` : ''}
         </div>`;
       }).join('')}</div>
       ` : '<div class="log-empty">Şu an kirada araç yok.</div>'}
