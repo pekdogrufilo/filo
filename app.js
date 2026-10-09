@@ -10195,30 +10195,25 @@ function renderDashboard(){
          bir bölme çizgisi) ve ekranın iki ayrı yerinde duruyordu. Artık tüm 6 KPI (2 tahsilat + 4
          filo metriği) TEK, tutarlı bir .dstat şeridinde birleşti — "Filo Durumu" kartında sadece
          toplam araç/doluluk görseli kaldı (bkz. aşağıda). -->
-    <div class="dash-stats cols-3" style="margin-bottom:16px;">
-      <div class="dstat" style="cursor:pointer;" onclick="switchPage('cari')">
-        <div class="dstat-ic" style="background:rgba(232,161,50,.15);color:#E8A132;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
-        <div class="dstat-txt"><div class="l">Bekleyen Tahsilat</div><div class="n" style="color:#E8A132;">${fmtTL2(dashBekleyenTahsilat)}</div><div class="d">vadesi geçmemiş bakiye</div></div>
+    <!-- v.301: "tek bakışta anlamlı özet" — 6 KPI yerine en kritik 4 metrik:
+         Bugün İş / Tahsilat (geciken+bekleyen tek kutuda) / Belgesi Bitecek / Aktif Müşteri.
+         Hasar Kaydı ve ayrı Bekleyen Tahsilat kutusu kaldırıldı (nadiren günlük ihtiyaç). -->
+    <div class="dash-stats cols-4" style="margin-bottom:16px;">
+      <div class="dstat" style="cursor:pointer;" onclick="switchPage('bildirimler')">
+        <div class="dstat-ic" style="background:${bugunKritik>0?'rgba(225,85,78,.15)':(bugunUyari>0?'rgba(22,160,134,.15)':'rgba(54,161,104,.15)')};color:${bugunKritik>0?'#E1554E':(bugunUyari>0?'var(--accent-blue)':'#36A168')};"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+        <div class="dstat-txt"><div class="l">Bugün İş</div><div class="n" style="color:${bugunKritik>0?'#E1554E':(bugunUyari>0?'var(--accent-blue)':'var(--paper)')};">${bugunYapilacaklar.length}</div><div class="d">${bugunKritik>0?bugunKritik+' kritik':'bekleyen'}</div></div>
       </div>
       <div class="dstat" style="cursor:pointer;" onclick="switchPage('cari')">
-        <div class="dstat-ic" style="background:rgba(225,85,78,.15);color:#E1554E;">${DASH_ICONS.warn}</div>
-        <div class="dstat-txt"><div class="l">Geciken Tahsilat</div><div class="n" style="color:${dashGecikenTahsilat>0?'#E1554E':'var(--paper)'};">${fmtTL2(dashGecikenTahsilat)}</div><div class="d">vadesi geçmiş bakiye</div></div>
-      </div>
-      <div class="dstat" style="cursor:pointer;" onclick="switchPage('musteriler')">
-        <div class="dstat-ic" style="background:rgba(22,160,134,.15);color:var(--accent-blue);">${DASH_ICONS.users}</div>
-        <div class="dstat-txt"><div class="l">Aktif Müşteri</div><div class="n">${aktifMusteri}</div><div class="d">kiracı</div></div>
+        <div class="dstat-ic" style="background:${dashGecikenTahsilat>0?'rgba(225,85,78,.15)':'rgba(232,161,50,.15)'};color:${dashGecikenTahsilat>0?'#E1554E':'#E8A132'};">${DASH_ICONS.warn}</div>
+        <div class="dstat-txt"><div class="l">Tahsilat</div><div class="n" style="color:${dashGecikenTahsilat>0?'#E1554E':'var(--paper)'};">${fmtTL2(dashGecikenTahsilat)}</div><div class="d">geciken · ${fmtTL2(dashBekleyenTahsilat)} bekleyen</div></div>
       </div>
       <div class="dstat" style="cursor:pointer;" onclick="switchPage('bildirimler')">
         <div class="dstat-ic" style="background:${yakindaBitecekPlakalar.size>0?'rgba(232,161,50,.15)':'rgba(54,161,104,.15)'};color:${yakindaBitecekPlakalar.size>0?'#E8A132':'#36A168'};"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg></div>
         <div class="dstat-txt"><div class="l">Belgesi Bitecek</div><div class="n" style="color:${yakindaBitecekPlakalar.size>0?'#E8A132':'var(--paper)'};">${yakindaBitecekPlakalar.size}</div><div class="d">30 gün içinde</div></div>
       </div>
-      <div class="dstat" style="cursor:pointer;" onclick="switchPage('bildirimler')">
-        <div class="dstat-ic" style="background:${bugunKritik>0?'rgba(225,85,78,.15)':(bugunUyari>0?'rgba(22,160,134,.15)':'rgba(54,161,104,.15)')};color:${bugunKritik>0?'#E1554E':(bugunUyari>0?'var(--accent-blue)':'#36A168')};"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
-        <div class="dstat-txt"><div class="l">Bugün İş</div><div class="n" style="color:${bugunKritik>0?'#E1554E':(bugunUyari>0?'var(--accent-blue)':'var(--paper)')};">${bugunYapilacaklar.length}</div><div class="d">${bugunKritik>0?bugunKritik+' kritik':'bekleyen'}</div></div>
-      </div>
-      <div class="dstat" style="cursor:pointer;" onclick="switchPage('hasarcezalar')">
-        <div class="dstat-ic" style="background:${hasarSayisi>0?'rgba(225,85,78,.15)':'rgba(54,161,104,.15)'};color:${hasarSayisi>0?'#E1554E':'#36A168'};"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
-        <div class="dstat-txt"><div class="l">Hasar Kaydı</div><div class="n" style="color:${hasarSayisi>0?'#E1554E':'var(--paper)'};">${hasarSayisi}</div><div class="d">toplam</div></div>
+      <div class="dstat" style="cursor:pointer;" onclick="switchPage('musteriler')">
+        <div class="dstat-ic" style="background:rgba(22,160,134,.15);color:var(--accent-blue);">${DASH_ICONS.users}</div>
+        <div class="dstat-txt"><div class="l">Aktif Müşteri</div><div class="n">${aktifMusteri}</div><div class="d">kiracı</div></div>
       </div>
     </div>
 

@@ -728,9 +728,10 @@
      Kart sayısı bilinen şeritlerde sütun sayısını kart sayısının bölenine sabitliyoruz
      (6 kart → 3+3, 5 kart → tek satır 5). Mobilde mevcut 2 sütun kuralı aynen geçerli. */
   .dash-stats.cols-3{grid-template-columns:repeat(3,1fr);}
+  .dash-stats.cols-4{grid-template-columns:repeat(4,1fr);}
   .dash-stats.cols-5{grid-template-columns:repeat(5,1fr);}
   @media (max-width:860px){
-    .dash-stats.cols-3,.dash-stats.cols-5{grid-template-columns:1fr 1fr;}
+    .dash-stats.cols-3,.dash-stats.cols-4,.dash-stats.cols-5{grid-template-columns:1fr 1fr;}
   }
   .dstat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;display:flex;align-items:flex-start;gap:12px;transition:border-color .15s ease, transform .15s ease;cursor:pointer;min-width:0;}
   .dstat:hover{border-color:var(--border-2);transform:translateY(-1px);}
