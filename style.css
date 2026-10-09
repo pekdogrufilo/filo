@@ -52,8 +52,8 @@
     --border:rgba(255,255,255,.07);
     --border-2:rgba(255,255,255,.14);
     --text:#F6F5F3;
-    --text-2:#A9A6A0;
-    --text-3:#7B7873;
+    --text-2:#BDBAB4;
+    --text-3:#8D8A85;
     --blue:#16A086;
     --blue-dim:rgba(22,160,134,.14);
     --green:#36A168;
@@ -2502,4 +2502,31 @@
   button,.btn,.add-btn,.settings-btn,.sb-item,.bn-item{min-height:36px;}
   @media (max-width:480px){
     button,.btn,.add-btn,.settings-btn,.sb-item,.bn-item{min-height:40px;}
+  }
+
+  /* v.302: Okunabilirlik artırımı — yazılar biraz daha büyük ve net */
+  body{font-size:15px;}
+  .sb-item{font-size:14px !important;}
+  .sidebar .sb-group-head{font-size:11px !important;}
+  .dcard h3,.card h3{font-size:15.5px !important;}
+  .dcard h3 a{font-size:13px !important;}
+  .dstat-txt .l{font-size:12.5px !important;}
+  .dstat-txt .d{font-size:13px !important;}
+  .stat .l{font-size:12.5px !important;}
+  .stat .n{font-size:24px !important;}
+  .chip{font-size:12.5px !important;padding:6px 12px !important;}
+  .field label{font-size:13.5px !important;}
+  .field input,.field select,.field textarea,.filters input,.filters select{font-size:14px !important;}
+  .v-card .meta,.model{font-size:13px !important;}
+  .v-card .plaka{font-size:16px !important;}
+  .yp-row{font-size:13px !important;}
+  .yp-l{font-size:12px !important;}
+  .bugun-item > span:nth-of-type(3){font-size:13px !important;}
+  .mini-table th{font-size:12px !important;}
+  .mini-table td{font-size:13px !important;}
+  .sb-user-name{font-size:13px !important;}
+  .sb-collapse-btn{font-size:13px !important;}
+  @media (max-width:480px){
+    .dstat-txt .n{font-size:21px !important;}
+    .stat .n{font-size:23px !important;}
   }
