@@ -2789,7 +2789,7 @@ function updateFromExcel(file){
 
       let updated = new Set(), added = 0;
       const gecerliDurumlar = ['KİRADA','MÜSAİT','SERVİSTE'];
-      sheetsFound.forEach(({headerIdx, rows, colMap})=>{
+      for(const {headerIdx, rows, colMap} of sheetsFound){
         for(let i=headerIdx+1;i<rows.length;i++){
           const r = rows[i];
           if(!r || !r[colMap.plaka]) continue;
@@ -2839,6 +2839,65 @@ function updateFromExcel(file){
 
           const existing = vehicles.find(v=>v.plaka===plaka);
           if(existing){
+            // v.295: Excel'den gelen yer bilgisi varsa bunu gerçek müşteri kaydına bağla —
+            // paneldeki eski kiracı bilgisi değişmeme / customerId eksik kalma sorununu çözer.
+            if(colMap.yer!==undefined && patch.yer){
+              let eslesen = customers.find(c=>musteriAdEslesir(patch.yer, musteriGoruntuAdi(c)))
+                           || customers.find(c=>musteriTokenEslesir(patch.yer, musteriGoruntuAdi(c)));
+              // v.295: eşleşen müşteri yoksa ve araç Kirada ise otomatik oluştur.
+              if(!eslesen && patch.durum==='Kirada'){
+                eslesen = await musteriKaydet({
+                  tip: isimKurumsalMu(patch.yer) ? 'kurum' : 'bireysel',
+                  ...(isimKurumsalMu(patch.yer) ? { firmaAdi: patch.yer } : { ad: patch.yer, soyad: '' }),
+                  kvkkOnay: false
+                });
+              }
+              if(eslesen){
+                patch.kiraciAdi = musteriGoruntuAdi(eslesen);
+                patch.customerId = eslesen.id;
+              }else if(!existing.kiraciAdi && !existing.customerId){
+                patch.kiraciAdi = patch.yer;
+              }
+            }
+            // v.295: Durum "Kirada" ise ama panelde aktif rental yoksa, Excel'den gelen
+            // yer/kiracı bilgileriyle otomatik kiralama kaydı oluştur (sözleşme yoksa da).
+            if(patch.durum==='Kirada' && existing.id){
+              const aktifRental = rentals.find(r=>r.vehicleId===existing.id && (r.durum==='teslimEdildi' || r.durum==='sozlesmeHazir'));
+              if(!aktifRental && patch.yer){
+                const musteri = customers.find(c=>musteriAdEslesir(patch.yer, musteriGoruntuAdi(c)))
+                             || customers.find(c=>musteriTokenEslesir(patch.yer, musteriGoruntuAdi(c)));
+                const customerId = musteri ? musteri.id : null;
+                rentals.push({
+                  id: yeniId('rnt'), vehicleId: existing.id, customerId,
+                  durum: 'teslimEdildi',
+                  baslangic: todayISO(),
+                  bitis: patch.kiraBitis || todayISO(),
+                  kiraTutari: Number(patch.kira)||0,
+                  kiraciAdi: patch.kiraciAdi || patch.yer || '',
+                  teslimTarih: todayISO()
+                });
+                if(musteri && existing.kiraciAdi){
+                  existing.kiraciAdi = musteriGoruntuAdi(musteri);
+                  existing.customerId = musteri.id;
+                }
+              }else if(aktifRental && patch.yer && (patch.kiraciAdi || patch.yer)!==(aktifRental.kiraciAdi||'')){
+                // Kiracı değişmiş; rental + varsa sözleşmeyi senkronize et.
+                const musteri = customers.find(c=>musteriAdEslesir(patch.yer, musteriGoruntuAdi(c)))
+                             || customers.find(c=>musteriTokenEslesir(patch.yer, musteriGoruntuAdi(c)));
+                aktifRental.kiraciAdi = patch.kiraciAdi || patch.yer;
+                if(musteri){ aktifRental.customerId = musteri.id; }
+                if(patch.kiraBitis) aktifRental.bitis = patch.kiraBitis;
+                if(patch.kira) aktifRental.kiraTutari = Number(patch.kira);
+                const soz = sozlesmeler.find(s=>s.vehicleId===existing.id && s.rentalId===aktifRental.id);
+                if(soz){
+                  soz.kiraciAdi = aktifRental.kiraciAdi;
+                  if(musteri){ soz.customerId = musteri.id; }
+                  if(patch.kiraBitis) soz.bitis = patch.kiraBitis;
+                  if(patch.kira) soz.kira = Number(patch.kira);
+                }
+              }
+            }
+
             // v.235: "X araç yenilendi" mesajı eskiden patch TAMAMEN BOŞ olsa bile (ör. eşleşen
             // ama hiçbir tanınan sütunu olmayan bir satır) o plakayı "güncellendi" sayıyordu —
             // kullanıcı gerçek bir değişiklik olmadığı halde "güncellendi" görüp yanılabiliyordu.
@@ -2856,9 +2915,12 @@ function updateFromExcel(file){
             updated.add(plaka);
           }
         }
-      });
+      }
 
       await persist();
+      await persistRentals();
+      await persistSozlesmeler();
+      await persistCustomers();
       buildSirketFilter();
       render();
       showToast(`Excel'den güncellendi: ${updated.size} araç yenilendi${added?`, ${added} yeni araç eklendi`:''}. Dosyada olmayan alanlara dokunulmadı.`);
