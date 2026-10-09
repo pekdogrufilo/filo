@@ -8918,12 +8918,29 @@ function switchPage(key){
   window.__currentPage = key;
   pageGrupBarCiz(key);
   renderCurrentPage();
+  // v.296: dar ekranlarda geniş tabloları yatay kaydırmalı hale getir
+  wrapMobileTables();
   // Mobilde sayfa değişince açık hamburger menüsünü otomatik kapat
   if(window.innerWidth<=900){
     document.getElementById('sidebar')?.classList.remove('show');
     document.getElementById('sbOverlay')?.classList.remove('show');
   }
 }
+
+// v.296: Mobil cihazlarda ekrana sığmayan tabloları .table-wrap içine alır.
+function wrapMobileTables(){
+  if(window.innerWidth > 640) return;
+  document.querySelectorAll('.page table').forEach(tbl=>{
+    if(tbl.closest('.table-wrap')) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'table-wrap';
+    tbl.parentNode.insertBefore(wrap, tbl);
+    wrap.appendChild(tbl);
+  });
+}
+window.addEventListener('resize', ()=>{
+  if(window.innerWidth <= 640) wrapMobileTables();
+});
 function openSidebarDrawer(){
   document.getElementById('sidebar')?.classList.toggle('show');
   document.getElementById('sbOverlay')?.classList.toggle('show');

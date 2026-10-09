@@ -2424,3 +2424,33 @@
   }
   .sidebar .sb-group-body .sb-item{padding-left:11px !important;}
   .sidebar .sb-search-trigger{margin-bottom:10px !important;}
+
+  /* v.296: Mobil görünüm kritik düzeltmeleri */
+  .table-wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--radius-sm);}
+  .table-wrap table{min-width:640px;width:100%;border-collapse:collapse;}
+  @media (max-width:640px){
+    .table-wrap{margin:0 -14px;width:calc(100% + 28px);border-radius:0;}
+    .table-wrap table{min-width:max-content;}
+    .table-wrap td,.table-wrap th{white-space:nowrap;}
+  }
+  .bottom-nav-items .bn-item{min-height:52px;padding-top:6px;padding-bottom:6px;}
+  .bottom-nav-items .bn-item svg{width:22px;height:22px;}
+  .bottom-nav-items .bn-item span{font-size:11px;margin-top:3px;}
+  @media (max-width:480px){
+    .dash-stats .dstat{padding:12px 10px;gap:8px;}
+    .dash-stats .dstat-ic{width:32px;height:32px;}
+    .dash-stats .dstat-ic svg{width:15px;height:15px;}
+    .dash-stats .dstat-txt .n{font-size:20px;}
+    .dash-stats .dstat-txt .l{font-size:11.5px;margin-top:4px;}
+    .dash-stats .dstat-txt .d{font-size:10.5px;padding:1px 5px;}
+    .alert-list-item{padding:9px 0;}
+    .alert-list-item .aic{width:30px;height:30px;}
+    .alert-list-item .aic svg{width:15px;height:15px;}
+    .alert-list-item .atitle{font-size:12px;}
+    .alert-list-item .asub{font-size:11.5px;}
+    .alert-list-item .achev{font-size:11px;}
+  }
+  button,.btn,.add-btn,.settings-btn,.sb-item,.bn-item{min-height:36px;}
+  @media (max-width:480px){
+    button,.btn,.add-btn,.settings-btn,.sb-item,.bn-item{min-height:40px;}
+  }
