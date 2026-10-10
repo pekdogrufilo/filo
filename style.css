@@ -2559,3 +2559,11 @@
     #isAkisiRehberi > summary{font-size:13.5px !important;gap:6px;}
     #isAkisiRehberi > summary > span{display:none;}
   }
+
+  /* v.305: Mobil sekme/buton düzeni — Kira sayfasında çift sekme çubuğunu bitir */
+  @media (max-width:640px){
+    #pageGrupBar[data-group="kiralamagr"]{display:none !important;}
+    #krTabBar{flex-wrap:nowrap !important;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;}
+    #krTabBar::-webkit-scrollbar{display:none;}
+    #krTabBar button{flex-shrink:0;}
+  }

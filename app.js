@@ -8871,6 +8871,7 @@ function pageGrupBarCiz(key){
   const gorunen = g ? g.pages.filter(p=>sayfaGorunurMu(p)) : [];
   if(!g || gorunen.length<2){ bar.style.display='none'; bar.innerHTML=''; return; }
   bar.style.display='';
+  bar.dataset.group = g.id;
   bar.innerHTML = `<div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;">${gorunen.map(p=>{
     const on = p===key;
     return `<button onclick="switchPage('${p}')" style="padding:9px 20px;border-radius:999px;font-size:13px;font-weight:${on?700:600};cursor:pointer;border:1px solid ${on?'var(--accent-blue)':'var(--border-2)'};background:${on?'var(--accent-blue)':'var(--surface)'};color:${on?'#fff':'var(--text-2)'};">${esc(PAGE_GROUP_ETIKET[p]||PAGE_META[p].title)}</button>`;
@@ -12756,7 +12757,7 @@ function renderKiralamaPage(){
   page.innerHTML = `
     <!-- v.95: Sayfa üç sekmeye bölündü: İşlemler / Sözleşmeler / Geçmiş -->
     <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;" id="krTabBar">
-      <button onclick="krTabSet('islem')" data-kr="islem" style="padding:9px 20px;border-radius:999px;font-size:13px;font-weight:${krAktif==='islem'?700:600};cursor:pointer;border:1px solid ${krAktif==='islem'?'var(--accent-blue)':'var(--border-2)'};background:${krAktif==='islem'?'var(--accent-blue)':'var(--surface)'};color:${krAktif==='islem'?'#fff':'var(--text-2)'};">İşlemler</button>
+      <button onclick="krTabSet('islem')" data-kr="islem" style="padding:9px 20px;border-radius:999px;font-size:13px;font-weight:${krAktif==='islem'?700:600};cursor:pointer;border:1px solid ${krAktif==='islem'?'var(--accent-blue)':'var(--border-2)'};background:${krAktif==='islem'?'var(--accent-blue)':'var(--surface)'};color:${krAktif==='islem'?'#fff':'var(--text-2)'};">Kiralamalar</button>
       <button onclick="krTabSet('sozlesme')" data-kr="sozlesme" style="padding:9px 20px;border-radius:999px;font-size:13px;font-weight:${krAktif==='sozlesme'?700:600};cursor:pointer;border:1px solid ${krAktif==='sozlesme'?'var(--accent-blue)':'var(--border-2)'};background:${krAktif==='sozlesme'?'var(--accent-blue)':'var(--surface)'};color:${krAktif==='sozlesme'?'#fff':'var(--text-2)'};">Sözleşmeler</button>
       <button onclick="krTabSet('gecmis')" data-kr="gecmis" style="padding:9px 20px;border-radius:999px;font-size:13px;font-weight:${krAktif==='gecmis'?700:600};cursor:pointer;border:1px solid ${krAktif==='gecmis'?'var(--accent-blue)':'var(--border-2)'};background:${krAktif==='gecmis'?'var(--accent-blue)':'var(--surface)'};color:${krAktif==='gecmis'?'#fff':'var(--text-2)'};">Geçmiş</button>
       <button onclick="openAracKirala()" style="margin-left:auto;padding:9px 16px;border-radius:999px;font-size:12.5px;font-weight:700;cursor:pointer;border:1px solid rgba(54,161,104,.35);background:rgba(54,161,104,.12);color:#36A168;">+ Yeni Kiralama</button>
