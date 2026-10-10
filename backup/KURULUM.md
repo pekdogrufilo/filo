@@ -27,9 +27,10 @@ Bu dosya, `www.pekdogru.com` hostinginizde her gece 23:00'da çalışacak, Fireb
 1. cPanel'e giriş yapın.
 2. **File Manager** (Dosya Yöneticisi) açın.
 3. `public_html` klasörünün içine yeni bir klasör oluşturun: `filo-yedek`
-4. Bu klasöre şu iki dosyayı yükleyin:
+4. Bu klasöre şu üç dosyayı yükleyin:
    - `filo-yedek-cron.php`
    - `firebase-service-account.json`
+   - `.htaccess` (gizli dosyaları web'den engeller; File Manager'da "gizli dosyaları göster" açık olmalı)
 5. `filo-yedek-cron.php` dosyasına sağ tıklayıp **Edit** (Düzenle) deyin.
 6. Başındaki `$AYARLAR` dizisini doldurun:
 
@@ -69,16 +70,18 @@ Bu dosya, `www.pekdogru.com` hostinginizde her gece 23:00'da çalışacak, Fireb
 
 ## Adım 4: Test Etme
 
-1. Tarayıcınızda şu adresi açın:
+1. `filo-yedek-cron.php` dosyasını düzenlerken başındaki `web_anahtari` alanına da kısa bir gizli kelime yazın (örn. `'web_anahtari' => 'pd2026yedek'`). Bu, başkalarının URL'yi açıp yedek e-postası tetiklemesini engeller.
+2. Tarayıcıda şu adresi açın (gizli kelimenizi sona ekleyin):
 
 ```
-https://www.pekdogru.com/filo-yedek/filo-yedek-cron.php
+https://www.pekdogru.com/filo-yedek/filo-yedek-cron.php?anahtar=GIZLI_KELIMENIZ
 ```
 
-2. Sayfa boş görünebilir; gerçek çıktı `filo-yedek-cron.log` dosyasına yazılır.
-3. File Manager'da aynı klasörde `filo-yedek-cron.log` dosyası oluşmuşsa açın.
-4. İçinde `E-posta gönderildi:` yazısını görürseniz başarılıdır.
-5. Belirttiğiniz alıcı e-posta adresinin gelen kutusunu (ve spam klasörünü) kontrol edin.
+3. Anahtarsız açarsanız "Erisim reddedildi" görürsünüz — bu doğru davranıştır.
+4. Gerçek çıktı `filo-yedek-cron.log` dosyasına yazılır.
+5. File Manager'da aynı klasörde `filo-yedek-cron.log` dosyası oluşmuşsa açın.
+6. İçinde `E-posta gönderildi:` yazısını görürseniz başarılıdır.
+7. Belirttiğiniz alıcı e-posta adresinin gelen kutusunu (ve spam klasörünü) kontrol edin.
 
 ---
 
@@ -96,8 +99,8 @@ Acil durumda tüm veriyi geri yüklemek için ZIP içindeki `.json` dosyaların�
 ## Güvenlik Notları
 
 - `firebase-service-account.json` dosyası ve `filo-yedek-cron.php` dosyası hostinginizde saklanır.
-- `filo-yedek` klasörüne dışarıdan doğrudan erişim olsa bile, service account key görünmez (PHP tarafından okunur).
-- Dilerseniz `.htaccess` ile `filo-yedek` klasörünü IP kısıtlamasıyla koruyabilirsiniz.
+- Klasöre yüklediğiniz `.htaccess` dosyası, service account JSON'unu ve log dosyalarını dışarıdan indirmeyi engeller (Apache altındaki cPanel hostinglerde otomatik geçerlidir).
+- Tarayıcıdan tetikleme gizli anahtarla (`?anahtar=...`) korunur; cron çalışması anahtardan bağımsızdır.
 - E-posta şifresini kimseyle paylaşmayın.
 
 ---

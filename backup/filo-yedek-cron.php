@@ -35,7 +35,22 @@ $AYARLAR = [
 
     // Yedek dosyası adı
     'dosya_adi'     => 'filo-yedek-' . date('Y-m-d') . '.zip',
+
+    // v.310: Tarayıcıdan (HTTP) tetikleme için zorunlu gizli anahtar.
+    // Cron zaten sunucu içinde çalıştığı için anahtar gerekmez; ama birisi URL'yi
+    // bulup sürekli yedek e-postası tetiklemesin. Kendi gizli kelimenizi yazın.
+    'web_anahtari'  => 'BURAYA_GIZLI_BIR_KELIME_YAZIN',
 ];
+
+// v.310: Tarayıcıdan çalıştırıldıysa gizli anahtar zorunlu; cron (CLI) serbest.
+$isCli = (PHP_SAPI === 'cli' || defined('STDIN') || empty($_SERVER['HTTP_HOST']));
+if(!$isCli){
+    $verilen = $_GET['anahtar'] ?? '';
+    if($verilen !== $AYARLAR['web_anahtari'] || strpos($AYARLAR['web_anahtari'], 'BURAYA_') === 0){
+        http_response_code(403);
+        exit('Erisim reddedildi.');
+    }
+}
 
 // ==================== YARDIMCI FONKSİYONLAR ====================
 

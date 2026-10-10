@@ -1,0 +1,4 @@
+# v.310: Service account anahtarini ve gunlukleri web'den engelle
+<FilesMatch "\.(json|log)$">
+  Require all denied
+</FilesMatch>
