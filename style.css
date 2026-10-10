@@ -98,7 +98,7 @@
     html[data-theme="light"]{
     /* v.186 — Petrol Yeşili & Turkuaz kimliği (kullanıcının gönderdiği mockup/palet referansı):
        ana renk koyu petrol yeşili, vurgu canlı turkuaz, altın sadece ince detaylarda. */
-    --bg:#F5F8F7;
+    --bg:#F7F8F8;
     --surface:#FFFFFF;
     --surface-2:#EAF3F1;
     --surface-3:#DCEBE8;
@@ -119,7 +119,7 @@
     --radius:20px;
     --radius-sm:12px;
     --radius-lg:26px;
-    --asphalt-900:#F5F8F7;
+    --asphalt-900:#F7F8F8;
     --asphalt-800:#FFFFFF;
     --asphalt-700:#EAF3F1;
     --steel-600:#DCEBE8;
@@ -1707,7 +1707,7 @@
   html[data-theme="light"]{
     /* v.186: bu blok data-theme="light" için EN SONUNCU (dolayısıyla kazanan) tanım —
        yukarıdaki "Petrol Yeşili & Turkuaz" paletiyle birebir aynı değerler kullanılıyor. */
-    --bg:#F5F8F7;
+    --bg:#F7F8F8;
     --surface:#FFFFFF;
     --surface-2:#EAF3F1;
     --surface-3:#DCEBE8;
