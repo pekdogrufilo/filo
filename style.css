@@ -2566,4 +2566,5 @@
     #krTabBar{flex-wrap:nowrap !important;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;}
     #krTabBar::-webkit-scrollbar{display:none;}
     #krTabBar button{flex-shrink:0;}
+    .th-title{font-size:16px !important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   }
