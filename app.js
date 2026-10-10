@@ -9336,33 +9336,48 @@ function svgBarChart(values, labels, width, height, color){
   const w = width - pad.l - pad.r;
   const h = height - pad.t - pad.b;
   const max = Math.max(...values, 1);
-  const fmtV = v=> v>=1000000 ? (v/1000000).toFixed(1).replace('.',',')+' M' : v>=10000 ? Math.round(v/1000)+' B' : v>=1000 ? (v/1000).toFixed(1).replace('.',',')+' B' : String(Math.round(v));
-  const niceMax = max<=0?1:Math.ceil(max/(max>100000?50000: max>10000?5000: max>1000?500:50)) * (max>100000?50000: max>10000?5000: max>1000?500:50);
+  // v.309: negatif değerler (ör. net kârın zarar olduğu aylar) baz çizginin altında kırmızı çizilir.
+  const min = Math.min(...values, 0);
+  const fmtV = v=> v>=1000000 ? (v/1000000).toFixed(1).replace('.',',')+' M' : v>=10000 ? Math.round(v/1000)+' B' : v>=1000 ? (v/1000).toFixed(1).replace('.',',')+' B' : v<=-1000 ? (v/1000).toFixed(1).replace('.',',')+' B' : String(Math.round(v));
+  const step = max>100000?50000: max>10000?5000: max>1000?500:50;
+  const niceMax = max<=0?1:Math.ceil(max/step) * step;
+  const negatifVar = min < 0;
+  const niceMin = negatifVar ? Math.floor(min/step) * step : 0;
+  const toplamAralik = niceMax - niceMin;
+  const yDeger = v=> pad.t + h * ((niceMax - v) / toplamAralik);
+  const ySifir = yDeger(0);
   const gap = 10;
   const barW = (w - gap*(values.length-1)) / values.length;
-  const gridLines = [0,0.5,1].map(f=>{
-    const y = pad.t + h - f*h;
+  const gridDegerleri = negatifVar ? [niceMax, 0, niceMin] : [niceMax, niceMax*0.5, 0];
+  const gridLines = gridDegerleri.map(f=>{
+    const y = yDeger(f);
     return `<line x1="${pad.l}" y1="${y.toFixed(1)}" x2="${width-pad.r}" y2="${y.toFixed(1)}" stroke="var(--line)" stroke-width="1" stroke-dasharray="${f===0?'0':'3 3'}"/>
-      <text x="${(pad.l-7).toFixed(1)}" y="${(y+3).toFixed(1)}" font-size="9.5" fill="var(--steel-500)" text-anchor="end">${esc(fmtV(niceMax*f))}</text>`;
+      <text x="${(pad.l-7).toFixed(1)}" y="${(y+3).toFixed(1)}" font-size="9.5" fill="var(--steel-500)" text-anchor="end">${esc(fmtV(f))}</text>`;
   }).join('');
   const bars = values.map((v,i)=>{
-    const bh = Math.max((v/niceMax)*h, v>0?4:0);
+    const yUst = yDeger(Math.max(v,0));
+    const yAlt = yDeger(Math.min(v,0));
+    const bh = Math.max(Math.abs(yAlt-yUst), v!==0?3:0);
     const x = pad.l + i*(barW+gap);
-    const y = pad.t + h - bh;
-    return `<rect class="chart-bar" style="animation-delay:${(i*70)}ms" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" rx="6" fill="url(#${id})"/>
-      <text style="animation:chartFade .4s ${(i*70+350)}ms ease both" x="${(x+barW/2).toFixed(1)}" y="${(y-7).toFixed(1)}" font-size="10" font-weight="600" fill="var(--steel-300)" text-anchor="middle">${esc(fmtV(v))}</text>`;
+    const grad = v<0 ? `url(#${id}n)` : `url(#${id})`;
+    return `<rect class="chart-bar" style="animation-delay:${(i*70)}ms" x="${x.toFixed(1)}" y="${Math.min(yUst,yAlt).toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" rx="6" fill="${grad}"/>
+      <text style="animation:chartFade .4s ${(i*70+350)}ms ease both" x="${(x+barW/2).toFixed(1)}" y="${(Math.min(yUst,yAlt)-7).toFixed(1)}" font-size="10" font-weight="600" fill="var(--steel-300)" text-anchor="middle">${esc(fmtV(v))}</text>`;
   }).join('');
   const labelEls = labels.map((lb,i)=>{
     const x = pad.l + i*(barW+gap) + barW/2;
     return `<text x="${x.toFixed(1)}" y="${height-5}" font-size="9.5" fill="var(--steel-500)" text-anchor="middle">${esc(lb)}</text>`;
   }).join('');
-  const baseline = `<line x1="${pad.l}" y1="${(pad.t+h).toFixed(1)}" x2="${width-pad.r}" y2="${(pad.t+h).toFixed(1)}" stroke="var(--line)" stroke-width="1"/>`;
+  const baseline = `<line x1="${pad.l}" y1="${ySifir.toFixed(1)}" x2="${width-pad.r}" y2="${ySifir.toFixed(1)}" stroke="var(--line)" stroke-width="1"/>`;
   return `<svg width="100%" height="${height}" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" style="overflow:visible;display:block">
     <defs>
       <linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%" stop-color="${color}" stop-opacity="1"/>
         <stop offset="100%" stop-color="${color}" stop-opacity=".45"/>
       </linearGradient>
+      ${negatifVar?`<linearGradient id="${id}n" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#E1554E" stop-opacity=".45"/>
+        <stop offset="100%" stop-color="#E1554E" stop-opacity="1"/>
+      </linearGradient>`:''}
     </defs>
     ${gridLines}${baseline}${bars}${labelEls}
   </svg>`;
@@ -15123,6 +15138,11 @@ function renderRaporlarPage(){
           <h4 style="margin:0 0 8px;font-size:13px;color:var(--text-2);">Filo Doluluk Oranı (Son 6 Ay)</h4>
           ${svgBarChart(dolulukTrend.map(x=>x.yuzde), dolulukTrend.map(x=>x.label), 320, 170, '#36A168')}
           <div style="margin-top:8px;font-size:11px;color:var(--text-3);">Birim: %. Kiralama kayıtları (rentals) üzerinden hesaplanır — bu modülden önceki kiralamalar için veri yoktur.</div>
+        </div>
+        <div style="grid-column:1/-1;">
+          <h4 style="margin:0 0 8px;font-size:13px;color:var(--text-2);">Net Kar / Zarar (Son 6 Ay)</h4>
+          ${isAdmin() ? svgBarChart(karTrend.map(x=>x.kar), karTrend.map(x=>x.label), 660, 190, '#36A168') : `<div class="log-empty">Bu analiz için yönetici girişi gerekir.</div>`}
+          <div style="margin-top:8px;font-size:11px;color:var(--text-3);">Gelir − gider. Zarar edilen aylar kırmızı çubukla, baz çizginin altında gösterilir.</div>
         </div>
       </div>
       <h4 style="margin:0 0 8px;font-size:13px;color:var(--text-2);">En Yüksek Gider Kalemleri (Son 6 Ay)</h4>
