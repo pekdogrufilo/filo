@@ -2274,6 +2274,13 @@ function render(){
         </div>
         ${aracAdi ? `<div class="arac-adi">${esc(aracAdi)}</div>` : ''}
         <div class="model">${esc(modelTxt||'')}</div>
+        ${(()=>{ // v.308: kiradaki araçta kiracı + kira bitişine kalan gün tek bakışta
+          if(v.durum!=='Kirada') return '';
+          const dl = daysLeft(v.sozlesmeBitis);
+          const gunTxt = dl===null ? '' : (dl<0 ? `${Math.abs(dl)} gün gecikti` : (dl===0 ? 'bugün bitiyor' : `${dl} gün kaldı`));
+          const cls = dl!==null&&dl<0 ? 'gecikti' : (dl!==null&&dl<=7 ? 'yakin' : '');
+          return `<div class="vk-kira ${cls}"><span class="vkk-ad">${esc(v.kiraciAdi||'Kiracı kaydı yok')}</span>${gunTxt?`<span class="vkk-gun">${gunTxt}</span>`:''}</div>`;
+        })()}
         ${aracGorsel?`<img class="vk-car" src="${aracGorsel}" alt="" loading="lazy" decoding="async" onerror="this.remove();">`:''}
       </div>
 
@@ -2338,6 +2345,7 @@ function render(){
 
       <div class="vk-foot">
         <div class="vk-acts" style="margin-left:auto;">
+          ${v.durum==='Kirada'?`<button class="vk-tahsil" title="Hızlı Tahsilat" onclick="hizliTahsilat('${v.id}')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></button>`:''}
           <button class="vk-det" title="Detay / Geçmiş" onclick="openVehicleDetail('${v.id}')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5"/><path d="M15 12H3"/></svg></button>
           <button class="masraf" data-id="${v.id}" title="Masraflar"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></button>
           <button class="edit" data-id="${v.id}" title="Düzenle"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>
@@ -18507,6 +18515,14 @@ function faturaExcelDisaAktar(){
 }
 
 // ----- Tahsilat (ödeme) formu -----
+// v.308: Araç kartından tek dokunuşla tahsilat — kiracının cari hesabına gider
+function hizliTahsilat(vid){
+  const v = vehicles.find(x=>x.id===vid); if(!v) return;
+  const aktifRental = rentals.find(r=>r.vehicleId===vid && (r.durum==='teslimEdildi'||r.durum==='sozlesmeHazir'));
+  const cid = v.customerId || (aktifRental||{}).customerId || '';
+  if(!cid){ showToast('Bu araca bağlı aktif kiracı bulunamadı — önce müşteri bağlantısını onarın.', true); return; }
+  tahsilatFormAc(cid);
+}
 function tahsilatFormAc(customerId, invoiceId){
   const eski = document.getElementById('tahsilatFormOverlay'); if(eski) eski.remove();
   const el = document.createElement('div');
