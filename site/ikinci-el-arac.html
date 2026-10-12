@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>2. El Araç Satışı | Pekdoğru Grup</title>
+<meta name="description" content="Kontrollü, servis bakımlı 2. el araçlar. Ekspertiz raporlu, şeffaf km, güvenli devir.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0b3550; --navy-d:#071f31; --navy-l:#12496e;
+  --accent:#e8a33d; --accent-d:#d18c22;
+  --ink:#1c2b36; --muted:#5a6b78; --bg:#f5f7fa; --line:#e3e9ef;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:'Inter','Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.7;-webkit-font-smoothing:antialiased;}
+h1,h2,h3{font-family:'Sora','Inter',sans-serif;letter-spacing:-.02em;}
+a{color:inherit;}
+
+/* Üst bar */
+header{position:sticky;top:0;z-index:60;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);}
+.hwrap{max-width:1080px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;font-family:'Sora',sans-serif;font-weight:800;font-size:17px;color:var(--navy);letter-spacing:.02em;}
+.logo .mark{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--navy),var(--navy-l));display:grid;place-items:center;color:#fff;font-size:15px;font-weight:800;}
+.logo .mark span{color:var(--accent);}
+.hnav{display:flex;align-items:center;gap:10px;}
+.hnav a.geri{color:var(--muted);text-decoration:none;font-size:14px;font-weight:500;padding:8px 12px;border-radius:8px;transition:.2s;}
+.hnav a.geri:hover{background:#eef3f8;color:var(--navy);}
+.hnav a.cta-mini{background:var(--accent);color:#fff;text-decoration:none;font-size:13.5px;font-weight:700;padding:9px 16px;border-radius:9px;box-shadow:0 2px 8px rgba(232,163,61,.35);transition:.2s;}
+.hnav a.cta-mini:hover{background:var(--accent-d);transform:translateY(-1px);}
+
+/* Hero */
+.hero{position:relative;color:#fff;padding:96px 20px 88px;text-align:center;overflow:hidden;
+  background:linear-gradient(150deg,rgba(7,31,49,.93) 0%,rgba(11,53,80,.86) 55%,rgba(18,73,110,.82) 100%),url('/assets/images/carsales.jpg') center/cover;}
+.hero::after{content:'';position:absolute;inset:0;background:
+  radial-gradient(600px 300px at 15% 0%,rgba(232,163,61,.14),transparent 60%),
+  radial-gradient(700px 340px at 90% 100%,rgba(255,255,255,.07),transparent 60%);pointer-events:none;}
+.hero .in{position:relative;max-width:720px;margin:0 auto;}
+.rozet{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);color:#ffd9a0;font-size:12.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;padding:7px 16px;border-radius:999px;margin-bottom:22px;}
+.rozet::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);}
+.hero h1{font-size:clamp(28px,5vw,44px);font-weight:800;line-height:1.18;margin-bottom:16px;}
+.hero p{max-width:600px;margin:0 auto;font-size:17px;color:#cfe0ee;}
+.hero .hcta{margin-top:30px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+
+/* Butonlar */
+.btn{display:inline-flex;align-items:center;gap:9px;padding:13px 26px;border-radius:11px;text-decoration:none;font-weight:700;font-size:15px;transition:transform .18s,box-shadow .18s,background .18s;}
+.btn:hover{transform:translateY(-2px);}
+.btn-wa{background:#25D366;color:#fff;box-shadow:0 4px 14px rgba(37,211,102,.35);}
+.btn-wa:hover{background:#1fbd59;}
+.btn-tel{background:rgba(255,255,255,.12);color:#fff;border:1.5px solid rgba(255,255,255,.4);backdrop-filter:blur(4px);}
+.btn-tel:hover{background:rgba(255,255,255,.2);}
+.btn-form{background:#fff;color:var(--navy);border:2px solid var(--navy);}
+.btn-form:hover{background:var(--navy);color:#fff;}
+.btn-acc{background:var(--accent);color:#fff;box-shadow:0 4px 14px rgba(232,163,61,.4);}
+.btn-acc:hover{background:var(--accent-d);}
+
+/* İçerik */
+.wrap{max-width:1080px;margin:0 auto;padding:56px 20px 20px;}
+.bolum-baslik{text-align:center;margin-bottom:38px;}
+.bolum-baslik .kicker{color:var(--accent-d);font-size:13px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;margin-bottom:8px;}
+.bolum-baslik h2{font-size:clamp(22px,3.4vw,30px);color:var(--navy);}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin-bottom:56px;}
+.kutu{position:relative;background:#fff;border:1px solid var(--line);border-radius:18px;padding:30px 26px 26px;box-shadow:0 2px 10px rgba(11,53,80,.05);transition:transform .22s,box-shadow .22s;overflow:hidden;}
+.kutu::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),transparent 70%);opacity:0;transition:.22s;}
+.kutu:hover{transform:translateY(-5px);box-shadow:0 14px 32px rgba(11,53,80,.12);}
+.kutu:hover::before{opacity:1;}
+.kutu .no{font-family:'Sora',sans-serif;font-size:13px;font-weight:700;color:var(--accent-d);background:#fdf3e3;width:38px;height:38px;border-radius:10px;display:grid;place-items:center;margin-bottom:16px;}
+.kutu h3{color:var(--navy);font-size:17.5px;margin-bottom:9px;}
+.kutu p{font-size:14.5px;color:var(--muted);}
+
+/* Neden şeridi */
+.neden{background:var(--navy);color:#fff;border-radius:22px;padding:42px 30px;margin:0 0 56px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:26px;text-align:center;}
+.neden .n{padding:6px;}
+.neden .n .ic{font-size:26px;margin-bottom:8px;}
+.neden .n b{display:block;font-family:'Sora',sans-serif;font-size:15.5px;margin-bottom:4px;}
+.neden .n small{color:#a9c3d8;font-size:13px;line-height:1.55;display:block;}
+
+/* CTA */
+.cta{background:linear-gradient(140deg,var(--navy-d),var(--navy-l));border-radius:22px;padding:52px 30px;text-align:center;color:#fff;position:relative;overflow:hidden;}
+.cta::before{content:'';position:absolute;inset:0;background:radial-gradient(500px 260px at 85% 10%,rgba(232,163,61,.18),transparent 60%);pointer-events:none;}
+.cta h2{font-size:clamp(22px,3.4vw,30px);margin-bottom:10px;position:relative;}
+.cta p{color:#c3d6e6;font-size:15.5px;margin-bottom:24px;position:relative;}
+.cta .btnler{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;position:relative;}
+.cta .btn-form{background:transparent;color:#fff;border-color:rgba(255,255,255,.5);}
+.cta .btn-form:hover{background:#fff;color:var(--navy);}
+
+/* Alt bilgi */
+footer{background:var(--navy-d);color:#8fa9bd;margin-top:70px;}
+.fwrap{max-width:1080px;margin:0 auto;padding:44px 20px 26px;display:grid;grid-template-columns:2fr 1fr 1fr;gap:30px;}
+.fwrap h4{color:#fff;font-family:'Sora',sans-serif;font-size:14px;margin-bottom:14px;letter-spacing:.04em;}
+.fwrap p{font-size:13.5px;line-height:1.7;}
+.fwrap a{display:block;color:#8fa9bd;text-decoration:none;font-size:13.5px;padding:4px 0;transition:.2s;}
+.fwrap a:hover{color:var(--accent);}
+.fbot{border-top:1px solid rgba(255,255,255,.08);text-align:center;padding:16px;font-size:12.5px;color:#6b8497;}
+.fbot a{color:#8fa9bd;text-decoration:none;}
+@media(max-width:720px){
+  .fwrap{grid-template-columns:1fr;gap:22px;text-align:center;}
+  .hero{padding:70px 18px 62px;}
+  .wrap{padding-top:44px;}
+}
+
+/* Görünürlük animasyonu */
+.gizli{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s ease;}
+.gorunur{opacity:1;transform:none;}
+</style>
+</head>
+<body>
+<header>
+  <div class="hwrap">
+    <a class="logo" href="/"><span class="mark">P<span>.</span></span>PEKDOĞRU GRUP</a>
+    <nav class="hnav">
+      <a class="geri" href="/">← Anasayfa</a>
+      <a class="cta-mini" href="/teklif.html">Teklif Al</a>
+    </nav>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="in">
+    <div class="rozet">Pekdoğru Grup</div>
+    <h1>2. El Araç Satışı</h1>
+    <p>Satışa sunduğumuz her araç titizlikle kontrol edilir; güvenli ve sorunsuz devir garantisi.</p>
+    <div class="hcta">
+      <a class="btn btn-wa" href="https://wa.me/908508123242?text=2.%20el%20araç%20stoklarınızı%20öğrenmek%20istiyorum" target="_blank" rel="noopener">WhatsApp ile Yaz</a>
+      <a class="btn btn-tel" href="tel:+908508123242">0850 812 32 42</a>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="bolum-baslik gizli">
+    <div class="kicker">Hizmetlerimiz</div>
+    <h2>Size nasıl yardımcı oluyoruz?</h2>
+  </div>
+  <div class="grid">
+    <div class="kutu gizli"><div class="no">01</div><h3>Ekspertiz Raporlu</h3><p>Her aracın detaylı ekspertiz raporu şeffaf şekilde sunulur.</p></div>
+    <div class="kutu gizli"><div class="no">02</div><h3>Servis Bakımlı</h3><p>Filo çıkışlı araçlar düzenli servis bakımıyla geçmişe sahiptir.</p></div>
+    <div class="kutu gizli"><div class="no">03</div><h3>Kolay Devir ve Finansman</h3><p>Noter devri, takas ve taksitli ödeme seçenekleri değerlendirilir.</p></div>
+  </div>
+
+  <div class="neden gizli">
+    <div class="n"><div class="ic">&#128337;</div><b>7/24 Erişim</b><small>Arıza, kaza ve acil durumlarda kesintisiz destek hattı.</small></div>
+    <div class="n"><div class="ic">&#128196;</div><b>Şeffaf Sözleşme</b><small>Sürpriz kalemler yok; her şey baştan yazılı ve net.</small></div>
+    <div class="n"><div class="ic">&#127970;</div><b>Kurumsal Güven</b><small>Kurumsal müşteri portföyüyle kanıtlanmış operasyon.</small></div>
+  </div>
+
+  <div class="cta gizli">
+    <h2>Size özel teklif hazırlayalım</h2>
+    <p>İhtiyacınızı 1 dakikada iletin, ekibimiz aynı iş günü içinde dönüş yapsın.</p>
+    <div class="btnler">
+      <a class="btn btn-acc" href="/teklif.html">Teklif Formu</a>
+      <a class="btn btn-wa" href="https://wa.me/908508123242?text=2.%20el%20araç%20stoklarınızı%20öğrenmek%20istiyorum" target="_blank" rel="noopener">WhatsApp</a>
+      <a class="btn btn-form" href="tel:+908508123242">0850 812 32 42</a>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="fwrap">
+    <div>
+      <h4>PEKDOĞRU GRUP</h4>
+      <p>Filo kiralama, 2. el araç satışı, lojistik, hayvancılık ve toptan et tedarikinde güvenilir çözüm ortağınız.</p>
+    </div>
+    <div>
+      <h4>Hızlı Erişim</h4>
+      <a href="/">Anasayfa</a>
+      <a href="/teklif.html">Teklif Formu</a>
+      <a href="/panel/">Panel Girişi</a>
+    </div>
+    <div>
+      <h4>İletişim</h4>
+      <a href="tel:+908508123242">0850 812 32 42</a>
+      <a href="https://wa.me/908508123242" target="_blank" rel="noopener">WhatsApp</a>
+      <a href="mailto:hasan@pekdogru.com">hasan@pekdogru.com</a>
+    </div>
+  </div>
+  <div class="fbot">© 2026 Pekdoğru Grup · <a href="/">www.pekdogru.com</a></div>
+</footer>
+
+<script>
+(function(){
+  var els=document.querySelectorAll('.gizli');
+  if(!('IntersectionObserver' in window)){els.forEach(function(e){e.classList.add('gorunur');});return;}
+  var io=new IntersectionObserver(function(en){en.forEach(function(x){if(x.isIntersecting){x.target.classList.add('gorunur');io.unobserve(x.target);}});},{threshold:.12});
+  els.forEach(function(e){io.observe(e);});
+})();
+</script>
+</body>
+</html>

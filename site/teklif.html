@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kira Teklifi Al | Pekdoğru Grup</title>
+<meta name="description" content="Binek, ticari araç, iş makinesi ve filo kiralama için dakikalar içinde teklif alın. Formu doldurun, ekibimiz aynı gün dönüş yapsın.">
+<style>
+:root{--navy:#0d3d5e;--navy-d:#092c45;--green:#25D366;--gold:#e8a132;}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',Arial,sans-serif;}
+body{background:#f4f6f8;color:#222;line-height:1.6;}
+header{background:var(--navy);color:#fff;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;}
+header .logo{font-weight:700;font-size:20px;letter-spacing:.5px;}
+header a.geri{color:#cfe3f5;text-decoration:none;font-size:14px;}
+.wrap{max-width:640px;margin:30px auto;padding:0 16px;}
+.kart{background:#fff;border-radius:14px;padding:28px;box-shadow:0 4px 20px rgba(13,61,94,.08);}
+h1{color:var(--navy);font-size:26px;margin-bottom:6px;}
+.alt{color:#667;font-size:14.5px;margin-bottom:22px;}
+label{display:block;font-size:13.5px;font-weight:600;color:#334;margin:14px 0 5px;}
+input,select,textarea{width:100%;padding:11px 12px;border:1px solid #ccd4dc;border-radius:8px;font-size:15px;background:#fbfcfe;}
+input:focus,select:focus,textarea:focus{outline:2px solid #9cc3e0;border-color:var(--navy);}
+.row{display:flex;gap:12px;}.row>div{flex:1;}
+@media(max-width:560px){.row{flex-direction:column;gap:0;}}
+.gonder{width:100%;margin-top:22px;background:var(--navy);color:#fff;border:none;border-radius:10px;padding:15px;font-size:16.5px;font-weight:700;cursor:pointer;transition:background .2s;}
+.gonder:hover{background:var(--navy-d);}
+.hp{position:absolute;left:-5000px;opacity:0;}
+.not{font-size:12.5px;color:#889;margin-top:14px;text-align:center;}
+.bilgi{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;justify-content:center;}
+.bilgi a{background:#fff;border:1px solid #d5dde5;border-radius:24px;padding:8px 16px;font-size:13.5px;color:var(--navy);text-decoration:none;font-weight:600;}
+.bilgi a.wa{background:#25D366;border-color:#25D366;color:#fff;}
+.sonuc{display:none;text-align:center;padding:30px 10px;}
+.sonuc .ok{font-size:44px;}
+footer{text-align:center;padding:18px;font-size:12.5px;color:#99a;}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">PEKDOĞRU GRUP</div>
+  <a class="geri" href="/">← Anasayfa</a>
+</header>
+<div class="wrap">
+  <div class="kart">
+    <div id="formAlani">
+      <h1>Kira Teklifi Alın</h1>
+      <div class="alt">Formu doldurun — filo ekibimiz aynı iş günü içinde sizi arayıp uygun araç ve fiyat seçeneklerini sunar.</div>
+      <form method="POST" action="teklif-gonder.php">
+        <input class="hp" type="text" name="gizli_alan" tabindex="-1" autocomplete="off">
+        <div class="row">
+          <div><label>Ad Soyad *</label><input type="text" name="ad" required maxlength="80"></div>
+          <div><label>Firma</label><input type="text" name="firma" maxlength="100"></div>
+        </div>
+        <div class="row">
+          <div><label>Telefon *</label><input type="tel" name="telefon" required maxlength="20" placeholder="05xx xxx xx xx"></div>
+          <div><label>E-posta</label><input type="email" name="eposta" maxlength="100"></div>
+        </div>
+        <div class="row">
+          <div><label>İhtiyaç Türü *</label>
+            <select name="tur" required>
+              <option value="">Seçiniz…</option>
+              <option>Binek Araç Kiralama</option>
+              <option>Ticari Araç Kiralama</option>
+              <option>İş Makinesi Kiralama</option>
+              <option>Kurumsal Filo Kiralama</option>
+              <option>Diğer</option>
+            </select>
+          </div>
+          <div><label>Araç Adedi</label><input type="number" name="adet" min="1" max="500" placeholder="1"></div>
+        </div>
+        <div class="row">
+          <div><label>Süre</label>
+            <select name="sure">
+              <option value="">Seçiniz…</option>
+              <option>Günlük</option><option>Haftalık</option><option>Aylık</option>
+              <option>3-6 Ay</option><option>1 Yıl ve üzeri</option>
+            </select>
+          </div>
+          <div><label>Şehir</label><input type="text" name="sehir" maxlength="40" placeholder="Konya"></div>
+        </div>
+        <label>Mesajınız</label>
+        <textarea name="mesaj" rows="4" maxlength="1500" placeholder="Araç tipi, tarih aralığı ve özel isteklerinizi yazabilirsiniz…"></textarea>
+        <button class="gonder" type="submit">Teklif Talebini Gönder</button>
+        <div class="not">Bilgileriniz yalnızca teklif hazırlamak için kullanılır, üçüncü taraflarla paylaşılmaz.</div>
+      </form>
+    </div>
+    <div class="sonuc" id="okAlani">
+      <div class="ok">✅</div>
+      <h2 style="color:var(--navy);margin:10px 0;">Talebiniz alındı!</h2>
+      <p>Ekibimiz en kısa sürede sizi arayacak. Acil durumlar için:</p>
+      <div class="bilgi">
+        <a class="wa" href="https://wa.me/908508123242?text=Teklif%20talebim%20var" target="_blank" rel="noopener">WhatsApp</a>
+        <a href="tel:+908508123242">📞 0850 812 32 42</a>
+      </div>
+    </div>
+  </div>
+</div>
+<footer>© 2026 Pekdoğru Grup · <a href="/" style="color:#99a;">www.pekdogru.com</a></footer>
+<script>
+if(new URLSearchParams(location.search).get('ok')==='1'){
+  document.getElementById('formAlani').style.display='none';
+  document.getElementById('okAlani').style.display='block';
+}
+</script>
+</body>
+</html>

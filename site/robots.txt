@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /panel/
+Disallow: /teklif-gonder.php
+Disallow: /teklif-log.txt
+
+Sitemap: https://www.pekdogru.com/sitemap.xml
