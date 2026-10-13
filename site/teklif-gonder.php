@@ -4,7 +4,7 @@
 
 header('Content-Type: text/html; charset=UTF-8');
 
-$KIME   = 'hasan@pekdogru.com';
+$KIME   = 'info@pekdogru.com';
 $KONU_ON = 'WEB TEKLIF';
 $GERI   = 'teklif.html';
 
