@@ -2549,3 +2549,20 @@
     cursor:pointer;
   }
   .vk-tahsil:hover{background:rgba(54,161,104,.22);}
+
+  /* v.315 cila: araç kartı kiracı rozeti — (a) açık modda okunabilirlik: rozet .vk-head'in koyu
+     gradient şeridinin içinde; var(--text)/var(--green-dim) açık tema belirteçleri koyu zeminde
+     koyu yazı üretiyordu. Rozet artık her iki temada da koyu şerit üzerinde beyaz/yarı saydam.
+     (b) taşma: rozet genişliği sağdaki araç görseli (118px+16px) kadar kısılır, uzun kiracı adı
+     üç nokta ile kısalır — metin artık görselin altına girmez. */
+  .vk-head .vk-kira{
+    max-width:calc(100% - 128px);
+    color:#fff;background:rgba(255,255,255,.12);
+  }
+  .vk-head .vk-kira .vkk-ad{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .vk-head .vk-kira .vkk-gun{white-space:nowrap;}
+  .vk-head .vk-kira .vkk-gun{color:#4CC480;}
+  .vk-head .vk-kira.yakin{background:rgba(232,161,50,.20);}
+  .vk-head .vk-kira.yakin .vkk-gun{color:#E8A132;}
+  .vk-head .vk-kira.gecikti{background:rgba(225,85,78,.22);}
+  .vk-head .vk-kira.gecikti .vkk-gun{color:#EC8E85;}
