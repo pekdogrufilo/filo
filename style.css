@@ -2,7 +2,7 @@
 /* Order preserved: later blocks may override earlier ones - intentional layering. */
 
 /* ===== index.html lines 30-48 ===== */
-  :root{--font-ui:'Manrope',-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;}
+  :root{--font-ui:'IBM Plex Sans',-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;}
 
   /* v.92: Sabit Kaydet düğmesi */
   /* v.174: "Ekran çentikleri hesap etmiyorsun" — bu sağ-alt köşeye sabitlenmiş düğme, cihazın
@@ -41,10 +41,10 @@
        ilham). Fraunces serif kaldırıldı; başlıklar da gövde metniyle aynı temiz
        sans-serif (Manrope) kullanıyor. --font-luxe artık kullanılmıyor ama geriye
        dönük uyumluluk için Manrope'a yönlendiriliyor. */
-    --font-body:'Manrope',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
-    --font-display:'Manrope','Space Grotesk',-apple-system,'Segoe UI',Arial,sans-serif;
-    --font-luxe:'Manrope',-apple-system,'Segoe UI',Arial,sans-serif;
-    --font-mono:'SF Mono',ui-monospace,'Cascadia Mono',Consolas,monospace;
+    --font-body:'IBM Plex Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+    --font-display:'Saira','IBM Plex Sans',-apple-system,'Segoe UI',Arial,sans-serif;
+    --font-luxe:'Saira','IBM Plex Sans',-apple-system,'Segoe UI',Arial,sans-serif;
+    --font-mono:'IBM Plex Mono',ui-monospace,'Cascadia Mono',Consolas,monospace;
     --bg:#0B0C0E;
     --surface:#15171A;
     --surface-2:#1D2025;
@@ -179,9 +179,9 @@
   .brand-mark{width:50px;height:50px;border-radius:12px;background:var(--fixed-light);display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:6px;box-shadow:0 6px 18px rgba(0,0,0,.3);}
   .brand-mark img{width:100%;height:100%;object-fit:contain;}
   .brand-mark svg{width:24px;height:24px;}
-  h1{font-family:var(--font-ui);font-size:25px;font-weight:750;margin:0;letter-spacing:-.3px;}
+  h1{font-family:var(--font-display);font-size:25px;font-weight:700;margin:0;letter-spacing:-.2px;}
   .sub{color:var(--steel-100);font-size:13px;margin-top:2px;}
-  .add-btn{background:linear-gradient(135deg,#E8A132,#A03327);color:#fff;border:none;font-family:var(--font-ui);font-weight:650;font-size:14px;padding:12px 22px;border-radius:12px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:opacity .15s ease, transform .15s ease, box-shadow .15s ease;box-shadow:0 4px 14px rgba(22,160,134,.28);}
+  .add-btn{background:var(--accent-blue);color:#fff;border:none;font-family:var(--font-ui);font-weight:600;font-size:14px;padding:12px 22px;border-radius:var(--radius-sm);cursor:pointer;display:flex;align-items:center;gap:8px;transition:filter .15s ease, transform .15s ease;box-shadow:0 1px 3px rgba(0,0,0,.18);}
   .add-btn:hover{opacity:.95;transform:translateY(-1px);box-shadow:0 6px 18px rgba(22,160,134,.34);}
   .add-btn:active{transform:translateY(0) scale(.98);}
   .btn-row{display:flex;gap:10px;flex-wrap:wrap;}
@@ -191,7 +191,7 @@
   .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:28px;}
   .stat{background:linear-gradient(155deg,var(--asphalt-800),var(--asphalt-700));border:1px solid var(--line);border-radius:12px;padding:16px 18px;transition:transform .15s var(--ease),box-shadow .15s var(--ease);animation:fadeSlideUp .4s var(--ease) backwards;}
   .stat:hover{transform:translateY(-2px);box-shadow:var(--shadow-sm);}
-  .stat .n{font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',monospace;font-size:23px;font-weight:600;line-height:1;}
+  .stat .n{font-family:var(--font-mono);font-size:23px;font-weight:600;line-height:1;}
   .stat .l{color:var(--steel-100);font-size:13px;margin-top:8px;letter-spacing:.3px;text-transform:uppercase;}
   .stat.warn .n{color:var(--safety);}
   .stat.ok .n{color:var(--teal);}
@@ -211,7 +211,7 @@
   .chip:hover{border-color:var(--steel-300);color:var(--paper);}
   .chip.active{background:var(--steel-600);color:var(--paper);border-color:var(--steel-300);box-shadow:var(--shadow-sm);}
   .result-count{color:var(--steel-100);font-size:13px;margin-bottom:14px;}
-  .result-count b{color:var(--paper);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',monospace;}
+  .result-count b{color:var(--paper);font-family:var(--font-mono);}
 
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;}
   .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:0;position:relative;transition:transform .18s var(--ease), box-shadow .25s var(--ease);animation:fadeSlideUp .3s var(--ease) backwards;overflow:hidden;display:flex;flex-direction:column;}
@@ -231,7 +231,7 @@
   .card-logo{width:38px;height:38px;flex-shrink:0;border-radius:8px;overflow:hidden;background:var(--surface-2);display:flex;align-items:center;justify-content:center;}
   .card-logo svg,.card-logo img{width:100%;height:100%;}
   .card-plaka-wrap{}
-  .plaka{font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',monospace;font-size:15px;font-weight:700;letter-spacing:.5px;background:var(--fixed-light);color:var(--fixed-dark);padding:3px 9px;border-radius:5px;display:inline-block;}
+  .plaka{font-family:var(--font-mono);font-size:15px;font-weight:700;letter-spacing:.5px;background:var(--fixed-light);color:var(--fixed-dark);padding:3px 9px;border-radius:5px;display:inline-block;}
   .arac-adi{font-family:var(--font-ui);font-weight:600;font-size:14px;color:var(--paper);margin-top:5px;line-height:1.3;}
   .model{color:var(--steel-300);font-size:12px;margin-top:2px;}
   .badge{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;flex-shrink:0;}
@@ -246,7 +246,7 @@
   .ci{display:flex;flex-direction:column;gap:2px;}
   .ci-label{font-size:10.5px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;font-weight:600;}
   .ci-val{font-size:13px;color:var(--paper);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .ci-val.mono{font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',monospace;}
+  .ci-val.mono{font-family:var(--font-mono);}
   .ci-val.warn{color:var(--accent-blue);}
   .ci-val.ok{color:#4CC480;}
   .ci-val.danger{color:#E8B4A8;}
@@ -296,10 +296,10 @@
   .alert-table{margin-top:10px;}
   .alert-row{display:grid;grid-template-columns:110px 82px 1fr 100px;gap:14px;align-items:center;padding:9px 8px;border-radius:8px;font-size:13px;border-bottom:1px solid var(--line);}
   .alert-row:last-child{border-bottom:none;}
-  .alert-row .aplaka{font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',monospace;font-weight:600;background:var(--fixed-light);color:var(--fixed-dark);padding:2px 8px;border-radius:5px;display:inline-block;font-size:13px;}
+  .alert-row .aplaka{font-family:var(--font-mono);font-weight:600;background:var(--fixed-light);color:var(--fixed-dark);padding:2px 8px;border-radius:5px;display:inline-block;font-size:13px;}
   .alert-row .atip{font-size:13px;padding:3px 9px;border-radius:10px;background:var(--surface-2);color:var(--steel-100);white-space:nowrap;text-align:center;}
   .alert-row .ayer{color:var(--steel-100);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .alert-row .adays{font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',monospace;font-weight:700;text-align:right;font-size:13px;}
+  .alert-row .adays{font-family:var(--font-mono);font-weight:700;text-align:right;font-size:13px;}
   .alert-more{text-align:center;font-size:13px;color:var(--steel-100);padding:10px 0 2px;cursor:pointer;text-decoration:underline;}
   .alert-more:hover{color:var(--paper);}
   @media (max-width:640px){.alert-row{grid-template-columns:90px 66px 1fr 80px;font-size:13px;}}
@@ -387,8 +387,7 @@
   @keyframes splashGlowPulse{0%,100%{opacity:.7;}50%{opacity:1;}}
   .splash-inner{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;text-align:center;}
   .splash-logo{position:relative;width:80px;height:80px;border-radius:20px;background:var(--fixed-light);display:flex;align-items:center;justify-content:center;padding:10px;box-shadow:0 0 0 1px rgba(255,255,255,.15),0 20px 50px rgba(0,0,0,.45);margin-bottom:22px;opacity:0;animation:introLogoBounce .7s cubic-bezier(.34,1.56,.64,1) .1s forwards;}
-  .splash-logo::before{content:'';position:absolute;inset:-16px;border-radius:28px;background:conic-gradient(from 0deg, rgba(0,169,157,0) 0%, rgba(0,169,157,.65) 50%, rgba(0,169,157,0) 100%);animation:splashSpinGlow 2.2s linear infinite;filter:blur(7px);z-index:-1;}
-  @keyframes splashSpinGlow{to{transform:rotate(360deg);}}
+  /* v.311: dönen conic-glow halkası söküldü — logo sade ve dingin duruyor. */
   @keyframes introLogoBounce{0%{opacity:0;transform:scale(.4);}60%{opacity:1;transform:scale(1.1);}100%{opacity:1;transform:scale(1);}}
   .splash-logo img{width:100%;height:100%;object-fit:contain;}
   .splash h2{font-family:var(--font-display);font-size:26px;font-weight:700;margin:0 0 5px;color:var(--paper);letter-spacing:-.3px;opacity:0;animation:introSlide .5s var(--ease) .55s forwards;}
@@ -429,7 +428,7 @@
   .lock-logo{display:none;}
 
   .lock-card{position:relative;z-index:10;width:100%;max-width:400px;margin:20px;animation:popIn .4s var(--ease);}
-  .lock-card-inner{background:rgba(15,17,23,.92);border:1px solid var(--border);border-radius:24px;padding:40px 36px;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);box-shadow:0 32px 80px rgba(0,0,0,.5),0 0 0 1px rgba(22,160,134,.08);}
+  .lock-card-inner{background:rgba(15,17,23,.92);border:1px solid var(--border);border-radius:var(--radius-lg);padding:40px 36px;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);box-shadow:0 32px 80px rgba(0,0,0,.5),0 0 0 1px rgba(22,160,134,.08);}
 
   .lock-header{text-align:center;margin-bottom:32px;}
   .lock-logo-wrap{width:76px;height:76px;background:var(--fixed-light);border-radius:20px;display:flex;align-items:center;justify-content:center;padding:11px;margin:0 auto 18px;box-shadow:0 8px 32px rgba(0,0,0,.4),0 0 0 1px rgba(255,255,255,.15);}
@@ -440,7 +439,7 @@
 
   @media(max-width:480px){
     .lock-card{margin:12px;}
-    .lock-card-inner{padding:28px 22px;border-radius:18px;}
+    .lock-card-inner{padding:28px 22px;border-radius:var(--radius-lg);}
     .lock-logo-wrap{width:60px;height:60px;}
     .lock-firm{font-size:17px;}
   }
@@ -451,14 +450,14 @@
   .lock-card .lsub{color:var(--text-2);font-size:13px;margin-bottom:24px;line-height:1.5;text-align:center;}
   .lock-field{position:relative;margin-bottom:14px;text-align:left;}
   .lock-field label{display:block;font-size:13px;color:var(--text-3);margin-bottom:7px;font-weight:500;letter-spacing:.3px;}
-  .lock-field input{width:100%;background:var(--surface-2);border:1px solid var(--border-2);color:var(--paper);padding:13px 44px 13px 14px;border-radius:10px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',monospace;font-size:16px;letter-spacing:3px;transition:border-color .15s ease, box-shadow .15s ease;}
+  .lock-field input{width:100%;background:var(--surface-2);border:1px solid var(--border-2);color:var(--paper);padding:13px 44px 13px 14px;border-radius:10px;font-family:var(--font-mono);font-size:16px;letter-spacing:3px;transition:border-color .15s ease, box-shadow .15s ease;}
   .lock-field input::placeholder{color:var(--text-3);letter-spacing:1px;}
   .lock-field input:focus{outline:none;border-color:rgba(22,160,134,.55);box-shadow:0 0 0 3px rgba(22,160,134,.12);}
   .lock-field .eye{position:absolute;right:12px;top:36px;background:none;border:none;color:var(--text-3);cursor:pointer;padding:4px;display:flex;}
   .lock-field .eye:hover{color:rgba(255,255,255,.7);}
   .lock-card.shake{animation:shake .45s ease;}
   .lock-err{color:var(--coral);font-size:13px;margin:2px 0 6px;min-height:16px;}
-  .lock-btn-main{width:100%;background:linear-gradient(135deg,#A03327,#E8A132);color:#fff;border:none;font-family:var(--font-ui);font-weight:600;font-size:15px;padding:14px;border-radius:11px;cursor:pointer;margin-top:10px;transition:opacity .15s ease, transform .15s ease;box-shadow:0 6px 24px rgba(22,160,134,.35);letter-spacing:.3px;}
+  .lock-btn-main{width:100%;background:var(--accent-blue);color:#fff;border:none;font-family:var(--font-ui);font-weight:600;font-size:15px;padding:14px;border-radius:var(--radius-sm);cursor:pointer;margin-top:10px;transition:filter .15s ease;box-shadow:0 1px 3px rgba(0,0,0,.2);letter-spacing:.3px;}
   .lock-btn-main:hover:not(:disabled){opacity:.88;transform:translateY(-1px);}
   .lock-btn-main:disabled{opacity:.35;cursor:not-allowed;}
   .lock-forgot{margin-top:18px;font-size:13px;color:var(--text-3);text-decoration:underline;cursor:pointer;background:none;border:none;font-family:var(--font-ui);}
@@ -521,7 +520,7 @@
     mask:no-repeat center/68% url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 8v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8'/%3E%3Cpath d='M3 8h18l-2-5H5L3 8Z'/%3E%3Cpath d='M9 12a2 2 0 0 0 4 0'/%3E%3C/svg%3E");
   }
   .rem-item{display:flex;justify-content:space-between;align-items:center;padding:9px 10px;border-radius:8px;background:var(--surface-2);margin-bottom:6px;font-size:13px;}
-  .rem-item .rp{font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',monospace;font-weight:600;}
+  .rem-item .rp{font-family:var(--font-mono);font-weight:600;}
   .rem-item .rd{font-size:13px;font-weight:600;padding:3px 8px;border-radius:12px;}
   .rem-item.gecti .rd{background:var(--coral-dim);color:#E8B4A8;}
   .rem-item.acil .rd{background:#3D2E13;color:#E8A132;}
@@ -531,7 +530,7 @@
   .cloud-status.ok{background:var(--teal-dim);color:#4CC480;border:1px solid #36A168;}
   .cloud-status.off{background:var(--surface-2);color:var(--steel-100);border:1px solid var(--line);}
   .cloud-status.err{background:var(--coral-dim);color:#E8B4A8;border:1px solid #6B2622;}
-  .cloud-textarea{width:100%;background:var(--surface-2);border:1px solid var(--line);color:var(--paper);padding:10px 12px;border-radius:8px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',monospace;font-size:13px;min-height:110px;resize:vertical;}
+  .cloud-textarea{width:100%;background:var(--surface-2);border:1px solid var(--line);color:var(--paper);padding:10px 12px;border-radius:8px;font-family:var(--font-mono);font-size:13px;min-height:110px;resize:vertical;}
   .cloud-steps{font-size:13px;color:var(--steel-100);line-height:1.7;margin:10px 0;}
   .cloud-steps a{color:#E8A132;}
   .storage-warn svg{flex-shrink:0;margin-top:1px;}
@@ -544,7 +543,7 @@
   .masraf-row{display:flex;justify-content:space-between;align-items:center;padding:10px 4px;border-bottom:1px solid var(--line);font-size:13px;}
   .masraf-row:last-child{border-bottom:none;}
   .masraf-row .mtip{font-weight:600;font-size:13px;padding:3px 9px;border-radius:12px;background:var(--surface-2);color:var(--steel-100);}
-  .masraf-row .mtutar{font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',monospace;font-weight:600;}
+  .masraf-row .mtutar{font-family:var(--font-mono);font-weight:600;}
   .masraf-row .mdel{background:none;border:none;color:var(--steel-300);cursor:pointer;padding:4px;}
   .masraf-row .mdel:hover{color:var(--coral);}
 
@@ -1181,7 +1180,7 @@
   }
   .field label{color:var(--text-2);font-weight:500;font-size:12.5px;}
   /* Giriş kartı */
-  .lock-card{border:1px solid var(--border);border-top:1px solid var(--border);border-radius:22px;box-shadow:0 20px 60px rgba(0,0,0,.4);}
+  .lock-card{border:1px solid var(--border);border-top:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:0 20px 60px rgba(0,0,0,.4);}
   html[data-theme="light"] .lock-card{box-shadow:0 12px 44px rgba(0,0,0,.1);}
   .splash-glow{background:radial-gradient(closest-side, rgba(22,160,134,.16), transparent 70%);}
   .splash-brand,.lock-brand{font-weight:700;letter-spacing:-.03em;}
@@ -1316,7 +1315,7 @@
   /* Modal ve çekmeceler: yumuşak gölge */
   html[data-theme="light"] .modal,
   html[data-theme="light"] .iade-card,
-  html[data-theme="light"] .drawer{border-radius:20px;}
+  html[data-theme="light"] .drawer{border-radius:var(--radius-lg);}
   html[data-theme="light"] .modal{box-shadow:0 24px 80px rgba(0,0,0,.18);}
   /* Butonlar: Pekdoğru kurumsal kırmızısı */
   html[data-theme="light"] .add-btn{background:var(--accent-blue);box-shadow:0 4px 14px rgba(22,160,134,.25);}
@@ -1409,7 +1408,7 @@
   /* ===== Premium Wallet araç kartı (A tasarımı) ===== */
   /* v.270 cila: görsel öncelik — daha büyük araç fotoğrafı, daha güçlü tipografi,
      daha fazla nefes alanı. Yapı (HTML) aynen korunur. */
-  .card.vk{padding:0;overflow:hidden;border-radius:22px;}
+  .card.vk{padding:0;overflow:hidden;border-radius:var(--radius-lg);}
   .vk-head{
     background:linear-gradient(135deg,#1A1C22 0%,#20252E 45%,#2A3340 100%);
     padding:18px 18px 16px;position:relative;color:#fff;
@@ -1613,9 +1612,9 @@
   /* v.104 — Sidebar köklü yenileme: 4 ana sayfa + 3 katlanabilir grup */
   .sb-nav .sb-section{display:none;}
   .sb-nav .sb-item{gap:10px;padding:9px 12px;border-radius:10px;font-weight:600;}
-  .sidebar .sb-item.active{background:linear-gradient(135deg,rgba(22,160,134,.22),rgba(22,160,134,.10));color:var(--accent-blue);box-shadow:none;border-radius:10px;}
-  .sidebar .sb-item.active svg{color:var(--accent-blue);opacity:1;}
-  html[data-theme="light"] .sidebar .sb-item.active{background:linear-gradient(135deg,rgba(22,160,134,.16),rgba(22,160,134,.07));color:var(--accent-blue);box-shadow:none;}
+  .sidebar .sb-item.active{background:var(--accent-blue);color:#fff;box-shadow:none;border-radius:var(--radius-sm);}
+  .sidebar .sb-item.active svg{color:#fff;opacity:1;}
+  html[data-theme="light"] .sidebar .sb-item.active{background:var(--accent-blue);color:#fff;box-shadow:none;}
   .sb-group{margin-top:4px;}
   .sb-group-head{display:flex;align-items:center;gap:8px;width:100%;background:none;border:none;cursor:pointer;color:var(--text-3);font-family:var(--font-ui);font-size:10px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;padding:12px 12px 6px;text-align:left;transition:color .15s ease;}
   .sb-group-head:hover{color:var(--text-2);}
@@ -1792,9 +1791,9 @@
   .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--blue) !important;box-shadow:0 0 0 3px var(--blue-dim) !important;}
   /* ---- Butonlar ---- */
   .add-btn,.modal-actions .save,.mobil-fab,.lock-btn-main{
-    background:linear-gradient(135deg,#E05244,#B93B2E) !important;
+    background:var(--accent-blue) !important;
     color:#fff !important;
-    box-shadow:0 4px 14px rgba(224,82,68,.30) !important;
+    box-shadow:0 1px 3px rgba(0,0,0,.2) !important;
     border:none !important;
   }
   .export-btn,.print-btn{background:var(--surface-2) !important;border:1px solid var(--border-2) !important;color:var(--text) !important;}
@@ -1836,10 +1835,10 @@
   html:not([data-theme="light"]) .splash-stat .n{color:#F2F3F4 !important;}
   html:not([data-theme="light"]) .splash-stat .l{color:#7C828B !important;}
   html:not([data-theme="light"]) .splash-stat{background:rgba(255,255,255,.05) !important;border-color:rgba(255,255,255,.09) !important;}
-  /* Araç karti bandlari — marka dili */
-  .card-band.kirada{background:linear-gradient(90deg,#E05244,#B93B2E) !important;}
-  .card-band.musait{background:linear-gradient(90deg,#565C66,#83888F) !important;}
-  .card-band.serviste{background:linear-gradient(90deg,#B93B2E,#E58B80) !important;}
+  /* --- Araç karti bandlari — düz durum renkleri (v.311: degrade kaldırıldı) --- */
+  .card-band.kirada{background:#B93B2E !important;}
+  .card-band.musait{background:#565C66 !important;}
+  .card-band.serviste{background:#A93A2B !important;}
 
 /* ===== index.html lines 1884-2434 ===== */
   /* v.120 — "Prestij" (siyah/altın/serif) teması ve onunla çakışan eski
@@ -1915,52 +1914,23 @@
   .dstat:hover{box-shadow:var(--shadow-md);transform:translateY(-2px);}
   .dstat-ic{box-shadow:0 2px 6px rgba(0,0,0,.18);}
 
-  /* --- Sidebar: daha güvenli aktif durum, ince parlama --- */
-  .sidebar .sb-item.active{box-shadow:0 0 0 1px var(--blue-dim) inset, 0 4px 14px var(--glow) !important;}
+  /* --- Sidebar: aktif durum net, sade --- */
+  .sidebar .sb-item.active{box-shadow:0 0 0 1px rgba(255,255,255,.08) inset !important;}
 
-  /* --- Ana eylem butonları: dolgun, hafif parlamalı --- */
+  /* --- Ana eylem butonları: düz marka rengi, keskin odak (v.311 — degrade +
+     parıltı süpürmesi kaldırıldı; "AI yapımı" hissi veren efektlerin yerine
+     sakin, mühendislik disiplinli bir bitiş geldi) --- */
   .add-btn,#filoKaydetBtn,.mobil-fab,.lock-btn-main{
-    box-shadow:0 6px 18px var(--glow) !important;
-    font-weight:700 !important;
+    box-shadow:0 1px 3px rgba(0,0,0,.2) !important;
+    font-weight:600 !important;
   }
-  .add-btn:hover,#filoKaydetBtn:hover{box-shadow:0 8px 24px var(--glow) !important;transform:translateY(-1px);}
+  .add-btn:hover,#filoKaydetBtn:hover,.mobil-fab:hover{filter:brightness(1.08) !important;}
 
-  /* v.126: "Girişteki güzellik panelde yok" — sebebi bulundu: .add-btn/#filoKaydetBtn/
-     .mobil-fab/.modal-actions .save eski tasarım katmanlarından (Onyx&Copper, Meridian vb.)
-     kalma FARKLI kırmızı-turuncu degradeleri (#E8A132→#A03327, #E05244→#B93B2E, #E1554E+
-     --safety, #CE4A38→#A93A2B) arasında geziniyordu — hiçbiri yeni marka kırmızısı
-     (--accent-blue) ile eşleşmiyordu, bu yüzden panel "kararsız/eski" hissettiriyordu.
-     Burada TEK, kasıtlı bir degrade + giriş ekranındaki parlama süpürmesiyle (shimmer)
-     hepsini birleştiriyoruz; var(--accent-blue) üzerinden türetildiği için açık/koyu
-     temada otomatik doğru tona oturur. */
-  .add-btn,#filoKaydetBtn,.mobil-fab,.modal-actions .save{
-    background:linear-gradient(135deg,
-      color-mix(in srgb, var(--accent-blue) 100%, #fff 20%),
-      var(--accent-blue) 52%,
-      color-mix(in srgb, var(--accent-blue) 100%, #000 18%)
-    ) !important;
-    overflow:hidden;
-  }
-  /* #filoKaydetBtn ve .mobil-fab zaten position:fixed ile konumlanmış (positioned element);
-     onu position:relative'e çevirmek sabit konumunu bozar (v.126 hata düzeltmesi) — sadece
-     konumlanmamış .add-btn / .modal-actions .save için relative gerekiyor. */
-  .add-btn,.modal-actions .save{ position:relative; }
-  .add-btn::after,#filoKaydetBtn::after,.mobil-fab::after,.modal-actions .save::after{
-    content:"";
-    position:absolute; top:0; left:-60%; width:40%; height:100%;
-    background:linear-gradient(120deg, transparent, rgba(255,255,255,.32), transparent);
-    transform:skewX(-20deg);
-    transition:left .55s ease;
-    pointer-events:none;
-  }
-  .add-btn:hover::after,#filoKaydetBtn:hover::after,.mobil-fab:hover::after,.modal-actions .save:hover::after{
-    left:130%;
-  }
-  .modal-actions .save{box-shadow:0 6px 18px var(--glow) !important;font-weight:700 !important;}
-  .modal-actions .save:hover{box-shadow:0 8px 24px var(--glow) !important;transform:translateY(-1px);}
-  @media (prefers-reduced-motion:reduce){
-    .add-btn::after,#filoKaydetBtn::after,.mobil-fab::after,.modal-actions .save::after{transition:none;}
-  }
+  /* v.311: v.126'daki degrade + shimmer süpürme sistemi tamamen söküldü —
+     birincil eylem artık tek, net marka rengi. Kontrast ve tutarlılık için
+     hover'da yalnızca hafif parlaklık, gölgede yalnızca kısa temas gölgesi. */
+  .modal-actions .save{box-shadow:0 1px 3px rgba(0,0,0,.2) !important;font-weight:600 !important;}
+  .modal-actions .save:hover{filter:brightness(1.08) !important;}
 
   /* v.131: Araç Geçmişi sekmesi — tip filtre çipleri + satır hover */
   .gh-chip{
@@ -2054,13 +2024,13 @@
   .lock-field .eye{color:rgba(22,160,134,.65) !important;}
   .lock-field input:focus{border-color:var(--lock-accent) !important;box-shadow:0 0 0 3px var(--lock-accent-dim) !important;}
   .lock-btn-main{
-    background:linear-gradient(135deg, var(--lock-accent-bright), var(--lock-accent) 55%, #0B6F5C) !important;
-    color:#0E1512 !important;
-    box-shadow:0 10px 30px rgba(22,160,134,.35) !important;
-    font-weight:700 !important;
+    background:var(--accent-blue) !important;
+    color:#fff !important;
+    box-shadow:0 1px 3px rgba(0,0,0,.25) !important;
+    font-weight:600 !important;
     border:none !important;
   }
-  .lock-btn-main:hover{transform:translateY(-1px);box-shadow:0 12px 36px rgba(22,160,134,.45) !important;}
+  .lock-btn-main:hover{filter:brightness(1.08) !important;}
   .lock-note{background:rgba(22,160,134,.07) !important;border-color:rgba(22,160,134,.16) !important;color:#C9C2B4 !important;}
   @media (max-width:640px){
     .lock-ribbon-bg{opacity:.75;}
@@ -2072,15 +2042,8 @@
      butona geçiş ışığı, arkadaki kırmızı "Kaydet" düğmesi/rozeti giriş
      ekranı açıkken gizleniyor (tema çakışmasın diye). Sadece görsel —
      JS/giriş mantığı değişmedi. ================================== */
-  .lock-ribbon-bg{
-    animation:lockRibbonBreathe 16s ease-in-out infinite;
-    transform-origin:50% 50%;
-  }
-  @keyframes lockRibbonBreathe{
-    0%{transform:scale(1) rotate(0deg);}
-    50%{transform:scale(1.045) rotate(.6deg);}
-    100%{transform:scale(1) rotate(0deg);}
-  }
+  /* v.311: giriş ekranı kurdelesinin sürekli "nefes alma" animasyonu kaldırıldı —
+     sabit ve dingin duruyor; dekoratif hareket AI estetiğinin işaretiydi. */
   @media (prefers-reduced-motion:reduce){ .lock-ribbon-bg{animation:none;} }
 
   /* v.148: nabız gibi atan altın parlama kaldırıldı (sade/bankacılık kimliği) —
@@ -2098,15 +2061,7 @@
     opacity:.85;
   }
 
-  .lock-btn-main{position:relative;overflow:hidden;}
-  .lock-btn-main::after{
-    content:"";
-    position:absolute;top:0;left:-60%;width:40%;height:100%;
-    background:linear-gradient(120deg, transparent, rgba(255,255,255,.55), transparent);
-    transform:skewX(-20deg);
-    transition:left .55s ease;
-  }
-  .lock-btn-main:hover::after{left:130%;}
+  .lock-btn-main{position:relative;}
 
   body:has(.lock-screen.show) #filoKaydetBtn,
   body:has(.lock-screen.show) #filoOtkRozet{
@@ -2190,6 +2145,12 @@
     --lux-deep:#0b6f5c;
     --lux-ink:#14171a;
     --lux-ink-2:#1c2024;
+    /* v.311 — yuvarlaklık disiplini: eski katmanlarda 14/20/26px'lik yumuşak
+       yuvarlaklıklar "oyuncaklı/AI yapımı" his veriyordu. Tek yetkili ölçek
+       artık daha sıkı: kart 10, küçük bileşen 7, büyük yüzey 14. */
+    --radius:10px;
+    --radius-sm:7px;
+    --radius-lg:14px;
   }
 
   /* --- v.152 — FAZ8: kenar çubuğu OKUNABİLİRLİK düzeltmesi ---
