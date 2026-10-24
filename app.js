@@ -7783,20 +7783,17 @@ document.getElementById('saveBtn').onclick = async ()=>{
   const kiraVal = document.getElementById('fKira').value;
   if(kiraVal!=='' && Number(kiraVal)<0){ fieldErr('fKira','Aylık kira negatif olamaz.'); return; }
 
-  // v.208: Tarih tutarlılığı kontrolleri
-  const kayitTarihi = document.getElementById('fTarih').value;
-  const sigortaBitis = document.getElementById('fSigorta').value;
-  const kaskoBitis = document.getElementById('fKaskoBitis').value;
   // v.265: "RUHSAT EKLİYORUM AI DİYOR Kİ MUAYENE TARİHİ İLERİ BİR TARİH OLAMAZ NE ALAKA" — bu satır
   // v.208'de "tarih tutarlılığı" kontrolü olarak eklenmişti, ama muayeneTarihi alanı bu uygulamada
   // baştan sona (AI'ın ruhsattan okuduğu "sonrakiMuayeneTarihi", "X gün kaldı" geri sayımları,
   // urgentList/bugunYapilacaklar uyarıları vb.) HER ZAMAN "SONRAKİ muayene tarihi" (ileri bir tarih)
   // anlamında kullanılıyor — yani gelecekte olması normal ve BEKLENEN davranış, hata değil. Bu satır
-  // tam tersini varsayıp AI'ın ruhsattan doğru okuduğu (gelecekteki) tarihi reddediyordu. Sigorta/
-  // Kasko bitiş tarihleri için ALTTAKİ kontroller (bitiş tarihi kayıt tarihinden ÖNCE olamaz) farklı
-  // ve doğru bir mantık olduğu için onlara dokunulmadı — sadece bu hatalı muayene kontrolü kaldırıldı.
-  if(kayitTarihi && sigortaBitis && tarihKarsilastir(sigortaBitis, kayitTarihi) < 0){ fieldErr('fSigorta','Sigorta bitiş tarihi kayıt tarihinden önce olamaz.'); return; }
-  if(kayitTarihi && kaskoBitis && tarihKarsilastir(kaskoBitis, kayitTarihi) < 0){ fieldErr('fKaskoBitis','Kasko bitiş tarihi kayıt tarihinden önce olamaz.'); return; }
+  // tam tersini varsayıp AI'ın ruhsattan doğru okuduğu (gelecekteki) tarihi reddediyordu.
+  // v.316: v.208'in sigorta/kasko kontrolleri de KALDIRILDI — fTarih alanı gerçekte "kira bitiş
+  // tarihi"ni tutuyor (bkz. form açılışı v.kiraBitis doldurur, kaydetme kiraBitis'e yazar) ve
+  // uygulamada ayrı bir kayıt tarihi alanı yok. Sigorta/kasko bitişinin kira bitişinden önce
+  // olması GEÇERLİ bir durumdur (42AKS976: sigorta 16.12.2026 < kira 30.12.2026 → her
+  // düzenlemede hata). Bu kontroller tüm araç düzenlemelerini blokluyordu.
 
   for(const d of DOC_TYPES){
     if(docState[d.key].reading){
