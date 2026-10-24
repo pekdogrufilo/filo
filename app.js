@@ -2783,6 +2783,13 @@ function updateFromExcel(file){
               else if(key.includes('KASKO BİTİŞ')) colMap.kaskoBitis=ci;
               else if(key.includes('SÖZLEŞME BİTİŞ')) colMap.sozlesmeBitis=ci;
               else if(key.includes('ŞOFÖR') || key.includes('SÜRÜCÜ')) colMap.sofor=ci;
+              // v.312: kiracı sütunları artık içe aktarımda da tanınıyor (yedek geri yüklemede
+              // kiracı verisinin kaybolmaması için).
+              else if(key==='KİRACI' || key==='KİRACI ADI') colMap.kiraci=ci;
+              else if(key==='KİRACI TELEFON' || key==='KİRACI TEL') colMap.kiraciTel=ci;
+              else if(key==='KİRACI TC/VERGİ NO' || key==='KİRACI TC' || key==='KİRACI VERGİ' || key==='KİRACI VKN') colMap.kiraciVergi=ci;
+              else if(key==='KİRACI EHLİYET' || key==='KİRACI EHLİYET NO') colMap.kiraciEhliyet=ci;
+              else if(key==='KİRACI ADRES') colMap.kiraciAdres=ci;
               else if(key==='DURUM') colMap.durum=ci;
             });
             sheetsFound.push({sheetName, headerIdx:i, rows:candidateRows, colMap});
@@ -2825,6 +2832,12 @@ function updateFromExcel(file){
           if(colMap.kaskoBitis!==undefined){ const d=excelCellDate(r[colMap.kaskoBitis]); if(d) patch.kaskoBitis = d; }
           if(colMap.sozlesmeBitis!==undefined){ const d=excelCellDate(r[colMap.sozlesmeBitis]); if(d) patch.sozlesmeBitis = d; }
           if(colMap.sofor!==undefined && r[colMap.sofor]!==undefined && String(r[colMap.sofor]||'').trim()) patch.sofor = String(r[colMap.sofor]).trim();
+          // v.312: kiracı sütunlarından doğrudan alan güncelleme.
+          if(colMap.kiraci!==undefined && r[colMap.kiraci]!==undefined && String(r[colMap.kiraci]||'').trim()) patch.kiraciAdi = String(r[colMap.kiraci]).trim();
+          if(colMap.kiraciTel!==undefined && r[colMap.kiraciTel]!==undefined && String(r[colMap.kiraciTel]||'').trim()) patch.kiraciTel = String(r[colMap.kiraciTel]).trim();
+          if(colMap.kiraciVergi!==undefined && r[colMap.kiraciVergi]!==undefined && String(r[colMap.kiraciVergi]||'').trim()) patch.kiraciVergi = String(r[colMap.kiraciVergi]).trim();
+          if(colMap.kiraciEhliyet!==undefined && r[colMap.kiraciEhliyet]!==undefined && String(r[colMap.kiraciEhliyet]||'').trim()) patch.kiraciEhliyet = String(r[colMap.kiraciEhliyet]).trim();
+          if(colMap.kiraciAdres!==undefined && r[colMap.kiraciAdres]!==undefined && String(r[colMap.kiraciAdres]||'').trim()) patch.kiraciAdres = String(r[colMap.kiraciAdres]).trim();
           if(colMap.kira!==undefined && r[colMap.kira]!==undefined && r[colMap.kira]!=='' && !isNaN(Number(r[colMap.kira]))) patch.kira = Number(r[colMap.kira]);
           if(colMap.yer!==undefined){
             const yerVal = String(r[colMap.yer]||'').trim();
@@ -2847,6 +2860,9 @@ function updateFromExcel(file){
 
           const existing = vehicles.find(v=>v.plaka===plaka);
           if(existing){
+            // v.312: KİRACI sütunundan gelen ad, müşteri eşleştirme/kiralama senkronizasyonu
+            // için yer alanına da yansıtılıyor (yer sütunu yoksa).
+            if(patch.kiraciAdi && !patch.yer) patch.yer = patch.kiraciAdi;
             // v.295: Excel'den gelen yer bilgisi varsa bunu gerçek müşteri kaydına bağla —
             // paneldeki eski kiracı bilgisi değişmeme / customerId eksik kalma sorununu çözer.
             if(colMap.yer!==undefined && patch.yer){
@@ -3353,11 +3369,19 @@ function exportExcel(){
     'Bağlı Şirket': v.sirket || '',
     'Şoför': v.sofor || '',
     'Çalıştığı Yer': v.yer || '',
+    // v.312: Araç kartlarında görünen kiracı bilgileri yedekte eksikti — artık dışa aktarılıyor.
+    'Kiracı': v.kiraciAdi || v.yer || '',
+    'Kiracı Telefon': v.kiraciTel || '',
+    'Kiracı TC/Vergi No': v.kiraciVergi || '',
+    'Kiracı Ehliyet No': v.kiraciEhliyet || '',
+    'Kiracı Adres': v.kiraciAdres || '',
     'Durum': v.durum || '',
     'Aylık Kira (TL)': v.kira || 0,
     'Kira Bitiş Tarihi': v.kiraBitis || '',
+    'Sözleşme Bitiş Tarihi': v.sozlesmeBitis || '',
     'Kasko Kodu': v.kaskoKodu || '',
     'Kasko Değeri (TL)': v.kaskoDegeri || '',
+    'Kasko Bitiş Tarihi': v.kaskoBitis || '',
     'Muayene Tarihi': v.muayeneTarihi || '',
     'Sigorta Tarihi': v.sigortaTarihi || '',
     'Ruhsat Seri No': v.ruhsatSeriNo || '',
@@ -3367,9 +3391,14 @@ function exportExcel(){
     'Sigorta Poliçe No': v.sigortaNo || '',
     'Kasko Poliçe No': v.kaskoNo || '',
     'Muayene Randevusu': v.muayeneRandevu ? 'Evet' : 'Hayır',
+    'Kiralama Türü': v.kiralamaTuru || '',
+    'Teslim Tarihi': v.teslimTarih || '',
+    'Teslim KM': v.teslimKm || '',
+    'KM Limiti (km/ay)': v.kmLimiti || '',
+    'KM Aşım Ücreti (TL/km)': v.kmAsimFiyat || '',
   }));
   const ws = XLSX.utils.json_to_sheet(rows);
-  ws['!cols'] = [{wch:12},{wch:14},{wch:14},{wch:16},{wch:16},{wch:10},{wch:18},{wch:18},{wch:24},{wch:10},{wch:15},{wch:16},{wch:14},{wch:14},{wch:14},{wch:18},{wch:18},{wch:18},{wch:22},{wch:20},{wch:18},{wch:16}];
+  ws['!cols'] = [{wch:12},{wch:14},{wch:14},{wch:16},{wch:16},{wch:10},{wch:18},{wch:18},{wch:24},{wch:24},{wch:14},{wch:16},{wch:14},{wch:36},{wch:10},{wch:15},{wch:16},{wch:16},{wch:14},{wch:14},{wch:14},{wch:18},{wch:18},{wch:18},{wch:22},{wch:20},{wch:18},{wch:16},{wch:12},{wch:12},{wch:10},{wch:12},{wch:14}];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Filo Listesi');
 
@@ -22739,8 +22768,13 @@ function otomatikYedekWorkbookOlustur(){
   const rows = vehicles.map(v=>({
     'Plaka': v.plaka || '', 'Marka': v.marka || '', 'Model': v.model || '',
     'Bağlı Şirket': v.sirket || '', 'Şoför': v.sofor || '', 'Çalıştığı Yer': v.yer || '',
+    // v.312: kiracı bilgileri yedeğe eklendi (manuel Excel'e Aktar ile tutarlı).
+    'Kiracı': v.kiraciAdi || v.yer || '', 'Kiracı Telefon': v.kiraciTel || '',
+    'Kiracı TC/Vergi No': v.kiraciVergi || '', 'Kiracı Ehliyet No': v.kiraciEhliyet || '',
+    'Kiracı Adres': v.kiraciAdres || '',
     'Durum': v.durum || '', 'Aylık Kira (TL)': v.kira || 0, 'Kira Bitiş Tarihi': v.kiraBitis || '',
-    'Muayene Tarihi': v.muayeneTarihi || '', 'Sigorta Tarihi': v.sigortaTarihi || '',
+    'Sözleşme Bitiş Tarihi': v.sozlesmeBitis || '',
+    'Muayene Tarihi': v.muayeneTarihi || '', 'Sigorta Tarihi': v.sigortaTarihi || '', 'Kasko Bitiş Tarihi': v.kaskoBitis || '',
   }));
   const ws = XLSX.utils.json_to_sheet(rows);
   const wb = XLSX.utils.book_new();
