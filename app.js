@@ -10993,6 +10993,22 @@ function renderBakimPage(){
     });
 
   page.innerHTML = `
+    ${isAdmin() ? `
+    <details class="dcard" id="waPanel" style="margin-bottom:16px;">
+      <summary style="cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;margin:0;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+        WhatsApp Mesaj İşle — AI ile Plakaya İşle
+        <span style="margin-left:auto;font-size:12px;font-weight:500;color:var(--steel-300);">aç / kapat</span>
+      </summary>
+      <p style="font-size:13px;color:var(--steel-300);margin:14px 0;">Tamirci, sigortacı veya muayene istasyonu grubundan gelen mesajları buraya yapıştır. AI mesajları okur, plakaları araçlarla eşleştirir; onayladıklarını masraf ve/veya servis kaydı olarak işler. Birden fazla mesajı birden yapıştırabilirsin.</p>
+      <textarea id="waMesajlar" rows="7" placeholder="Örn:&#10;Ali Usta: Selam, 42 AKS 976 bugün servise geldi debriyaj seti değişecek&#10;Mehmet: 42aks976 egzoz işi bitti 3.500 TL, araç teslim edildi&#10;Acente: 34 ABC 123 kasko yenilendi, poliçe 12.500 TL" style="width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--paper);font-size:13px;padding:10px 12px;resize:vertical;font-family:inherit;"></textarea>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap;">
+        <button class="settings-btn" id="waIsleBtn" onclick="waMesajIsle()">AI ile İşle</button>
+        <span style="font-size:11.5px;color:var(--steel-300);">Grup mesajlarını seçip kopyala → buraya yapıştır → İşle'ye bas.</span>
+      </div>
+      <div id="waSonuc" style="margin-top:14px;display:none;"></div>
+    </details>` : ''}
+
     <details class="dcard" id="masrafFisPanel" style="margin-bottom:16px;">
       <summary style="cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;margin:0;">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/></svg>
@@ -11145,6 +11161,158 @@ function renderBakimPage(){
 
 // (v.87) renderServisKayitTablosu / servisKayitFiltrele kaldırıldı — Bakım & Servis
 // sayfasındaki yinelenen bakım-masraf tablosu Masraf Yönetimi'ne yönlendirmeyle değiştirildi.
+
+
+// ─── v.317: WhatsApp Mesaj İşle ─────────────────────────────────────────────
+// Tamirci/sigortacı/muayene gruplarından gelen mesajlar kopyala-yapıştır ile panele
+// işlenir: Gemini mesajları okur (plaka, konu, tarih, tutar, firma), plakalar araçlarla
+// eşleştirilir, kullanıcı onayladığında masraf (expenses) ve gerekiyorsa servis giriş/
+// çıkış kaydı (v.servisGirisleri) oluşturulur. Tam otomatik grup okuma WhatsApp API
+// kısıtı ve numara yasaklama riski nedeniyle bilinçli olarak YAPILMADI (bkz. sohbet).
+const WA_TIP_ESLE = { 'Tamir':'Tamir','Bakım':'Bakım','Lastik':'Lastik','Yakıt':'Yakıt','Sigorta':'Sigorta','Kasko':'Kasko','Vergi':'Vergi','Ceza':'Ceza','Muayene':'Diğer','Diğer':'Diğer' };
+let waOneriListesi = [];
+
+async function waMesajIsle(){
+  const ta = document.getElementById('waMesajlar');
+  const btn = document.getElementById('waIsleBtn');
+  const sonuc = document.getElementById('waSonuc');
+  if(!ta || !btn || !sonuc) return;
+  const raw = (ta.value||'').trim();
+  if(!raw){ showToast('Önce grup mesajlarını yapıştırın.', true); return; }
+  const origText = btn.textContent;
+  btn.disabled = true; btn.textContent = 'AI mesajları okuyor...';
+  sonuc.style.display = 'block';
+  sonuc.innerHTML = '<div class="log-empty">⏳ Mesajlar analiz ediliyor, plakalar eşleştiriliyor...</div>';
+  try{
+    const system = [
+      'Şirket filo yönetim asistanısın. Tamirciler, sigortacılar, muayene istasyonları ve şoförlerin WhatsApp\'tan attığı Türkçe mesajları ayrıştıracaksın.',
+      'Girdide birden fazla mesaj olabilir (gönderen adı + saat + mesaj biçiminde). Her mesajda ARAÇLA İLGİLİ BİR İŞ varsa bir kayıt üret. Aynı iş hakkında birden fazla mesaj (ör. önce "araç geliyor" sonra "iş bitti") varsa TEK kayıtta birleştir.',
+      'Her kayıt için JSON alanları:',
+      '- plaka: mesajdaki plaka (Türkçe karakterler karışabilir: "42aks976", "42 AKS 976", "42AKS976" aynı araçtır). Mesajda plaka yoksa o kaydı ÜRETME.',
+      '- konu: şu değerlerden biri: Tamir, Bakım, Lastik, Yakıt, Sigorta, Kasko, Vergi, Ceza, Muayene, Diğer',
+      '- aciklama: yapılan iş / konu (kısa: iş + parça + durum)',
+      '- tarih: mesajdaki iş tarihi YYYY-MM-DD (yoksa null). "bugün"/"yarın" gibi ifadeleri BUGÜN bilgisine göre çöz.',
+      '- tutar: TL cinsinden sayı (yoksa null).',
+      '- firma: işi yapan yer (tamirci/acente adı; mesajdan çıkarılabiliyorsa, yoksa null)',
+      '- durum: "girdi" (araç servise girdi, iş devam ediyor) veya "bitti" (iş tamamlandı/teslim edildi) veya "kayit" (bilgi, araç işleme girmesi yok — ör. poliçe yenilendi)',
+      'SADECE şu JSON\'ı döndür, başka hiçbir metin yok: {"kayitlar":[...]}'
+    ].join('\n');
+    const text = await geminiChatFetch(system, [{role:'user',parts:[{text:'BUGÜN: '+todayISO()+'\n\nMESAJLAR:\n'+raw}]}], {temperature:0, maxOutputTokens:4096});
+    let cleaned = (text||'').replace(/```json|```/g,'').trim();
+    const m = cleaned.match(/\{[\s\S]*\}/);
+    if(m) cleaned = m[0];
+    const parsed = JSON.parse(cleaned);
+    const kayitlar = Array.isArray(parsed.kayitlar) ? parsed.kayitlar : [];
+    if(!kayitlar.length){
+      sonuc.innerHTML = '<div class="log-empty">Mesajlarda araçla ilgili bir iş bulunamadı.</div>';
+      return;
+    }
+    waOneriListesi = kayitlar.map(k=>{
+      const v = k.plaka ? vehicles.find(x=>normPlaka(x.plaka)===normPlaka(String(k.plaka))) : null;
+      return {
+        plaka: k.plaka||null, vid: v?v.id:null, plakaBulunan: v?v.plaka:(k.plaka||'—'),
+        konu: WA_TIP_ESLE[k.konu]||'Diğer', aciklama: k.aciklama||'', tarih: k.tarih||todayISO(),
+        tutar: (k.tutar!=null && !isNaN(Number(k.tutar))) ? Number(k.tutar) : null,
+        firma: k.firma||'', durum: k.durum||'kayit', secili: !!v
+      };
+    });
+    waOneriRender();
+  }catch(e){
+    sonuc.innerHTML = `<div class="log-empty" style="color:#E1554E;">Okuma hatası: ${esc(e?.message||String(e))}</div>`;
+  }finally{
+    btn.disabled = false; btn.textContent = origText;
+  }
+}
+
+function waOneriRender(){
+  const sonuc = document.getElementById('waSonuc');
+  if(!sonuc) return;
+  const secili = waOneriListesi.filter(k=>k.secili).length;
+  sonuc.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+      <div style="font-size:13px;font-weight:700;color:var(--paper);">${waOneriListesi.length} kayıt bulundu${waOneriListesi.some(k=>!k.vid)?' · <span style="color:#E8A132;">eşleşmeyen plakalar var</span>':''}</div>
+      <button class="settings-btn" onclick="waHepsiniKaydet()">Seçili ${secili} kaydı İşle</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      ${waOneriListesi.map((k,i)=>`
+      <div style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--bg);">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
+          <input type="checkbox" id="wa-sec-${i}" ${k.secili?'checked':''} onchange="waOneriListesi[${i}].secili=this.checked" style="width:16px;height:16px;accent-color:var(--accent-blue);cursor:pointer;">
+          <span class="mini-plaka" style="font-size:13px;color:${k.vid?'var(--accent-blue)':'#E8A132'};">${esc(k.plakaBulunan)}</span>
+          ${k.vid?'':'<span style="font-size:11px;color:#E8A132;">plaka paneldeki araçlarla eşleşmedi</span>'}
+          <span style="font-size:11.5px;color:var(--steel-300);">${k.durum==='girdi'?'🛠 servise girdi':k.durum==='bitti'?'✔ işi bitti':'ℹ kayıt/bilgi'}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;">
+          <div><label style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;">Konu</label>
+            <select id="wa-konu-${i}" onchange="waOneriListesi[${i}].konu=this.value" style="width:100%;margin-top:3px;padding:7px 8px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--paper);font-size:12.5px;box-sizing:border-box;">
+              ${['Tamir','Bakım','Lastik','Yakıt','Sigorta','Kasko','Vergi','Ceza','Muayene','Diğer'].map(t=>`<option ${t===k.konu?'selected':''}>${t}</option>`).join('')}
+            </select></div>
+          <div><label style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;">Tarih</label>
+            <input type="date" id="wa-tarih-${i}" value="${esc(k.tarih||'')}" onchange="waOneriListesi[${i}].tarih=this.value" style="width:100%;margin-top:3px;padding:7px 8px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--paper);font-size:12.5px;box-sizing:border-box;"></div>
+          <div><label style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;">Tutar (₺)</label>
+            <input type="number" id="wa-tutar-${i}" value="${k.tutar!=null?k.tutar:''}" placeholder="—" onwheel="this.blur()" onchange="waOneriListesi[${i}].tutar=this.value?Number(this.value):null" style="width:100%;margin-top:3px;padding:7px 8px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--paper);font-size:12.5px;box-sizing:border-box;"></div>
+          <div><label style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;">Firma</label>
+            <input type="text" id="wa-firma-${i}" value="${esc(k.firma||'')}" placeholder="—" onchange="waOneriListesi[${i}].firma=this.value" style="width:100%;margin-top:3px;padding:7px 8px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--paper);font-size:12.5px;box-sizing:border-box;"></div>
+        </div>
+        <div style="margin-top:8px;"><label style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;">Açıklama</label>
+          <input type="text" id="wa-aciklama-${i}" value="${esc(k.aciklama||'')}" onchange="waOneriListesi[${i}].aciklama=this.value" style="width:100%;margin-top:3px;padding:7px 8px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--paper);font-size:12.5px;box-sizing:border-box;"></div>
+      </div>`).join('')}
+    </div>`;
+}
+
+async function waHepsiniKaydet(){
+  if(!isAdmin()){ showToast('Bu işlem için yetkiniz yok.', true); return; }
+  const secili = waOneriListesi.filter(k=>k.secili);
+  if(!secili.length){ showToast('İşlenecek kayıt seçilmedi.', true); return; }
+  const btns = document.querySelectorAll('#waSonuc .settings-btn');
+  const btn = btns[btns.length-1];
+  const origText = btn ? btn.textContent : '';
+  if(btn){ btn.disabled = true; btn.textContent = 'Kaydediliyor...'; }
+  let masrafSayisi = 0, servisSayisi = 0;
+  try{
+    for(const k of secili){
+      const i = waOneriListesi.indexOf(k);
+      const aciklama = (document.getElementById(`wa-aciklama-${i}`)?.value)||k.aciklama;
+      k.aciklama = aciklama;
+      if(!k.vid){ continue; }
+      const v = vehicles.find(x=>x.id===k.vid);
+      if(!v) continue;
+      // Masraf: tutar varsa her zaman yaz.
+      if(k.tutar!=null && k.tutar>0){
+        expenses.push({
+          id: cryptoId(), vehicleId: v.id, plaka: v.plaka,
+          tip: WA_TIP_ESLE[k.konu]||'Diğer',
+          tarih: k.tarih || todayISO(),
+          tutar: k.tutar,
+          not: aciklama + (k.firma?` · ${k.firma}`:'') + ' · WhatsApp mesajından',
+          km: null
+        });
+        masrafSayisi++;
+      }
+      // Servis giriş/çıkış kaydı: tamir/bakım/lastik işi ve araç işleme girmişse.
+      if(['Tamir','Bakım','Lastik'].includes(k.konu) && k.durum!=='kayit'){
+        v.servisGirisleri = v.servisGirisleri||[];
+        const kayit = { yer: k.firma||'WhatsApp mesajından', islem: aciklama||k.konu, giris: k.tarih||todayISO(), tutar: k.tutar||null };
+        if(k.durum==='bitti') kayit.cikis = k.tarih||todayISO();
+        v.servisGirisleri.push(kayit);
+        servisSayisi++;
+      }
+    }
+    if(masrafSayisi) await persistExpenses();
+    if(servisSayisi) await persist();
+    logActivity('add', `WhatsApp mesajları işlendi: <b>${masrafSayisi}</b> masraf, <b>${servisSayisi}</b> servis kaydı`);
+    showToast(`Tamam: ${masrafSayisi} masraf, ${servisSayisi} servis kaydı işlendi.`);
+    waOneriListesi = [];
+    const ta = document.getElementById('waMesajlar'); if(ta) ta.value='';
+    const sonuc = document.getElementById('waSonuc'); if(sonuc) sonuc.style.display='none';
+    if(masrafSayisi){ renderStatMasraf && renderStatMasraf(); renderMasrafTable && renderMasrafTable(); }
+  }catch(e){
+    showToast('Kaydetme hatası: '+(e?.message||e), true);
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = origText || 'Tekrar İşle'; }
+  }
+}
+// ────────────────────────────────────────────────────────────────────────────
 
 
 async function fisOku(file){
