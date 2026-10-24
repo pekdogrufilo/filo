@@ -11619,6 +11619,7 @@ function leadTeklifRender(){
 
     <div style="margin-top:18px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
       <button class="settings-btn" onclick="leadTeklifKaydet()" style="background:var(--accent-blue);">💾 Kaydet</button>
+      <button class="settings-btn" onclick="ltMusteriLinkiUret()">🔗 Müşteri Linki</button>
       <button class="settings-btn" onclick="leadTeklifWaKopyala()">📋 WhatsApp Metnini Kopyala</button>
       <button class="settings-btn" onclick="leadTeklifPdf()">🖨 PDF / Yazdır</button>
     </div>
@@ -11688,6 +11689,47 @@ async function leadTeklifWaKopyala(){
     document.execCommand('copy'); ta.remove();
     showToast('WhatsApp teklif metni kopyalandı.');
   }
+}
+// v.325: müşteri teklif linki — teklif verisi UTF-8 güvenli base64-url olarak ./teklif.html#d=...
+// bağlantısına gömülür; harici sunucu/veritabanı gerekmez, linki olmayan sayfa içeriğini göremez.
+// Kopyalanan link müşteriyle WhatsApp'tan paylaşılır; müşteri sayfada teklifi görür, imzasını
+// atıp imzalı PDF olarak kaydedip geri gönderebilir.
+function ltMusteriLinkiUret(){
+  const s = window.__leadTeklif; if(!s) return;
+  const payload = {
+    v:1,
+    tkNo: 'TKF-' + new Date().getFullYear() + '-' + String(s.leadId).replace(/[^a-z0-9]/gi,'').slice(-6).toUpperCase(),
+    tarih: new Date().toLocaleDateString('tr-TR'),
+    gecerlilik: 15,
+    firma: { kisa: LT_FIRMA_KISA, tam: LT_FIRMA_AD },
+    musteri: { ad: s.ad, sehir: s.sehir, telefon: s.telefon, email: s.email },
+    kalemler: s.kalemler.map(k=>({ad:k.ad, adet:k.adet, aylikKira:k.aylikKira, sureAy:k.sureAy, kmLimiti:k.kmLimiti, kmAsim:k.kmAsim})),
+    kdvMod: s.kdvMod, kdvOrani: s.kdvOrani, odeme: s.odeme, notlar: s.notlar
+  };
+  let b64;
+  try{
+    b64 = btoa(unescape(encodeURIComponent(JSON.stringify(payload)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  }catch(e){ showToast('Teklif linki oluşturulamadı.', true); return; }
+  const kok = location.origin && location.origin !== 'null'
+    ? location.origin + location.pathname.replace(/[^/]*$/, '')
+    : 'https://pekdogrufilo.github.io/filo/';
+  const url = kok + 'teklif.html#d=' + b64;
+  const metin = 'Sayın ' + (s.ad||'') + ', araç kiralama teklifiniz hazır: ' + url;
+  (async()=>{
+    try{
+      await navigator.clipboard.writeText(url);
+      showToast('Müşteri teklif linki kopyalandı — müşteriye gönderebilirsiniz.');
+    }catch(e){
+      const ta = document.createElement('textarea');
+      ta.value = url; document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); ta.remove();
+      showToast('Müşteri teklif linki kopyalandı.');
+    }
+    if(confirm('Link kopyalandı. WhatsApp\'tan göndermek için mesajı açmak ister misiniz?\n\nSayın ' + (s.ad||'') + ' telefonu: ' + (s.telefon||'yok'))){
+      const tel = String(s.telefon||'').replace(/[^0-9]/g,'').replace(/^0/,'90');
+      window.open('https://wa.me/' + tel + '?text=' + encodeURIComponent(metin), '_blank');
+    }
+  })();
 }
 function leadTeklifPdf(){
   const s = window.__leadTeklif; if(!s) return;
