@@ -494,6 +494,10 @@ let kvkkTalepleri = [];
 // kalıcı notifications kaydına (bildirimEkleyeBil) yazılır — ayrı bir hatırlatma mekanizması
 // İCAT EDİLMEDİ.
 let ihaleler = [];
+// v.319: Müşteri Teklifleri (leads) — web sitesi/WhatsApp'tan gelen plakasız kiralama talepleri
+// (ad soyad, telefon, e-posta, ihtiyaç türü, araç adedi, süre, şehir). vehicles/customers/rentals
+// ile birebir aynı depolama deseni (tek JSON blob, storageAPI üzerinden, persistLeads).
+let leads = [];
 let activeFilter = 'hepsi';
 let activeSirket = 'hepsi';
 let belgeFilterType = null; // null | 'sigorta' | 'muayene' | 'kira'
@@ -551,6 +555,7 @@ const KOLEKSIYONLAR = {
   trafficFines:[()=>trafficFines, v=>{trafficFines=v;}], documents:[()=>documents, v=>{documents=v;}],
   notifications:[()=>notifications, v=>{notifications=v;}], automationRules:[()=>automationRules, v=>{automationRules=v;}],
   kvkkTalepleri:[()=>kvkkTalepleri, v=>{kvkkTalepleri=v;}], ihaleler:[()=>ihaleler, v=>{ihaleler=v;}],
+  leads:[()=>leads, v=>{leads=v;}],
   activityLog:[()=>activityLog, v=>{activityLog=v;}],
 };
 const tabanDeger = {};   // anahtar -> bu cihazın en son okuduğu/yazdığı bulut hali (JSON metni)
@@ -642,7 +647,7 @@ function veriYuklemeUyarisiGoster(){
   const ADLAR = {vehicles:'Araçlar', arsiv:'Arşiv', arsivSilinenler:'Son silinenler', customers:'Müşteriler', rentals:'Kiralamalar', expenses:'Masraflar',
     sozlesmeler:'Sözleşmeler', invoices:'Faturalar', payments:'Tahsilatlar', ledger:'Cari hareketler', documents:'Belgeler',
     suppliers:'Tedarikçiler', supplierLedger:'Tedarikçi cari', tires:'Lastikler', fuelRecords:'Yakıt', tolls:'HGS/OGS',
-    trafficFines:'Trafik cezaları', serviceParts:'Servis parçaları', ihaleler:'İhaleler', notifications:'Bildirimler',
+    trafficFines:'Trafik cezaları', serviceParts:'Servis parçaları', ihaleler:'İhaleler', leads:'Müşteri teklifleri', notifications:'Bildirimler',
     activityLog:'İşlem geçmişi', automationRules:'Otomasyon kuralları', kvkkTalepleri:'KVKK talepleri', sozlesmeGruplari:'Sözleşme grupları'};
   const liste = [...yuklenemeyenAnahtarlar].map(k=>ADLAR[k]||k).join(', ');
   const zaman = new Date().toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'});
@@ -877,6 +882,13 @@ async function load(){
         const ihr = await guvenliOku('ihaleler');
         ihaleler = (ihr && ihr.value) ? JSON.parse(ihr.value) : [];
       }catch(e){ ihaleler = []; yuklemeHatasiIsaretle('ihaleler', e); }
+    })(),
+    // v.319: leads — müşteri teklif talepleri (web sitesi/WhatsApp'tan gelen plakasız talepler).
+    (async()=>{
+      try{
+        const lr = await guvenliOku('leads');
+        leads = (lr && lr.value) ? JSON.parse(lr.value) : [];
+      }catch(e){ leads = []; yuklemeHatasiIsaretle('leads', e); }
     })(),
   ]);
   if(yuklenemeyenAnahtarlar.size) veriYuklemeUyarisiGoster();
@@ -11007,7 +11019,14 @@ function renderBakimPage(){
         <span style="font-size:11.5px;color:var(--steel-300);">Grup mesajlarını seçip kopyala → buraya yapıştır → İşle'ye bas.</span>
       </div>
       <div id="waSonuc" style="margin-top:14px;display:none;"></div>
-    </details>` : ''}
+    </details>
+
+    <div class="dcard" id="leadsKart" style="margin-bottom:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+        <h3 style="margin:0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>Müşteri Teklifleri <span style="font-weight:400;font-size:13px;color:var(--steel-100)">web sitesi / WhatsApp'tan gelen kiralama talepleri</span></h3>
+      </div>
+      <div id="leadsListe" style="margin-top:12px;"></div>
+    </div>` : ''}
 
     <details class="dcard" id="masrafFisPanel" style="margin-bottom:16px;">
       <summary style="cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;margin:0;">
@@ -11157,6 +11176,8 @@ function renderBakimPage(){
       setTimeout(()=>panel.scrollIntoView({behavior:'smooth', block:'start'}), 50);
     }
   }
+  // v.319: müşteri teklifleri listesi (leadsListe) — kart yalnızca admin'e çizilir.
+  if(isAdmin()) renderLeadsKart();
 }
 
 // (v.87) renderServisKayitTablosu / servisKayitFiltrele kaldırıldı — Bakım & Servis
@@ -11195,7 +11216,10 @@ async function waMesajIsle(){
       '- tutar: TL cinsinden sayı (yoksa null).',
       '- firma: işi yapan yer (tamirci/acente adı; mesajdan çıkarılabiliyorsa, yoksa null)',
       '- durum: "girdi" (araç servise girdi, iş devam ediyor) veya "bitti" (iş tamamlandı/teslim edildi) veya "kayit" (bilgi, araç işleme girmesi yok — ör. poliçe yenilendi)',
-      'SADECE şu JSON\'ı döndür, başka hiçbir metin yok: {"kayitlar":[...]}'
+      'ÖNEMLİ — MÜŞTERİ TEKLİF TALEPLERİ: Bir mesaj plaka/iş içermiyorsa ama MÜŞTERİNİN ARAÇ KİRALAMA TALEBİ ise (ör. "Merhaba, teklif talebim var", ad soyad, telefon, araç adedi, kiralama süresi, şehir içeren mesajlar), bunu kayitlar\'a DEĞİL teklifler\'e yaz.',
+      'Her teklif için JSON alanları:',
+      '- adSoyad, telefon (rakamlar), email (yoksa null), ihtiyacTuru (ör. "Filo Kiralama (Ticari)"), adet (araç sayısı sayı), sureAy (ay cinsinden süre sayı; gün ise ay\u0027a çevir), sehir, aciklama (mesajdaki diğer notlar), tarih (YYYY-MM-DD, yoksa bugün)',
+      'SADECE şu JSON\'ı döndür, başka hiçbir metin yok: {"kayitlar":[...],"teklifler":[...]}'
     ].join('\n');
     const text = await geminiChatFetch(system, [{role:'user',parts:[{text:'BUGÜN: '+todayISO()+'\n\nMESAJLAR:\n'+raw}]}], {temperature:0, maxOutputTokens:4096});
     let cleaned = (text||'').replace(/```json|```/g,'').trim();
@@ -11203,18 +11227,36 @@ async function waMesajIsle(){
     if(m) cleaned = m[0];
     const parsed = JSON.parse(cleaned);
     const kayitlar = Array.isArray(parsed.kayitlar) ? parsed.kayitlar : [];
-    if(!kayitlar.length){
-      sonuc.innerHTML = '<div class="log-empty">Mesajlarda araçla ilgili bir iş bulunamadı.</div>';
+    const teklifler = Array.isArray(parsed.teklifler) ? parsed.teklifler : [];
+    if(!kayitlar.length && !teklifler.length){
+      sonuc.innerHTML = '<div class="log-empty">Mesajlarda araçla ilgili bir iş veya müşteri teklif talebi bulunamadı.</div>';
       return;
     }
     waOneriListesi = kayitlar.map(k=>{
       const v = k.plaka ? vehicles.find(x=>normPlaka(x.plaka)===normPlaka(String(k.plaka))) : null;
       return {
+        tip: 'is',
         plaka: k.plaka||null, vid: v?v.id:null, plakaBulunan: v?v.plaka:(k.plaka||'—'),
         konu: WA_TIP_ESLE[k.konu]||'Diğer', aciklama: k.aciklama||'', tarih: k.tarih||todayISO(),
         tutar: (k.tutar!=null && !isNaN(Number(k.tutar))) ? Number(k.tutar) : null,
         firma: k.firma||'', durum: k.durum||'kayit', secili: !!v
       };
+    });
+    // v.319: müşteri teklif talepleri (plakasız) — onaylanınca leads koleksiyonuna yazılır.
+    teklifler.forEach(t=>{
+      waOneriListesi.push({
+        tip: 'teklif',
+        adSoyad: t.adSoyad||'',
+        telefon: t.telefon!=null ? String(t.telefon) : '',
+        email: t.email||'',
+        ihtiyacTuru: t.ihtiyacTuru||'Filo Kiralama',
+        adet: (t.adet!=null && !isNaN(Number(t.adet))) ? Number(t.adet) : null,
+        sureAy: (t.sureAy!=null && !isNaN(Number(t.sureAy))) ? Number(t.sureAy) : null,
+        sehir: t.sehir||'',
+        aciklama: t.aciklama||'',
+        tarih: t.tarih||todayISO(),
+        secili: true
+      });
     });
     waOneriRender();
   }catch(e){
@@ -11228,13 +11270,43 @@ function waOneriRender(){
   const sonuc = document.getElementById('waSonuc');
   if(!sonuc) return;
   const secili = waOneriListesi.filter(k=>k.secili).length;
+  const isSayisi = waOneriListesi.filter(k=>k.tip!=='teklif').length;
+  const teklifSayisi = waOneriListesi.length - isSayisi;
   sonuc.innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
-      <div style="font-size:13px;font-weight:700;color:var(--paper);">${waOneriListesi.length} kayıt bulundu${waOneriListesi.some(k=>!k.vid)?' · <span style="color:#E8A132;">eşleşmeyen plakalar var</span>':''}</div>
+      <div style="font-size:13px;font-weight:700;color:var(--paper);">${waOneriListesi.length} kayıt bulundu${isSayisi?` · ${isSayisi} araç işi`:''}${teklifSayisi?` · ${teklifSayisi} müşteri teklifi`:''}${waOneriListesi.some(k=>k.tip!=='teklif'&&!k.vid)?' · <span style="color:#E8A132;">eşleşmeyen plakalar var</span>':''}</div>
       <button class="settings-btn" onclick="waHepsiniKaydet()">Seçili ${secili} kaydı İşle</button>
     </div>
     <div style="display:flex;flex-direction:column;gap:10px;">
-      ${waOneriListesi.map((k,i)=>`
+      ${waOneriListesi.map((k,i)=>k.tip==='teklif' ? `
+      <div style="border:1px solid rgba(22,160,134,.45);border-radius:10px;padding:10px 12px;background:var(--bg);">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
+          <input type="checkbox" id="wa-sec-${i}" ${k.secili?'checked':''} onchange="waOneriListesi[${i}].secili=this.checked" style="width:16px;height:16px;accent-color:var(--accent-blue);cursor:pointer;">
+          <span style="font-size:12px;font-weight:700;color:var(--accent-blue);border:1px solid rgba(22,160,134,.45);border-radius:6px;padding:2px 8px;">MÜŞTERİ TEKLİFİ</span>
+          <span style="font-size:13.5px;font-weight:700;color:var(--paper);">${esc(k.adSoyad||'—')}</span>
+          ${k.sehir?`<span style="font-size:11.5px;color:var(--steel-300);">📍 ${esc(k.sehir)}</span>`:''}
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;">
+          <div><label style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;">Ad Soyad</label>
+            <input type="text" id="wa-ad-${i}" value="${esc(k.adSoyad||'')}" onchange="waOneriListesi[${i}].adSoyad=this.value" style="width:100%;margin-top:3px;padding:7px 8px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--paper);font-size:12.5px;box-sizing:border-box;"></div>
+          <div><label style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;">Telefon</label>
+            <input type="text" id="wa-tel-${i}" value="${esc(k.telefon||'')}" onchange="waOneriListesi[${i}].telefon=this.value" style="width:100%;margin-top:3px;padding:7px 8px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--paper);font-size:12.5px;box-sizing:border-box;"></div>
+          <div><label style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;">E-posta</label>
+            <input type="text" id="wa-email-${i}" value="${esc(k.email||'')}" onchange="waOneriListesi[${i}].email=this.value" style="width:100%;margin-top:3px;padding:7px 8px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--paper);font-size:12.5px;box-sizing:border-box;"></div>
+          <div><label style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;">İhtiyaç Türü</label>
+            <input type="text" id="wa-ihtiyac-${i}" value="${esc(k.ihtiyacTuru||'')}" onchange="waOneriListesi[${i}].ihtiyacTuru=this.value" style="width:100%;margin-top:3px;padding:7px 8px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--paper);font-size:12.5px;box-sizing:border-box;"></div>
+          <div><label style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;">Araç Adedi</label>
+            <input type="number" min="1" value="${k.adet!=null?k.adet:''}" onwheel="this.blur()" onchange="waOneriListesi[${i}].adet=this.value?Number(this.value):null" style="width:100%;margin-top:3px;padding:7px 8px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--paper);font-size:12.5px;box-sizing:border-box;"></div>
+          <div><label style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;">Süre (ay)</label>
+            <input type="number" min="1" value="${k.sureAy!=null?k.sureAy:''}" onwheel="this.blur()" onchange="waOneriListesi[${i}].sureAy=this.value?Number(this.value):null" style="width:100%;margin-top:3px;padding:7px 8px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--paper);font-size:12.5px;box-sizing:border-box;"></div>
+          <div><label style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;">Şehir</label>
+            <input type="text" id="wa-sehir-${i}" value="${esc(k.sehir||'')}" onchange="waOneriListesi[${i}].sehir=this.value" style="width:100%;margin-top:3px;padding:7px 8px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--paper);font-size:12.5px;box-sizing:border-box;"></div>
+          <div><label style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;">Tarih</label>
+            <input type="date" id="wa-tarih-${i}" value="${esc(k.tarih||'')}" onchange="waOneriListesi[${i}].tarih=this.value" style="width:100%;margin-top:3px;padding:7px 8px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--paper);font-size:12.5px;box-sizing:border-box;"></div>
+        </div>
+        <div style="margin-top:8px;"><label style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;">Açıklama</label>
+          <input type="text" id="wa-aciklama-${i}" value="${esc(k.aciklama||'')}" onchange="waOneriListesi[${i}].aciklama=this.value" style="width:100%;margin-top:3px;padding:7px 8px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--paper);font-size:12.5px;box-sizing:border-box;"></div>
+      </div>` : `
       <div style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--bg);">
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
           <input type="checkbox" id="wa-sec-${i}" ${k.secili?'checked':''} onchange="waOneriListesi[${i}].secili=this.checked" style="width:16px;height:16px;accent-color:var(--accent-blue);cursor:pointer;">
@@ -11268,12 +11340,30 @@ async function waHepsiniKaydet(){
   const btn = btns[btns.length-1];
   const origText = btn ? btn.textContent : '';
   if(btn){ btn.disabled = true; btn.textContent = 'Kaydediliyor...'; }
-  let masrafSayisi = 0, servisSayisi = 0;
+  let masrafSayisi = 0, servisSayisi = 0, teklifSayisi = 0;
   try{
     for(const k of secili){
       const i = waOneriListesi.indexOf(k);
       const aciklama = (document.getElementById(`wa-aciklama-${i}`)?.value)||k.aciklama;
       k.aciklama = aciklama;
+      // v.319: müşteri teklifi — leads koleksiyonuna yazılır, araç işi olarak işlenmez.
+      if(k.tip==='teklif'){
+        leads.push({
+          id: cryptoId(),
+          adSoyad: k.adSoyad||'İsimsiz talep',
+          telefon: k.telefon||'',
+          email: k.email||'',
+          ihtiyacTuru: k.ihtiyacTuru||'',
+          adet: k.adet, sureAy: k.sureAy, sehir: k.sehir||'',
+          aciklama: aciklama||'',
+          tarih: k.tarih||todayISO(),
+          kaynak: 'WhatsApp mesajından',
+          durum: 'Yeni',
+          olusturma: new Date().toISOString()
+        });
+        teklifSayisi++;
+        continue;
+      }
       if(!k.vid){ continue; }
       const v = vehicles.find(x=>x.id===k.vid);
       if(!v) continue;
@@ -11300,20 +11390,82 @@ async function waHepsiniKaydet(){
     }
     if(masrafSayisi) await persistExpenses();
     if(servisSayisi) await persist();
-    logActivity('add', `WhatsApp mesajları işlendi: <b>${masrafSayisi}</b> masraf, <b>${servisSayisi}</b> servis kaydı`);
-    showToast(`Tamam: ${masrafSayisi} masraf, ${servisSayisi} servis kaydı işlendi.`);
+    if(teklifSayisi) await persistLeads();
+    logActivity('add', `WhatsApp mesajları işlendi: <b>${masrafSayisi}</b> masraf, <b>${servisSayisi}</b> servis kaydı${teklifSayisi?`, <b>${teklifSayisi}</b> müşteri teklifi`:''}`);
+    showToast(`Tamam: ${masrafSayisi} masraf, ${servisSayisi} servis kaydı${teklifSayisi?`, ${teklifSayisi} müşteri teklifi`:''} işlendi.`);
     waOneriListesi = [];
     const ta = document.getElementById('waMesajlar'); if(ta) ta.value='';
     const sonuc = document.getElementById('waSonuc'); if(sonuc) sonuc.style.display='none';
     if(masrafSayisi){ renderStatMasraf && renderStatMasraf(); renderMasrafTable && renderMasrafTable(); }
+    if(teklifSayisi){ renderLeadsKart && renderLeadsKart(); }
   }catch(e){
     showToast('Kaydetme hatası: '+(e?.message||e), true);
   }finally{
     if(btn){ btn.disabled = false; btn.textContent = origText || 'Tekrar İşle'; }
   }
 }
+// ─── v.319: Müşteri Teklifleri (leads) listesi ──────────────────────────────
+// WhatsApp Mesaj İşle kartından onaylanan plakasız kiralama talepleri burada listelenir;
+// durum akışı: Yeni → İletişime geçildi → Teklif gönderildi → Kazanıldı/Kaybedildi.
+const LEAD_DURUMLAR = ['Yeni','İletişime geçildi','Teklif gönderildi','Kazanıldı','Kaybedildi'];
+function leadDurumRenk(d){
+  if(d==='Kazanıldı') return '#36A168';
+  if(d==='Kaybedildi') return '#E1554E';
+  if(d==='Yeni') return 'var(--accent-blue)';
+  if(d==='Teklif gönderildi') return '#E8A132';
+  return 'var(--steel-100)';
+}
+function renderLeadsKart(){
+  const liste = document.getElementById('leadsListe');
+  if(!liste) return;
+  const sirali = [...leads].sort((a,b)=>(b.olusturma||b.tarih||'').localeCompare(a.olusturma||a.tarih||''));
+  if(!sirali.length){
+    liste.innerHTML = '<div class="log-empty">Henüz teklif talebi yok. Müşterinin kiralama talebini (ad soyad, telefon, araç adedi, süre, şehir) yukarıdaki "WhatsApp Mesaj İşle" kartına yapıştırıp <b>AI ile İşle</b>\'e basın — onayladığınızda buraya düşer.</div>';
+    return;
+  }
+  liste.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px;">${sirali.map(l=>`
+    <div style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--surface-2);display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;">
+      <div style="flex:1;min-width:220px;">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <span style="font-size:13.5px;font-weight:700;color:var(--paper);">${esc(l.adSoyad||'—')}</span>
+          <span style="font-size:11px;font-weight:700;color:${leadDurumRenk(l.durum)};">${esc(l.durum||'Yeni')}</span>
+          <span style="font-size:11px;color:var(--steel-300);">${fmtTarih(l.tarih)}</span>
+        </div>
+        <div style="font-size:12px;color:var(--steel-100);margin-top:4px;">
+          ${esc(l.ihtiyacTuru||'—')}${l.adet?` · <b>${l.adet} araç</b>`:''}${l.sureAy?` · ${l.sureAy} ay`:''}${l.sehir?` · ${esc(l.sehir)}`:''}
+        </div>
+        ${l.aciklama?`<div style="font-size:11.5px;color:var(--steel-300);margin-top:3px;">${esc(l.aciklama)}</div>`:''}
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        ${l.telefon?`<a href="tel:${esc(String(l.telefon).replace(/\s+/g,''))}" style="font-size:12px;color:var(--accent-blue);text-decoration:none;font-weight:600;">📞 ${esc(l.telefon)}</a>`:''}
+        ${l.email?`<a href="mailto:${esc(l.email)}" style="font-size:12px;color:var(--accent-blue);text-decoration:none;">✉ ${esc(l.email)}</a>`:''}
+        <select onchange="leadDurumDegistir('${esc(String(l.id))}',this.value)" style="padding:5px 8px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--paper);font-size:12px;font-family:inherit;cursor:pointer;">
+          ${LEAD_DURUMLAR.map(d=>`<option ${d===l.durum?'selected':''}>${d}</option>`).join('')}
+        </select>
+        <button onclick="leadSil('${esc(String(l.id))}')" title="Sil" style="background:none;border:1px solid var(--line);color:#E1554E;font-size:12px;padding:4px 9px;border-radius:6px;cursor:pointer;">Sil</button>
+      </div>
+    </div>`).join('')}</div>`;
+}
+async function leadDurumDegistir(id, durum){
+  const l = leads.find(x=>String(x.id)===String(id));
+  if(!l || l.durum===durum) return;
+  l.durum = durum;
+  await persistLeads();
+  renderLeadsKart();
+  logActivity('edit', `Müşteri teklifi güncellendi: <b>${esc(l.adSoyad||'—')}</b> → ${esc(durum)}`);
+}
+async function leadSil(id){
+  if(!requireAdmin()) return;
+  const idx = leads.findIndex(x=>String(x.id)===String(id));
+  if(idx<0) return;
+  const l = leads[idx];
+  if(!confirm((l.adSoyad||'Bu müşteri')+' için teklif kaydı silinecek. Devam edilsin mi?')) return;
+  leads.splice(idx,1);
+  await persistLeads();
+  renderLeadsKart();
+  logActivity('del', `Müşteri teklifi silindi: <b>${esc(l.adSoyad||'—')}</b>`);
+}
 // ────────────────────────────────────────────────────────────────────────────
-
 
 async function fisOku(file){
   if(!file) return;
@@ -16341,6 +16493,11 @@ async function persistKvkkTalepleri(){
 async function persistIhaleler(){
   try{ await withStorageTimeout(storageAPI.set('ihaleler', JSON.stringify(ihaleler))); return true; }
   catch(e){ showToast((e && /zaman aşımı/i.test(e.message||'')) ? e.message : 'İhale kaydedilemedi.', true); return false; }
+}
+// v.319: leads — müşteri teklif talepleri, ihaleler ile birebir aynı desen.
+async function persistLeads(){
+  try{ await withStorageTimeout(storageAPI.set('leads', JSON.stringify(leads))); return true; }
+  catch(e){ showToast((e && /zaman aşımı/i.test(e.message||'')) ? e.message : 'Teklif kaydedilemedi.', true); return false; }
 }
 
 // ================================================================================
