@@ -1000,6 +1000,18 @@ async function load(){
       }
     }catch(e){ console.error('müşteri bağlantı onarımı hatası:', e); }
   }
+  // v.313b self-heal 4: açık kiralamadan araç kirası senkronu — v.kira alanı kiralamadan sapmış
+  // araçların kira bedeli açılışta rentals.kiraTutari'den yenilenir (bkz. kiraSenkronOnar).
+  if(!yuklenemeyenAnahtarlar.has('rentals')){
+    try{
+      const ks = kiraSenkronOnar();
+      if(ks>0){
+        await persist();
+        logActivity('edit', `<b>${ks}</b> araçta aylık kira bedeli aktif kiralamadan senkronize edildi`);
+        showToast(ks+' araçta aylık kira bedeli aktif kiralamadan güncellendi.');
+      }
+    }catch(e){ console.error('kira senkron onarımı hatası:', e); }
+  }
   // v.287/v.288: müşteri bağlantıları oturduktan sonra aylık kira faturalarını üret —
   // hem Excel'den aktarılan filo hem de panel içinden kiraya verilen araçlar.
   if(!yuklenemeyenAnahtarlar.has('rentals') && !yuklenemeyenAnahtarlar.has('customers')){
@@ -3361,9 +3373,26 @@ function generateQrDataUrl(text){
 // v.313: Excel'deki "Aylık Kira" aktif kiralamadaki tutarı yansıtacak — araç kaydındaki v.kira
 // alanı hakediş yüklemesi / eski veri / Excel'den güncelleme nedeniyle kiralamadan sapabiliyor;
 // Kiralama İşlemleri'nde görünen (rentals.kiraTutari) tutar birincil kabul edilir.
+// v.313b: durum filtresi kaldırıldı — kapalı/iptal olmayan HER açık kiralamada tutar varsa o esastır.
 function efektifAylikKira(v){
-  const r = rentals.find(x=>x.vehicleId===v.id && (x.durum==='teslimEdildi'||x.durum==='sozlesmeHazir') && Number(x.kiraTutari)>0);
-  return r ? Number(r.kiraTutari) : (Number(v.kira)||0);
+  const r = rentalAcikBul(v.id);
+  const t = r ? Number(r.kiraTutari) : 0;
+  return t>0 ? t : (Number(v.kira)||0);
+}
+// v.313b self-heal: AÇIK KİRALAMADAN ARAÇ KİRASI SENKRONU — rentals.kiraTutari birincildir.
+// Hakediş fiyat yüklemesi, eski "Excel'den Güncelle" veya belge taraması v.kira'yı kiralamadan
+// koparıp bayat tutar bırakabiliyordu (42AKS976 Excel'de 12000 görünüyordu). Açılışta "Kirada"
+// durumdaki ve açık kiralaması (teklif hariç) kiraTutari>0 olan araçlarda v.kira kiralamadan
+// yenilenir — kart, Excel ve raporlar böylece tek ve doğru tutar gösterir.
+function kiraSenkronOnar(){
+  let degisti = 0;
+  for(const v of vehicles){
+    if(!v || v.durum!=='Kirada') continue;
+    const r = rentalAcikBul(v.id);
+    const tutar = r && r.durum!=='teklif' ? Number(r.kiraTutari) : 0;
+    if(tutar>0 && (Number(v.kira)||0)!==tutar){ v.kira = tutar; degisti++; }
+  }
+  return degisti;
 }
 function exportExcel(){
   const rows = vehicles.map(v=>({
