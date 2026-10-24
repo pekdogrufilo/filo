@@ -120,9 +120,10 @@ service cloud.firestore {
       allow delete: if isAdmin() || isSuperAdmin();
     }
 
-    // Süper admin denetim günlüğü — değiştirilemez (immutable): yalnızca create + read.
+    // Süper admin denetim günlüğü — değiştirilemez (immutable): create yalnızca
+    // süper admin tarafından, okuma yönetici/süper admin tarafından yapılabilir.
     match /superAdminAuditLog/{logId} {
-      allow create: if isSignedIn();
+      allow create: if isSuperAdmin();
       allow get, list: if isAdmin() || isSuperAdmin();
       allow update, delete: if false;
     }
