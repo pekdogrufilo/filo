@@ -11411,7 +11411,7 @@ function renderLeadsKart(){
   if(!liste) return;
   const sirali = [...leads].sort((a,b)=>(b.olusturma||b.tarih||'').localeCompare(a.olusturma||a.tarih||''));
   if(!sirali.length){
-    liste.innerHTML = '<div class="log-empty">Henüz teklif talebi yok. Müşterinin kiralama talebini (ad soyad, telefon, araç adedi, süre, şehir) yukarıdaki "WhatsApp Mesaj İşle" kartına yapıştırıp <b>AI ile İşle</b>\'e basın — onayladığınızda buraya düşer.</div>';
+    liste.innerHTML = '<div class="log-empty">Henüz teklif talebi yok. Müşterinin kiralama talebini (ad soyad, telefon, araç adedi, süre, şehir) <b>Bakım &amp; Servis</b> sayfasındaki "WhatsApp Mesaj İşle" kartına yapıştırıp <b>AI ile İşle</b>\'e basın — onayladığınızda buraya düşer.<br><button onclick="switchPage(\'bakim\')" style="margin-top:10px;background:rgba(22,160,134,.12);border:1px solid rgba(22,160,134,.4);color:var(--accent-blue);font-size:12.5px;font-weight:700;padding:6px 16px;border-radius:8px;cursor:pointer;">➜ WhatsApp Mesaj İşle kartına git</button></div>';
     return;
   }
   liste.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px;">${sirali.map(l=>`
@@ -13490,7 +13490,7 @@ function renderKiralamaPage(){
     ${isAdmin() ? `
     <div class="dcard" id="leadsKart" style="margin-bottom:16px;">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
-        <h3 style="margin:0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>Müşteri Teklifleri <span style="font-weight:400;font-size:13px;color:var(--steel-100)">web sitesi / WhatsApp'tan gelen kiralama talepleri</span></h3>
+        <h3 style="margin:0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>Müşteri Teklifleri <span style="font-weight:400;font-size:13px;color:var(--steel-100);margin-left:6px;">web sitesi / WhatsApp'tan gelen kiralama talepleri</span></h3>
       </div>
       <div id="leadsListe" style="margin-top:12px;"></div>
     </div>` : ''}
