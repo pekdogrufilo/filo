@@ -11012,21 +11012,14 @@ function renderBakimPage(){
         WhatsApp Mesaj İşle — AI ile Plakaya İşle
         <span style="margin-left:auto;font-size:12px;font-weight:500;color:var(--steel-300);">aç / kapat</span>
       </summary>
-      <p style="font-size:13px;color:var(--steel-300);margin:14px 0;">Tamirci, sigortacı veya muayene istasyonu grubundan gelen mesajları buraya yapıştır. AI mesajları okur, plakaları araçlarla eşleştirir; onayladıklarını masraf ve/veya servis kaydı olarak işler. Birden fazla mesajı birden yapıştırabilirsin.</p>
+      <p style="font-size:13px;color:var(--steel-300);margin:14px 0;">Tamirci, sigortacı veya muayene istasyonu grubundan gelen mesajları buraya yapıştır. AI mesajları okur, plakaları araçlarla eşleştirir; onayladıklarını masraf ve/veya servis kaydı olarak işler. Plakasız <b>müşteri kiralama talepleri</b> de okunur — onayladıklarınız Kiralama sayfasındaki <b>Müşteri Teklifleri</b> kartına düşer. Birden fazla mesajı birden yapıştırabilirsin.</p>
       <textarea id="waMesajlar" rows="7" placeholder="Örn:&#10;Ali Usta: Selam, 42 AKS 976 bugün servise geldi debriyaj seti değişecek&#10;Mehmet: 42aks976 egzoz işi bitti 3.500 TL, araç teslim edildi&#10;Acente: 34 ABC 123 kasko yenilendi, poliçe 12.500 TL" style="width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--paper);font-size:13px;padding:10px 12px;resize:vertical;font-family:inherit;"></textarea>
       <div style="display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap;">
         <button class="settings-btn" id="waIsleBtn" onclick="waMesajIsle()">AI ile İşle</button>
         <span style="font-size:11.5px;color:var(--steel-300);">Grup mesajlarını seçip kopyala → buraya yapıştır → İşle'ye bas.</span>
       </div>
       <div id="waSonuc" style="margin-top:14px;display:none;"></div>
-    </details>
-
-    <div class="dcard" id="leadsKart" style="margin-bottom:16px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
-        <h3 style="margin:0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>Müşteri Teklifleri <span style="font-weight:400;font-size:13px;color:var(--steel-100)">web sitesi / WhatsApp'tan gelen kiralama talepleri</span></h3>
-      </div>
-      <div id="leadsListe" style="margin-top:12px;"></div>
-    </div>` : ''}
+    </details>` : ''}
 
     <details class="dcard" id="masrafFisPanel" style="margin-bottom:16px;">
       <summary style="cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;margin:0;">
@@ -11176,8 +11169,6 @@ function renderBakimPage(){
       setTimeout(()=>panel.scrollIntoView({behavior:'smooth', block:'start'}), 50);
     }
   }
-  // v.319: müşteri teklifleri listesi (leadsListe) — kart yalnızca admin'e çizilir.
-  if(isAdmin()) renderLeadsKart();
 }
 
 // (v.87) renderServisKayitTablosu / servisKayitFiltrele kaldırıldı — Bakım & Servis
@@ -13187,6 +13178,13 @@ function renderKiralamaPage(){
       <button onclick="krTabSet('gecmis')" data-kr="gecmis" style="padding:9px 20px;border-radius:999px;font-size:13px;font-weight:${krAktif==='gecmis'?700:600};cursor:pointer;border:1px solid ${krAktif==='gecmis'?'var(--accent-blue)':'var(--border-2)'};background:${krAktif==='gecmis'?'var(--accent-blue)':'var(--surface)'};color:${krAktif==='gecmis'?'#fff':'var(--text-2)'};">Geçmiş</button>
       <button onclick="openAracKirala()" style="margin-left:auto;padding:9px 16px;border-radius:999px;font-size:12.5px;font-weight:700;cursor:pointer;border:1px solid rgba(54,161,104,.35);background:rgba(54,161,104,.12);color:#36A168;">+ Yeni Kiralama</button>
     </div>
+    ${isAdmin() ? `
+    <div class="dcard" id="leadsKart" style="margin-bottom:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+        <h3 style="margin:0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>Müşteri Teklifleri <span style="font-weight:400;font-size:13px;color:var(--steel-100)">web sitesi / WhatsApp'tan gelen kiralama talepleri</span></h3>
+      </div>
+      <div id="leadsListe" style="margin-top:12px;"></div>
+    </div>` : ''}
     ${(()=>{
       // v.272: "sözleşme yaptım ama araç Müsait görünüyor" — adım adım akışta sözleşme
       // kaydedilip Teslim Et atlanınca araç Müsait kalıyor (tasarım geregi), ama kullanıcıya
@@ -13662,6 +13660,8 @@ function renderKiralamaPage(){
     </div>
   `;
   wireQuickActions(page);
+  // v.320: müşteri teklifleri listesi (leadsListe) — kart yalnızca admin'e çizilir.
+  if(isAdmin()) renderLeadsKart();
 }
 // v.221: Teklifler — adım adım akışta oluşturulan teklif/rezervasyon/sözleşme-hazır
 // kayıtlarının tek ekranda listelendiği sayfa. Kiralama sayfasındaki "Devam Eden Adım
