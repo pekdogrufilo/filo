@@ -11423,13 +11423,14 @@ function renderLeadsKart(){
           <span style="font-size:11px;color:var(--steel-300);">${fmtTarih(l.tarih)}</span>
         </div>
         <div style="font-size:12px;color:var(--steel-100);margin-top:4px;">
-          ${esc(l.ihtiyacTuru||'—')}${l.adet?` · <b>${l.adet} araç</b>`:''}${l.sureAy?` · ${l.sureAy} ay`:''}${l.sehir?` · ${esc(l.sehir)}`:''}
+          ${esc(l.ihtiyacTuru||'—')}${l.adet?` · <b>${l.adet} araç</b>`:''}${l.sureAy?` · ${l.sureAy} ay`:''}${l.sehir?` · ${esc(l.sehir)}`:''}${(l.teklif&&l.teklif.genelToplam)?` · <span style="color:#36A168;font-weight:700;">Teklif: ${fmtTL2(l.teklif.genelToplam)}</span>`:''}
         </div>
         ${l.aciklama?`<div style="font-size:11.5px;color:var(--steel-300);margin-top:3px;">${esc(l.aciklama)}</div>`:''}
       </div>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
         ${l.telefon?`<a href="tel:${esc(String(l.telefon).replace(/\s+/g,''))}" style="font-size:12px;color:var(--accent-blue);text-decoration:none;font-weight:600;">📞 ${esc(l.telefon)}</a>`:''}
         ${l.email?`<a href="mailto:${esc(l.email)}" style="font-size:12px;color:var(--accent-blue);text-decoration:none;">✉ ${esc(l.email)}</a>`:''}
+        <button onclick="leadTeklifAc('${esc(String(l.id))}')" title="${l.teklif?'Teklifi görüntüle / düzenle':'Fiyat, km, süre ve ödeme şeklini kendiniz belirleyerek teklif oluşturun'}" style="background:${l.teklif?'rgba(54,161,104,.12)':'rgba(22,160,134,.12)'};border:1px solid ${l.teklif?'rgba(54,161,104,.4)':'rgba(22,160,134,.4)'};color:${l.teklif?'#36A168':'var(--accent-blue)'};font-size:12px;font-weight:700;padding:4px 12px;border-radius:6px;cursor:pointer;white-space:nowrap;">${l.teklif?'📄 Teklifi Gör / Düzenle':'📄 Teklif Oluştur'}</button>
         <select onchange="leadDurumDegistir('${esc(String(l.id))}',this.value)" style="padding:5px 8px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--paper);font-size:12px;font-family:inherit;cursor:pointer;">
           ${LEAD_DURUMLAR.map(d=>`<option ${d===l.durum?'selected':''}>${d}</option>`).join('')}
         </select>
@@ -11455,6 +11456,314 @@ async function leadSil(id){
   await persistLeads();
   renderLeadsKart();
   logActivity('del', `Müşteri teklifi silindi: <b>${esc(l.adSoyad||'—')}</b>`);
+}
+
+// ─── v.321: Araç Kiralama Teklifi üretici ───────────────────────────────────
+// Lead kartındaki "Teklif Oluştur" ile açılır. Fiyat, km, süre ve ödeme şekli KULLANICI
+// TARAFINDAN serbestçe girilir (fiyat listesi şablonu YOK — kullanıcının talebi). Kaydedilen
+// teklif lead.teklif'te saklanır; WhatsApp metni panoya kopyalanır, PDF ise mevcut window.print()
+// deseniyle (bkz. sozGrupRaporYazdir / htmlYazdirVeyaIndir) tarayıcıdan üretilir — yeni bir
+// kütüphane eklenmedi. PDF tasarımı sözleşmeyle AYNI marka dilini kullanır (turkuaz antet).
+const LT_FIRMA_AD = 'PEKDOĞRU OTOMOTİV TURİZM TAŞIMACILIK NAKLİYE HAYVANCILIK TİCARET LİMİTED ŞİRKETİ';
+const LT_FIRMA_KISA = 'PEKDOĞRU OTOMOTİV TURİZM';
+function leadTeklifAc(id){
+  const l = leads.find(x=>String(x.id)===String(id));
+  if(!l) return;
+  const t = l.teklif || {};
+  window.__leadTeklif = {
+    leadId: String(id),
+    ad: t.ad || l.adSoyad || '',
+    telefon: t.telefon || l.telefon || '',
+    email: t.email || l.email || '',
+    sehir: t.sehir || l.sehir || '',
+    kalemler: Array.isArray(t.kalemler) && t.kalemler.length ? t.kalemler.map(k=>({...k})) :
+      [{ ad: l.ihtiyacTuru ? (l.ihtiyacTuru + ' Araç') : '', adet: l.adet||1, aylikKira: null, sureAy: l.sureAy||12, kmLimiti: null, kmAsim: null }],
+    odeme: t.odeme || '',
+    kdvMod: t.kdvMod || 'dahil',
+    kdvOrani: t.kdvOrani!=null ? t.kdvOrani : 20,
+    notlar: t.notlar || '',
+  };
+  leadTeklifRender();
+}
+function ltAlanDegis(alan, deger){
+  const s = window.__leadTeklif; if(!s) return;
+  s[alan] = (alan==='kdvOrani') ? (deger?Number(deger):0) : deger;
+  ltToplamGuncelle();
+}
+function ltKalemDegis(i, alan, deger){
+  const s = window.__leadTeklif; if(!s || !s.kalemler[i]) return;
+  if(alan==='ad') s.kalemler[i].ad = deger;
+  else s.kalemler[i][alan] = deger!=='' ? Number(deger) : null;
+  ltToplamGuncelle();
+}
+function ltKalemEkle(){
+  const s = window.__leadTeklif; if(!s) return;
+  s.kalemler.push({ ad:'', adet:1, aylikKira:null, sureAy:12, kmLimiti:null, kmAsim:null });
+  leadTeklifRender();
+}
+function ltKalemSil(i){
+  const s = window.__leadTeklif; if(!s) return;
+  if(s.kalemler.length<=1){ showToast('En az bir kalem bulunmalı.', true); return; }
+  s.kalemler.splice(i,1);
+  leadTeklifRender();
+}
+function ltSatirToplam(k){
+  const adet = Number(k.adet)||0, kira = Number(k.aylikKira)||0, sure = Number(k.sureAy)||0;
+  return adet*kira*sure;
+}
+function ltToplamHesapla(){
+  const s = window.__leadTeklif;
+  const ara = s ? s.kalemler.reduce((t,k)=>t+ltSatirToplam(k), 0) : 0;
+  const oran = Number(s?.kdvOrani)||0;
+  let kdv = 0, genel = ara;
+  if(s && s.kdvMod==='haric' && oran>0){ kdv = ara*oran/100; genel = ara+kdv; }
+  else if(s && s.kdvMod==='dahil' && oran>0){ kdv = ara - ara/(1+oran/100); genel = ara; }
+  return {ara, kdv, genel};
+}
+function ltToplamGuncelle(){
+  const s = window.__leadTeklif; if(!s) return;
+  s.kalemler.forEach((k,i)=>{
+    const el = document.getElementById(`lt-satir-${i}`);
+    if(el) el.textContent = fmtTL2(ltSatirToplam(k));
+  });
+  const t = ltToplamHesapla();
+  const ltAra = document.getElementById('lt-ara'); if(ltAra) ltAra.textContent = fmtTL2(t.ara);
+  const ltKdv = document.getElementById('lt-kdv'); if(ltKdv) ltKdv.textContent = fmtTL2(t.kdv);
+  const ltGenel = document.getElementById('lt-genel'); if(ltGenel) ltGenel.textContent = fmtTL2(t.genel);
+}
+function ltInputStil(){ return 'width:100%;box-sizing:border-box;margin-top:3px;padding:7px 8px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--paper);font-size:12.5px;font-family:inherit;'; }
+function leadTeklifRender(){
+  const s = window.__leadTeklif; if(!s) return;
+  const t = ltToplamHesapla();
+  const eski = document.getElementById('ltOverlay'); if(eski) eski.remove();
+  const el = document.createElement('div');
+  el.className = 'overlay show'; el.id = 'ltOverlay'; el.style.cssText = 'z-index:70;';
+  const kalemAlanlari = (k,i)=>`
+    <tr style="border-bottom:1px solid var(--line);">
+      <td style="padding:6px 4px;"><input type="text" value="${esc(k.ad||'')}" placeholder="Araç / hizmet (örn. Fiat Doblo Cargo)" onchange="ltKalemDegis(${i},'ad',this.value)" style="${ltInputStil()}"></td>
+      <td style="padding:6px 4px;"><input type="number" min="1" value="${k.adet!=null?k.adet:''}" onwheel="this.blur()" onchange="ltKalemDegis(${i},'adet',this.value)" style="${ltInputStil()}text-align:right;"></td>
+      <td style="padding:6px 4px;"><input type="number" min="0" step="0.01" value="${k.aylikKira!=null?k.aylikKira:''}" placeholder="—" onwheel="this.blur()" onchange="ltKalemDegis(${i},'aylikKira',this.value)" style="${ltInputStil()}text-align:right;"></td>
+      <td style="padding:6px 4px;"><input type="number" min="1" value="${k.sureAy!=null?k.sureAy:''}" onwheel="this.blur()" onchange="ltKalemDegis(${i},'sureAy',this.value)" style="${ltInputStil()}text-align:right;"></td>
+      <td style="padding:6px 4px;"><input type="number" min="0" value="${k.kmLimiti!=null?k.kmLimiti:''}" placeholder="sınırsız" onwheel="this.blur()" onchange="ltKalemDegis(${i},'kmLimiti',this.value)" style="${ltInputStil()}text-align:right;"></td>
+      <td style="padding:6px 4px;"><input type="number" min="0" step="0.01" value="${k.kmAsim!=null?k.kmAsim:''}" placeholder="—" onwheel="this.blur()" onchange="ltKalemDegis(${i},'kmAsim',this.value)" style="${ltInputStil()}text-align:right;"></td>
+      <td style="padding:6px 4px;text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,monospace;font-size:12px;color:var(--paper);white-space:nowrap;" id="lt-satir-${i}">${fmtTL2(ltSatirToplam(k))}</td>
+      <td style="padding:6px 4px;"><button onclick="ltKalemSil(${i})" title="Kalemi sil" style="background:none;border:1px solid var(--line);color:#E1554E;font-size:11px;padding:4px 8px;border-radius:6px;cursor:pointer;">✕</button></td>
+    </tr>`;
+  el.innerHTML = `
+  <div style="background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px;width:min(96vw,860px);max-height:90vh;overflow-y:auto;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+      <h3 style="margin:0;font-size:17px;color:var(--paper);">📄 Araç Kiralama Teklifi</h3>
+      <button onclick="document.getElementById('ltOverlay').remove()" style="background:none;border:none;color:var(--steel-300);cursor:pointer;padding:4px;display:flex;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <p style="margin:0 0 14px;font-size:12.5px;color:var(--steel-300);">Fiyat, km, süre ve ödeme şeklini siz belirleyin. Kaydettiğinizde teklif müşteri kaydına işlenir; WhatsApp metnini kopyalayabilir veya PDF yazdırabilirsiniz.</p>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px;">
+      <div><label style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;">Müşteri</label>
+        <input type="text" value="${esc(s.ad||'')}" onchange="ltAlanDegis('ad',this.value)" style="${ltInputStil()}"></div>
+      <div><label style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;">Telefon</label>
+        <input type="text" value="${esc(s.telefon||'')}" onchange="ltAlanDegis('telefon',this.value)" style="${ltInputStil()}"></div>
+      <div><label style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;">E-posta</label>
+        <input type="text" value="${esc(s.email||'')}" onchange="ltAlanDegis('email',this.value)" style="${ltInputStil()}"></div>
+      <div><label style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;">Şehir</label>
+        <input type="text" value="${esc(s.sehir||'')}" onchange="ltAlanDegis('sehir',this.value)" style="${ltInputStil()}"></div>
+    </div>
+
+    <div class="table-scroll" style="margin-bottom:10px;">
+      <table class="mini-table" style="min-width:640px;">
+        <thead><tr>
+          <th style="text-align:left;">Araç / Hizmet</th><th style="text-align:right;">Adet</th><th style="text-align:right;">Aylık Kira (₺)</th>
+          <th style="text-align:right;">Süre (ay)</th><th style="text-align:right;">Aylık KM</th><th style="text-align:right;">KM Aşımı (₺/km)</th><th style="text-align:right;">Dönem Toplamı</th><th></th>
+        </tr></thead>
+        <tbody>${s.kalemler.map(kalemAlanlari).join('')}</tbody>
+      </table>
+    </div>
+    <button onclick="ltKalemEkle()" style="background:none;border:1px dashed var(--line);color:var(--accent-blue);font-size:12px;font-weight:600;padding:6px 14px;border-radius:8px;cursor:pointer;">+ Kalem Ekle</button>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:16px;">
+      <div><label style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;">Ödeme Şekli</label>
+        <input type="text" value="${esc(s.odeme||'')}" placeholder="örn. %50 peşin, kalan aylık taksitler halinde" onchange="ltAlanDegis('odeme',this.value)" style="${ltInputStil()}"></div>
+      <div><label style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;">KDV</label>
+        <div style="display:flex;gap:6px;margin-top:3px;">
+          <select onchange="ltAlanDegis('kdvMod',this.value)" style="${ltInputStil()}margin-top:0;">
+            <option value="dahil" ${s.kdvMod==='dahil'?'selected':''}>Dahil</option>
+            <option value="haric" ${s.kdvMod==='haric'?'selected':''}>Hariç</option>
+            <option value="yok" ${s.kdvMod==='yok'?'selected':''}>Yok</option>
+          </select>
+          <input type="number" min="0" max="100" value="${s.kdvOrani!=null?s.kdvOrani:20}" onwheel="this.blur()" onchange="ltAlanDegis('kdvOrani',this.value)" style="${ltInputStil()}margin-top:0;max-width:80px;text-align:right;" title="KDV oranı (%)">
+        </div></div>
+      <div><label style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;">Not (teklif metnine eklenir)</label>
+        <input type="text" value="${esc(s.notlar||'')}" placeholder="örn. Fiyata sigorta ve bakım dahildir" onchange="ltAlanDegis('notlar',this.value)" style="${ltInputStil()}"></div>
+    </div>
+
+    <div style="margin-top:16px;border-top:1px solid var(--line);padding-top:12px;display:flex;justify-content:flex-end;">
+      <div style="min-width:260px;font-size:13px;">
+        <div style="display:flex;justify-content:space-between;padding:3px 0;color:var(--steel-100);"><span>Ara Toplam</span><span id="lt-ara" style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace;">${fmtTL2(t.ara)}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:3px 0;color:var(--steel-100);"><span>KDV ${s.kdvOrani!=null?s.kdvOrani:20}% (${s.kdvMod==='dahil'?'dahil':s.kdvMod==='haric'?'hariç':'yok'})</span><span id="lt-kdv" style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace;">${fmtTL2(t.kdv)}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0 0;font-size:15px;font-weight:800;color:var(--accent-blue);"><span>GENEL TOPLAM</span><span id="lt-genel" style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace;">${fmtTL2(t.genel)}</span></div>
+      </div>
+    </div>
+
+    <div style="margin-top:18px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
+      <button class="settings-btn" onclick="leadTeklifKaydet()" style="background:var(--accent-blue);">💾 Kaydet</button>
+      <button class="settings-btn" onclick="leadTeklifWaKopyala()">📋 WhatsApp Metnini Kopyala</button>
+      <button class="settings-btn" onclick="leadTeklifPdf()">🖨 PDF / Yazdır</button>
+    </div>
+  </div>`;
+  document.body.appendChild(el);
+  el.onclick = e=>{ if(e.target===el) el.remove(); };
+}
+async function leadTeklifKaydet(){
+  const s = window.__leadTeklif; if(!s) return;
+  const l = leads.find(x=>String(x.id)===String(s.leadId));
+  if(!l){ showToast('Müşteri kaydı bulunamadı.', true); return; }
+  l.teklif = {
+    ad: s.ad, telefon: s.telefon, email: s.email, sehir: s.sehir,
+    kalemler: s.kalemler.map(k=>({...k})),
+    odeme: s.odeme, kdvMod: s.kdvMod, kdvOrani: s.kdvOrani, notlar: s.notlar,
+    genelToplam: ltToplamHesapla().genel,
+    olusturma: new Date().toISOString()
+  };
+  if(LEAD_DURUMLAR.indexOf(l.durum||'Yeni') < LEAD_DURUMLAR.indexOf('Teklif gönderildi')) l.durum = 'Teklif gönderildi';
+  await persistLeads();
+  renderLeadsKart();
+  logActivity('add', `Teklif oluşturuldu: <b>${esc(l.adSoyad||l.teklif.ad||'—')}</b> · ${fmtTL2(l.teklif.genelToplam)}`);
+  showToast('Teklif kaydedildi — durum "Teklif gönderildi" olarak güncellendi.');
+  const ov = document.getElementById('ltOverlay'); if(ov) ov.remove();
+}
+function leadTeklifMetni(){
+  const s = window.__leadTeklif; if(!s) return '';
+  const t = ltToplamHesapla();
+  const satirlar = s.kalemler.filter(k=>k.ad||k.aylikKira).map((k,i)=>{
+    const parcalar = [`*${i+1}. ${k.ad||'Araç'}${k.adet?` ×${k.adet}`:''}*`];
+    parcalar.push(`Aylık kira: ${fmtTL2(k.aylikKira||0)}`);
+    parcalar.push(`Süre: ${k.sureAy||'—'} ay`);
+    if(k.kmLimiti) parcalar.push(`Aylık km: ${Number(k.kmLimiti).toLocaleString('tr-TR')}`);
+    if(k.kmAsim) parcalar.push(`KM aşımı: ${fmtTL2(k.kmAsim)}/km`);
+    parcalar.push(`Dönem toplamı: ${fmtTL2(ltSatirToplam(k))}`);
+    return parcalar.join('\n   ');
+  }).join('\n\n');
+  const kdvSatiri = s.kdvMod==='haric' ? `KDV (%${s.kdvOrani}): ${fmtTL2(t.kdv)}` : '';
+  return [
+    `*${LT_FIRMA_KISA}* — _Araç Kiralama Teklifi_`,
+    ``,
+    `Sayın *${s.ad||'—'}*,`,
+    s.sehir ? `${s.sehir} bölgesi için talebiniz üzerine teklifimiz aşağıdadır:` : 'Talebiniz üzerine teklifimiz aşağıdadır:',
+    ``,
+    satirlar,
+    ``,
+    `──────────────`,
+    s.kdvMod==='haric' ? `Ara toplam: ${fmtTL2(t.ara)}` : `Toplam: ${fmtTL2(t.ara)}`,
+    kdvSatiri || null,
+    `*${s.kdvMod==='haric'?'GENEL TOPLAM (KDV dahil)':'GENEL TOPLAM'}: ${fmtTL2(t.genel)}*`,
+    s.odeme ? `💳 *Ödeme şekli:* ${s.odeme}` : null,
+    s.notlar ? `ℹ️ _${s.notlar}_` : null,
+    ``,
+    `Bu teklif ${new Date().toLocaleDateString('tr-TR')} tarihi itibarıyla *15 gün* geçerlidir.`,
+    `Sorularınız için bize ulaşabilirsiniz. İyi çalışmalar dileriz.`
+  ].filter(x=>x!==null).join('\n');
+}
+async function leadTeklifWaKopyala(){
+  const metin = leadTeklifMetni();
+  if(!metin){ showToast('Teklif verisi yok.', true); return; }
+  try{
+    await navigator.clipboard.writeText(metin);
+    showToast('WhatsApp teklif metni kopyalandı — sohbete yapıştırabilirsiniz.');
+  }catch(e){
+    const ta = document.createElement('textarea');
+    ta.value = metin; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); ta.remove();
+    showToast('WhatsApp teklif metni kopyalandı.');
+  }
+}
+function leadTeklifPdf(){
+  const s = window.__leadTeklif; if(!s) return;
+  const t = ltToplamHesapla();
+  const logoSrc = (typeof SIRKET_LOGOS!=='undefined' && SIRKET_LOGOS['PEKDOĞRU GRUP']) || '';
+  const bugun = new Date().toLocaleDateString('tr-TR', {day:'2-digit', month:'long', year:'numeric'});
+  const satirlarHtml = s.kalemler.map(k=>`
+    <tr>
+      <td>${esc(k.ad||'—')}</td>
+      <td class="c">${k.adet!=null?k.adet:'—'}</td>
+      <td class="r">${fmtTL2(k.aylikKira||0)}</td>
+      <td class="c">${k.sureAy!=null?k.sureAy:'—'}</td>
+      <td class="r">${k.kmLimiti?Number(k.kmLimiti).toLocaleString('tr-TR')+' km':'Sınırsız'}</td>
+      <td class="r">${k.kmAsim?fmtTL2(k.kmAsim)+'/km':'—'}</td>
+      <td class="r" style="font-weight:700;">${fmtTL2(ltSatirToplam(k))}</td>
+    </tr>`).join('');
+  const kdvHtml = s.kdvMod==='haric'
+    ? `<div class="tot-row"><span>Ara Toplam</span><span>${fmtTL2(t.ara)}</span></div>
+       <div class="tot-row"><span>KDV (%${s.kdvOrani})</span><span>${fmtTL2(t.kdv)}</span></div>`
+    : (s.kdvMod==='dahil' ? `<div class="tot-row muted"><span>içinde KDV (%${s.kdvOrani})</span><span>${fmtTL2(t.kdv)}</span></div>` : '');
+  const html = `<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>Araç Kiralama Teklifi — ${esc(s.ad||'')}</title>
+  <style>
+    *{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    body{font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;color:#1A1A1A;max-width:800px;margin:0 auto;padding:24px;background:#fff;}
+    .letterhead{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:22px 26px;background:linear-gradient(120deg,#00A99D,#017F76);color:#fff;border-radius:12px;margin-bottom:20px;flex-wrap:wrap;}
+    .lh-left{display:flex;align-items:center;gap:14px;}
+    .lh-left img{width:52px;height:52px;object-fit:contain;background:#fff;border-radius:10px;padding:4px;}
+    .lh-left h1{font-size:19px;margin:0;letter-spacing:.3px;}
+    .lh-left .sub{font-size:11px;opacity:.85;margin-top:2px;}
+    .lh-right{text-align:right;font-size:11.5px;opacity:.9;line-height:1.5;}
+    .musteri{display:flex;gap:20px;flex-wrap:wrap;border:1px solid #DDE6E5;border-radius:10px;padding:12px 18px;margin-bottom:18px;background:#F4FAF9;}
+    .musteri div{min-width:140px;}
+    .musteri .l{font-size:9.5px;color:#5E8C87;text-transform:uppercase;letter-spacing:.5px;}
+    .musteri .v{font-size:13px;font-weight:700;margin-top:2px;}
+    table{width:100%;border-collapse:collapse;font-size:11.5px;margin-bottom:4px;}
+    th{text-align:left;background:#017F76;color:#fff;padding:8px 10px;font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;}
+    th.r, td.r{text-align:right;} th.c, td.c{text-align:center;}
+    td{padding:8px 10px;border-bottom:1px solid #E3EBEA;}
+    tr:nth-child(even) td{background:#F7FBFA;}
+    .tot{margin:14px 0 0 auto;width:min(320px,100%);font-size:12.5px;}
+    .tot-row{display:flex;justify-content:space-between;padding:5px 10px;color:#345;}
+    .tot-row.muted{color:#7B9895;font-size:11px;}
+    .tot-row.genel{background:linear-gradient(120deg,#00A99D,#017F76);color:#fff;font-weight:800;font-size:14px;border-radius:8px;padding:9px 12px;margin-top:4px;}
+    .blok{border-left:4px solid #00A99D;background:#F4FAF9;padding:10px 14px;border-radius:0 8px 8px 0;margin-top:14px;font-size:12px;}
+    .blok b{display:block;font-size:10px;color:#017F76;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;}
+    .foot{margin-top:30px;font-size:11px;color:#88A09E;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;border-top:1px solid #DDE6E5;padding-top:10px;}
+    .gecerlilik{margin-top:18px;font-size:11px;color:#5E8C87;font-style:italic;}
+    @media print{ body{padding:12mm;} .foot{position:fixed;bottom:0;left:0;right:0;margin:0;background:#fff;} }
+  </style></head>
+  <body>
+    <div class="letterhead">
+      <div class="lh-left">
+        ${logoSrc?`<img src="${logoSrc}" alt="">`:''}
+        <div>
+          <h1>${LT_FIRMA_KISA}</h1>
+          <div class="sub">Araç Kiralama & Filo Çözümleri</div>
+        </div>
+      </div>
+      <div class="lh-right">TEKLİF<br><b>${bugun}</b><br>Teklif No: L-${esc(String(s.leadId).replace('v','').toUpperCase())}</div>
+    </div>
+
+    <div class="musteri">
+      <div><div class="l">Sayın</div><div class="v">${esc(s.ad||'—')}</div></div>
+      ${s.sehir?`<div><div class="l">Şehir</div><div class="v">${esc(s.sehir)}</div></div>`:''}
+      ${s.telefon?`<div><div class="l">Telefon</div><div class="v">${esc(s.telefon)}</div></div>`:''}
+      ${s.email?`<div><div class="l">E-posta</div><div class="v">${esc(s.email)}</div></div>`:''}
+    </div>
+
+    <table>
+      <thead><tr><th>Araç / Hizmet</th><th class="c">Adet</th><th class="r">Aylık Kira</th><th class="c">Süre (ay)</th><th class="r">Aylık KM</th><th class="r">KM Aşımı</th><th class="r">Dönem Toplamı</th></tr></thead>
+      <tbody>${satirlarHtml}</tbody>
+    </table>
+
+    <div class="tot">
+      ${kdvHtml}
+      <div class="tot-row genel"><span>${s.kdvMod==='haric'?'GENEL TOPLAM (KDV DAHİL)':'GENEL TOPLAM'}</span><span>${fmtTL2(t.genel)}</span></div>
+    </div>
+
+    ${s.odeme?`<div class="blok"><b>Ödeme Şekli</b>${esc(s.odeme)}</div>`:''}
+    ${s.notlar?`<div class="blok"><b>Not</b>${esc(s.notlar)}</div>`:''}
+    <div class="gecerlilik">Bu teklif ${bugun} tarihi itibarıyla 15 gün geçerlidir. Fiyatlara ${s.kdvMod==='haric'?'KDV dahil değildir.':s.kdvMod==='dahil'?'KDV dahildir.':''}</div>
+
+    <div class="foot">
+      <span><b>${LT_FIRMA_AD}</b></span>
+      <span>Araç Kiralama Teklifi · ${bugun}</span>
+    </div>
+  </body></html>`;
+  htmlYazdirVeyaIndir(html, `teklif_${(s.ad||'musteri').replace(/\s+/g,'-')}.html`);
 }
 // ────────────────────────────────────────────────────────────────────────────
 
