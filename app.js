@@ -11559,6 +11559,7 @@ function leadTeklifRender(){
     </div>
     <p style="margin:0 0 14px;font-size:12.5px;color:var(--steel-300);">Fiyat, km, süre ve ödeme şeklini siz belirleyin. Kaydettiğinizde teklif müşteri kaydına işlenir; WhatsApp metnini kopyalayabilir veya PDF yazdırabilirsiniz.</p>
 
+    <div style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--steel-300);margin:16px 0 8px;">Müşteri Bilgileri</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px;">
       <div><label style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;">Müşteri</label>
         <input type="text" value="${esc(s.ad||'')}" onchange="ltAlanDegis('ad',this.value)" style="${ltInputStil()}"></div>
@@ -11570,6 +11571,7 @@ function leadTeklifRender(){
         <input type="text" value="${esc(s.sehir||'')}" onchange="ltAlanDegis('sehir',this.value)" style="${ltInputStil()}"></div>
     </div>
 
+    <div style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--steel-300);margin:16px 0 8px;">Teklif Kalemleri</div>
     <div class="table-scroll" style="margin-bottom:10px;">
       <table class="mini-table" style="min-width:640px;">
         <thead><tr>
@@ -11581,6 +11583,7 @@ function leadTeklifRender(){
     </div>
     <button onclick="ltKalemEkle()" style="background:none;border:1px dashed var(--line);color:var(--accent-blue);font-size:12px;font-weight:600;padding:6px 14px;border-radius:8px;cursor:pointer;">+ Kalem Ekle</button>
 
+    <div style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--steel-300);margin:16px 0 8px;">Koşullar</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:16px;">
       <div><label style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;">Ödeme Şekli</label>
         <input type="text" value="${esc(s.odeme||'')}" placeholder="örn. %50 peşin, kalan aylık taksitler halinde" onchange="ltAlanDegis('odeme',this.value)" style="${ltInputStil()}"></div>
@@ -11680,87 +11683,185 @@ async function leadTeklifWaKopyala(){
 function leadTeklifPdf(){
   const s = window.__leadTeklif; if(!s) return;
   const t = ltToplamHesapla();
+  const aylikToplam = s.kalemler.reduce((a,k)=>a+(Number(k.adet)||0)*(Number(k.aylikKira)||0),0);
+  const toplamAdet = s.kalemler.reduce((a,k)=>a+(Number(k.adet)||0),0);
   const logoSrc = (typeof SIRKET_LOGOS!=='undefined' && SIRKET_LOGOS['PEKDOĞRU GRUP']) || '';
   const bugun = new Date().toLocaleDateString('tr-TR', {day:'2-digit', month:'long', year:'numeric'});
+  const teklifNo = 'TKF-' + new Date().getFullYear() + '-' + String(s.leadId).replace(/[^a-z0-9]/gi,'').slice(-6).toUpperCase();
   const satirlarHtml = s.kalemler.map(k=>`
     <tr>
-      <td>${esc(k.ad||'—')}</td>
+      <td><b>${esc(k.ad||'—')}</b></td>
       <td class="c">${k.adet!=null?k.adet:'—'}</td>
-      <td class="r">${fmtTL2(k.aylikKira||0)}</td>
-      <td class="c">${k.sureAy!=null?k.sureAy:'—'}</td>
-      <td class="r">${k.kmLimiti?Number(k.kmLimiti).toLocaleString('tr-TR')+' km':'Sınırsız'}</td>
-      <td class="r">${k.kmAsim?fmtTL2(k.kmAsim)+'/km':'—'}</td>
-      <td class="r" style="font-weight:700;">${fmtTL2(ltSatirToplam(k))}</td>
+      <td class="r mono">${fmtTL2(k.aylikKira||0)}</td>
+      <td class="c">${k.sureAy!=null?k.sureAy+' ay':'—'}</td>
+      <td class="r mono">${k.kmLimiti?Number(k.kmLimiti).toLocaleString('tr-TR'):'Sınırsız'}</td>
+      <td class="r mono">${k.kmAsim?fmtTL2(k.kmAsim)+'/km':'—'}</td>
+      <td class="r mono donem">${fmtTL2(ltSatirToplam(k))}</td>
     </tr>`).join('');
   const kdvHtml = s.kdvMod==='haric'
-    ? `<div class="tot-row"><span>Ara Toplam</span><span>${fmtTL2(t.ara)}</span></div>
-       <div class="tot-row"><span>KDV (%${s.kdvOrani})</span><span>${fmtTL2(t.kdv)}</span></div>`
-    : (s.kdvMod==='dahil' ? `<div class="tot-row muted"><span>içinde KDV (%${s.kdvOrani})</span><span>${fmtTL2(t.kdv)}</span></div>` : '');
-  const html = `<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>Araç Kiralama Teklifi — ${esc(s.ad||'')}</title>
+    ? `<div class="tot-row"><span>Ara Toplam</span><span class="mono">${fmtTL2(t.ara)}</span></div>
+       <div class="tot-row"><span>KDV (%${s.kdvOrani})</span><span class="mono">${fmtTL2(t.kdv)}</span></div>`
+    : '';
+  const sartlar = [
+    ['Geçerlilik', `Bu teklif ${bugun} tarihi itibarıyla 15 gün geçerlidir.`],
+    ['Ödeme', s.odeme || 'Aylık dönemler halinde peşin ödeme.'],
+  ];
+  if(s.kdvMod==='haric') sartlar.push(['Vergi', `Fiyatlara KDV (%${s.kdvOrani}) dahil değildir; genel toplama eklenmiştir.`]);
+  else if(s.kdvMod==='dahil') sartlar.push(['Vergi', `Fiyatlara KDV (%${s.kdvOrani}) dahildir.`]);
+  sartlar.push(['Kilometre', s.kalemler.some(k=>k.kmLimiti)
+    ? 'Kalemlerde belirtilen aylık km kullanımı dahildir; aşım halinde km başına belirtilen aşım bedeli uygulanır.'
+    : 'Aylık km kullanımı sınırsızdır.']);
+  sartlar.push(['Sigorta & Bakım', s.notlar || 'Araçlar kasko, trafik sigortası ve periyodik bakım dahil teslim edilir. Yakıt giderleri kiracıya aittir.']);
+  const sartlarHtml = sartlar.map((x,i)=>`
+    <div class="sart">
+      <div class="s-no">${String(i+1).padStart(2,'0')}</div>
+      <div><div class="s-b">${x[0]}</div><div class="s-v">${x[1]}</div></div>
+    </div>`).join('');
+  const html = `<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>Araç Kiralama Teklifi ${teklifNo} — ${esc(s.ad||'')}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Saira:wght@600;700;800&display=swap" rel="stylesheet">
   <style>
     *{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-    body{font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;color:#1A1A1A;max-width:800px;margin:0 auto;padding:24px;background:#fff;}
-    .letterhead{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:22px 26px;background:linear-gradient(120deg,#00A99D,#017F76);color:#fff;border-radius:12px;margin-bottom:20px;flex-wrap:wrap;}
-    .lh-left{display:flex;align-items:center;gap:14px;}
-    .lh-left img{width:52px;height:52px;object-fit:contain;background:#fff;border-radius:10px;padding:4px;}
-    .lh-left h1{font-size:19px;margin:0;letter-spacing:.3px;}
-    .lh-left .sub{font-size:11px;opacity:.85;margin-top:2px;}
-    .lh-right{text-align:right;font-size:11.5px;opacity:.9;line-height:1.5;}
-    .musteri{display:flex;gap:20px;flex-wrap:wrap;border:1px solid #DDE6E5;border-radius:10px;padding:12px 18px;margin-bottom:18px;background:#F4FAF9;}
-    .musteri div{min-width:140px;}
-    .musteri .l{font-size:9.5px;color:#5E8C87;text-transform:uppercase;letter-spacing:.5px;}
-    .musteri .v{font-size:13px;font-weight:700;margin-top:2px;}
-    table{width:100%;border-collapse:collapse;font-size:11.5px;margin-bottom:4px;}
-    th{text-align:left;background:#017F76;color:#fff;padding:8px 10px;font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;}
-    th.r, td.r{text-align:right;} th.c, td.c{text-align:center;}
-    td{padding:8px 10px;border-bottom:1px solid #E3EBEA;}
-    tr:nth-child(even) td{background:#F7FBFA;}
-    .tot{margin:14px 0 0 auto;width:min(320px,100%);font-size:12.5px;}
-    .tot-row{display:flex;justify-content:space-between;padding:5px 10px;color:#345;}
-    .tot-row.muted{color:#7B9895;font-size:11px;}
-    .tot-row.genel{background:linear-gradient(120deg,#00A99D,#017F76);color:#fff;font-weight:800;font-size:14px;border-radius:8px;padding:9px 12px;margin-top:4px;}
-    .blok{border-left:4px solid #00A99D;background:#F4FAF9;padding:10px 14px;border-radius:0 8px 8px 0;margin-top:14px;font-size:12px;}
-    .blok b{display:block;font-size:10px;color:#017F76;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;}
-    .foot{margin-top:30px;font-size:11px;color:#88A09E;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;border-top:1px solid #DDE6E5;padding-top:10px;}
-    .gecerlilik{margin-top:18px;font-size:11px;color:#5E8C87;font-style:italic;}
-    @media print{ body{padding:12mm;} .foot{position:fixed;bottom:0;left:0;right:0;margin:0;background:#fff;} }
+    :root{--teal:#017F76;--teal-b:#00A99D;--ink:#0B2B28;--mut:#5E7370;--line:#DCE8E6;--tint:#F3FAF8;}
+    body{font-family:'IBM Plex Sans',Arial,Helvetica,sans-serif;font-size:12px;line-height:1.65;color:var(--ink);max-width:800px;margin:0 auto;padding:24px;background:#fff;}
+    .mono{font-family:'IBM Plex Mono',Consolas,monospace;font-variant-numeric:tabular-nums;}
+    b{font-weight:700;}
+    /* — filigran — */
+    .wm{position:fixed;top:50%;left:50%;width:430px;height:430px;transform:translate(-50%,-50%);opacity:.05;pointer-events:none;z-index:0;}
+    .wm img{width:100%;height:100%;object-fit:contain;}
+    body>*:not(.wm){position:relative;z-index:1;}
+    /* — antet — */
+    .masthead{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;padding-bottom:16px;border-bottom:3px solid var(--teal);flex-wrap:wrap;}
+    .mh-left{display:flex;align-items:center;gap:14px;}
+    .mh-logo{width:58px;height:58px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .mh-logo img{width:100%;height:100%;object-fit:contain;}
+    .mh-name{font-family:Saira,'IBM Plex Sans',sans-serif;font-size:20px;font-weight:800;letter-spacing:.3px;color:var(--ink);line-height:1.2;}
+    .mh-tag{font-size:10px;font-weight:600;color:var(--teal);letter-spacing:1.8px;text-transform:uppercase;margin-top:3px;}
+    .mh-meta{text-align:right;font-size:10.5px;color:var(--mut);line-height:1.9;}
+    .mh-meta .no{font-family:Saira,sans-serif;font-size:15px;font-weight:800;color:var(--ink);letter-spacing:.5px;}
+    /* — belge başlığı — */
+    .doc-title{margin:24px 0 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+    .doc-title .t{font-family:Saira,sans-serif;font-size:23px;font-weight:800;letter-spacing:2px;color:var(--ink);text-transform:uppercase;}
+    .doc-title .rule{flex:1;height:1px;background:var(--line);min-width:30px;}
+    .chip{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.5px;color:var(--teal);background:var(--tint);border:1px solid var(--line);border-radius:20px;padding:4px 12px;white-space:nowrap;}
+    /* — müşteri + teklif künyesi — */
+    .meta{display:grid;grid-template-columns:1.35fr 1fr;gap:12px;margin-bottom:20px;}
+    .mcard{border:1px solid var(--line);border-radius:12px;padding:14px 18px;background:var(--tint);}
+    .mcard .l{font-size:9px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1.2px;}
+    .mcard .v{font-family:Saira,sans-serif;font-size:16px;font-weight:700;color:var(--ink);margin-top:2px;line-height:1.35;}
+    .mcard .satir{font-size:11.5px;color:var(--mut);margin-top:5px;display:flex;gap:7px;align-items:baseline;}
+    .mcard .satir .sl{font-size:9.5px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.8px;min-width:52px;}
+    .knye{display:flex;flex-direction:column;gap:0;}
+    .knye .satir{display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;border-bottom:1px dashed var(--line);font-size:11.5px;}
+    .knye .satir:last-child{border-bottom:none;}
+    .knye .sl{font-size:9.5px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.8px;}
+    .knye .sv{font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--ink);}
+    /* — kalemler — */
+    table{width:100%;border-collapse:collapse;font-size:11.5px;page-break-inside:avoid;}
+    thead th{background:#0B2B28;color:#fff;font-family:Saira,sans-serif;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:10px 10px;text-align:left;}
+    th.r,td.r{text-align:right;} th.c,td.c{text-align:center;}
+    td.r{white-space:nowrap;}
+    tbody td{padding:10px 10px;border-bottom:1px solid var(--line);vertical-align:top;}
+    tbody tr:nth-child(even) td{background:var(--tint);}
+    td.donem{font-weight:700;color:var(--teal);}
+    /* — toplamlar — */
+    .tot{margin:16px 0 0 auto;width:min(340px,100%);}
+    .tot-row{display:flex;justify-content:space-between;align-items:baseline;padding:6px 4px;border-bottom:1px dashed var(--line);font-size:12px;color:var(--mut);}
+    .tot-row .mono{font-weight:600;color:var(--ink);}
+    .tot-aylik{margin-top:10px;display:flex;justify-content:space-between;align-items:center;background:var(--tint);border:1px solid var(--line);border-left:4px solid var(--teal-b);border-radius:0 9px 9px 0;padding:9px 14px;font-size:12.5px;}
+    .tot-aylik .mono{font-size:14px;font-weight:700;color:var(--ink);}
+    .genel{margin-top:8px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(120deg,#0B2B28,#017F76);color:#fff;border-radius:11px;padding:13px 18px;font-family:Saira,sans-serif;font-size:13px;font-weight:800;letter-spacing:1px;text-transform:uppercase;}
+    .genel .mono{font-size:18px;font-weight:700;letter-spacing:0;}
+    /* — şartlar — */
+    .sec-baslik{font-family:Saira,sans-serif;font-size:13px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;color:var(--ink);margin:26px 0 12px;display:flex;align-items:center;gap:10px;page-break-after:avoid;}
+    .sec-baslik::before{content:'';width:22px;height:4px;background:var(--teal-b);border-radius:2px;}
+    .sart{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);page-break-inside:avoid;}
+    .sart:last-child{border-bottom:none;}
+    .s-no{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:var(--teal-b);min-width:22px;padding-top:1px;}
+    .s-b{font-size:11px;font-weight:700;color:var(--ink);text-transform:uppercase;letter-spacing:.6px;}
+    .s-v{font-size:11.5px;color:var(--mut);margin-top:2px;}
+    /* — kabul & imza — */
+    .kabul{display:flex;gap:44px;margin-top:44px;page-break-inside:avoid;}
+    .kbox{flex:1;text-align:center;}
+    .kbox .k-t{font-size:10px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1px;}
+    .kbox .k-n{font-family:Saira,sans-serif;font-size:13px;font-weight:700;color:var(--ink);margin-top:2px;}
+    .kline{border-top:1px solid #9AB0AD;margin-top:58px;padding-top:6px;font-size:10px;color:var(--mut);}
+    /* — künye alt — */
+    .foot{margin-top:30px;border-top:1px solid var(--line);padding-top:10px;font-size:10px;color:#7A8A88;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+    .foot b{color:#4B6B67;}
+    @media (max-width:640px){ .meta{grid-template-columns:1fr;} .kabul{gap:24px;} }
+    @media print{ body{padding:0;} .wm{opacity:.045;} @page{margin:14mm;} }
   </style></head>
   <body>
-    <div class="letterhead">
-      <div class="lh-left">
-        ${logoSrc?`<img src="${logoSrc}" alt="">`:''}
+    ${logoSrc?`<div class="wm"><img src="${logoSrc}" alt=""></div>`:''}
+    <div class="masthead">
+      <div class="mh-left">
+        ${logoSrc?`<div class="mh-logo"><img src="${logoSrc}" alt=""></div>`:''}
         <div>
-          <h1>${LT_FIRMA_KISA}</h1>
-          <div class="sub">Araç Kiralama & Filo Çözümleri</div>
+          <div class="mh-name">${LT_FIRMA_KISA}</div>
+          <div class="mh-tag">Araç Kiralama &amp; Filo Çözümleri</div>
         </div>
       </div>
-      <div class="lh-right">TEKLİF<br><b>${bugun}</b><br>Teklif No: L-${esc(String(s.leadId).replace('v','').toUpperCase())}</div>
+      <div class="mh-meta">
+        <span class="no">${teklifNo}</span><br>
+        ${bugun}<br>
+        Geçerlilik: 15 gün
+      </div>
     </div>
 
-    <div class="musteri">
-      <div><div class="l">Sayın</div><div class="v">${esc(s.ad||'—')}</div></div>
-      ${s.sehir?`<div><div class="l">Şehir</div><div class="v">${esc(s.sehir)}</div></div>`:''}
-      ${s.telefon?`<div><div class="l">Telefon</div><div class="v">${esc(s.telefon)}</div></div>`:''}
-      ${s.email?`<div><div class="l">E-posta</div><div class="v">${esc(s.email)}</div></div>`:''}
+    <div class="doc-title">
+      <span class="t">Araç Kiralama Teklifi</span>
+      ${toplamAdet?`<span class="chip">${toplamAdet} Araç</span>`:''}
+      <span class="rule"></span>
+    </div>
+
+    <div class="meta">
+      <div class="mcard">
+        <div class="l">Sayın</div>
+        <div class="v">${esc(s.ad||'—')}</div>
+        ${s.sehir?`<div class="satir"><span class="sl">Şehir</span><span>${esc(s.sehir)}</span></div>`:''}
+        ${s.telefon?`<div class="satir"><span class="sl">Telefon</span><span class="mono">${esc(s.telefon)}</span></div>`:''}
+        ${s.email?`<div class="satir"><span class="sl">E-posta</span><span>${esc(s.email)}</span></div>`:''}
+      </div>
+      <div class="mcard knye">
+        <div class="satir"><span class="sl">Teklif No</span><span class="sv">${teklifNo}</span></div>
+        <div class="satir"><span class="sl">Tarih</span><span class="sv">${bugun}</span></div>
+        <div class="satir"><span class="sl">Para Birimi</span><span class="sv">TL (₺)</span></div>
+        <div class="satir"><span class="sl">KDV</span><span class="sv">${s.kdvMod==='haric'?`Hariç (%${s.kdvOrani})`:s.kdvMod==='dahil'?`Dahil (%${s.kdvOrani})`:'Yok'}</span></div>
+      </div>
     </div>
 
     <table>
-      <thead><tr><th>Araç / Hizmet</th><th class="c">Adet</th><th class="r">Aylık Kira</th><th class="c">Süre (ay)</th><th class="r">Aylık KM</th><th class="r">KM Aşımı</th><th class="r">Dönem Toplamı</th></tr></thead>
+      <thead><tr><th>Araç / Hizmet</th><th class="c">Adet</th><th class="r">Aylık Kira</th><th class="c">Süre</th><th class="r">Aylık KM</th><th class="r">KM Aşımı</th><th class="r">Dönem Toplamı</th></tr></thead>
       <tbody>${satirlarHtml}</tbody>
     </table>
 
     <div class="tot">
       ${kdvHtml}
-      <div class="tot-row genel"><span>${s.kdvMod==='haric'?'GENEL TOPLAM (KDV DAHİL)':'GENEL TOPLAM'}</span><span>${fmtTL2(t.genel)}</span></div>
+      ${aylikToplam?`<div class="tot-aylik"><span>Aylık Toplam Kira</span><span class="mono">${fmtTL2(aylikToplam)}</span></div>`:''}
+      <div class="genel"><span>${s.kdvMod==='haric'?'Genel Toplam · KDV Dahil':'Genel Toplam'}</span><span class="mono">${fmtTL2(t.genel)}</span></div>
     </div>
 
-    ${s.odeme?`<div class="blok"><b>Ödeme Şekli</b>${esc(s.odeme)}</div>`:''}
-    ${s.notlar?`<div class="blok"><b>Not</b>${esc(s.notlar)}</div>`:''}
-    <div class="gecerlilik">Bu teklif ${bugun} tarihi itibarıyla 15 gün geçerlidir. Fiyatlara ${s.kdvMod==='haric'?'KDV dahil değildir.':s.kdvMod==='dahil'?'KDV dahildir.':''}</div>
+    <div class="sec-baslik">Teklif Şartları</div>
+    ${sartlarHtml}
+
+    <div class="kabul">
+      <div class="kbox">
+        <div class="k-t">Hazırlayan / Yetkili</div>
+        <div class="k-n">PEKDOĞRU OTOMOTİV TURİZM</div>
+        <div class="kline">İmza</div>
+      </div>
+      <div class="kbox">
+        <div class="k-t">Kabul ve Onay</div>
+        <div class="k-n">${esc(s.ad||'Müşteri')}</div>
+        <div class="kline">İmza / Kaşe</div>
+      </div>
+    </div>
 
     <div class="foot">
       <span><b>${LT_FIRMA_AD}</b></span>
-      <span>Araç Kiralama Teklifi · ${bugun}</span>
+      <span>${teklifNo} · Araç Kiralama Teklifi · ${bugun}</span>
     </div>
   </body></html>`;
   htmlYazdirVeyaIndir(html, `teklif_${(s.ad||'musteri').replace(/\s+/g,'-')}.html`);
