@@ -5162,6 +5162,12 @@ function openAracKirala(vehicleId){
             <input type="date" id="krBitis" value="${isoPlusYil(todayISO(),1)}">
           </div>
         </div>
+        <!-- v.324: geçmişe dönük sözleşme — belgede görünen imza/tarih kullanıcının seçtiği gün olur,
+             bugüne sabitlenmez. Boş bırakılırsa bugün kabul edilir (eski davranış korunur). -->
+        <div class="iade-field">
+          <label>Sözleşme tarihi (belge üzerinde görünen tarih — geçmişe dönük için değiştirin)</label>
+          <input type="date" id="krSozTarih" value="${todayISO()}">
+        </div>
         <div class="iade-row">
           <div class="iade-field">
             <label>Depozito (₺)</label>
@@ -5581,6 +5587,9 @@ async function kirayaVerVeSozlesme(format){
   const krKefilAd = (document.getElementById('krKefil')?.value||'').trim();
   const krKefilTCNo = (document.getElementById('krKefilTC')?.value||'').trim();
   const krTeslimYerYakalanan = (document.getElementById('krTeslimYer')?.value||'').trim();
+  // v.324: geçmişe dönük sözleşme tarihi — modal silinmeden önce yakalanmalı (v.202 notundaki
+  // "modal kalktıktan sonra DOM'dan okuma hep null döner" deseninin aynısı).
+  const krSozTarihDeger = document.getElementById('krSozTarih')?.value||'';
   document.getElementById('kiralaModal')?.remove();
   const plakalar = secilen.map(v=>esc(v.plaka)).join(', ');
   logActivity('edit', secilen.length===1
@@ -5627,7 +5636,7 @@ async function kirayaVerVeSozlesme(format){
     aracSayisi: araclar.length,
     sure: sozlesmeSureMetni(bas, bitis),
     notlar: notlar||'',
-    tarih: new Date().toLocaleDateString('tr-TR'),
+    tarih: krSozTarihDeger ? krSozTarihDeger.split('-').reverse().join('.') : new Date().toLocaleDateString('tr-TR'),
     sozNo: 'SOZ-'+new Date().getFullYear()+'-'+Date.now().toString().slice(-4),
     // FAZ6: yakalanmışsa (opsiyonel) dijital imzalar — yoksa şablonlar mevcut boş çizgiyi basar.
     imzaKiraci: (window.__krImza||{}).kiraci||null,
@@ -12310,6 +12319,7 @@ async function sozlesmeOlustur(format){
   const kiraciAdresInp = document.getElementById('sozKiraciAdres')?.value?.trim();
   const kiraciEhliyetInp = document.getElementById('sozKiraciEhliyet')?.value?.trim();
   const notlar = document.getElementById('sozNotlar')?.value?.trim();
+  const sozTarihDeger = document.getElementById('sozTarih')?.value||'';
   const log = document.getElementById('sozlesmeLog');
 
   if(!vehicleId){ showToast('Lütfen araç seçin.',true); return; }
@@ -12346,7 +12356,7 @@ async function sozlesmeOlustur(format){
     depozito: depozito!==undefined && depozito!=='' ? Number(depozito).toLocaleString('tr-TR',{minimumFractionDigits:2}) : (kira ? Number(kira).toLocaleString('tr-TR',{minimumFractionDigits:2}) : '—'),
     sure: bas&&bitis ? sozlesmeSureMetni(bas, bitis) : '—',
     notlar: notlar||'',
-    tarih: new Date().toLocaleDateString('tr-TR'),
+    tarih: sozTarihDeger ? sozTarihDeger.split('-').reverse().join('.') : new Date().toLocaleDateString('tr-TR'),
     sozNo: 'SOZ-'+new Date().getFullYear()+'-'+Date.now().toString().slice(-4),
   };
 
@@ -13361,6 +13371,7 @@ function ykSihirbaziHtml(){
             </div>
             <div class="iade-field"><label>Teslim yeri</label><input type="text" id="ykTeslimYer" placeholder="Konya merkez (varsayılan)"></div>
           </div>
+          <div class="iade-field"><label>Sözleşme tarihi (belge üzerinde görünen tarih — geçmişe dönük için değiştirin)</label><input type="date" id="ykSozTarih" value="${todayISO()}"></div>
           <button class="add-btn" onclick="ykSozlesmeyeIlerle()">Sözleşmeye ilerle</button>` : ''}
         ` : ''}
         ${durum==='sozlesmeHazir' ? `
@@ -13445,6 +13456,7 @@ async function ykSozlesmeyeIlerle(){
   const ykKefilTCNo = (document.getElementById('ykKefilTC')?.value||'').trim();
   const ykSozYakitDeger = document.getElementById('ykSozYakit')?.value||'Dolu';
   const ykTeslimYerDeger = (document.getElementById('ykTeslimYer')?.value||'').trim();
+  const ykSozTarihDeger = document.getElementById('ykSozTarih')?.value||'';
   const musteri = customers.find(c=>c.id===r.customerId);
   const kiraci = musteriGoruntuAdi(musteri)||'—';
   const basTxt = (r.baslangic||'').split('-').reverse().join('.');
@@ -13474,7 +13486,7 @@ async function ykSozlesmeyeIlerle(){
     depozito: r.depozito!=null ? Number(r.depozito).toLocaleString('tr-TR',{minimumFractionDigits:2}) : '—',
     sure: (r.baslangic&&r.bitis) ? sozlesmeSureMetni(r.baslangic, r.bitis) : '—',
     notlar: r.ekHizmetler||'',
-    tarih: new Date().toLocaleDateString('tr-TR'),
+    tarih: ykSozTarihDeger ? ykSozTarihDeger.split('-').reverse().join('.') : new Date().toLocaleDateString('tr-TR'),
     sozNo: 'SOZ-'+new Date().getFullYear()+'-'+Date.now().toString().slice(-4),
   };
   const sozRec = await sozKaydet(sozData, r.baslangic, r.bitis);
@@ -13892,6 +13904,10 @@ function renderKiralamaPage(){
         <div class="field">
           <label>Sözleşme Bitiş</label>
           <input type="date" id="sozBitis">
+        </div>
+        <div class="field">
+          <label>Sözleşme Tarihi (imza — geçmişe dönük için değiştirin)</label>
+          <input type="date" id="sozTarih" value="${todayISO()}">
         </div>
         <div class="field">
           <label>Aylık Kira Bedeli (₺)</label>
