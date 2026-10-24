@@ -4,7 +4,7 @@ Bu rehberi izleyince: (1) verileriniz ve belgeleriniz Google bulutuna yedeklenir
 
 ---
 
-## BÖLÜM 1 — Bulut Senkron (Firebase) — ~10 dakika
+## BÖLÜM 1 — Bulut Senkron (Firebase) — ~15 dakika
 
 ### 1. Firebase projesi aç
 1. https://console.firebase.google.com adresine girin (Google hesabıyla).
@@ -13,31 +13,48 @@ Bu rehberi izleyince: (1) verileriniz ve belgeleriniz Google bulutuna yedeklenir
 ### 2. Firestore veritabanı oluştur
 1. Sol menüden **Build → Firestore Database** → **Create database**.
 2. Konum: **eur3 (Europe)** önerilir → **Start in production mode** → **Enable**.
-3. **Rules** sekmesine girin, içeriği şununla değiştirin ve **Publish** deyin:
 
-```
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /filoPaneliData/{doc} {
-      allow read, write: if request.auth != null;
-    }
-  }
-}
-```
+### 3. Güvenlik kurallarını yayınla (ÖNEMLİ — eski kuralı KULLANMAYIN)
+1. **Rules** sekmesine girin.
+2. Depodaki **`firestore.rules`** dosyasının TÜM içeriğini kopyalayıp yapıştırın (bu rehberdeki eski, kısa kural **artık geçerli değildir** — o kural, hesabı olan herkesin tüm panel verisini okumasına izin veriyordu).
+3. **Publish** deyin. Yeni kurallar şunları sağlar:
+   - Panel verisi (`filoPaneliData`) yalnızca **users dokümanı olan** gerçek panel kullanıcılarına açıktır (anonim/sahte hesaplar okuyamaz).
+   - Ekip üyeleri kendi dokümanlarında rol/şirket değiştiremez, kendini admin yapamaz.
+   - `invites` (davet) ve `superAdminAuditLog` koleksiyonları kurala kavuşur; süper admin paneli çalışır.
 
-> Not: Bu kural yalnızca oturum açmış istemcilerin veriye erişmesine izin verir. Panel, bağlanırken kendiliğinden **anonim Firebase girişi** yapar (sizin işiniz yok); panelin kendi şifre ekranı erişim kontrolünü yapar. Böylece veri, yapılandırmayı bilen ama oturum açmayan tarayıcılardan korunur.
+### 4. Kimlik doğrulamayı ayarla
+1. **Build → Authentication → Get started**.
+2. **Email/Password → Enable** (panel bu yöntemle giriş yapar).
+3. **Anonymous sağlayıcisini KAPALI bırakın/tutun.** Panel anonim oturum açmaz; açık olması güvenlik açığıdır.
 
-### 3. Web uygulaması anahtarını al
+### 5. İlk yönetici hesabını oluştur (tek seferlik, konsoldan)
+Panelde "yeni şirket kaydı" bilinçli olarak kapalıdır (güvenlik); ilk yöneticiyi konsoldan oluşturursunuz:
+1. **Authentication → Users → Add user** → e-posta + şifre girin → kaydedin ve çıkan **UID**'yi kopyalayın.
+2. **Firestore Database → Start collection** → adı `users` → doküman ID olarak UID'yi yapıştırın, şu alanları ekleyin:
+
+| Alan | Tür | Değer |
+|---|---|---|
+| `companyId` | string | `pekdogru` (şirketinizin kalıcı kimliği) |
+| `adSoyad` | string | Adınız Soyadınız |
+| `email` | string | Giriş e-postanız |
+| `roleId` | string | `sahip` |
+| `aktif` | boolean | `true` |
+| `olusturmaTarihi` | string | bugünün tarihi (ör. `2026-10-24T12:00:00.000Z`) |
+
+3. Aynı `companyId` değeriyle bir de şirket dokümanı önerilir: koleksiyon `companies`, doküman ID `pekdogru`, alanlar: `unvan` = `PEKDOĞRU Filo Kiralama Hizmetleri`, `plan` = `Enterprise`.
+4. (Opsiyonel — süper admin paneli için) users dokümanına `superAdmin` (boolean) = `true` alanını ekleyin. Bu alan konsol dışından hiçbir şekilde atanamaz.
+
+> Sonraki ekip üyeleri panelden eklenir: **Ekip → Davet gönder** → davetli, giriş ekranındaki "Bir davetim var" ekranından kendi e-postasıyla kayıt olur.
+
+### 6. Web uygulaması anahtarını al
 1. Proje ana sayfasında ⚙️ **Project settings → General → Your apps → Web (</>) simgesi**.
 2. Takma ad: `panel` → **Register app** (Hosting adımı gerekmez).
 3. Karşınıza çıkan `firebaseConfig` bloğundaki değerler gerekli: **apiKey, authDomain, projectId, storageBucket, messagingSenderId, appId**.
 
-### 4. Panele bağla
-1. Firebase Console → **Build → Authentication → Get started → Anonymous → Enable** (panel, buluta bağlanırken anonim oturum açar; bu adım bir kez yapılır).
-2. Paneli açın → **Ayarlar → Bulut Senkronizasyonu → Bağlan**.
-3. firebaseConfig değerlerini forma girin → **Bağlan**.
-4. Üst çubukta **"☁ Bulutta senkronize"** rozeti görünmeli. Artık araç verileri + belgeler buluta yazılıyor; telefonunuzdan da aynı adımlarla bağlanınca her şey orada da görünür.
+### 7. Panele bağla ve giriş yap
+1. Paneli açın → **Ayarlar → Bulut Senkronizasyonu → Bağlan** → firebaseConfig değerlerini girin → **Bağlan**.
+2. Giriş ekranından 5. adımda oluşturduğunuz e-posta/şifreyle **giriş yapın**.
+3. Üst çubukta **"☁ Bulutta senkronize"** rozetini görmelisiniz. Telefonunuzdan da aynı adımlarla bağlanıp aynı hesapla girince her şey orada da görünür.
 
 ---
 
@@ -83,7 +100,7 @@ Yanıtta şunları görürsünüz:
 
 ## Sık sorulanlar
 
-**Buluta bağlayınca verilerim güvende mi?** Veri Google'ın altyapısında saklanır, HTML dosyanız artık araç verisi taşımaz. Kural dosyası pratik koruma sağlar; çok hassas görüyorsanız kimlik doğrulama ekleyelim.
+**Buluta bağlayınca verilerim güvende mi?** Veri Google'ın altyapısında saklanır, HTML dosyanız artık araç verisi taşımaz. `firestore.rules` dosyasındaki kurallar yayındaysa panele yalnızca gerçek panel kullanıcıları (e-posta/şifreyle giriş yapıp users dokümanı olan hesaplar) erişebilir; anonim ve sahte hesaplar erişemez. Kuralları yayınlamayı ve Anonymous sağlayıcisini kapalı tutmayı atlamayın — güvenliğin asıl adımı budur.
 
 **Ücret olur mu?** Firebase Spark (ücretsiz) planı bu kullanım için yeterlidir; Resend'in ücretsiz planı ayda 100 e-posta verir (günlük hatırlatma için fazlasıyla yeterli, çünkü sistem tekrar gönderimi atlar).
 

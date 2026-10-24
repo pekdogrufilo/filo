@@ -1,5 +1,5 @@
 // =============================================================================
-// FİLO PANELİ — Firestore Güvenlik Kuralları (FAZ 2)
+// FİLO PANELİ — Firestore Güvenlik Kuralları (FAZ 2b)
 // =============================================================================
 //
 // (a) BU DOSYA BURADAN OTOMATİK OLARAK YAYINLANMAZ (deploy edilmez). Bu kodu
@@ -10,76 +10,128 @@
 //     (İsteyen, `firebase deploy --only firestore:rules` ile CLI üzerinden de
 //     yayınlayabilir, ama bu da proje sahibinin kendi makinesinde/CI'ında
 //     çalıştırması gereken ayrı bir adımdır.)
+//     Adım adım anlatım için: KURULUM-BULUT.md → BÖLÜM 1.
 //
-// (b) `filoPaneliData/{docId}` kuralı KASITLI olarak sadece "giriş yapmış olmak"
-//     (isSignedIn()) istiyor, şirket bazlı (companyId) bir izolasyon YAPMIYOR.
-//     Sebebi: bu koleksiyon panelin ESKİ, düz anahtar-değer (chunked blob)
-//     deposu — her doküman hangi şirkete ait olduğunu belirten bir companyId
-//     alanı taşımıyor, dolayısıyla bu aşamada kural motorunun şirket bazında
-//     ayrım yapabilmesi mümkün değil. Bu koleksiyondaki kayıtların gerçek
-//     kiracı (tenant) izolasyonu, verisi companies/{companyId} bazlı yeni
-//     koleksiyonlara taşındıktan sonra, SONRAKİ bir fazda gelecek — o zamana
+// (b) `filoPaneliData/{docId}` kuralı hâlâ şirket bazlı (companyId) izolasyon
+//     YAPMIYOR — sebebi: bu koleksiyon panelin ESKİ, düz anahtar-değer (chunked
+//     blob) deposu; her doküman hangi şirkete ait olduğunu belirten bir
+//     companyId alanı taşımıyor. FAZ 2b'de EKLENEN sıkılaştırma: artık yalnızca
+//     users/{uid} dokümanı OLAN (yani panelin davet/ekip akışından geçmiş
+//     gerçek) kullanıcılar bu koleksiyona erişebilir. Bu, "Authentication'da
+//     hesap açan herhangi biri (anonim ya da konsoldan oluşturulmuş sahte
+//     e-posta hesabı) tüm panel verisini okuyabilir" açığını kapatır — çünkü
+//     panelin kendi giriş akışı da zaten users dokümanı olmayan hesabı
+//     oturumdan atar (bkz. onCloudLoginSubmit → fetchUserDoc).
+//     Kiracı (tenant) izolasyonu, verisi companies/{companyId} bazlı yeni
+//     koleksiyonlara taşındıktan sonra SONRAKİ bir fazda gelecek — o zamana
 //     kadar aynı Firebase projesini paylaşan farklı şirketlerin bu koleksiyon
-//     üzerinden birbirinin verisini görebileceğini unutmayın (bkz. FAZ2
-//     raporundaki "yapılmayanlar" listesi).
+//     üzerinden birbirinin verisini görebileceğini unutmayın.
 //
-//     Ayrıca not: aşağıdaki `users/{uid}` bloğundaki `allow list: if isSignedIn();`
-//     kuralı da şirket bazlı değildir — Firestore kuralları bir "list" (koleksiyon
-//     sorgusu) isteğini şirket filtresine ZORLAYAMAZ; bu yüzden teknik olarak
-//     giriş yapmış herhangi bir kullanıcı users/ koleksiyonunu sorgulayabilir.
-//     Gerçek izolasyon için istemci kodunun HER ZAMAN sorguya
-//     where('companyId','==',...) filtresi eklemesi gerekir (bu kural, filtresiz
-//     bir sorguyu reddetmez) — bu, FAZ2b'de ele alınması gereken bir sıkılaştırmadır.
+// (c) FAZ 2b YETKİ YÜKSELTME DÜZELTMELERİ (bu dosyada yenidir):
+//       - Kullanıcı KENDİ dokümanında asla roleId / companyId / superAdmin /
+//         aktif / email alanlarını değiştiremez (eskiden değiştirebiliyordu —
+//         yani her personel kendini admin veya süper-admin yapabilirdi!).
+//       - users/{uid} OLUŞTURURKEN superAdmin:true yazılamaz. Süper admin
+//         ataması yalnızca Firebase Console'dan elle yapılır (bkz. app.js
+//         içindeki "İlk süper admin'in atanması" yorumu).
+//       - users list sorgusu yalnızca yönetici (sahip/admin) veya süper
+//         admin tarafından yapılabilir.
+//       - invites/ ve superAdminAuditLog/ koleksiyonlarının kuralları eklendi
+//         (istemci kodu bu koleksiyonları kullanıyor; eski dosyada
+//         yazılmadıkları için "ayrıca iletildi" notuyla geçiştirilmişti).
+//       - Süper admin, tüm companies/ dokümanlarını okuyabilir/güncelleyebilir
+//         (süper admin paneli bunu gerektiriyor; eski dosyada eksikti).
 //
-// (c) YAYINLAMADAN ÖNCE, Firebase Console'un "Rules Playground" (kural
-//     simülatörü) aracıyla EN AZ şu iki senaryoyu test edin:
+// (d) ROL NOTU — ÖNEMLİ: istemcideki güncel yönetici rolü 'sahip' (bkz.
+//     app.js ROLE_DEFS, ekipYonet:true yalnızca o rolde); eski kayıtlarda
+//     tarihsel 'admin' rolü de bulunabilir. Aşağıdaki isAdmin() HER İKİSİNİ
+//     de kabul eder — roleDefFor() ile eşleşmeyen diğer roller (muhasebe,
+//     operasyon-mudürü vb.) istemcide de ekip yönetemez, kurallarda da
+//     yönetici sayılmaz.
+//
+// (e) YAYINLAMADAN ÖNCE, Firebase Console'un "Rules Playground" (kural
+//     simülatörü) aracıyla EN AZ şu senaryoları test edin:
 //       1) A şirketinden bir kullanıcının, B şirketine ait
 //          companies/{B'nin companyId'si} dokümanını "get" etmeye çalışması
 //          → REDDEDİLMELİ.
-//       2) Bir kullanıcının, kendisi olmayan başka bir uid'ye ait
-//          users/{başkasının uid'si} dokümanını "update" etmeye çalışması
-//          → o kullanıcı aynı şirketin admin'i DEĞİLSE REDDEDİLMELİ.
+//       2) Bir personelin KENDİ users/{uid} dokümanında roleId'yi
+//           değiştirmeye çalışması → REDDEDİLMELİ (adSoyad gibi diğer alanlar
+//           değiştirilebilir kalmalıdır).
+//       3) users dokümanı olmayan bir hesabın (ör. anonim oturum)
+//          filoPaneliData'yı okumaya çalışması → REDDEDİLMELİ.
 //     (Rules Playground: Firestore Database → Rules sekmesi → "Rules
 //     playground" düğmesi; simüle edilecek auth.uid ve belge yolunu elle
 //     girebilirsiniz.)
 //
 // ÖNEMLİ GÜVENLİK NOTU — anonim kimlik doğrulama: Bu panelin istemci kodu
-// artık (FAZ2 itibarıyla) HİÇBİR ZAMAN otomatik "anonim" Firebase oturumu
-// AÇMIYOR (bkz. index.html içindeki makeFirestoreAdapter() yorumu). Ancak bu
-// kurallardaki isSignedIn(), sadece "request.auth != null" kontrolü yaptığı
-// için, eğer bu Firebase projesinde Authentication → Sign-in method →
-// "Anonymous" sağlayıcısı AÇIK bırakılırsa, panelin arayüzünü hiç kullanmadan,
-// tarayıcı konsolundan doğrudan firebase.auth().signInAnonymously() çağıran
-// biri de "isSignedIn()" testini geçebilir. Bu, FAZ2'nin kapatmaya çalıştığı
-// tam olarak aynı türde bir açıktır. Bu yüzden proje sahibine ÖNERİMİZ:
-// Firebase Console → Authentication → Sign-in method → "Anonymous" sağlayıcısını
-// KAPALI tutun (varsayılan olarak zaten kapalıdır; yalnızca panelin ESKİ
-// sürümü için daha önce açtıysanız kapatmayı unutmayın).
+// HİÇBİR ZAMAN otomatik "anonim" Firebase oturumu AÇMIYOR (bkz.
+// makeFirestoreAdapter() yorumu). Yine de Firebase Console → Authentication
+// → Sign-in method → "Anonymous" sağlayıcısını KAPALI tutun. Ayrıca
+// Email/Password sağlayıcısı açık kalmak ZORUNDADIR (giriş için) — olsa olsa
+// konsoldan sahte hesap açılırsa bile (b) maddesindeki hasUserDoc() şartı
+// panel verisine erişemez.
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     function isSignedIn() { return request.auth != null; }
     function myUserDoc() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data; }
     function isSameCompany(companyId) { return isSignedIn() && myUserDoc().companyId == companyId; }
-    function isAdmin() { return isSignedIn() && myUserDoc().roleId == 'admin'; }
+    function isAdmin() { return isSignedIn() && (myUserDoc().roleId == 'sahip' || myUserDoc().roleId == 'admin'); }
+    function isSuperAdmin() { return isSignedIn() && myUserDoc().superAdmin == true; }
+    function hasUserDoc() { return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)); }
 
     match /companies/{companyId} {
-      allow read: if isSameCompany(companyId);
+      allow get: if isSameCompany(companyId) || isSuperAdmin();
+      allow list: if isSuperAdmin();
       allow create: if isSignedIn();
-      allow update: if isSameCompany(companyId) && isAdmin();
+      allow update: if (isSameCompany(companyId) && isAdmin()) || isSuperAdmin();
       allow delete: if false;
     }
 
     match /users/{uid} {
-      allow get: if isSignedIn() && (request.auth.uid == uid || isSameCompany(resource.data.companyId));
-      allow list: if isSignedIn();
-      allow create: if isSignedIn() && request.auth.uid == uid;
-      allow update: if isSignedIn() && (request.auth.uid == uid || (isSameCompany(resource.data.companyId) && isAdmin()));
-      allow delete: if isSignedIn() && isSameCompany(resource.data.companyId) && isAdmin();
+      allow get: if isSignedIn() && (request.auth.uid == uid || isSameCompany(resource.data.companyId) || isSuperAdmin());
+      allow list: if isAdmin() || isSuperAdmin();
+      // Yeni hesap yalnızca KENDİ dokümanını oluşturabilir ve superAdmin:true yazamaz.
+      allow create: if isSignedIn() && request.auth.uid == uid && request.resource.data.superAdmin != true;
+      // Kendi dokümanında korunmuş alanlar (roleId, companyId, superAdmin, aktif, email)
+      // DEĞİŞTİRİLEMEZ; diğer alanlar (adSoyad, tercihler vb.) güncellenebilir.
+      // Yönetici (aynı şirket) ve süper admin her alanı güncelleyebilir.
+      allow update: if isSignedIn() && (
+        (request.auth.uid == uid
+          && !diff(resource.data, request.resource.data).affectedKeys()
+                .hasAny(['roleId', 'companyId', 'superAdmin', 'aktif', 'email']))
+        || (isSameCompany(resource.data.companyId) && isAdmin())
+        || isSuperAdmin()
+      );
+      allow delete: if (isSameCompany(resource.data.companyId) && isAdmin()) || isSuperAdmin();
+    }
+
+    // Ekip davet akışı: yönetici davet OLUŞTURUR (create), davetli KENDİ hesabını
+    // açarken daveti OKUR (get — bu aşamada henüz users dokümanı YOKTUR, o yüzden
+    // burada hasUserDoc() ŞARTI OLMAMALI) ve kayıt sonrası daveti "kullanıldı"
+    // olarak İŞARETLER (update). İptal (delete) yöneticidedir.
+    match /invites/{email} {
+      allow get: if isSignedIn();
+      allow list: if isAdmin() || isSuperAdmin();
+      allow create: if isAdmin() || isSuperAdmin();
+      // "kullanıldı" işaretini yalnızca davetin e-postasıyla kayıt olan kişi koyabilir
+      // (request.auth.token.email, hesabın doğrulanmış e-postasıdır).
+      allow update: if isSignedIn() && request.auth.token.email == email;
+      allow delete: if isAdmin() || isSuperAdmin();
+    }
+
+    // Süper admin denetim günlüğü — değiştirilemez (immutable): yalnızca create + read.
+    match /superAdminAuditLog/{logId} {
+      allow create: if isSignedIn();
+      allow get, list: if isAdmin() || isSuperAdmin();
+      allow update, delete: if false;
     }
 
     match /filoPaneliData/{docId} {
-      allow read, write: if isSignedIn();
+      // hasUserDoc(): yalnızca panelin ekip/davet akışından geçmiş gerçek kullanıcılar.
+      // Bu şart olmadan, Authentication'da hesabı olan HERKES (anonim dahil) tüm
+      // panel verisini okuyup yazabilirdi.
+      allow read, write: if isSignedIn() && hasUserDoc();
     }
   }
 }
