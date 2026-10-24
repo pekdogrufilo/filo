@@ -11340,11 +11340,15 @@ async function fisOku(file){
     const mimeType = file.type === 'application/pdf' ? 'application/pdf' : (file.type || 'image/jpeg');
     const plakaList = vehicles.map(v=>v.plaka).join(', ');
 
+    // v.318: fişteki KM bilgisi artık okunuyor — km alanı prompta eklendi, önizlemede
+    // düzenlenebilir KM sütunu var, kaydederken masrafa km yazılıp aracın sonKm/sonBakimKm
+    // değeri masrafKmUygula ile güncelleniyor.
     const system = `Filo masraf belgesi okuma asistanı. Belgedeki TÜM masraf satırlarını çıkar.
 SADECE JSON döndür, başka açıklama yapma:
-{"tip":"cari","kayitlar":[{"plaka":"42AKS976","tarih":"2026-01-15","tutar":5250,"tip":"Tamir","not":"açıklama"}]}
+{"tip":"cari","kayitlar":[{"plaka":"42AKS976","tarih":"2026-01-15","tutar":5250,"tip":"Tamir","not":"açıklama","km":123456}]}
 
 Kurallar: plaka büyük harf boşluksuz, tarih YYYY-MM-DD, tutar TL sayı, tip: Tamir/Bakım/Lastik/Sigorta/Kasko/Diğer
+km: fişte kilometresi/odometre değeri görünüyorsa SAYI olarak yaz (bu litre, saat, para DEĞİL — sadece araç kilometresi). Fişte km yazmıyorsa km:null bırak.
 Filodaki plakalar: ${plakaList.slice(0,500)}`;
 
     const contentBlock = { source:{ type:'base64', media_type:mimeType, data:base64 } };
@@ -11407,6 +11411,7 @@ Filodaki plakalar: ${plakaList.slice(0,500)}`;
                 <th style="text-align:left;padding:4px 8px;color:var(--steel-300);font-weight:600;">Tarih</th>
                 <th style="text-align:left;padding:4px 8px;color:var(--steel-300);font-weight:600;">Tip</th>
                 <th style="text-align:right;padding:4px 8px;color:var(--steel-300);font-weight:600;">Tutar</th>
+                <th style="text-align:right;padding:4px 8px;color:var(--steel-300);font-weight:600;">KM</th>
                 <th style="padding:4px 8px;"></th>
               </tr>
             </thead>
@@ -11421,6 +11426,7 @@ Filodaki plakalar: ${plakaList.slice(0,500)}`;
                   <td style="padding:5px 8px;color:var(--steel-300);font-size:12px;">${esc(k.tarih||'—')}</td>
                   <td style="padding:5px 8px;color:var(--steel-300);font-size:12px;">${esc(k.tip||'Tamir')}</td>
                   <td style="padding:5px 8px;text-align:right;font-weight:600;color:var(--paper);font-size:12px;">${k.tutar ? k.tutar.toLocaleString('tr-TR')+'₺' : '—'}</td>
+                  <td style="padding:5px 8px;text-align:right;"><input type="number" min="0" value="${k.km??''}" placeholder="km" onwheel="this.blur()" onchange="fisRowKm(${i},this.value)" style="width:86px;background:var(--surface-2);border:1px solid var(--line);color:var(--paper);padding:3px 6px;border-radius:5px;font-size:12px;font-family:inherit;text-align:right;"></td>
                   <td style="padding:5px 8px;"><button onclick="fisRowSil(${i})" style="background:none;border:none;color:var(--safety);cursor:pointer;font-size:11px;">✕</button></td>
                 </tr>
               `).join('')}
@@ -11454,6 +11460,13 @@ function fisRowSil(i){
   if(row) row.style.opacity = '0.3';
 }
 
+// v.318: fiş önizlemesinde KM düzeltme (AI yanlış/boş okuduysa kullanıcı düzeltir).
+function fisRowKm(i, deger){
+  if(!window.__fisKayitlari) return;
+  const n = Number(deger);
+  window.__fisKayitlari[i].km = (deger && !isNaN(n) && n>0) ? n : null;
+}
+
 function fisRowDüzenle(i, alan, deger){
   if(!window.__fisKayitlari) return;
   window.__fisKayitlari[i][alan] = deger.trim().toUpperCase().replace(/\s+/g,'');
@@ -11478,6 +11491,7 @@ async function fisTopluKaydet(){
 
   let eklenen = 0;
   let atlanan = 0;
+  let aracKmGuncellenen = 0;
   const uyarilar = [];
 
   // Fiş base64 — yüklenen dosya
@@ -11520,11 +11534,17 @@ async function fisTopluKaydet(){
       tarih: k.tarih||todayISO(),
       tutar: tutarNum,
       not: k.not||'',
+      km: (Number(k.km)||null),
       hasFis: !!fisBase64
     });
+    // v.318: fişte km okunduysa aracın sonKm/sonBakimKm değerini de güncelle
+    // (manuel masraf ekleme akışındaki masrafKmUygula ile aynı davranış).
+    const aracV = vehicles.find(vv=>vv.id===k.vehicleId);
+    if(aracV && Number(k.km)>0 && masrafKmUygula(aracV, k.km, k.tip||'Tamir')) aracKmGuncellenen++;
     eklenen++;
   }
 
+  if(aracKmGuncellenen>0) await persist();
   // v.134: dönüş değeri artık kontrol ediliyor — persistExpenses() depolamaya gerçekten
   // yazamadıysa (ör. 20 saniyelik zaman aşımı), aşağıda "X masraf kaydedildi" diye YANILTICI
   // bir başarı mesajı göstermek yerine gerçek durumu bildiriyoruz. Kayıtlar bu noktada hâlâ
@@ -11549,7 +11569,7 @@ async function fisTopluKaydet(){
   }
 
   let msg = `<div style="padding:12px;border-radius:8px;font-size:13px;">`;
-  if(eklenen>0) msg += `<div style="color:#36A168;font-weight:700;margin-bottom:4px;">✅ ${eklenen} masraf kaydedildi${fisBase64?' (fiş görüntüsü eklendi)':''}.</div>`;
+  if(eklenen>0) msg += `<div style="color:#36A168;font-weight:700;margin-bottom:4px;">✅ ${eklenen} masraf kaydedildi${fisBase64?' (fiş görüntüsü eklendi)':''}${aracKmGuncellenen>0?` · ${aracKmGuncellenen} araçta km güncellendi`:''}.</div>`;
   if(atlanan>0){
     msg += `<div style="color:#E8A132;font-weight:600;margin-bottom:4px;">⚠️ ${atlanan} kayıt atlandı (zaten mevcut):</div>`;
     msg += uyarilar.map(u=>`<div style="color:var(--steel-300);font-size:12px;margin-left:8px;">• ${esc(u)}</div>`).join('');
