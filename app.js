@@ -3358,6 +3358,13 @@ function generateQrDataUrl(text){
     }, 200);
   });
 }
+// v.313: Excel'deki "Aylık Kira" aktif kiralamadaki tutarı yansıtacak — araç kaydındaki v.kira
+// alanı hakediş yüklemesi / eski veri / Excel'den güncelleme nedeniyle kiralamadan sapabiliyor;
+// Kiralama İşlemleri'nde görünen (rentals.kiraTutari) tutar birincil kabul edilir.
+function efektifAylikKira(v){
+  const r = rentals.find(x=>x.vehicleId===v.id && (x.durum==='teslimEdildi'||x.durum==='sozlesmeHazir') && Number(x.kiraTutari)>0);
+  return r ? Number(r.kiraTutari) : (Number(v.kira)||0);
+}
 function exportExcel(){
   const rows = vehicles.map(v=>({
     'Plaka': v.plaka || '',
@@ -3376,7 +3383,7 @@ function exportExcel(){
     'Kiracı Ehliyet No': v.kiraciEhliyet || '',
     'Kiracı Adres': v.kiraciAdres || '',
     'Durum': v.durum || '',
-    'Aylık Kira (TL)': v.kira || 0,
+    'Aylık Kira (TL)': efektifAylikKira(v),
     'Kira Bitiş Tarihi': v.kiraBitis || '',
     'Sözleşme Bitiş Tarihi': v.sozlesmeBitis || '',
     'Kasko Kodu': v.kaskoKodu || '',
@@ -22772,7 +22779,7 @@ function otomatikYedekWorkbookOlustur(){
     'Kiracı': v.kiraciAdi || v.yer || '', 'Kiracı Telefon': v.kiraciTel || '',
     'Kiracı TC/Vergi No': v.kiraciVergi || '', 'Kiracı Ehliyet No': v.kiraciEhliyet || '',
     'Kiracı Adres': v.kiraciAdres || '',
-    'Durum': v.durum || '', 'Aylık Kira (TL)': v.kira || 0, 'Kira Bitiş Tarihi': v.kiraBitis || '',
+    'Durum': v.durum || '', 'Aylık Kira (TL)': efektifAylikKira(v), 'Kira Bitiş Tarihi': v.kiraBitis || '',
     'Sözleşme Bitiş Tarihi': v.sozlesmeBitis || '',
     'Muayene Tarihi': v.muayeneTarihi || '', 'Sigorta Tarihi': v.sigortaTarihi || '', 'Kasko Bitiş Tarihi': v.kaskoBitis || '',
   }));
