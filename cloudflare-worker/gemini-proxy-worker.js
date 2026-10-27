@@ -33,7 +33,7 @@ const GEMINI_MODELS = [
 ];
 
 // Panelin çağrı yapmasına izinli kaynaklar (host son ekleri).
-const ALLOWED_ORIGIN_HOST_SUFFIXES = ['pekdogrufilo.github.io', '.netlify.app'];
+const ALLOWED_ORIGIN_HOST_SUFFIXES = ['pekdogrufilo.github.io', '.netlify.app', '.pekdogru.com'];
 
 // Hız sınırı: IP başına 5 dakikada en fazla 30 Gemini isteği.
 const RATE_LIMIT_MAX = 30;
