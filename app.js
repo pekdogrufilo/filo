@@ -11516,6 +11516,53 @@ function ltKalemSil(i){
   s.kalemler.splice(i,1);
   leadTeklifRender();
 }
+// ─── v.326: Teklif şablonları ────────────────────────────────────────────────
+// Sık kullanılan kalem paketleri ("Doblo 12.000₺ 12ay 4000km" vb.) tek tıkla teklife eklenir.
+// localStorage'da tutulur (LT_SABLON_KEY) — bulut senkronu gerektirmez, cihaz başına geçerlidir.
+const LT_SABLON_KEY = 'filo_ltSablonlar';
+function ltSablonlarOku(){
+  try{ return JSON.parse(localStorage.getItem(LT_SABLON_KEY)||'[]'); }catch(e){ return []; }
+}
+function ltSablonYaz(liste){
+  try{ localStorage.setItem(LT_SABLON_KEY, JSON.stringify(liste)); }catch(e){ showToast('Şablon kaydedilemedi (depolama dolu olabilir).', true); }
+}
+function ltSablonKaydet(){
+  const s = window.__leadTeklif; if(!s) return;
+  const dolu = s.kalemler.filter(k=>k.ad||k.aylikKira);
+  if(!dolu.length){ showToast('Kaydedilecek dolu kalem yok.', true); return; }
+  const ad = prompt('Şablon adı (örn. "Doblo paketi — 12 ay"):');
+  if(!ad) return;
+  const liste = ltSablonlarOku();
+  liste.push({
+    id: 'sbn-'+Date.now().toString(36),
+    ad: ad.trim(),
+    kalemler: dolu.map(k=>({ad:k.ad, adet:k.adet, aylikKira:k.aylikKira, sureAy:k.sureAy, kmLimiti:k.kmLimiti, kmAsim:k.kmAsim})),
+    kdvMod: s.kdvMod, kdvOrani: s.kdvOrani
+  });
+  ltSablonYaz(liste);
+  showToast('Şablon kaydedildi: ' + ad.trim());
+  leadTeklifRender();
+}
+function ltSablonUygula(id){
+  const s = window.__leadTeklif; if(!s) return;
+  const sbn = ltSablonlarOku().find(x=>x.id===id);
+  if(!sbn) return;
+  const mevcutDolu = s.kalemler.some(k=>k.ad||k.aylikKira);
+  if(mevcutDolu && !confirm('Mevcut kalemler şablonla değiştirilecek. Devam edilsin mi?')) return;
+  s.kalemler = sbn.kalemler.map(k=>({...k}));
+  s.kdvMod = sbn.kdvMod || s.kdvMod;
+  s.kdvOrani = sbn.kdvOrani!=null ? sbn.kdvOrani : s.kdvOrani;
+  showToast('Şablon uygulandı: ' + sbn.ad);
+  leadTeklifRender();
+}
+function ltSablonSil(id){
+  const liste = ltSablonlarOku();
+  const sbn = liste.find(x=>x.id===id);
+  if(!sbn) return;
+  if(!confirm('"'+sbn.ad+'" şablonu silinecek. Devam edilsin mi?')) return;
+  ltSablonYaz(liste.filter(x=>x.id!==id));
+  leadTeklifRender();
+}
 function ltSatirToplam(k){
   const adet = Number(k.adet)||0, kira = Number(k.aylikKira)||0, sure = Number(k.sureAy)||0;
   return adet*kira*sure;
@@ -11581,6 +11628,15 @@ function leadTeklifRender(){
     </div>
 
     <div style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--steel-300);margin:16px 0 8px;">Teklif Kalemleri</div>
+    ${(()=>{ const sbnlar = ltSablonlarOku(); if(!sbnlar.length) return ''; return `
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:10px;padding:8px 10px;border:1px dashed var(--line);border-radius:9px;background:var(--tint,rgba(0,169,157,.05));">
+      <span style="font-size:11px;font-weight:700;color:var(--steel-100);">⚡ Şablon:</span>
+      <select id="ltSablonSec" style="flex:1;min-width:160px;padding:6px 8px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--paper);font-size:12px;">
+        ${sbnlar.map(x=>`<option value="${esc(x.id)}">${esc(x.ad)} (${x.kalemler.length} kalem)</option>`).join('')}
+      </select>
+      <button onclick="ltSablonUygula(document.getElementById('ltSablonSec').value)" style="background:var(--accent-blue);border:none;color:#fff;font-size:11.5px;font-weight:700;padding:6px 12px;border-radius:7px;cursor:pointer;">Uygula</button>
+      <button onclick="ltSablonSil(document.getElementById('ltSablonSec').value)" style="background:none;border:1px solid var(--line);color:#E1554E;font-size:11.5px;font-weight:600;padding:6px 10px;border-radius:7px;cursor:pointer;">Sil</button>
+    </div>`; })()}
     <div class="table-scroll" style="margin-bottom:10px;">
       <table class="mini-table" style="min-width:640px;">
         <thead><tr>
@@ -11590,7 +11646,10 @@ function leadTeklifRender(){
         <tbody>${s.kalemler.map(kalemAlanlari).join('')}</tbody>
       </table>
     </div>
-    <button onclick="ltKalemEkle()" style="background:none;border:1px dashed var(--line);color:var(--accent-blue);font-size:12px;font-weight:600;padding:6px 14px;border-radius:8px;cursor:pointer;">+ Kalem Ekle</button>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button onclick="ltKalemEkle()" style="background:none;border:1px dashed var(--line);color:var(--accent-blue);font-size:12px;font-weight:600;padding:6px 14px;border-radius:8px;cursor:pointer;">+ Kalem Ekle</button>
+      <button onclick="ltSablonKaydet()" style="background:none;border:1px dashed var(--line);color:var(--steel-100);font-size:12px;font-weight:600;padding:6px 14px;border-radius:8px;cursor:pointer;" title="Mevcut dolu kalemleri şablon olarak kaydeder">⚡ Şablon Olarak Kaydet</button>
+    </div>
 
     <div style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--steel-300);margin:16px 0 8px;">Koşullar</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:16px;">
