@@ -4116,7 +4116,10 @@ async function geminiChatFetch(system, contents, generationConfig){
     for(let i=0;i<GEMINI_MODELS.length;i++){
       const MODEL = GEMINI_MODELS[i];
       const controller = new AbortController();
-      const timeout = setTimeout(()=>controller.abort(), 60000);
+      // v.331: 60 sn beklemek çok uzundu — gerçek bir yanıt genelde ilk ~30 sn içinde gelir,
+      // 45 sn'i geçen istek artık beklemek yerine sıradaki modele geçiyor (toplam hata
+      // senaryosunda kullanıcı dakikalarca "Düşünüyor..." görmiyor).
+      const timeout = setTimeout(()=>controller.abort(), 45000);
       try{
         const res = await fetch(GEMINI_PROXY_URL,{
           method:'POST',
@@ -22540,6 +22543,7 @@ TEMEL KURALLAR:
 - Para birimini ₺ olarak göster (1.234,56 ₺ formatında)
 - Birden fazla kalem varsa okunaklı olsun diye liste/tablo kullanabilirsin, ama her cevabı zorla listeye/tabloya çevirme
 - Veri yoksa "Bu konuda elimde yeterli veri yok" gibi doğal bir cümleyle söyle
+- Cevabı yazmadan ÖNCE cevabındaki HER sayıyı, plakayı ve tarihi FİLO VERİSİ'nde tek tek kontrol et — veride birebir karşılığı olmayan bir sayı/plaka/tarihi asla yazma; toplama/çıkarma sonucu vereceksen bile sonucu verideki hazır alandan doğrulayamıyorsan bunu açıkça belirt
 
 TAKİP SORULARI VE SOHBET SÜREKLİLİĞİ:
 - Bir soruyu cevaplamak için gereken bilgi eksik veya belirsizse (ör. hangi araç/plaka olduğu, hangi tarih aralığı, "bu ay" derken hangi ay) tahmin yürütüp yanlış cevap vermek yerine KISA bir takip sorusu sor
@@ -22606,11 +22610,17 @@ SIKÇA SORULAN SORULAR:
 - "Ödenmemiş HGS/OGS ve trafik cezası ne kadar?" → hasarCezaOzet.odenmemisHgsToplam / odenmemisCezaToplam (yönetici değilse erişim yok de)
 
 FİLO VERİSİ:
-${JSON.stringify(filoOzet, null, 1)}`;
+${JSON.stringify(filoOzet)}`;
 
     // Konuşma geçmişini Gemini formatına çevir
+    // v.331: geçmiş sınırsız büyüyordu — uzun sohbette tüm geçmiş + tüm filo verisi her
+    // istekte yeniden gönderilince payload şişiyor, model detay kaçırıp yanlış cevap veriyor
+    // ve yanıt ciddi yavaşlıyordu. Artık son 10 mesaj (5 soru-cevap) gönderiliyor; en eski
+    // mesajlar bağlamdan düşüyor (asistan "bu sohbette yeni" gibi davranmıyor, sadece
+    // çok eski turları hatırlamıyor).
+    const gecmisBas = Math.max(0, aiMessages.length-1-10);
     const geminiMessages = [];
-    for(let i=0; i<aiMessages.length-1; i++){
+    for(let i=gecmisBas; i<aiMessages.length-1; i++){
       const m = aiMessages[i];
       geminiMessages.push({role: m.role==='user'?'user':'model', parts:[{text: aiMesajDuzMetne(m.content)}]});
     }
