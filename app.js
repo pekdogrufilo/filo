@@ -6021,7 +6021,7 @@ function openVehicleDetail(id){
               const sRenk = r.iadeEdildi?'var(--accent-blue)':(dl===null?'var(--steel-300)':dl<0?'#E1554E':'#36A168');
               const sTxt = r.iadeEdildi ? 'İade edildi'+(r.iadeEdildi.tarih?' · '+r.iadeEdildi.tarih:'') : (dl===null?'—':dl<0?'Süresi geçti':'Aktif · '+dl+' gün');
               return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);flex-wrap:wrap;">
-                <span style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace;font-weight:700;font-size:12px;color:var(--accent-blue);">${esc(r.sozNo)}</span>
+                <span style="font-family:var(--font-mono,monospace);font-weight:700;font-size:12px;color:var(--accent-blue);">${esc(r.sozNo)}</span>
                 <span style="font-size:12px;color:var(--steel-300);flex:1;min-width:120px;">${esc(r.kiraci||'')}</span>
                 <span style="font-size:11px;color:var(--steel-300);">${r.basISO?fmtTarih(r.basISO):'—'} → ${r.bitisISO?fmtTarih(r.bitisISO):'—'}</span>
                 <span style="font-size:11px;font-weight:600;color:${sRenk};white-space:nowrap;">${sTxt}</span>
@@ -10137,7 +10137,7 @@ function filoSaglikSkoruHTML(){
             stroke-dasharray="${dash} ${C.toFixed(1)}" transform="rotate(-90 66 66)"/>
         </svg>
         <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-          <div style="font-size:30px;font-weight:800;color:${s.renk};font-family:'SF Mono',SFMono-Regular,Consolas,monospace;line-height:1;">${s.genel}</div>
+          <div style="font-size:30px;font-weight:800;color:${s.renk};font-family:var(--font-mono,monospace);line-height:1;">${s.genel}</div>
           <div style="font-size:10px;font-weight:700;letter-spacing:.5px;color:var(--steel-300);text-transform:uppercase;margin-top:2px;">/ 100</div>
         </div>
       </div>
@@ -10687,13 +10687,13 @@ function renderFinansalAnalizPage(){
             <div style="flex:1;height:20px;background:var(--surface-2);border-radius:6px;overflow:hidden;">
               <div style="height:100%;width:${Math.max(4,Math.round(x.tutar/_max*100))}%;background:linear-gradient(90deg,rgba(22,160,134,.72),rgba(225,85,78,.95));border-radius:6px;"></div>
             </div>
-            <span style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace;font-size:12.5px;font-weight:700;color:var(--paper);width:110px;text-align:right;">${fmtTL2(x.tutar)}</span>
+            <span style="font-family:var(--font-mono,monospace);font-size:12.5px;font-weight:700;color:var(--paper);width:110px;text-align:right;">${fmtTL2(x.tutar)}</span>
             <span style="font-size:11.5px;color:var(--steel-300);width:80px;text-align:right;">%${Math.round(x.tutar/_toplam*100)} · ${x.adet} kayıt</span>
           </div>`).join('')}
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);font-size:12.5px;color:var(--text-2);">
           <span>Toplam ${_sirali.length} araç · ${_sirali.reduce((s,x)=>s+x.adet,0)} masraf kaydı</span>
-          <b style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace;color:var(--paper);">${fmtTL2(_toplam)}</b>
+          <b style="font-family:var(--font-mono,monospace);color:var(--paper);">${fmtTL2(_toplam)}</b>
         </div>`;
       })()}
     </div>
@@ -10782,7 +10782,7 @@ function masrafRowsHTML(list){
       <td><span class="mtip" style="background:var(--surface-2);padding:3px 9px;border-radius:12px;font-size:13px;font-weight:600;">${esc(e.tip)}</span></td>
       <td>${esc(fmtTarih(e.tarih))}</td>
       <td>${esc(e.not||'—')}</td>
-      <td style="text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,monospace;font-weight:600;">${fmtTL2(e.tutar)}</td>
+      <td style="text-align:right;font-family:var(--font-mono,monospace);font-weight:600;">${fmtTL2(e.tutar)}</td>
       <td><input type="number" min="0" class="mkm" data-id="${e.id}" value="${e.km||''}" placeholder="km" title="Km bilgisi — girip alandan çıkınca kaydedilir" style="width:82px;background:var(--surface-2);border:1px solid var(--line);color:var(--paper);padding:5px 7px;border-radius:6px;font-family:inherit;font-size:12.5px;"></td>
       <td style="text-align:right;"><button class="mdel" data-id="${e.id}" title="Sil"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg></button></td>
     </tr>`;
@@ -11094,7 +11094,7 @@ function renderBakimPage(){
             <td><span class="mini-plaka">${esc(v.plaka)}</span></td>
             <td>${esc([v.marka,v.model].filter(Boolean).join(' ')||'—')}</td>
             <td>${v.sonrakiServisTarihi?fmtTarih(v.sonrakiServisTarihi):'—'}</td>
-            <td style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${v.sonrakiServisKm?v.sonrakiServisKm.toLocaleString('tr-TR')+' km':'—'}</td>
+            <td style="font-family:var(--font-mono,monospace)">${v.sonrakiServisKm?v.sonrakiServisKm.toLocaleString('tr-TR')+' km':'—'}</td>
             <td>${esc(v.servisTuru||'Periyodik Bakım')}</td>
             <td style="color:${durumRenk};font-weight:600">${durumTxt}</td>
           </tr>`;
@@ -11123,8 +11123,8 @@ function renderBakimPage(){
           return `<tr>
             <td><span class="mini-plaka">${esc(v.plaka)}</span></td>
             <td>${esc([v.marka,v.model].filter(Boolean).join(' ')||'—')}</td>
-            <td style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${kmTxt}</td>
-            <td style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${ortTxt}</td>
+            <td style="font-family:var(--font-mono,monospace)">${kmTxt}</td>
+            <td style="font-family:var(--font-mono,monospace)">${ortTxt}</td>
             <td>${tahminTxt}</td>
           </tr>`;
         }).join('')}</tbody>
@@ -11151,7 +11151,7 @@ function renderBakimPage(){
               <td>${fmtTarih(k.giris)}</td>
               <td>${k.cikis?fmtTarih(k.cikis):'<span style="color:#E8A132;font-weight:700;">hâlâ serviste</span>'}</td>
               <td>${sure||'—'}</td>
-              <td style="text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${k.tutar!=null?fmtTL2(k.tutar):'—'}</td>
+              <td style="text-align:right;font-family:var(--font-mono,monospace)">${k.tutar!=null?fmtTL2(k.tutar):'—'}</td>
               <td><button onclick="openVehicleDetail('${k.vid}')" style="background:none;border:1px solid var(--line);color:var(--paper);font-size:11px;padding:3px 9px;border-radius:6px;cursor:pointer;white-space:nowrap;">Araç</button></td>
             </tr>`;
           }).join('')}</tbody>
@@ -11415,6 +11415,13 @@ function leadDurumRenk(d){
   if(d==='Teklif gönderildi') return '#E8A132';
   return 'var(--steel-100)';
 }
+function leadDurumZemin(d){
+  if(d==='Kazanıldı') return 'rgba(54,161,104,.12)';
+  if(d==='Kaybedildi') return 'rgba(225,85,78,.10)';
+  if(d==='Yeni') return 'rgba(0,169,157,.12)';
+  if(d==='Teklif gönderildi') return 'rgba(232,161,50,.14)';
+  return 'rgba(127,131,128,.12)';
+}
 function renderLeadsKart(){
   const liste = document.getElementById('leadsListe');
   if(!liste) return;
@@ -11424,11 +11431,11 @@ function renderLeadsKart(){
     return;
   }
   liste.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px;">${sirali.map(l=>`
-    <div style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--surface-2);display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;">
+    <div style="border:1px solid var(--border);border-radius:20px;padding:12px 14px;background:var(--surface);box-shadow:var(--shadow-soft,0 1px 2px rgba(31,42,40,.05));display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;">
       <div style="flex:1;min-width:220px;">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
           <span style="font-size:13.5px;font-weight:700;color:var(--paper);">${esc(l.adSoyad||'—')}</span>
-          <span style="font-size:11px;font-weight:700;color:${leadDurumRenk(l.durum)};">${esc(l.durum||'Yeni')}</span>
+          <span style="font-size:11px;font-weight:700;color:${leadDurumRenk(l.durum)};background:${leadDurumZemin(l.durum)};padding:3px 10px;border-radius:999px;white-space:nowrap;">${esc(l.durum||'Yeni')}</span>
           <span style="font-size:11px;color:var(--steel-300);">${fmtTarih(l.tarih)}</span>
         </div>
         <div style="font-size:12px;color:var(--steel-100);margin-top:4px;">
@@ -11439,11 +11446,11 @@ function renderLeadsKart(){
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
         ${l.telefon?`<a href="tel:${esc(String(l.telefon).replace(/\s+/g,''))}" style="font-size:12px;color:var(--accent-blue);text-decoration:none;font-weight:600;">📞 ${esc(l.telefon)}</a>`:''}
         ${l.email?`<a href="mailto:${esc(l.email)}" style="font-size:12px;color:var(--accent-blue);text-decoration:none;">✉ ${esc(l.email)}</a>`:''}
-        <button onclick="leadTeklifAc('${esc(String(l.id))}')" title="${l.teklif?'Teklifi görüntüle / düzenle':'Fiyat, km, süre ve ödeme şeklini kendiniz belirleyerek teklif oluşturun'}" style="background:${l.teklif?'rgba(54,161,104,.12)':'rgba(22,160,134,.12)'};border:1px solid ${l.teklif?'rgba(54,161,104,.4)':'rgba(22,160,134,.4)'};color:${l.teklif?'#36A168':'var(--accent-blue)'};font-size:12px;font-weight:700;padding:4px 12px;border-radius:6px;cursor:pointer;white-space:nowrap;">${l.teklif?'📄 Teklifi Gör / Düzenle':'📄 Teklif Oluştur'}</button>
-        <select onchange="leadDurumDegistir('${esc(String(l.id))}',this.value)" title="Müşteri imzalı teklifi geri gönderince 'Kazanıldı', vazgeçerse 'Kaybedildi' seçin" style="padding:5px 8px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--paper);font-size:12px;font-family:inherit;cursor:pointer;">
+        <button onclick="leadTeklifAc('${esc(String(l.id))}')" title="${l.teklif?'Teklifi görüntüle / düzenle':'Fiyat, km, süre ve ödeme şeklini kendiniz belirleyerek teklif oluşturun'}" style="background:${l.teklif?'rgba(54,161,104,.12)':'rgba(0,169,157,.12)'};border:1px solid ${l.teklif?'rgba(54,161,104,.35)':'rgba(0,169,157,.35)'};color:${l.teklif?'#36A168':'var(--accent-blue)'};font-size:12px;font-weight:700;padding:4px 12px;border-radius:999px;cursor:pointer;white-space:nowrap;">${l.teklif?'📄 Teklifi Gör / Düzenle':'📄 Teklif Oluştur'}</button>
+        <select onchange="leadDurumDegistir('${esc(String(l.id))}',this.value)" title="Müşteri imzalı teklifi geri gönderince 'Kazanıldı', vazgeçerse 'Kaybedildi' seçin" style="padding:5px 8px;border:1px solid var(--border-2,var(--line));border-radius:12px;background:var(--surface);color:var(--paper);font-size:12px;font-family:inherit;cursor:pointer;">
           ${LEAD_DURUMLAR.map(d=>`<option ${d===l.durum?'selected':''}>${d}</option>`).join('')}
         </select>
-        <button onclick="leadSil('${esc(String(l.id))}')" title="Sil" style="background:none;border:1px solid var(--line);color:#E1554E;font-size:12px;padding:4px 9px;border-radius:6px;cursor:pointer;">Sil</button>
+        <button onclick="leadSil('${esc(String(l.id))}')" title="Sil" style="background:none;border:1px solid var(--line);color:#E1554E;font-size:12px;padding:4px 9px;border-radius:999px;cursor:pointer;">Sil</button>
       </div>
     </div>`).join('')}</div>`;
 }
@@ -11587,7 +11594,7 @@ function ltToplamGuncelle(){
   const ltKdv = document.getElementById('lt-kdv'); if(ltKdv) ltKdv.textContent = fmtTL2(t.kdv);
   const ltGenel = document.getElementById('lt-genel'); if(ltGenel) ltGenel.textContent = fmtTL2(t.genel);
 }
-function ltInputStil(){ return 'width:100%;box-sizing:border-box;margin-top:3px;padding:7px 8px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--paper);font-size:12.5px;font-family:inherit;'; }
+function ltInputStil(){ return 'width:100%;box-sizing:border-box;margin-top:3px;padding:7px 8px;border:1px solid var(--border-2,var(--line));border-radius:12px;background:var(--surface);color:var(--paper);font-size:12.5px;font-family:inherit;'; }
 function leadTeklifRender(){
   const s = window.__leadTeklif; if(!s) return;
   const t = ltToplamHesapla();
@@ -11602,11 +11609,11 @@ function leadTeklifRender(){
       <td style="padding:6px 4px;"><input type="number" min="1" value="${k.sureAy!=null?k.sureAy:''}" onwheel="this.blur()" onchange="ltKalemDegis(${i},'sureAy',this.value)" style="${ltInputStil()}text-align:right;"></td>
       <td style="padding:6px 4px;"><input type="number" min="0" value="${k.kmLimiti!=null?k.kmLimiti:''}" placeholder="sınırsız" onwheel="this.blur()" onchange="ltKalemDegis(${i},'kmLimiti',this.value)" style="${ltInputStil()}text-align:right;"></td>
       <td style="padding:6px 4px;"><input type="number" min="0" step="0.01" value="${k.kmAsim!=null?k.kmAsim:''}" placeholder="—" onwheel="this.blur()" onchange="ltKalemDegis(${i},'kmAsim',this.value)" style="${ltInputStil()}text-align:right;"></td>
-      <td style="padding:6px 4px;text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,monospace;font-size:12px;color:var(--paper);white-space:nowrap;" id="lt-satir-${i}">${fmtTL2(ltSatirToplam(k))}</td>
+      <td style="padding:6px 4px;text-align:right;font-family:var(--font-mono,monospace);font-size:12px;color:var(--paper);white-space:nowrap;" id="lt-satir-${i}">${fmtTL2(ltSatirToplam(k))}</td>
       <td style="padding:6px 4px;"><button onclick="ltKalemSil(${i})" title="Kalemi sil" style="background:none;border:1px solid var(--line);color:#E1554E;font-size:11px;padding:4px 8px;border-radius:6px;cursor:pointer;">✕</button></td>
     </tr>`;
   el.innerHTML = `
-  <div style="background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px;width:min(96vw,860px);max-height:90vh;overflow-y:auto;">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:22px;box-shadow:var(--shadow-soft,0 18px 44px -18px rgba(31,42,40,.25));width:min(96vw,860px);max-height:90vh;overflow-y:auto;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
       <h3 style="margin:0;font-size:17px;color:var(--paper);">📄 Araç Kiralama Teklifi</h3>
       <button onclick="document.getElementById('ltOverlay').remove()" style="background:none;border:none;color:var(--steel-300);cursor:pointer;padding:4px;display:flex;">
@@ -11615,7 +11622,7 @@ function leadTeklifRender(){
     </div>
     <p style="margin:0 0 14px;font-size:12.5px;color:var(--steel-300);">Fiyat, km, süre ve ödeme şeklini siz belirleyin. Kaydettiğinizde teklif müşteri kaydına işlenir; WhatsApp metnini kopyalayabilir veya PDF yazdırabilirsiniz.</p>
 
-    <div style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--steel-300);margin:16px 0 8px;">Müşteri Bilgileri</div>
+    <div class="lt-sec" style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-3,var(--steel-300));margin:16px 0 8px;">Müşteri Bilgileri</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px;">
       <div><label style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;">Müşteri</label>
         <input type="text" value="${esc(s.ad||'')}" onchange="ltAlanDegis('ad',this.value)" style="${ltInputStil()}"></div>
@@ -11627,9 +11634,9 @@ function leadTeklifRender(){
         <input type="text" value="${esc(s.sehir||'')}" onchange="ltAlanDegis('sehir',this.value)" style="${ltInputStil()}"></div>
     </div>
 
-    <div style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--steel-300);margin:16px 0 8px;">Teklif Kalemleri</div>
+    <div class="lt-sec" style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-3,var(--steel-300));margin:16px 0 8px;">Teklif Kalemleri</div>
     ${(()=>{ const sbnlar = ltSablonlarOku(); if(!sbnlar.length) return ''; return `
-    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:10px;padding:8px 10px;border:1px dashed var(--line);border-radius:9px;background:var(--tint,rgba(0,169,157,.05));">
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:10px;padding:8px 10px;border:1px dashed var(--line);border-radius:9px;background:var(--mint-tint,rgba(0,169,157,.06));">
       <span style="font-size:11px;font-weight:700;color:var(--steel-100);">⚡ Şablon:</span>
       <select id="ltSablonSec" style="flex:1;min-width:160px;padding:6px 8px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--paper);font-size:12px;">
         ${sbnlar.map(x=>`<option value="${esc(x.id)}">${esc(x.ad)} (${x.kalemler.length} kalem)</option>`).join('')}
@@ -11651,7 +11658,7 @@ function leadTeklifRender(){
       <button onclick="ltSablonKaydet()" style="background:none;border:1px dashed var(--line);color:var(--steel-100);font-size:12px;font-weight:600;padding:6px 14px;border-radius:8px;cursor:pointer;" title="Mevcut dolu kalemleri şablon olarak kaydeder">⚡ Şablon Olarak Kaydet</button>
     </div>
 
-    <div style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--steel-300);margin:16px 0 8px;">Koşullar</div>
+    <div class="lt-sec" style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-3,var(--steel-300));margin:16px 0 8px;">Koşullar</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:16px;">
       <div><label style="font-size:10px;color:var(--steel-300);text-transform:uppercase;letter-spacing:.4px;">Ödeme Şekli</label>
         <input type="text" value="${esc(s.odeme||'')}" placeholder="örn. %50 peşin, kalan aylık taksitler halinde" onchange="ltAlanDegis('odeme',this.value)" style="${ltInputStil()}"></div>
@@ -11670,9 +11677,9 @@ function leadTeklifRender(){
 
     <div style="margin-top:16px;border-top:1px solid var(--line);padding-top:12px;display:flex;justify-content:flex-end;">
       <div style="min-width:260px;font-size:13px;">
-        <div style="display:flex;justify-content:space-between;padding:3px 0;color:var(--steel-100);"><span>Ara Toplam</span><span id="lt-ara" style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace;">${fmtTL2(t.ara)}</span></div>
-        <div style="display:flex;justify-content:space-between;padding:3px 0;color:var(--steel-100);"><span>KDV ${s.kdvOrani!=null?s.kdvOrani:20}% (${s.kdvMod==='dahil'?'dahil':s.kdvMod==='haric'?'hariç':'yok'})</span><span id="lt-kdv" style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace;">${fmtTL2(t.kdv)}</span></div>
-        <div style="display:flex;justify-content:space-between;padding:6px 0 0;font-size:15px;font-weight:800;color:var(--accent-blue);"><span>GENEL TOPLAM</span><span id="lt-genel" style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace;">${fmtTL2(t.genel)}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:3px 0;color:var(--steel-100);"><span>Ara Toplam</span><span id="lt-ara" style="font-family:var(--font-mono,monospace);">${fmtTL2(t.ara)}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:3px 0;color:var(--steel-100);"><span>KDV ${s.kdvOrani!=null?s.kdvOrani:20}% (${s.kdvMod==='dahil'?'dahil':s.kdvMod==='haric'?'hariç':'yok'})</span><span id="lt-kdv" style="font-family:var(--font-mono,monospace);">${fmtTL2(t.kdv)}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0 0;font-size:15px;font-weight:800;color:var(--accent-blue);"><span>GENEL TOPLAM</span><span id="lt-genel" style="font-family:var(--font-mono,monospace);">${fmtTL2(t.genel)}</span></div>
       </div>
     </div>
 
@@ -11844,11 +11851,11 @@ function leadTeklifPdf(){
   const html = `<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>Araç Kiralama Teklifi ${teklifNo} — ${esc(s.ad||'')}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Saira:wght@600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@500;600;700&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     *{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     :root{--teal:#017F76;--teal-b:#00A99D;--ink:#0B2B28;--mut:#5E7370;--line:#DCE8E6;--tint:#F3FAF8;}
-    body{font-family:'IBM Plex Sans',Arial,Helvetica,sans-serif;font-size:12px;line-height:1.65;color:var(--ink);max-width:800px;margin:0 auto;padding:24px;background:#fff;}
+    body{font-family:'Instrument Sans',Arial,Helvetica,sans-serif;font-size:12px;line-height:1.65;color:var(--ink);max-width:800px;margin:0 auto;padding:24px;background:#fff;}
     .mono{font-family:'IBM Plex Mono',Consolas,monospace;font-variant-numeric:tabular-nums;}
     b{font-weight:700;}
     /* — filigran — */
@@ -11860,20 +11867,20 @@ function leadTeklifPdf(){
     .mh-left{display:flex;align-items:center;gap:14px;}
     .mh-logo{width:58px;height:58px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
     .mh-logo img{width:100%;height:100%;object-fit:contain;}
-    .mh-name{font-family:Saira,'IBM Plex Sans',sans-serif;font-size:20px;font-weight:800;letter-spacing:.3px;color:var(--ink);line-height:1.2;}
+    .mh-name{font-family:'Bricolage Grotesque','Instrument Sans',sans-serif;font-size:20px;font-weight:800;letter-spacing:.3px;color:var(--ink);line-height:1.2;}
     .mh-tag{font-size:10px;font-weight:600;color:var(--teal);letter-spacing:1.8px;text-transform:uppercase;margin-top:3px;}
     .mh-meta{text-align:right;font-size:10.5px;color:var(--mut);line-height:1.9;}
-    .mh-meta .no{font-family:Saira,sans-serif;font-size:15px;font-weight:800;color:var(--ink);letter-spacing:.5px;}
+    .mh-meta .no{font-family:'Bricolage Grotesque',sans-serif;font-size:15px;font-weight:800;color:var(--ink);letter-spacing:.5px;}
     /* — belge başlığı — */
     .doc-title{margin:24px 0 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
-    .doc-title .t{font-family:Saira,sans-serif;font-size:23px;font-weight:800;letter-spacing:2px;color:var(--ink);text-transform:uppercase;}
+    .doc-title .t{font-family:'Bricolage Grotesque',sans-serif;font-size:23px;font-weight:800;letter-spacing:2px;color:var(--ink);text-transform:uppercase;}
     .doc-title .rule{flex:1;height:1px;background:var(--line);min-width:30px;}
     .chip{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.5px;color:var(--teal);background:var(--tint);border:1px solid var(--line);border-radius:20px;padding:4px 12px;white-space:nowrap;}
     /* — müşteri + teklif künyesi — */
     .meta{display:grid;grid-template-columns:1.35fr 1fr;gap:12px;margin-bottom:20px;}
     .mcard{border:1px solid var(--line);border-radius:12px;padding:14px 18px;background:var(--tint);}
     .mcard .l{font-size:9px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1.2px;}
-    .mcard .v{font-family:Saira,sans-serif;font-size:16px;font-weight:700;color:var(--ink);margin-top:2px;line-height:1.35;}
+    .mcard .v{font-family:'Bricolage Grotesque',sans-serif;font-size:16px;font-weight:700;color:var(--ink);margin-top:2px;line-height:1.35;}
     .mcard .satir{font-size:11.5px;color:var(--mut);margin-top:5px;display:flex;gap:7px;align-items:baseline;}
     .mcard .satir .sl{font-size:9.5px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.8px;min-width:52px;}
     .knye{display:flex;flex-direction:column;gap:0;}
@@ -11883,7 +11890,7 @@ function leadTeklifPdf(){
     .knye .sv{font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--ink);}
     /* — kalemler — */
     table{width:100%;border-collapse:collapse;font-size:11.5px;page-break-inside:avoid;}
-    thead th{background:#0B2B28;color:#fff;font-family:Saira,sans-serif;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:10px 10px;text-align:left;}
+    thead th{background:#0B2B28;color:#fff;font-family:'Bricolage Grotesque',sans-serif;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:10px 10px;text-align:left;}
     th.r,td.r{text-align:right;} th.c,td.c{text-align:center;}
     td.r{white-space:nowrap;}
     tbody td{padding:10px 10px;border-bottom:1px solid var(--line);vertical-align:top;}
@@ -11895,10 +11902,10 @@ function leadTeklifPdf(){
     .tot-row .mono{font-weight:600;color:var(--ink);}
     .tot-aylik{margin-top:10px;display:flex;justify-content:space-between;align-items:center;background:var(--tint);border:1px solid var(--line);border-left:4px solid var(--teal-b);border-radius:0 9px 9px 0;padding:9px 14px;font-size:12.5px;}
     .tot-aylik .mono{font-size:14px;font-weight:700;color:var(--ink);}
-    .genel{margin-top:8px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(120deg,#0B2B28,#017F76);color:#fff;border-radius:11px;padding:13px 18px;font-family:Saira,sans-serif;font-size:13px;font-weight:800;letter-spacing:1px;text-transform:uppercase;}
+    .genel{margin-top:8px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(120deg,#0B2B28,#017F76);color:#fff;border-radius:11px;padding:13px 18px;font-family:'Bricolage Grotesque',sans-serif;font-size:13px;font-weight:800;letter-spacing:1px;text-transform:uppercase;}
     .genel .mono{font-size:18px;font-weight:700;letter-spacing:0;}
     /* — şartlar — */
-    .sec-baslik{font-family:Saira,sans-serif;font-size:13px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;color:var(--ink);margin:26px 0 12px;display:flex;align-items:center;gap:10px;page-break-after:avoid;}
+    .sec-baslik{font-family:'Bricolage Grotesque',sans-serif;font-size:13px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;color:var(--ink);margin:26px 0 12px;display:flex;align-items:center;gap:10px;page-break-after:avoid;}
     .sec-baslik::before{content:'';width:22px;height:4px;background:var(--teal-b);border-radius:2px;}
     .sart{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);page-break-inside:avoid;}
     .sart:last-child{border-bottom:none;}
@@ -11909,7 +11916,7 @@ function leadTeklifPdf(){
     .kabul{display:flex;gap:44px;margin-top:44px;page-break-inside:avoid;}
     .kbox{flex:1;text-align:center;}
     .kbox .k-t{font-size:10px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1px;}
-    .kbox .k-n{font-family:Saira,sans-serif;font-size:13px;font-weight:700;color:var(--ink);margin-top:2px;}
+    .kbox .k-n{font-family:'Bricolage Grotesque',sans-serif;font-size:13px;font-weight:700;color:var(--ink);margin-top:2px;}
     .kline{border-top:1px solid #9AB0AD;margin-top:58px;padding-top:6px;font-size:10px;color:var(--mut);}
     /* — künye alt — */
     .foot{margin-top:30px;border-top:1px solid var(--line);padding-top:10px;font-size:10px;color:#7A8A88;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;}
@@ -13959,8 +13966,8 @@ function renderKiralamaPage(){
             <td>${esc(v.kiraciAdi||v.yer||'—')}</td>
             <td>${turLabel}</td>
             <td>${teslimTarih}${gun!==null?`<span style="font-size:12px;color:var(--steel-100);margin-left:5px;">(${gun} gün)</span>`:''}</td>
-            <td style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${teslimKm}</td>
-            <td style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${fmtTL2_role(v.kira)}</td>
+            <td style="font-family:var(--font-mono,monospace)">${teslimKm}</td>
+            <td style="font-family:var(--font-mono,monospace)">${fmtTL2_role(v.kira)}</td>
             <td>${sozBitis}</td>
             <td>
               ${(()=>{ const rAktif = rentals.find(x=>x.vehicleId===v.id && (x.durum==='teslimEdildi'||x.durum==='sozlesmeHazir')); return rAktif ? `<button onclick="kiralamaDuzenleAc('${esc(rAktif.id)}')" style="background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.2);color:var(--accent-blue);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Düzenle</button>` : ''; })()}
@@ -13981,8 +13988,8 @@ function renderKiralamaPage(){
             <div class="m-card-row"><span class="m-card-label">Araç</span><span class="m-card-val">${esc([v.marka,v.model].filter(Boolean).join(' ')||'—')}</span></div>
             <div class="m-card-row"><span class="m-card-label">Çalıştığı Yer</span><span class="m-card-val">${esc(v.kiraciAdi||v.yer||'—')}</span></div>
             ${v.teslimTarih?`<div class="m-card-row"><span class="m-card-label">Teslim</span><span class="m-card-val">${fmtTarih(v.teslimTarih)}${gun!==null?' ('+gun+' gün)':''}</span></div>`:''}
-            ${v.teslimKm?`<div class="m-card-row"><span class="m-card-label">Teslim km</span><span class="m-card-val" style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${v.teslimKm.toLocaleString('tr-TR')} km</span></div>`:''}
-            <div class="m-card-row"><span class="m-card-label">Aylık Kira</span><span class="m-card-val" style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${fmtTL2_role(v.kira)}</span></div>
+            ${v.teslimKm?`<div class="m-card-row"><span class="m-card-label">Teslim km</span><span class="m-card-val" style="font-family:var(--font-mono,monospace)">${v.teslimKm.toLocaleString('tr-TR')} km</span></div>`:''}
+            <div class="m-card-row"><span class="m-card-label">Aylık Kira</span><span class="m-card-val" style="font-family:var(--font-mono,monospace)">${fmtTL2_role(v.kira)}</span></div>
           </div>
           ${rAktif ? `<div style="margin-top:10px;"><button onclick="kiralamaDuzenleAc('${esc(rAktif.id)}')" style="width:100%;background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.2);color:var(--accent-blue);padding:7px 0;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Kiralamayı Düzenle</button></div>` : ''}
         </div>`;
@@ -14118,7 +14125,7 @@ function renderKiralamaPage(){
         <tbody>${gorunen.map(r=>{
           const d = sozDurumOf(r);
           return `<tr style="box-shadow:inset 3px 0 0 ${d.color};">
-            <td style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace;font-weight:700;">${esc(r.sozNo)}</td>
+            <td style="font-family:var(--font-mono,monospace);font-weight:700;">${esc(r.sozNo)}</td>
             <td>${esc(r.tarih||'—')}</td>
             <td>${esc(r.kiraci||'—')}${r.kiraciVKN?`<div style="font-size:11px;color:var(--steel-300);">VKN/TC: ${esc(r.kiraciVKN)}</div>`:''}</td>
             <td style="font-size:12px;">${esc(r.aracOzet||'—')}</td>
@@ -14137,7 +14144,7 @@ function renderKiralamaPage(){
         const d = sozDurumOf(r);
         return `<div class="m-card" style="border-left:3px solid ${d.color};">
           <div class="m-card-head">
-            <span style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace;font-weight:700;font-size:13px;">${esc(r.sozNo)}</span>
+            <span style="font-family:var(--font-mono,monospace);font-weight:700;font-size:13px;">${esc(r.sozNo)}</span>
             <span style="color:${d.color};font-weight:600;">${d.label}</span>
           </div>
           <div class="m-card-rows">
@@ -14186,7 +14193,7 @@ function renderKiralamaPage(){
               <td style="font-size:13px;">${donem}</td>
               <td>${esc(k.kiraci||k.yer||'—')}</td>
               <td>${gun!==null?gun+' gün':'—'}</td>
-              <td style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace;color:${k.kullanim>0?'#E8A132':'var(--steel-300)'}">
+              <td style="font-family:var(--font-mono,monospace);color:${k.kullanim>0?'#E8A132':'var(--steel-300)'}">
                 ${k.kullanim>0?k.kullanim.toLocaleString('tr-TR')+' km':'—'}
               </td>
               <td>${esc(k.yakit||'—')}</td>
@@ -14236,7 +14243,7 @@ function renderTekliflerPage(){
       <td style="padding:10px 14px;">${m?esc(musteriGoruntuAdi(m)):'<span style="color:var(--steel-300);">Müşteri seçilmedi</span>'}</td>
       <td style="padding:10px 14px;">${v?`<span class="mini-plaka">${esc(v.plaka)}</span>`:'<span style="color:var(--steel-300);">—</span>'} <span style="font-size:12px;color:var(--text-3);">${v?esc([v.marka,v.model].filter(Boolean).join(' ')):''}</span></td>
       <td style="padding:10px 14px;font-size:13px;">${donem}</td>
-      <td style="padding:10px 14px;text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,monospace;">${r.kiraTutari!=null?fmtTL2(r.kiraTutari):'—'}</td>
+      <td style="padding:10px 14px;text-align:right;font-family:var(--font-mono,monospace);">${r.kiraTutari!=null?fmtTL2(r.kiraTutari):'—'}</td>
       <td style="padding:10px 14px;"><span style="font-size:11px;font-weight:700;padding:2px 9px;border-radius:12px;background:${r.durum==='sozlesmeHazir'?'rgba(232,161,50,.15);color:#E8A132':r.durum==='rezervasyon'?'rgba(22,160,134,.12);color:var(--accent-blue)':'rgba(54,161,104,.15);color:#36A168'};">${esc(YK_DURUM_ETIKET[r.durum]||r.durum)}</span></td>
       <td style="padding:10px 14px;">${onayBadge}</td>
       <td style="padding:10px 14px;text-align:right;white-space:nowrap;">
@@ -15779,7 +15786,7 @@ function belgeMerkeziListesiHtml(rows, durumEtiket, durumRenk){
       ${rows.map(r=>`<tr>
         <td><span style="font-weight:600;">${esc(r.ad)}</span> <span style="font-size:10px;color:var(--text-3);">(${r.ilgiliTip==='arac'?'Araç':'Müşteri'})</span></td>
         <td>${esc(r.tur)}</td>
-        <td>${r.belgeNo?`<span style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace;font-size:12px;">${esc(r.belgeNo)}</span>`:'<span style="color:var(--text-3);">—</span>'}</td>
+        <td>${r.belgeNo?`<span style="font-family:var(--font-mono,monospace);font-size:12px;">${esc(r.belgeNo)}</span>`:'<span style="color:var(--text-3);">—</span>'}</td>
         <td>v${r.versiyon||1}${r.eskiSayisi?` <button onclick="belgeMerkeziGecmisGoster('${r.ilgiliTip}','${r.ilgiliId}','${esc(r.tur)}')" style="background:none;border:1px solid var(--border);color:var(--text-2);padding:1px 7px;border-radius:6px;font-size:10.5px;cursor:pointer;">+${r.eskiSayisi} geçmiş</button>`:''}</td>
         <td>${r.sonGecerlilik?fmtTarih(r.sonGecerlilik):'—'}</td>
         <td><span style="font-weight:700;color:${durumRenk[r.durumAnahtari]};">${durumEtiket[r.durumAnahtari]}</span></td>
@@ -15941,7 +15948,7 @@ function giderKalemleriDokumHTML(donem){
       <div style="flex:1;height:18px;background:var(--surface-2);border-radius:6px;overflow:hidden;">
         <div style="height:100%;width:${Math.max(4,Math.round(k.value/max*100))}%;background:${esc(k.color)};border-radius:6px;"></div>
       </div>
-      <span style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace;font-size:12px;font-weight:700;color:var(--paper);width:104px;text-align:right;">${fmtTL2(k.value)}</span>
+      <span style="font-family:var(--font-mono,monospace);font-size:12px;font-weight:700;color:var(--paper);width:104px;text-align:right;">${fmtTL2(k.value)}</span>
       <span style="font-size:11px;color:var(--steel-300);width:46px;text-align:right;">%${toplam?Math.round(k.value/toplam*100):0}</span>
     </div>`).join('')}
   </div>`;
@@ -16040,10 +16047,10 @@ function renderRaporlarPage(){
             <td><span class="mini-plaka">${esc(v.plaka)}</span></td>
             <td>${esc([v.marka,v.model].filter(Boolean).join(' ')||'—')}</td>
             <td><span class="mini-badge ${durumBadge}">${esc(v.durum)}</span></td>
-            <td style="text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${fmtTL2_role(aylikGelir)}${gelirBilgisi.kaynak==='fatura'?` <span title="Bu tutar kayıtlı kira alanı yerine, bu ayki gerçek fatura(lar)dan alınmıştır (tahsil edilen: ${fmtTL2(gelirBilgisi.tahsilatToplam)})." style="cursor:help;font-size:10px;font-weight:700;color:#36A168;border:1px solid var(--line);border-radius:8px;padding:1px 5px;margin-left:4px;">F</span>`:''}</td>
-            <td style="text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,monospace;color:var(--steel-100)">${fmtTL2(toplamMasraf)}</td>
-            <td style="text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,monospace;color:var(--steel-300)">${kmBasiMaliyetGenel!=null?kmBasiMaliyetGenel.toLocaleString('tr-TR',{maximumFractionDigits:2})+' ₺/km':'—'}</td>
-            <td style="text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,monospace;color:${karRenk};font-weight:600">${fmtTL2_role(aylikKar)}${amortisman>0?` <span title="Aylık masrafa ${fmtTL2(amortisman)} amortisman gideri dahil edildi (alış fiyatı üzerinden düz-oranlı hesap)." style="cursor:help;font-size:10px;font-weight:700;color:var(--steel-300);border:1px solid var(--line);border-radius:8px;padding:1px 5px;margin-left:4px;">A</span>`:''}</td>
+            <td style="text-align:right;font-family:var(--font-mono,monospace)">${fmtTL2_role(aylikGelir)}${gelirBilgisi.kaynak==='fatura'?` <span title="Bu tutar kayıtlı kira alanı yerine, bu ayki gerçek fatura(lar)dan alınmıştır (tahsil edilen: ${fmtTL2(gelirBilgisi.tahsilatToplam)})." style="cursor:help;font-size:10px;font-weight:700;color:#36A168;border:1px solid var(--line);border-radius:8px;padding:1px 5px;margin-left:4px;">F</span>`:''}</td>
+            <td style="text-align:right;font-family:var(--font-mono,monospace);color:var(--steel-100)">${fmtTL2(toplamMasraf)}</td>
+            <td style="text-align:right;font-family:var(--font-mono,monospace);color:var(--steel-300)">${kmBasiMaliyetGenel!=null?kmBasiMaliyetGenel.toLocaleString('tr-TR',{maximumFractionDigits:2})+' ₺/km':'—'}</td>
+            <td style="text-align:right;font-family:var(--font-mono,monospace);color:${karRenk};font-weight:600">${fmtTL2_role(aylikKar)}${amortisman>0?` <span title="Aylık masrafa ${fmtTL2(amortisman)} amortisman gideri dahil edildi (alış fiyatı üzerinden düz-oranlı hesap)." style="cursor:help;font-size:10px;font-weight:700;color:var(--steel-300);border:1px solid var(--line);border-radius:8px;padding:1px 5px;margin-left:4px;">A</span>`:''}</td>
             <td style="min-width:80px;">
               <div style="background:var(--surface-2);border-radius:4px;height:8px;overflow:hidden;">
                 <div style="background:${karRenk};height:100%;width:${barPct}%;transition:width .4s ease;border-radius:4px;"></div>
@@ -16885,7 +16892,7 @@ function musteriDetayHtml(m){
               : `<span style="color:#36A168;font-weight:600;">Aktif${dl<=7?' · '+dl+' gün':''}</span>`));
     return `
       <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border);">
-        <span style="font-family:'SF Mono',SFMono-Regular,Consolas,monospace;font-weight:700;font-size:12px;color:var(--accent-blue);min-width:110px;">${esc(r.sozNo)}</span>
+        <span style="font-family:var(--font-mono,monospace);font-weight:700;font-size:12px;color:var(--accent-blue);min-width:110px;">${esc(r.sozNo)}</span>
         <span style="font-size:12px;color:var(--text-2);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r.aracOzet||'')}</span>
         <span style="font-size:11.5px;color:var(--text-3);white-space:nowrap;">${r.basISO?fmtTarih(r.basISO):'—'} → ${r.bitisISO?fmtTarih(r.bitisISO):'—'}</span>
         <span style="font-size:11px;font-weight:600;white-space:nowrap;">${durum}</span>
@@ -20178,9 +20185,9 @@ function renderKmTakibiPage(){
           const durumRenk = r.kmDurum.asim>0 ? '#E1554E' : (r.mevcutKm ? '#36A168' : 'var(--steel-500)');
           return `<tr style="border-bottom:1px solid var(--border);">
             <td style="padding:10px 14px;"><span class="mini-plaka">${esc(v.plaka)}</span> <span style="color:var(--steel-500);font-size:11.5px;">${esc([v.marka,v.model].filter(Boolean).join(' ')||'')}</span></td>
-            <td style="padding:10px 14px;text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${r.mevcutKm?r.mevcutKm.toLocaleString('tr-TR'):'—'}</td>
+            <td style="padding:10px 14px;text-align:right;font-family:var(--font-mono,monospace)">${r.mevcutKm?r.mevcutKm.toLocaleString('tr-TR'):'—'}</td>
             <td style="padding:10px 14px;">${sonKayit?esc(sonKayit.donem||'—'):'—'}</td>
-            <td style="padding:10px 14px;text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${sonKayit&&sonKayit.toplamKm?Number(sonKayit.toplamKm).toLocaleString('tr-TR')+' km':'—'}</td>
+            <td style="padding:10px 14px;text-align:right;font-family:var(--font-mono,monospace)">${sonKayit&&sonKayit.toplamKm?Number(sonKayit.toplamKm).toLocaleString('tr-TR')+' km':'—'}</td>
             <td style="padding:10px 14px;"><span style="font-size:11.5px;font-weight:700;color:${durumRenk};">${durumTxt}</span></td>
             <td style="padding:10px 14px;text-align:right;white-space:nowrap;">
               <button onclick="openVehicleDetail('${v.id}')" style="background:var(--surface-2);border:1px solid var(--line);color:var(--text);padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;">Detay</button>
@@ -20232,9 +20239,9 @@ function renderYakitPage(){
         <tbody>${araliklar.slice().reverse().map(a=>`
           <tr>
             <td>${fmtTarih(a.kayit.tarih)}</td>
-            <td style="text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${a.kmFarki.toLocaleString('tr-TR')} km</td>
-            <td style="text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${a.l100km.toLocaleString('tr-TR',{maximumFractionDigits:1})}</td>
-            <td style="text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${a.kmBasiMaliyet.toLocaleString('tr-TR',{maximumFractionDigits:2})} ₺/km</td>
+            <td style="text-align:right;font-family:var(--font-mono,monospace)">${a.kmFarki.toLocaleString('tr-TR')} km</td>
+            <td style="text-align:right;font-family:var(--font-mono,monospace)">${a.l100km.toLocaleString('tr-TR',{maximumFractionDigits:1})}</td>
+            <td style="text-align:right;font-family:var(--font-mono,monospace)">${a.kmBasiMaliyet.toLocaleString('tr-TR',{maximumFractionDigits:2})} ₺/km</td>
           </tr>`).join('')}</tbody>
       </table></div>` : '<div class="log-empty">L/100km hesabı için bu araca ait en az iki yakıt kaydı (farklı km ile) gerekir.</div>'}
       ${aylikSirali.length ? `<div style="margin-top:14px;">
@@ -20264,9 +20271,9 @@ function renderYakitPage(){
           return `<tr style="border-bottom:1px solid var(--border);">
             <td style="padding:10px 14px;">${v?`<span class="mini-plaka">${esc(v.plaka)}</span>`:'<span style="color:var(--steel-500);">—</span>'}</td>
             <td style="padding:10px 14px;">${fmtTarih(f.tarih)}</td>
-            <td style="padding:10px 14px;text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${f.km!=null?Number(f.km).toLocaleString('tr-TR'):'—'}</td>
-            <td style="padding:10px 14px;text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${f.litre!=null?Number(f.litre).toLocaleString('tr-TR',{maximumFractionDigits:1}):'—'}</td>
-            <td style="padding:10px 14px;text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${f.litreFiyati!=null?fmtTL2(f.litreFiyati):'—'}</td>
+            <td style="padding:10px 14px;text-align:right;font-family:var(--font-mono,monospace)">${f.km!=null?Number(f.km).toLocaleString('tr-TR'):'—'}</td>
+            <td style="padding:10px 14px;text-align:right;font-family:var(--font-mono,monospace)">${f.litre!=null?Number(f.litre).toLocaleString('tr-TR',{maximumFractionDigits:1}):'—'}</td>
+            <td style="padding:10px 14px;text-align:right;font-family:var(--font-mono,monospace)">${f.litreFiyati!=null?fmtTL2(f.litreFiyati):'—'}</td>
             <td style="padding:10px 14px;text-align:right;font-weight:700;">${fmtTL2(f.toplam)}</td>
             <td style="padding:10px 14px;">${esc(f.istasyon||'—')}</td>
             <td style="padding:10px 14px;text-align:right;white-space:nowrap;">
