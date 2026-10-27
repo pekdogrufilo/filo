@@ -11432,7 +11432,7 @@ function renderLeadsKart(){
           <span style="font-size:11px;color:var(--steel-300);">${fmtTarih(l.tarih)}</span>
         </div>
         <div style="font-size:12px;color:var(--steel-100);margin-top:4px;">
-          ${esc(l.ihtiyacTuru||'—')}${l.adet?` · <b>${l.adet} araç</b>`:''}${l.sureAy?` · ${l.sureAy} ay`:''}${l.sehir?` · ${esc(l.sehir)}`:''}${(l.teklif&&l.teklif.genelToplam)?` · <span style="color:#36A168;font-weight:700;">Teklif: ${fmtTL2(l.teklif.genelToplam)}</span>`:''}
+          ${esc(l.ihtiyacTuru||'—')}${l.adet?` · <b>${l.adet} araç</b>`:''}${l.sureAy?` · ${l.sureAy} ay`:''}${l.sehir?` · ${esc(l.sehir)}`:''}${(l.teklif&&l.teklif.genelToplam)?` · <span style="color:#36A168;font-weight:700;">Teklif: ${fmtTL2(l.teklif.genelToplam)}</span>`:''}${(l.teklif&&l.teklif.linkGonderim)?` · <span title="Müşteri teklif linki ${fmtTarih(l.teklif.linkGonderim)} tarihinde gönderildi">🔗 ${fmtTarih(l.teklif.linkGonderim)}</span>`:''}
         </div>
         ${l.aciklama?`<div style="font-size:11.5px;color:var(--steel-300);margin-top:3px;">${esc(l.aciklama)}</div>`:''}
       </div>
@@ -11440,7 +11440,7 @@ function renderLeadsKart(){
         ${l.telefon?`<a href="tel:${esc(String(l.telefon).replace(/\s+/g,''))}" style="font-size:12px;color:var(--accent-blue);text-decoration:none;font-weight:600;">📞 ${esc(l.telefon)}</a>`:''}
         ${l.email?`<a href="mailto:${esc(l.email)}" style="font-size:12px;color:var(--accent-blue);text-decoration:none;">✉ ${esc(l.email)}</a>`:''}
         <button onclick="leadTeklifAc('${esc(String(l.id))}')" title="${l.teklif?'Teklifi görüntüle / düzenle':'Fiyat, km, süre ve ödeme şeklini kendiniz belirleyerek teklif oluşturun'}" style="background:${l.teklif?'rgba(54,161,104,.12)':'rgba(22,160,134,.12)'};border:1px solid ${l.teklif?'rgba(54,161,104,.4)':'rgba(22,160,134,.4)'};color:${l.teklif?'#36A168':'var(--accent-blue)'};font-size:12px;font-weight:700;padding:4px 12px;border-radius:6px;cursor:pointer;white-space:nowrap;">${l.teklif?'📄 Teklifi Gör / Düzenle':'📄 Teklif Oluştur'}</button>
-        <select onchange="leadDurumDegistir('${esc(String(l.id))}',this.value)" style="padding:5px 8px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--paper);font-size:12px;font-family:inherit;cursor:pointer;">
+        <select onchange="leadDurumDegistir('${esc(String(l.id))}',this.value)" title="Müşteri imzalı teklifi geri gönderince 'Kazanıldı', vazgeçerse 'Kaybedildi' seçin" style="padding:5px 8px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--paper);font-size:12px;font-family:inherit;cursor:pointer;">
           ${LEAD_DURUMLAR.map(d=>`<option ${d===l.durum?'selected':''}>${d}</option>`).join('')}
         </select>
         <button onclick="leadSil('${esc(String(l.id))}')" title="Sil" style="background:none;border:1px solid var(--line);color:#E1554E;font-size:12px;padding:4px 9px;border-radius:6px;cursor:pointer;">Sil</button>
@@ -11686,18 +11686,25 @@ function leadTeklifRender(){
   document.body.appendChild(el);
   el.onclick = e=>{ if(e.target===el) el.remove(); };
 }
-async function leadTeklifKaydet(){
-  const s = window.__leadTeklif; if(!s) return;
+// v.327: teklif → lead yazıcı; Kaydet ve Müşteri Linki üretimi aynı noktadan yazar, böylece
+// gönderilen link her zaman lead'e kayıtlı son teklifin birebir kopyasıdır.
+function ltTeklifiLeadYaz(){
+  const s = window.__leadTeklif; if(!s) return null;
   const l = leads.find(x=>String(x.id)===String(s.leadId));
-  if(!l){ showToast('Müşteri kaydı bulunamadı.', true); return; }
+  if(!l){ showToast('Müşteri kaydı bulunamadı.', true); return null; }
   l.teklif = {
     ad: s.ad, telefon: s.telefon, email: s.email, sehir: s.sehir,
     kalemler: s.kalemler.map(k=>({...k})),
     odeme: s.odeme, kdvMod: s.kdvMod, kdvOrani: s.kdvOrani, notlar: s.notlar,
     genelToplam: ltToplamHesapla().genel,
-    olusturma: new Date().toISOString()
+    olusturma: (l.teklif && l.teklif.olusturma) || new Date().toISOString(),
+    linkGonderim: (l.teklif && l.teklif.linkGonderim) || null
   };
   if(LEAD_DURUMLAR.indexOf(l.durum||'Yeni') < LEAD_DURUMLAR.indexOf('Teklif gönderildi')) l.durum = 'Teklif gönderildi';
+  return l;
+}
+async function leadTeklifKaydet(){
+  const l = ltTeklifiLeadYaz(); if(!l) return;
   await persistLeads();
   renderLeadsKart();
   logActivity('add', `Teklif oluşturuldu: <b>${esc(l.adSoyad||l.teklif.ad||'—')}</b> · ${fmtTL2(l.teklif.genelToplam)}`);
@@ -11753,8 +11760,15 @@ async function leadTeklifWaKopyala(){
 // bağlantısına gömülür; harici sunucu/veritabanı gerekmez, linki olmayan sayfa içeriğini göremez.
 // Kopyalanan link müşteriyle WhatsApp'tan paylaşılır; müşteri sayfada teklifi görür, imzasını
 // atıp imzalı PDF olarak kaydedip geri gönderebilir.
-function ltMusteriLinkiUret(){
+async function ltMusteriLinkiUret(){
   const s = window.__leadTeklif; if(!s) return;
+  // v.327: link üretilmeden önce teklif lead'e otomatik yazılır + link gönderim tarihi damgalanır;
+  // böylece müşteriye giden link her zaman panelde kayıtlı olanla aynıdır.
+  const l = ltTeklifiLeadYaz(); if(!l) return;
+  l.teklif.linkGonderim = new Date().toISOString();
+  await persistLeads();
+  renderLeadsKart();
+  logActivity('edit', `Müşteri teklif linki üretildi: <b>${esc(l.adSoyad||l.teklif.ad||'—')}</b> · ${fmtTL2(l.teklif.genelToplam)}`);
   const payload = {
     v:1,
     tkNo: 'TKF-' + new Date().getFullYear() + '-' + String(s.leadId).replace(/[^a-z0-9]/gi,'').slice(-6).toUpperCase(),
@@ -11777,12 +11791,12 @@ function ltMusteriLinkiUret(){
   (async()=>{
     try{
       await navigator.clipboard.writeText(url);
-      showToast('Müşteri teklif linki kopyalandı — müşteriye gönderebilirsiniz.');
+      showToast('Link kopyalandı — teklif lead\'e kaydedildi, müşteriye gönderebilirsiniz.');
     }catch(e){
       const ta = document.createElement('textarea');
       ta.value = url; document.body.appendChild(ta); ta.select();
       document.execCommand('copy'); ta.remove();
-      showToast('Müşteri teklif linki kopyalandı.');
+      showToast('Link kopyalandı — teklif lead\'e kaydedildi.');
     }
     if(confirm('Link kopyalandı. WhatsApp\'tan göndermek için mesajı açmak ister misiniz?\n\nSayın ' + (s.ad||'') + ' telefonu: ' + (s.telefon||'yok'))){
       const tel = String(s.telefon||'').replace(/[^0-9]/g,'').replace(/^0/,'90');
