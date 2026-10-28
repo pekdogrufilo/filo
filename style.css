@@ -3060,3 +3060,151 @@
   /* --- Vurgu ikon ve detayları otomatik kırmızıya döner (token değişimi) --- */
   .field label .req,.link,.linklike,a{color:var(--accent-blue);}
   ::selection{background:var(--accent-blue);color:#fff;}
+
+  /* ======================================================================
+     v.344 — "SAMSARA" tasarım dili (TEK YETKİLİ KATMAN)
+     Referans: samsara.com platform — lacivert sidebar (#16283A), teal-yeşil
+     vurgu (#00A389 / koyuda #00C389), 12px yumuşak kart, hap rozetler,
+     Inter tipografi. v341 Avis katmanının kırmızı/uppercase kuralları
+     burada geçersiz kılınır.
+     ====================================================================== */
+  :root, html[data-theme="dark"]{
+    --bg:#0F1A24;
+    --surface:#16232F;
+    --surface-2:#1C2A38;
+    --surface-3:#233444;
+    --border:rgba(255,255,255,.10);
+    --border-2:rgba(255,255,255,.18);
+    --text:#E8EEF2;
+    --text-2:#9DAEBB;
+    --text-3:#71838F;
+    --accent-blue:#00C389;
+    --blue-dim:rgba(0,195,137,.16);
+    --mint-tint:rgba(0,195,137,.13);
+    --sidebar-bg:#111E2B;
+    --paper:#E8EEF2;
+    --steel-100:#E8EEF2;
+    --steel-300:#71838F;
+    --steel-500:#9DAEBB;
+    --steel-600:#233444;
+    --lux-accent:#00C389;
+    --lux-bright:#2BE3A9;
+    --lux-deep:#009D72;
+    --accent-hover:#009D72;
+    --shadow-soft:0 1px 3px rgba(4,14,22,.35);
+    --shadow-lift:0 2px 8px rgba(4,14,22,.45);
+    --glow:rgba(0,195,137,.16);
+  }
+  html[data-theme="light"]{
+    --bg:#F7F8FA;
+    --surface:#FFFFFF;
+    --surface-2:#F0F2F5;
+    --surface-3:#E4E8EC;
+    --border:rgba(22,40,58,.10);
+    --border-2:rgba(22,40,58,.18);
+    --text:#16283A;
+    --text-2:#5A6B7A;
+    --text-3:#8A99A6;
+    --accent-blue:#00A389;
+    --blue-dim:rgba(0,163,137,.10);
+    --mint-tint:#E2F5EF;
+    --sidebar-bg:#16283A;
+    --paper:#16283A;
+    --steel-100:#16283A;
+    --steel-300:#8A99A6;
+    --steel-500:#5A6B7A;
+    --steel-600:#E4E8EC;
+    --lux-accent:#00A389;
+    --lux-bright:#00C389;
+    --lux-deep:#00826E;
+    --accent-hover:#00826E;
+    --shadow-soft:0 1px 2px rgba(22,40,58,.06),0 2px 8px rgba(22,40,58,.05);
+    --shadow-lift:0 2px 4px rgba(22,40,58,.07),0 6px 16px rgba(22,40,58,.09);
+    --glow:rgba(0,163,137,.13);
+  }
+
+  /* --- Başlık: Samsara dili — cümle hali (uppercase DEĞİL), kalın, kırmızı kural YOK --- */
+  h1{
+    text-transform:none !important;
+    font-weight:700 !important;
+    letter-spacing:-.3px !important;
+    color:var(--text) !important;
+    border-left:none !important;
+    padding-left:0 !important;
+  }
+  .th-title,#thTitle{text-transform:none;font-weight:700;}
+
+  /* --- Sidebar: HER İKİ TEMADA LACİVERT, beyaz metin, teal aktif hap --- */
+  .sidebar{background:var(--sidebar-bg) !important;border-right:none !important;box-shadow:none !important;}
+  .sidebar .sb-item{color:#B7C6D3 !important;border-radius:10px !important;}
+  .sidebar .sb-item svg{color:#7C93A6 !important;}
+  .sidebar .sb-item:hover{background:rgba(255,255,255,.07) !important;color:#FFFFFF !important;}
+  .sidebar .sb-item:hover svg{color:#2BE3A9 !important;}
+  .sidebar .sb-item.active{background:rgba(0,195,137,.16) !important;color:#2BE3A9 !important;box-shadow:inset 3px 0 0 #00C389 !important;}
+  .sidebar .sb-item.active svg{color:#2BE3A9 !important;}
+  html[data-theme="light"] .sidebar{background:#16283A !important;}
+  html[data-theme="light"] .sidebar .sb-item{color:#B7C6D3 !important;}
+  html[data-theme="light"] .sidebar .sb-item.active{background:rgba(0,195,137,.18) !important;color:#3FE0B4 !important;box-shadow:inset 3px 0 0 #00C389 !important;}
+
+  /* --- Butonlar: teal dolu, 10px; secondary outline --- */
+  .add-btn,.modal-actions .save,#filoKaydetBtn,.lock-btn-main{
+    background:var(--accent-blue) !important;
+    color:#fff !important;
+    border:none !important;
+    border-radius:10px !important;
+  }
+  .mobil-fab{background:var(--accent-blue) !important;border-radius:999px !important;}
+  .add-btn:hover,.modal-actions .save:hover,#filoKaydetBtn:hover,.lock-btn-main:hover{background:var(--accent-hover) !important;}
+  .export-btn,.print-btn,.lock-btn,.modal-actions .cancel{
+    background:var(--surface);
+    color:var(--text);
+    border:1px solid var(--border-2);
+    border-radius:10px;
+  }
+  .export-btn:hover,.print-btn:hover,.lock-btn:hover,.modal-actions .cancel:hover{
+    border-color:var(--accent-blue);
+    color:var(--accent-blue);
+    background:var(--surface);
+  }
+  .chip{border-radius:8px;}
+  .chip.active{background:var(--accent-blue);color:#fff;}
+
+  /* --- Kartlar: 12px, hafif gölge (Samsara yumuşaklığı), hover'da derinleşir --- */
+  .dcard,.card,.alert-panel,.filters,.yp-grid,.stat,.dash-stats,.m-card,.modal{
+    border-radius:12px !important;
+  }
+  .card,.dcard{box-shadow:var(--shadow-soft) !important;}
+  .card:hover,.dcard:hover{box-shadow:var(--shadow-lift) !important;border-color:var(--border-2);}
+  .modal{box-shadow:0 10px 40px rgba(4,14,22,.22) !important;}
+  html[data-theme="dark"] .modal{box-shadow:0 10px 40px rgba(0,0,0,.5) !important;}
+
+  /* --- Rozet: Samsara hap dili geri döndü --- */
+  .badge{border-radius:999px !important;}
+
+  /* --- Formlar: teal focus --- */
+  .field input:focus,.field select:focus,.field textarea:focus,.filters input:focus,.filters select:focus{
+    border-color:var(--accent-blue) !important;
+    box-shadow:0 0 0 3px var(--glow) !important;
+  }
+
+  /* --- Splash & giriş: lacivert zemin + teal bar --- */
+  .splash-bar{background:var(--accent-blue) !important;}
+  .splash-glow,html[data-theme="light"] .splash-glow{background:radial-gradient(closest-side,var(--glow),transparent 70%) !important;}
+  html[data-theme="light"] .splash{background:#F7F8FA !important;}
+  html[data-theme="light"] .splash h2{color:#16283A !important;}
+  html[data-theme="light"] .splash .sd{color:#5A6B7A !important;}
+  html[data-theme="light"] .splash-stat .n{color:#16283A !important;}
+  html[data-theme="light"] .splash-stat .l{color:#8A99A6 !important;}
+  html[data-theme="light"] .lock-screen{background:#F7F8FA !important;}
+  html[data-theme="light"] .lock-screen h2{color:#16283A !important;}
+
+  /* --- Link/selection teal --- */
+  .field label .req,.link,.linklike,a{color:var(--accent-blue);}
+  ::selection{background:var(--accent-blue);color:#fff;}
+
+  /* --- Tipografi: Samsara arayüz fontu (Inter) --- */
+  :root{
+    --font-display:'Inter',-apple-system,'Segoe UI',Arial,sans-serif;
+    --font-body:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;
+    --font-ui:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;
+  }
