@@ -2064,6 +2064,87 @@ async function sozKayitSil(id){
   showToast('Sözleşme kaydı silindi.');
 }
 
+// v.332: MÜŞTERİ ONAY AKIŞI — sözleşme, teklifteki gibi verisi link içinde taşınan
+// sunucusuz bir müşteri sayfasıyla (sozlesme.html) paylaşılır. Müşteri sayfada sözleşmeyi
+// okur, KVKK iznini verir, SMS/WhatsApp ile bildirilen 6 haneli onay kodunu girer ve
+// parmağıyla imzasını atar. Onaylayınca sayfa 7 haneli bir ONAY DAMGASI üretir; bu damga
+// (sozNo + onayKodu'dan deterministik türetildiği için) panelde çevrimdışı doğrulanabilir —
+// müşteri damgayı WhatsApp'tan geri gönderir, yönetici "Onay İşle" ile yapıştırır.
+function sozOnayDamga(sozNo, kod){
+  const kaynak = String(sozNo||'')+'|'+String(kod||'')+'|pekdogru-filo-onay';
+  let h = 5381;
+  for(let i=0;i<kaynak.length;i++){ h = (((h<<5)+h)+kaynak.charCodeAt(i))>>>0; }
+  return h.toString(36).toUpperCase().padStart(7,'0').slice(-7);
+}
+async function sozMusteriLinkiUret(rec){
+  if(!rec || !rec.data){ showToast('Sözleşme kaydı bulunamadı.', true); return; }
+  const d = rec.data;
+  if(!rec.sozOnayKodu){
+    rec.sozOnayKodu = String(Math.floor(100000 + Math.random()*900000));
+    rec.sozOnayDamga = sozOnayDamga(rec.sozNo, rec.sozOnayKodu);
+    try{ await persistSozlesmeler(); }catch(e){}
+  }
+  const payload = {
+    v:1, sozNo: rec.sozNo, onayKodu: rec.sozOnayKodu, tarih: d.tarih||'',
+    firma:{ad:d.firmaAdi||'', adres:d.firmaAdres||'', tel:d.firmaTelefon||'', vkn:d.firmaVergiNo||''},
+    musteri:{ad:d.kiraci||'', vergi:d.kiraciVKN||d.kiraciVergi||'', adres:d.kiraciAdres||'', tel:d.kiraciTel||'', ehliyet:d.kiraciEhliyet||''},
+    kefil:d.kefil||'', kefilTC:d.kefilTC||'',
+    plaka:d.plaka||'', marka:d.marka||'', model:d.model||'', versiyon:d.versiyon||'', aracCinsi:d.aracCinsi||'', modelYili:d.modelYili||'', renk:d.renk||'',
+    ruhsatNo:d.ruhsatNo||'', sasiNo:d.sasiNo||'', motorNo:d.motorNo||'',
+    bas:d.bas||'', bitis:d.bitis||'', sure:d.sure||'', teslimKm:d.teslimKm||'',
+    aylikKira:d.aylikKira||'', yillikKira:d.yillikKira||'', kmLimit:d.kmLimit||'', kmAsimFiyat:d.kmAsimFiyat||'', depozito:d.depozito||'',
+    sozlesmeTip:d.sozlesmeTip||'', notlar:d.notlar||'',
+    firmaWa: localStorage.getItem('filoPaneli_firmaTelefon')||''
+  };
+  let b64;
+  try{
+    b64 = btoa(unescape(encodeURIComponent(JSON.stringify(payload)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  }catch(e){ showToast('Onay linki oluşturulamadı.', true); return; }
+  const kok = location.origin && location.origin !== 'null'
+    ? location.origin + location.pathname.replace(/[^/]*$/, '')
+    : 'https://pekdogrufilo.github.io/filo/';
+  const url = kok + 'sozlesme.html#d=' + b64;
+  const metin = 'Sayın ' + (d.kiraci||'') + ', ' + (rec.sozNo||'') + ' numaralı kira sözleşmeniz onayınızı bekliyor. Sözleşmeyi buradan inceleyip onaylayabilirsiniz: ' + url + '\nOnay kodunuz: ' + rec.sozOnayKodu;
+  (async()=>{
+    try{
+      await navigator.clipboard.writeText(metin);
+      showToast('Sözleşme linki + onay kodu kopyalandı — WhatsApp\'tan gönderebilirsiniz.');
+    }catch(e){
+      const ta = document.createElement('textarea');
+      ta.value = metin; document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); ta.remove();
+      showToast('Sözleşme linki + onay kodu kopyalandı.');
+    }
+    if(confirm('Link + onay kodu kopyalandı. Müşteriye WhatsApp\'tan göndermek için mesajı açmak ister misiniz?\n\nKiracı: ' + (d.kiraci||'—') + '\nTelefon: ' + (d.kiraciTel||'yok') + '\nOnay kodu: ' + rec.sozOnayKodu)){
+      const tel = String(d.kiraciTel||'').replace(/[^0-9]/g,'').replace(/^0/,'90');
+      window.open('https://wa.me/' + tel + '?text=' + encodeURIComponent(metin), '_blank');
+    }
+  })();
+}
+async function sozHazirMusteriLinki(){
+  const sozNo = window.__sozHazirData && window.__sozHazirData.sozNo;
+  const rec = sozlesmeler.find(r=>r.sozNo===sozNo);
+  if(!rec){ showToast('Sözleşme kaydı bulunamadı.', true); return; }
+  sozMusteriLinkiUret(rec);
+}
+async function sozMusteriOnayIsle(id){
+  const rec = sozlesmeler.find(r=>r.id===id);
+  if(!rec){ showToast('Sözleşme kaydı bulunamadı.', true); return; }
+  if(!rec.sozOnayKodu){ showToast('Bu sözleşme için henüz müşteri linki üretilmemiş — önce "Link" butonunu kullanın.', true); return; }
+  const girdi = prompt('Müşteri sözleşmeyi onaylayınca ekranda gördüğü 7 haneli ONAY DAMGASI\'nı buraya yapıştırın:\n\nSözleşme: ' + (rec.sozNo||'—') + '\nKiracı: ' + (rec.kiraci||'—') + '\n\n(Onay kodu: ' + rec.sozOnayKodu + ')');
+  if(girdi===null) return;
+  const beklenen = rec.sozOnayDamga || sozOnayDamga(rec.sozNo, rec.sozOnayKodu);
+  if(girdi.trim().toUpperCase() === beklenen){
+    rec.sozMusteriOnay = { ts: new Date().toISOString(), damga: beklenen };
+    await persistSozlesmeler();
+    renderCurrentPage();
+    showToast('✅ Müşteri onayı işlendi: ' + (rec.sozNo||''));
+    logActivity('edit', 'Müşteri onayı işlendi: <b>'+esc(rec.sozNo||'')+'</b> · '+esc(rec.kiraci||''));
+  }else{
+    showToast('Onay damgası eşleşmedi — kodu kontrol edin.', true);
+  }
+}
+
 function daysLeft(dateStr){
   if(!dateStr) return null;
   const parts = String(dateStr).split('-').map(Number);
@@ -12597,6 +12678,7 @@ function sozlesmeHazirGoster(sozData, opts){
       <p style="margin:0 0 16px;font-size:12.5px;color:var(--text-3);">Kayıt tamamlandı${sozData && sozData.sozNo ? ' · '+esc(sozData.sozNo) : ''}.${opts.not ? ' '+esc(opts.not) : ''}</p>
       <div style="display:flex;flex-direction:column;gap:8px;">
         ${opts.pdf ? `<button class="add-btn" style="justify-content:center;width:100%;" onclick="sozlesmeHtmlPdf(window.__sozHazirData)">Sözleşmeyi Aç (PDF / Yazdır)</button>` : ''}
+        <button class="add-btn" style="justify-content:center;width:100%;background:rgba(22,160,134,.12);" onclick="sozHazirMusteriLinki()">🔗 Müşteri Onay Linki (WhatsApp/SMS)</button>
         ${opts.tutanak ? `<button class="settings-btn" style="justify-content:center;width:100%;" onclick="teslimTutanakAc(window.__sozHazirData)">Teslim Tutanağını Aç</button>` : ''}
         <button class="settings-btn" style="justify-content:center;width:100%;" onclick="document.getElementById('sozHazirModal').remove()">Kapat</button>
       </div>
@@ -14128,7 +14210,7 @@ function renderKiralamaPage(){
         <tbody>${gorunen.map(r=>{
           const d = sozDurumOf(r);
           return `<tr style="box-shadow:inset 3px 0 0 ${d.color};">
-            <td style="font-family:var(--font-mono,monospace);font-weight:700;">${esc(r.sozNo)}</td>
+            <td style="font-family:var(--font-mono,monospace);font-weight:700;">${esc(r.sozNo)}${r.sozMusteriOnay?'<div style="font-size:10px;color:#36A168;font-weight:700;letter-spacing:.3px;">✅ MÜŞTERİ ONAYLADI</div>':(r.sozOnayKodu?'<div style="font-size:10px;color:#E8A132;font-weight:700;letter-spacing:.3px;">⏳ LINK GÖNDERİLDİ</div>':'')}</td>
             <td>${esc(r.tarih||'—')}</td>
             <td>${esc(r.kiraci||'—')}${r.kiraciVKN?`<div style="font-size:11px;color:var(--steel-300);">VKN/TC: ${esc(r.kiraciVKN)}</div>`:''}</td>
             <td style="font-size:12px;">${esc(r.aracOzet||'—')}</td>
@@ -14137,6 +14219,8 @@ function renderKiralamaPage(){
             <td style="white-space:nowrap;">
               <button onclick="sozKayitPdf('${r.id}')" style="background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.2);color:var(--accent-blue);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">PDF</button>
               <button onclick="sozKayitDocx('${r.id}')" style="background:rgba(54,161,104,.1);border:1px solid rgba(54,161,104,.2);color:#36A168;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Word</button>
+              <button onclick="sozMusteriLinkiUret(sozlesmeler.find(x=>x.id==='${r.id}'))" title="Müşteri onay linki + kod gönder" style="background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.25);color:var(--accent-blue);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">🔗 Link</button>
+              ${r.sozMusteriOnay?`<span title="Onay: ${esc(r.sozMusteriOnay.damga||'')}" style="font-size:11px;color:#36A168;font-weight:700;">✅</span>`:`<button onclick="sozMusteriOnayIsle('${r.id}')" title="Müşterinin gönderdiği onay damgasını işle" style="background:rgba(232,161,50,.12);border:1px solid rgba(232,161,50,.3);color:#E8A132;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Onay İşle</button>`}
               <button onclick="teslimTutanakAc(sozlesmeler.find(x=>x.id==='${r.id}').data)" title="Ek-1 Teslim Tutanağını yeniden üret" style="background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.25);color:var(--accent-blue);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Teslim</button>
               <button onclick="sozKayitSil('${r.id}')" style="background:rgba(225,85,78,.1);border:1px solid rgba(225,85,78,.2);color:#E1554E;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Sil</button>
             </td>
@@ -14150,6 +14234,7 @@ function renderKiralamaPage(){
             <span style="font-family:var(--font-mono,monospace);font-weight:700;font-size:13px;">${esc(r.sozNo)}</span>
             <span style="color:${d.color};font-weight:600;">${d.label}</span>
           </div>
+          ${r.sozMusteriOnay?'<div style="font-size:11px;color:#36A168;font-weight:700;margin-top:4px;">✅ MÜŞTERİ ONAYLADI</div>':(r.sozOnayKodu?'<div style="font-size:11px;color:#E8A132;font-weight:700;margin-top:4px;">⏳ LINK GÖNDERİLDİ — ONAY BEKLENİYOR</div>':'')}
           <div class="m-card-rows">
             <div class="m-card-row"><span class="m-card-label">Kiracı</span><span class="m-card-val">${esc(r.kiraci||'—')}</span></div>
             <div class="m-card-row"><span class="m-card-label">Araç</span><span class="m-card-val" style="font-size:12px;">${esc(r.aracOzet||'—')}</span></div>
@@ -14159,7 +14244,8 @@ function renderKiralamaPage(){
           <div style="display:flex;gap:6px;margin-top:10px;">
             <button onclick="sozKayitPdf('${r.id}')" style="flex:1;background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.2);color:var(--accent-blue);padding:7px 0;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">PDF</button>
             <button onclick="sozKayitDocx('${r.id}')" style="flex:1;background:rgba(54,161,104,.1);border:1px solid rgba(54,161,104,.2);color:#36A168;padding:7px 0;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Word</button>
-            <button onclick="teslimTutanakAc(sozlesmeler.find(x=>x.id==='${r.id}').data)" style="flex:1;background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.25);color:var(--accent-blue);padding:7px 0;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Teslim</button>
+            <button onclick="sozMusteriLinkiUret(sozlesmeler.find(x=>x.id==='${r.id}'))" style="flex:1.2;background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.25);color:var(--accent-blue);padding:7px 0;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">🔗 Link</button>
+            ${r.sozMusteriOnay?'':`<button onclick="sozMusteriOnayIsle('${r.id}')" style="flex:1.2;background:rgba(232,161,50,.12);border:1px solid rgba(232,161,50,.3);color:#E8A132;padding:7px 0;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Onay İşle</button>`}
             <button onclick="sozKayitSil('${r.id}')" style="background:rgba(225,85,78,.1);border:1px solid rgba(225,85,78,.2);color:#E1554E;padding:7px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Sil</button>
           </div>
         </div>`;

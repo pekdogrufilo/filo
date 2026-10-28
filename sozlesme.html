@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#F7F6F2">
+<title>Araç Kiralama Sözleşmesi — PEKDOĞRU</title>
+<link rel="icon" href="./logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@500;600;700&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact;-webkit-tap-highlight-color:transparent;}
+  :root{
+    --teal:#017F76; --teal-b:#00A99D; --ink:#0B2B28; --mut:#5E7370; --line:#DCE8E6; --tint:#F3FAF8;
+    --sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px);
+  }
+  html{scroll-behavior:smooth;}
+  body{font-family:'Instrument Sans',Arial,Helvetica,sans-serif;font-size:14px;line-height:1.65;color:var(--ink);margin:0;background:#F7F6F2;}
+  .mono{font-family:'IBM Plex Mono',Consolas,monospace;font-variant-numeric:tabular-nums;}
+  b{font-weight:700;}
+  .wrap{max-width:820px;margin:0 auto;padding:16px 14px calc(140px + var(--sab));}
+  /* — antet — */
+  .masthead{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;padding-bottom:14px;border-bottom:3px solid var(--teal);flex-wrap:wrap;}
+  .mh-left{display:flex;align-items:center;gap:12px;}
+  .mh-logo{width:52px;height:52px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .mh-logo img{width:100%;height:100%;object-fit:contain;}
+  .mh-name{font-family:'Bricolage Grotesque','Instrument Sans',sans-serif;font-size:16px;font-weight:800;letter-spacing:.3px;color:var(--ink);line-height:1.25;}
+  .mh-tag{font-size:9px;font-weight:600;color:var(--teal);letter-spacing:1.6px;text-transform:uppercase;margin-top:2px;}
+  .mh-meta{text-align:right;font-size:10px;color:var(--mut);line-height:1.8;}
+  .mh-meta .no{font-family:'Bricolage Grotesque',sans-serif;font-size:14px;font-weight:800;color:var(--ink);}
+  /* — başlık — */
+  .doc-title{margin:20px 0 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .doc-title .t{font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:800;letter-spacing:1.6px;color:var(--ink);text-transform:uppercase;}
+  .doc-title .rule{flex:1;height:1px;background:var(--line);min-width:24px;}
+  .chip{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;color:var(--teal);background:var(--tint);border:1px solid var(--line);border-radius:20px;padding:4px 12px;white-space:nowrap;}
+  /* — künye — */
+  .kunye{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+  @media(max-width:640px){.kunye{grid-template-columns:1fr;}}
+  .k-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:0 1px 2px rgba(11,43,40,.04),0 8px 24px -18px rgba(11,43,40,.25);}
+  .k-card h4{margin:0 0 8px;font-family:'Bricolage Grotesque',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--teal);}
+  .k-row{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px dashed var(--line);font-size:12.5px;}
+  .k-row:last-child{border-bottom:none;}
+  .k-row .l{color:var(--mut);flex-shrink:0;}
+  .k-row .v{text-align:right;font-weight:600;word-break:break-word;}
+  /* — maddeler — */
+  .maddeler{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:0 1px 2px rgba(11,43,40,.04),0 8px 24px -18px rgba(11,43,40,.25);}
+  .madde{margin-bottom:14px;}
+  .madde:last-child{margin-bottom:0;}
+  .madde .m-b{font-family:'Bricolage Grotesque',sans-serif;font-size:12.5px;font-weight:700;color:var(--ink);margin-bottom:3px;}
+  .madde .m-b .m-no{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;border-radius:6px;background:var(--tint);border:1px solid var(--line);color:var(--teal);font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;margin-right:7px;vertical-align:1px;}
+  .madde .m-t{font-size:12px;line-height:1.7;color:#2C4340;text-align:justify;}
+  .notlar-blok{margin-top:14px;background:var(--tint);border:1px dashed var(--line);border-radius:12px;padding:12px 14px;font-size:12px;color:var(--ink);}
+  .notlar-blok b{color:var(--teal);}
+  /* — onay paneli (ekran) — */
+  .onay-panel{position:fixed;left:0;right:0;bottom:0;z-index:50;background:#fff;border-top:1px solid var(--line);box-shadow:0 -8px 30px rgba(11,43,40,.10);padding:12px 14px calc(10px + var(--sab));border-radius:18px 18px 0 0;}
+  .onay-inner{max-width:820px;margin:0 auto;}
+  .onay-bas{display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;user-select:none;}
+  .onay-bas .ob-l{font-family:'Bricolage Grotesque',sans-serif;font-size:14px;font-weight:800;color:var(--ink);}
+  .onay-bas .ob-l .ok-ic{color:var(--teal);margin-right:6px;}
+  .onay-bas .ob-arrow{font-size:12px;color:var(--mut);transition:transform .2s;}
+  .onay-body{display:none;margin-top:12px;}
+  .onay-body.acik{display:block;}
+  .od-check{display:flex;gap:10px;align-items:flex-start;background:var(--tint);border:1px solid var(--line);border-radius:12px;padding:11px 12px;margin-bottom:8px;cursor:pointer;font-size:12px;line-height:1.5;}
+  .od-check input{width:20px;height:20px;accent-color:var(--teal);flex-shrink:0;margin-top:1px;cursor:pointer;}
+  .od-check a{color:var(--teal);font-weight:700;}
+  .kod-satir{display:flex;gap:8px;align-items:center;margin:10px 0;}
+  .kod-satir label{font-size:12px;font-weight:700;color:var(--ink);white-space:nowrap;}
+  .kod-input{flex:1;min-width:0;font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:700;letter-spacing:6px;text-align:center;padding:11px 8px;border:1.5px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);outline:none;}
+  .kod-input:focus{border-color:var(--teal-b);}
+  .imza-alan{margin-top:10px;}
+  .imza-alan .ia-l{font-size:12px;font-weight:700;color:var(--ink);margin-bottom:6px;}
+  .imza-box{position:relative;width:100%;height:150px;background:#fff;border:1.5px dashed var(--line);border-radius:12px;touch-action:none;overflow:hidden;}
+  .imza-box canvas{width:100%;height:100%;display:block;cursor:crosshair;}
+  .imza-placeholder{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#A8BBB8;font-size:12.5px;pointer-events:none;}
+  .imza-araclar{display:flex;justify-content:space-between;align-items:center;margin-top:6px;font-size:11px;color:var(--mut);}
+  .imza-temizle{background:none;border:none;color:#E1554E;font-size:11.5px;font-weight:700;cursor:pointer;padding:6px 4px;}
+  .btn-onay{width:100%;margin-top:12px;min-height:52px;border:none;border-radius:14px;background:var(--teal-b);color:#fff;font-family:'Bricolage Grotesque',sans-serif;font-size:15.5px;font-weight:800;letter-spacing:.4px;cursor:pointer;box-shadow:0 10px 24px -10px rgba(0,169,157,.55);transition:background .15s;}
+  .btn-onay:active{background:var(--teal);}
+  .btn-onay:disabled{background:#B9CDC9;box-shadow:none;cursor:not-allowed;}
+  .onay-hata{display:none;margin-top:8px;font-size:12px;font-weight:600;color:#C4382F;background:#FBEFEE;border:1px solid #F0CFCC;border-radius:10px;padding:9px 12px;}
+  /* — sonuç — */
+  .sonuc{display:none;background:#fff;border:1.5px solid var(--teal-b);border-radius:16px;padding:18px;margin-top:16px;text-align:center;box-shadow:0 12px 30px -18px rgba(0,169,157,.5);}
+  .sonuc.acik{display:block;}
+  .sonuc .s-ic{width:52px;height:52px;border-radius:50%;background:rgba(0,169,157,.12);color:var(--teal);display:flex;align-items:center;justify-content:center;margin:0 auto 10px;font-size:26px;font-weight:800;}
+  .sonuc h3{margin:0 0 4px;font-family:'Bricolage Grotesque',sans-serif;font-size:17px;font-weight:800;color:var(--ink);}
+  .sonuc .s-sub{font-size:12.5px;color:var(--mut);margin-bottom:12px;}
+  .damga-kart{display:inline-block;background:var(--tint);border:1px solid var(--line);border-radius:12px;padding:10px 22px;margin-bottom:12px;}
+  .damga-kart .dk-l{font-size:10px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--teal);margin-bottom:3px;}
+  .damga-kart .dk-v{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:700;letter-spacing:3px;color:var(--ink);}
+  .sonuc-btnler{display:flex;gap:8px;flex-wrap:wrap;}
+  .sonuc-btnler button{flex:1;min-height:48px;border:none;border-radius:12px;font-family:'Instrument Sans',sans-serif;font-size:13.5px;font-weight:700;cursor:pointer;}
+  .btn-print{background:var(--teal-b);color:#fff;}
+  .btn-wa{background:rgba(37,211,102,.14);color:#128C4B;border:1px solid rgba(37,211,102,.4) !important;}
+  .sonuc-imza{margin:10px auto 4px;max-width:280px;}
+  .sonuc-imza img{width:100%;border:1px solid var(--line);border-radius:10px;background:#fff;}
+  /* — KVKK — */
+  .kvkk-metin{display:none;margin-top:8px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:11px;line-height:1.7;color:#2C4340;max-height:220px;overflow:auto;text-align:left;}
+  .kvkk-metin.acik{display:block;}
+  .kvkk-metin h5{margin:8px 0 4px;font-size:11px;color:var(--ink);}
+  /* — hata — */
+  .hata-kart{max-width:520px;margin:60px auto;background:#fff;border:1px solid var(--line);border-radius:16px;padding:28px 22px;text-align:center;}
+  .hata-kart .h-ic{font-size:34px;margin-bottom:8px;}
+  .hata-kart h3{font-family:'Bricolage Grotesque',sans-serif;margin:0 0 6px;color:var(--ink);}
+  .hata-kart p{margin:0;font-size:13px;color:var(--mut);}
+  /* — imzalı çıktı (yazdır) — */
+  .imza-blok{display:none;margin-top:22px;border:1.5px solid var(--teal-b);border-radius:12px;padding:14px;background:var(--tint);}
+  body.imzali .imza-blok{display:block;}
+  .imza-blok h4{margin:0 0 10px;font-family:'Bricolage Grotesque',sans-serif;font-size:12px;letter-spacing:1.2px;text-transform:uppercase;color:var(--teal);}
+  .ib-grid{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;}
+  .ib-imza{width:200px;max-width:45%;background:#fff;border:1px solid var(--line);border-radius:8px;padding:4px;}
+  .ib-imza img{width:100%;display:block;}
+  .ib-bilgi{flex:1;min-width:200px;font-size:11.5px;line-height:1.9;}
+  .ib-bilgi .mono{font-size:13px;font-weight:700;}
+  .kvkk-onay-satir{margin-top:10px;font-size:10.5px;color:var(--mut);border-top:1px dashed var(--line);padding-top:8px;}
+  /* — yazdır — */
+  @media print{
+    body{background:#fff;font-size:12px;}
+    .wrap{padding:0;max-width:none;}
+    .onay-panel,.no-print{display:none !important;}
+    .maddeler,.k-card,.masthead{box-shadow:none;}
+    .madde .m-t{text-align:justify;}
+    .sonuc.acik{display:none;}
+    @page{margin:14mm;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap" id="belge" style="display:none;">
+  <div class="masthead">
+    <div class="mh-left">
+      <div class="mh-logo"><img src="./logo.png" alt="PEKDOĞRU"></div>
+      <div>
+        <div class="mh-name" id="mFirmaAd">PEKDOĞRU OTOMOTİV</div>
+        <div class="mh-tag">Filo Kiralama Hizmetleri</div>
+      </div>
+    </div>
+    <div class="mh-meta">
+      <div class="no" id="mSozNo">SOZ—</div>
+      <div id="mFirmaAdres"></div>
+      <div id="mFirmaIletisim"></div>
+    </div>
+  </div>
+
+  <div class="doc-title">
+    <div class="t">Araç Kiralama Sözleşmesi</div>
+    <div class="rule"></div>
+    <span class="chip" id="mTarih"></span>
+  </div>
+
+  <div class="kunye">
+    <div class="k-card">
+      <h4>Taraflar</h4>
+      <div class="k-row"><span class="l">Kiraya Veren</span><span class="v" id="kFirma">—</span></div>
+      <div class="k-row"><span class="l">Vergi No</span><span class="v" id="kFirmaVkn">—</span></div>
+      <div class="k-row"><span class="l">Kiracı</span><span class="v" id="kKiraci">—</span></div>
+      <div class="k-row"><span class="l">VKN / T.C.</span><span class="v" id="kKiraciVergi">—</span></div>
+      <div class="k-row"><span class="l">Adres</span><span class="v" id="kKiraciAdres">—</span></div>
+      <div class="k-row"><span class="l">Telefon</span><span class="v" id="kKiraciTel">—</span></div>
+      <div class="k-row" id="kKefilRow" style="display:none;"><span class="l">Kefil</span><span class="v" id="kKefil">—</span></div>
+    </div>
+    <div class="k-card">
+      <h4>Araç ve Dönem</h4>
+      <div class="k-row"><span class="l">Plaka</span><span class="v mono" id="kPlaka">—</span></div>
+      <div class="k-row"><span class="l">Araç</span><span class="v" id="kArac">—</span></div>
+      <div class="k-row"><span class="l">Kira Dönemi</span><span class="v" id="kDonem">—</span></div>
+      <div class="k-row"><span class="l">Süre</span><span class="v" id="kSure">—</span></div>
+      <div class="k-row"><span class="l">Aylık Kira</span><span class="v mono" id="kKira">—</span></div>
+      <div class="k-row"><span class="l">Km Limiti / Aşım</span><span class="v mono" id="kKm">—</span></div>
+      <div class="k-row"><span class="l">Depozito</span><span class="v mono" id="kDepozito">—</span></div>
+      <div class="k-row"><span class="l">Teslim Km</span><span class="v mono" id="kTeslimKm">—</span></div>
+    </div>
+  </div>
+
+  <div class="maddeler" id="maddelerHtml"></div>
+  <div class="notlar-blok" id="notlarBlok" style="display:none;"></div>
+
+  <div class="imza-blok" id="imzaBlok">
+    <h4>Elektronik Müşteri Onayı</h4>
+    <div class="ib-grid">
+      <div class="ib-imza"><img id="ibImzaImg" src="" alt="Müşteri imzası"></div>
+      <div class="ib-bilgi">
+        <div>Kiracı: <b id="ibKiraci"></b></div>
+        <div>Sözleşme No: <b id="ibSozNo"></b></div>
+        <div>Onay zamanı: <b id="ibZaman"></b></div>
+        <div>Onay Damgası: <span class="mono" id="ibDamga"></span></div>
+        <div class="kvkk-onay-satir">Kiracı, sözleşme şartlarını ve KVKK Aydınlatma Metni'ni elektronik ortamda okuyup onayladığını, onay kodu ile kimliğinin doğrulandığını ve ekranda attığı imzanın kendisine ait olduğunu beyan eder. Bu elektronik onay, taraflar arasındaki kabul beyanının kaydına geçer.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="hata-kart" id="hataKart" style="display:none;">
+  <div class="h-ic">🔒</div>
+  <h3>Sözleşme açılamadı</h3>
+  <p>Bu sayfa, size gönderilen özel bağlantıyla açılmalıdır. Lütfen size iletilen linke telefonunuzdan veya bilgisayarınızdan tekrar dokunun. Linkte sözleşmenin içeriği şifrelenmiş şekilde gömülüdür; linki olmayan bir kişi bu sayfadan hiçbir veri göremez.</p>
+</div>
+
+<!-- ONAY PANELİ (yalnızca ekran) -->
+<div class="onay-panel no-print" id="onayPanel" style="display:none;">
+  <div class="onay-inner">
+    <div class="onay-bas" onclick="onayToggle()">
+      <div class="ob-l"><span class="ok-ic">✍️</span> Sözleşmeyi Onayla ve İmzala</div>
+      <div class="ob-arrow" id="obArrow">▲</div>
+    </div>
+    <div class="onay-body" id="onayBody">
+      <label class="od-check">
+        <input type="checkbox" id="ckKvkk">
+        <span><b>KVKK Aydınlatma Metni</b>'ni okudum; kişisel verilerimin 6698 sayılı Kanun kapsamında işlenmesine <b>açık rıza</b> veriyorum. <a href="javascript:void(0)" onclick="event.preventDefault();event.stopPropagation();kvkkToggle()">Metni göster</a></span>
+      </label>
+      <label class="od-check">
+        <input type="checkbox" id="ckSartlar">
+        <span>Sözleşmenin tamamını (madde 1–23) okudum, anladım ve tüm şartlarını <b>kabul ediyorum</b>.</span>
+      </label>
+      <div class="kod-satir">
+        <label for="kodInput">Onay Kodu</label>
+        <input class="kod-input" id="kodInput" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••">
+      </div>
+      <div class="imza-alan">
+        <div class="ia-l">İmzanız — parmağınızla veya fareyle aşağıya imzalayın</div>
+        <div class="imza-box" id="imzaBox">
+          <canvas id="imzaCanvas"></canvas>
+          <div class="imza-placeholder" id="imzaPlaceholder">Bu alana imzanızı atın</div>
+        </div>
+        <div class="imza-araclar">
+          <span>İmza, sözleşmenin sonuna basılır</span>
+          <button class="imza-temizle" type="button" onclick="imzaTemizle()">✕ Temizle</button>
+        </div>
+      </div>
+      <button class="btn-onay" id="btnOnay" onclick="sozlesmeyiOnayla()">Sözleşmeyi Onayla ve İmzala</button>
+      <div class="onay-hata" id="onayHata"></div>
+    </div>
+  </div>
+</div>
+
+<div class="sonuc no-print" id="sonuc">
+  <div class="s-ic">✓</div>
+  <h3>Sözleşme Onaylandı</h3>
+  <div class="s-sub">Teşekkürler <b id="sKiraci"></b> — onayınız kaydedildi. Bu ekranı ve damga kodunu şirkete WhatsApp'tan iletmeniz yeterlidir.</div>
+  <div class="damga-kart">
+    <div class="dk-l">Onay Damgası</div>
+    <div class="dk-v" id="sDamga">—</div>
+  </div>
+  <div class="sonuc-imza"><img id="sImzaImg" src="" alt="İmza"></div>
+  <div class="sonuc-btnler">
+    <button class="btn-print" onclick="onayliYazdir()">🖨️ Onaylı Sözleşmeyi PDF Aç</button>
+    <button class="btn-wa" onclick="waBildir()">WhatsApp ile Bildir</button>
+  </div>
+</div>
+
+<!-- KVKK AYDINLATMA METNİ (kalıcı katman) -->
+<div class="kvkk-metin" id="kvkkMetin">
+  <h5>6698 SAYILI KİŞİSEL VERİLERİN KORUNMASI KANUNU AYDINLATMA METNİ</h5>
+  <b>Veri sorumlusu:</b> <span id="kvkkFirma">—</span> ("Şirket").<br><br>
+  <b>İşlenen kişisel veriler:</b> Ad-soyad, T.C. kimlik numarası / vergi numarası, adres, telefon numarası, e-posta, sürücü belgesi bilgileri, imza görüntüsü, sözleşme ve ödeme kayıtları ile araç kullanımına ilişkin veriler (km, hasar, ceza kayıtları).<br><br>
+  <b>İşleme amaçları:</b> Araç kiralama sözleşmesinin kurulması, ifası ve sona ermesi; kiracının kimliğinin ve onayının doğrulanması; faturalandırma ve tahsilat; hasar, kaza ve trafik cezası takibi; yasal yükümlülüklerin yerine getirilmesi; hukuki süreçlerde delil olarak kullanma.<br><br>
+  <b>Hukuki sebepler:</b> KVKK m.5/2-(c) sözleşmenin kurulması/ifası, m.5/2-(ç) veri sorumlusunun hukuki yükümlülüğü, m.5/2-(f) meşru menfaat; imza görüntüsü için açık rızanız (KVKK m.5/1).<br><br>
+  <b>Aktarım:</b> Verileriniz; yasal talep halinde yetkili kamu kurum ve kuruluşlarına, hukuki süreçlerde avukat/danışmanlara ve ilgili mahkeme/icra dairelerine aktarılabilir. Yurt dışına aktarım yapılmaz.<br><br>
+  <b>Saklama süreleri:</b> Sözleşme ve onay kayıtları, ilgili mevzuatta öngörülen zamanaşımı süreleri boyunca saklanır; süre sonunda silinir veya anonimleştirilir.<br><br>
+  <b>Haklarınız (KVKK m.11):</b> Kişisel verilerinizin işlenip işlenmediğini öğrenme, işlenmişse bilgi talep etme, düzeltilmesini veya silinmesini isteme, aktarıldığı üçüncü kişileri bilme, eksik/yanlış işlenmişse düzeltilmesini talep etme ve kanunun diğer hakları. Taleplerinizi Şirket'in yukarıda belirtilen adresine yazılı olarak iletebilirsiniz.<br><br>
+  Bu metin, onay kutucuğunu işaretlemeniz halinde okunmuş ve kabul edilmiş sayılır.
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var D = null;
+  function esc(s){
+    return String(s==null?'':s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function hashCoz(){
+    try{
+      var h = location.hash||'';
+      if(h.indexOf('#d=')!==0) return null;
+      var b64 = h.slice(3).replace(/-/g,'+').replace(/_/g,'/');
+      while(b64.length % 4) b64 += '=';
+      var json = decodeURIComponent(escape(atob(b64)));
+      return JSON.parse(json);
+    }catch(e){ return null; }
+  }
+  // Onay damgası — paneldeki sozOnayDamga() ile BİREBİR aynı algoritma
+  function onayDamgasi(sozNo, kod){
+    var kaynak = String(sozNo||'')+'|'+String(kod||'')+'|pekdogru-filo-onay';
+    var h = 5381;
+    for(var i=0;i<kaynak.length;i++){ h = (((h<<5)+h)+kaynak.charCodeAt(i))>>>0; }
+    return h.toString(36).toUpperCase().padStart(7,'0').slice(-7);
+  }
+  function maddeler(d){
+    var A = 'Araç';
+    return [
+      {no:1, b:'SÖZLEŞMENİN KONUSU VE KAPSAMI', t:'İşbu sözleşmenin konusu, yukarıda nitelikleri belirtilen aracın mülkiyeti KİRAYA VEREN\'de kalmak kaydıyla, işbu sözleşmede belirlenen süre, bedel ve şartlarla KİRACI\'ya operasyonel kiralama esasına göre kullanım hakkının devredilmesidir. Sözleşme, Araç Teslim Tutanağı (Ek-1) ve varsa diğer ekleriyle birlikte bir bütündür; ekler ile sözleşme metni arasında çelişki halinde sözleşme metni esas alınır. Kiracı, işbu sözleşmede belirttiği temsil yetkisinin geçerli ve tam olduğunu, temsilcisinin şirketi bağlayıcı şekilde imza atmaya yetkili olduğunu beyan ve taahhüt eder; yetkisiz temsilden doğan tüm zararlardan Kiracı ve temsilcisi müştereken ve müteselsilen sorumludur.'},
+      {no:2, b:'TESLİM VE İADE', t:A+', '+d.bas+' tarihinde, Madde 3\'te belirtilen aylık kilometre ve Dolu yakıt seviyesiyle, KİRAYA VEREN merkezi yerinde, taraflarca birlikte düzenlenip imzalanacak Araç Teslim Tutanağı (Ek-1) ile KİRACI\'ya teslim edilir; tutanakta aracın o anki hasar durumu, lastik/aksesuar bilgileri ve varsa fotoğrafları yer alır. Araç dolu yakıtla teslim edilip dolu yakıtla iade edilecek, eksik yakıt bedeli KİRACI\'dan piyasa fiyatı üzerinden tahsil edilecektir. Kira süresi sonunda Araç, KİRAYA VEREN\'in belirteceği yer ve tarihte, teslim alındığı hal ve donanımla, normal yıpranma payı dışında hasarsız olarak iade edilir; iade sırasında araç birlikte kontrol edilip Araç İade Tutanağı (Ek-2) düzenlenir. KİRACI\'nın iade sırasında hazır bulunmaması veya tutanağı imzalamaktan kaçınması halinde KİRAYA VEREN\'in tek taraflı düzenleyeceği tutanak taraflar arasında bağlayıcıdır.'},
+      {no:3, b:'KULLANIM KOŞULLARI VE YASAKLAR', t:A+' yalnızca işbu sözleşmede belirtilen amaçla ve KİRACI tarafından kullanılır; KİRAYA VEREN\'in önceden yazılı onayı olmaksızın üçüncü kişilere kiralanamaz, alt kiraya konu edilemez, ödünç verilemez, devredilemez veya rehin/teminat olarak gösterilemez. Aracın yurt dışına çıkarılması KİRAYA VEREN\'in önceden yazılı onayına tabidir. Araç üzerinde LPG dönüşümü, renk değişikliği, marka/logo yapıştırması, mekanik/elektronik modifikasyon dahil hiçbir yetkisiz değişiklik yapılamaz. Aracın yarışta, sürüş eğitiminde, test amaçlı, başka bir aracı çekmede/kurtarmada, ruhsatında belirtilenden fazla yükleme ile veya trafik güvenliğini tehlikeye atacak şekilde kullanılması yasaktır. Bu maddeye aykırılıktan doğan her türlü zarar, ceza ve üçüncü kişi talepleri KİRACI\'ya aittir ve KİRAYA VEREN bu hallerde sözleşmeyi derhal feshederek aracı geri alma hakkına sahiptir. Aylık '+d.kmLimit+' km kullanım limitini aşan her kilometre için '+d.kmAsimFiyat+' ₺ + KDV ek ücret tahakkuk eder; kullanılmayan km sonraki döneme devredilmez.'},
+      {no:4, b:'SÜRÜCÜ VE EHLİYET ŞARTI', t:A+'yı yalnızca KİRACI ile önceden KİRAYA VEREN\'e bildirilmiş, aracın sınıfına uygun geçerli sürücü belgesine sahip kişiler kullanabilir. KİRACI, ek sürücü bilgilerini (varsa) yazılı olarak bildirmekle yükümlüdür; bildirilmemiş bir sürücünün kullanımından doğan hasar, ceza ve sigorta reddi dahil tüm sonuçlar KİRACI\'ya aittir. Ehliyetsiz, ehliyeti geçici/sürekli iptal edilmiş veya aracın sınıfına uygun olmayan ehliyetle yapılan kullanımdan doğan tüm hukuki ve cezai sonuçlar ile hasarlar münhasıran KİRACI\'ya aittir; bu hallerde sigorta şirketinin ödeme yapmaması durumunda dahi KİRAYA VEREN\'in zararı KİRACI\'dan tazmin edilir.'},
+      {no:5, b:'BAKIM, ONARIM VE PERİYODİK SERVİS', t:A+'nın üretici tarafından öngörülen periyodik bakımları KİRAYA VEREN tarafından, KİRAYA VEREN\'in yönlendireceği yetkili servislerde yaptırılır; KİRACI, aracın bakım zamanı geldiğinde gecikmeksizin belirtilen servise götürmek ve arıza/uyarı ışıklarını derhal KİRAYA VEREN\'e bildirmekle yükümlüdür. KİRACI\'nın bu yükümlülüğü ihmal etmesi sonucu oluşan arıza büyümesi, motor/şanzıman hasarı gibi zararlar KİRACI\'ya aittir. KİRAYA VEREN\'in yazılı onayı olmaksızın yetkisiz servislerde bakım/onarım yaptırılamaz; aksi halde doğacak garanti kaybı ve hasarlardan KİRACI sorumludur. Bakım/onarım süresince ikame araç sağlanmaz.'},
+      {no:6, b:'SİGORTA, KAZA VE HASAR', t:A+' için zorunlu mali mesuliyet sigortası ve kasko poliçesi KİRAYA VEREN tarafından yaptırılır. Kaza, çalınma, yanma veya üçüncü kişi zararı halinde KİRACI; olayı gecikmeksizin (en geç 24 saat içinde) KİRAYA VEREN\'e ve yetkili kolluk kuvvetlerine bildirmek, kaza tespit tutanağı düzenletmek, gerektiğinde alkol/uyuşturucu raporu aldırmak ve ilgili tüm belgeleri KİRAYA VEREN\'e iletmekle yükümlüdür. Bu yükümlülüklerin yerine getirilmemesi (tutanaksız araç bırakma, olay yerinden ayrılma, geç bildirim) nedeniyle sigortanın hasarı kısmen veya tamamen karşılamaması halinde karşılanmayan tutar KİRACI\'dan tahsil edilir. KİRACI\'nın kusurlu olduğu hasarlarda kasko muafiyet bedeli, değer kaybı ve onarım süresince oluşan gelir kaybı KİRACI\'ya aittir. Kasko teminatı dışında kalan iç döşeme, lastik, jant, cam, far/stop, alt kaporta hasarları ile alkol, uyuşturucu/uyarıcı madde etkisi altında veya ehliyetsiz kullanımdan doğan hasarların tamamı, sigorta tazmin etse dahi rücu edilmek suretiyle, KİRACI\'ya aittir.'},
+      {no:7, b:'TRAFİK CEZALARI VE GEÇİŞ ÜCRETLERİ', t:'Kira süresi içinde aracın kullanımından kaynaklanan tüm trafik idari para cezaları, OGS/HGS/köprü-otoyol geçiş ücretleri, park/otopark bedelleri, çekici ücretleri ve benzeri her türlü mali yükümlülük KİRACI\'ya aittir. KİRAYA VEREN adına tebliğ edilen bu tür cezalar/ücretler, KİRAYA VEREN tarafından ödendikten sonra varsa uygulanan idari işlem/dosya ücreti ile birlikte KİRACI\'dan tahsil edilir; KİRACI bu tutarları ilk yazılı bildirimde, ihtara gerek kalmaksızın öder.'},
+      {no:8, b:'ÖDEME KOŞULLARI VE TEMERRÜT', t:'Kira bedeli, işbu sözleşmede belirtilen tutar ve tarihte, her ayın 1. gününde peşin olarak, banka havalesi/EFT ile KİRAYA VEREN\'in bildireceği hesaba ödenir. Ödemenin vadesinde yapılmaması halinde, ödenmeyen tutara 3095 sayılı Kanuni Faiz ve Temerrüt Faizine İlişkin Kanun uyarınca uygulanan ticari temerrüt faizi işletilir. Kira bedelinin 10 (on) günden fazla gecikmesi halinde KİRAYA VEREN, ayrıca ihtar çekmeye gerek olmaksızın sözleşmeyi feshedip aracı geri alma hakkına sahiptir; bu durumda KİRACI\'nın işbu sözleşmeden doğan tüm borçları muaccel hale gelir.'},
+      {no:9, b:'DEPOZİTO / TEMİNAT', t:'KİRACI, sözleşme imzalanmadan önce '+d.depozito+' ₺ depozito/teminat tutarını KİRAYA VEREN\'e öder. KİRAYA VEREN, KİRACI\'nın işbu sözleşmeden doğan ödenmemiş borçlarını, tahsil edilemeyen trafik cezalarını, hasar bedellerini ve cezai şart alacaklarını depozitodan mahsup etme hakkına sahiptir; mahsup sonrası kalan tutar aracın sorunsuz iade edildikten ve tüm hesaplar kapatıldıktan sonra KİRACI\'ya iade edilir. Depozito, KİRACI\'nın araç üzerindeki kullanımına ilişkin herhangi bir mülkiyet veya rehin hakkı doğurmaz.'},
+      {no:10, b:'DEVİR, ALT KİRA VE HACİZ YASAĞI', t:'KİRACI, işbu sözleşmeden doğan haklarını ve aracı KİRAYA VEREN\'in önceden yazılı onayı olmaksızın üçüncü kişilere devredemez, alt kiraya veremez, üzerinde herhangi bir ayni/şahsi hak tesis edemez. Araç üzerine KİRACI\'nın borçları nedeniyle üçüncü kişilerce haciz, ihtiyati haciz veya ihtiyati tedbir konulması halinde KİRACI, aracın KİRAYA VEREN mülkiyetinde olduğunu derhal icra dairesine ve ilgili mercilere bildirmek ve KİRAYA VEREN\'i gecikmeksizin haberdar etmekle yükümlüdür; bu bildirimin yapılmaması veya geç yapılması nedeniyle doğacak tüm zarar ve masraflar KİRACI\'ya aittir.'},
+      {no:11, b:'CEZAİ ŞARTLAR VE TAZMİNAT', t:'Aşağıdaki hallerde KİRACI, ayrıca ihtara gerek kalmaksızın belirtilen cezai şartları KİRAYA VEREN\'e öder; cezai şartın ödenmesi KİRAYA VEREN\'in bu tutarı aşan gerçek zararını ayrıca talep etme hakkını ortadan kaldırmaz: (a) KİRACI\'nın sözleşmeyi süresinden önce tek taraflı feshetmesi veya erken iade talep etmesi halinde, kalan kira süresine ait toplam kira bedelinin %20\'si; (b) Aracın izinsiz devri, alt kiraya verilmesi veya sözleşmeye aykırı/kötüye kullanımı halinde, sözleşme toplam bedelinin %50\'si; (c) Aracın sözleşme süresi sonunda veya KİRAYA VEREN\'in fesih hakkının doğduğu tarihte iade edilmemesi halinde, iade gecikmesinin devam ettiği her gün için aylık kira bedelinin %10\'u oranında gecikme tazminatı.'},
+      {no:12, b:'ERKEN FESİH VE KİRAYA VERENİN FESİH HAKKI', t:'KİRACI, sözleşmeyi süresinden önce sona erdirmek istediğinde bunu en az 30 (otuz) gün önceden yazılı olarak KİRAYA VEREN\'e bildirir; bu halde Madde 11(a) uyarınca cezai şart uygulanır. KİRAYA VEREN; kira bedelinin ödenmemesi, aracın sözleşmeye aykırı kullanılması, sigortanın geçersiz kılınmasına yol açacak davranışlar, KİRACI\'nın iflası/konkordato ilanı/işlerini tasfiye etmesi veya KİRACI hakkında haciz işlemi başlatılması hallerinde, ihtara gerek kalmaksızın sözleşmeyi derhal feshedip aracı geri alma hakkına sahiptir.'},
+      {no:13, b:'ARACIN GERİ ALINMASI', t:'KİRACI, sözleşme süresinin sona ermesi veya KİRAYA VEREN\'in fesih hakkının doğması halinde aracı derhal ve kendiliğinden iade eder. Araç iade edilmezse KİRAYA VEREN, aracın bulunduğu yeri tespit ederek yasal yollardan (icra takibi dahil) geri alma hakkına sahiptir; bu kapsamda yapılan tüm masraflar (avukatlık ücreti, icra masrafları, yer tespiti ve nakliye giderleri dahil) KİRACI\'dan tahsil edilir.'},
+      {no:14, b:'GİZLİLİK VE KİŞİSEL VERİLERİN KORUNMASI (KVKK)', t:'Taraflar, işbu sözleşme kapsamında öğrendikleri birbirlerine ait ticari ve kişisel bilgileri gizli tutmayı, sözleşme amacı dışında kullanmayı ve önceden yazılı onay olmaksızın üçüncü kişilerle paylaşmamayı taahhüt eder. KİRAYA VEREN, KİRACI\'ya ve varsa bildirdiği sürücülere ait kişisel verileri, 6698 sayılı Kişisel Verilerin Korunması Kanunu ve ilgili mevzuata uygun olarak, sözleşmenin kurulması ve ifası, hasar/kaza/ceza takibi ve yasal yükümlülüklerin yerine getirilmesi amacıyla işler; buna ilişkin aydınlatma metni Ek-3\'te yer alır.'},
+      {no:15, b:'MÜCBİR SEBEP', t:'Deprem, sel, yangın, savaş, terör, genel grev, salgın hastalık, resmi makam kararları gibi tarafların makul kontrolü dışındaki ve öngörülemeyen hallerin (mücbir sebep) sözleşmenin ifasını imkânsız veya aşırı derecede güçleştirmesi halinde, etkilenen Taraf durumu derhal diğer Tarafa yazılı olarak bildirir ve mücbir sebep süresince yükümlülükler askıya alınır. Mücbir sebep 30 (otuz) günden uzun sürerse taraflardan her biri sözleşmeyi tazminatsız feshedebilir; bu durumda o ana kadar tahakkuk etmiş kira bedeli ve varsa hasar/ceza alacakları KİRAYA VEREN\'e ödenir.'},
+      {no:16, b:'TEBLİGAT', t:'Taraflar, işbu sözleşmede belirtilen adreslerini tebligat adresi olarak kabul eder; adres değişiklikleri diğer Tarafa yazılı olarak (noter/iadeli taahhütlü/e-posta) bildirilmedikçe, son bildirilen adrese yapılan tebligat geçerli sayılır. Taraflar, işbu sözleşmede belirtilen e-posta adreslerine yapılacak bildirimleri de yazılı bildirim olarak kabul eder.'},
+      {no:17, b:'ALACAĞIN DEVRİ', t:'KİRAYA VEREN, işbu sözleşmeden doğan alacaklarını (kira bedeli, cezai şart, tazminat alacakları dahil) önceden KİRACI\'nın onayını almaksızın üçüncü kişilere (finans kuruluşları dahil) devir ve temlik edebilir; bu durumda KİRACI, temlik bildirimini takiben ödemelerini bildirilen alacaklıya yapmakla yükümlüdür.'},
+      {no:18, b:'KEFİL VE MÜTESELSİL SORUMLULUK', t:d.kefil ? ('İşbu sözleşmeden doğan tüm borçlardan (kira bedeli, cezai şart, tazminat, hasar bedeli, trafik cezaları ve diğer her türlü alacak dahil) '+d.kefil+(d.kefilTC?(' (T.C. Kimlik No: '+d.kefilTC+')'):'')+' ("KEFİL"), KİRACI ile birlikte ve aynı derecede sorumlu olmayı (müteselsil sorumluluk), bu sorumluluğun borcu sonradan doğanlar için de devam edeceğini bilerek ve isteyerek kabul ve taahhüt eder. Kefil, KİRAYA VEREN\'in önce Kiracıya başvurmasını veya Kiracı hakkında takip yapmasını beklemek zorunda olmaksızın doğrudan dava ve icra takibine muhatap olarak ödeme yapmayı kabul eder. Kefilin bu beyanı sözleşmenin yenilenmesi veya süre uzatımı hallerinde aynen geçerlidir.') : ('KİRACI tüzel kişi ise, işbu sözleşmeyi imzalayan temsilci, şirketi bağlayıcı imza yetkisine sahip olduğunu beyan eder; yetki eksikliği halinde sözleşmeden doğan tüm borç ve zararlardan imzalayan kişi KİRACI ile birlikte müştereken ve müteselsilen sorumludur. KİRAYA VEREN, kira süresince dilediği anda KİRACI\'dan gösterilecek kefilin müteselsil sorumluluk beyanını imzalamasını talep etme hakkına sahiptir; bu talebin 15 gün içinde karşılanmaması halinde KİRAYA VEREN sözleşmeyi derhal feshedip aracı geri alma hakkını saklı tutar.')},
+      {no:19, b:'KASKO PRİM ARTIŞI VE HASARSIZLIK KAYBI', t:'KİRACI\'nın veya bildirilen sürücülerin kusuruyla meydana gelen her hasar sonucunda sigorta şirketlerince uygulanan hasarsızlık indirimlerinin kaybedilmesi ve kasko ile zorunlu mali mesuliyet sigortası primlerinde oluşan artış, kaybedilen indirim tutarı ve yeni prim ile önceki prim arasındaki fark esas alınarak hesaplanır ve KİRACI\'ya yansıtılır. KİRACI, kira süresinin bitimini takip eden ilk prim yenileme dönemini kapsayan prim artışlarını, belgelendirilmiş olarak ilk yazılı bildirimde ödemeyi kabul ve taahhüt eder; bu tutarlar depozitodan mahsup edilebilir.'},
+      {no:20, b:'KİRA BEDELİNİN YENİLENMESİ', t:'12 (on iki) ay ve üzeri süreli kiralamalarda kira bedeli, her kira dönem başında, önceki 12 aylık döneme ilişkin TÜFE (Yiyecek ve Alkolsüz İçecekler hariç Esas Yıllık Ortalama Tüketici Fiyatları Endeksi) artış oranı kadar zamlanarak yenilenir; güncelleme oranı %25\'in üzerinde ise %25 esas alınır. KİRAYA VEREN, yeni dönem kira bedelini dönem başlangıcından en az 30 (otuz) gün önce yazılı olarak KİRACI\'ya bildirir; KİRACI\'nın yeni bedeli kabul etmemesi halinde sözleşme, devam eden kira döneminin sonunda tazminatsız olarak sona erer ve KİRACI aracı Madde 2 hükümlerine göre iade eder.'},
+      {no:21, b:'AVUKATLIK ÜCRETİ VE YARGI MASRAFLARI', t:'İşbu sözleşmeden doğan alacak ve uyuşmazlıkların tahsili/çözümü amacıyla KİRAYA VEREN tarafından başlatılan her türlü hukuk ve icra takibinde; avukatlık ücretleri aksi kararlaştırılmış olsa dahi, harç, masraf, bilirkişi ve keşif giderleri dahil tüm yargı ve icra masrafları KİRACI\'ya ait olup talep halinde peşin ödenir. KİRAYA VEREN\'in birden fazla avukat veya avukatlık bürosu ile temsil edilmesi halinde hepsi için avukatlık ücreti hükmedilmesini KİRACI şimdiden kabul ve taahhüt eder.'},
+      {no:22, b:'SÖZLEŞMENİN BÜTÜNLÜĞÜ VE DEĞİŞİKLİK', t:'İşbu sözleşme ve ekleri, taraflar arasındaki anlaşmanın tamamını oluşturur ve sözleşme tarihinden önceki tüm sözlü/yazılı anlaşmaların yerine geçer. Sözleşmede yapılacak her türlü değişiklik, ancak yazılı ve her iki tarafça imzalanmış ek protokol ile geçerli olur. Sözleşmenin herhangi bir hükmünün geçersiz veya uygulanamaz sayılması, sözleşmenin diğer hükümlerinin geçerliliğini etkilemez; geçersiz hüküm, tarafların amacına en yakın geçerli bir hükümle değiştirilmiş sayılır.'},
+      {no:23, b:'UYUŞMAZLIKLARIN ÇÖZÜMÜ VE YETKİLİ MAHKEME', t:'İşbu sözleşmenin uygulanmasından doğacak her türlü uyuşmazlıkta Türk hukuku uygulanır; KONYA Mahkemeleri ve İcra Daireleri münhasıran yetkilidir. İşbu sözleşme 2 (iki) nüsha olarak düzenlenmiş, taraflarca okunup anlaşılarak aşağıda belirtilen tarihte imzalanmıştır.'}
+    ];
+  }
+
+  // ——— başlat ———
+  D = hashCoz();
+  if(!D || !D.sozNo){ document.getElementById('hataKart').style.display='block'; return; }
+  document.getElementById('belge').style.display='block';
+  document.getElementById('onayPanel').style.display='block';
+  document.getElementById('mFirmaAd').textContent = D.firma && D.firma.ad ? D.firma.ad : 'PEKDOĞRU OTOMOTİV';
+  document.getElementById('mSozNo').textContent = D.sozNo;
+  document.getElementById('mTarih').textContent = D.tarih || '';
+  if(D.firma){
+    document.getElementById('mFirmaAdres').textContent = D.firma.adres||'';
+    document.getElementById('mFirmaIletisim').textContent = [D.firma.tel, D.firma.vkn?('VKN: '+D.firma.vkn):''].filter(Boolean).join(' · ');
+    document.getElementById('kFirma').textContent = D.firma.ad||'—';
+    document.getElementById('kFirmaVkn').textContent = D.firma.vkn||'—';
+  }
+  var m = D.musteri||{};
+  document.getElementById('kKiraci').textContent = m.ad||'—';
+  document.getElementById('kKiraciVergi').textContent = m.vergi||'—';
+  document.getElementById('kKiraciAdres').textContent = m.adres||'—';
+  document.getElementById('kKiraciTel').textContent = m.tel||'—';
+  if(D.kefil){ document.getElementById('kKefilRow').style.display='flex'; document.getElementById('kKefil').textContent = D.kefil + (D.kefilTC?(' · '+D.kefilTC):''); }
+  document.getElementById('kPlaka').textContent = D.plaka||'—';
+  document.getElementById('kArac').textContent = [D.marka, D.model, D.versiyon, D.modelYili, D.renk?('('+D.renk+')'):''].filter(Boolean).join(' ') || '—';
+  document.getElementById('kDonem').textContent = (D.bas||'—') + ' → ' + (D.bitis||'—');
+  document.getElementById('kSure').textContent = D.sure||'—';
+  document.getElementById('kKira').textContent = (D.aylikKira||'—') + (D.aylikKira?' ₺/ay':'');
+  document.getElementById('kKm').textContent = (D.kmLimit||'—') + ' km / ' + (D.kmAsimFiyat||'—') + ' ₺';
+  document.getElementById('kDepozito').textContent = (D.depozito||'—') + (D.depozito?' ₺':'');
+  document.getElementById('kTeslimKm').textContent = D.teslimKm||'—';
+  document.getElementById('maddelerHtml').innerHTML = maddeler(D).map(function(md){
+    return '<div class="madde"><div class="m-b"><span class="m-no">'+md.no+'</span>'+esc(md.b)+'</div><div class="m-t">'+md.t+'</div></div>';
+  }).join('');
+  if(D.notlar){
+    document.getElementById('notlarBlok').style.display='block';
+    document.getElementById('notlarBlok').innerHTML = '<b>Özel Şartlar / Notlar:</b> '+esc(D.notlar);
+  }
+  document.getElementById('kvkkFirma').textContent = (D.firma && D.firma.ad) || 'Şirket';
+
+  // ——— imza tuvali ———
+  var canvas = document.getElementById('imzaCanvas');
+  var ctx = canvas.getContext('2d');
+  var ciziyor = false, imzaVar = false, sonNokta = null;
+  function tuvalBoyutla(){
+    var rect = canvas.getBoundingClientRect();
+    var dpr = window.devicePixelRatio||1;
+    if(rect.width===0) return;
+    var eski = imzaVar ? canvas.toDataURL() : null;
+    canvas.width = Math.round(rect.width*dpr);
+    canvas.height = Math.round(rect.height*dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.lineWidth = 2.2; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.strokeStyle='#0B2B28';
+    if(eski){
+      var img = new Image();
+      img.onload = function(){ ctx.drawImage(img,0,0,rect.width,rect.height); };
+      img.src = eski;
+    }
+  }
+  setTimeout(tuvalBoyutla, 50);
+  window.addEventListener('resize', function(){ setTimeout(tuvalBoyutla, 100); });
+  function noktaAl(e){
+    var rect = canvas.getBoundingClientRect();
+    return {x:e.clientX-rect.left, y:e.clientY-rect.top};
+  }
+  canvas.addEventListener('pointerdown', function(e){
+    e.preventDefault();
+    canvas.setPointerCapture && canvas.setPointerCapture(e.pointerId);
+    ciziyor = true; sonNokta = noktaAl(e);
+    ctx.beginPath(); ctx.arc(sonNokta.x, sonNokta.y, 1.2, 0, Math.PI*2); ctx.fillStyle='#0B2B28'; ctx.fill();
+  });
+  canvas.addEventListener('pointermove', function(e){
+    if(!ciziyor) return;
+    var n = noktaAl(e);
+    ctx.beginPath(); ctx.moveTo(sonNokta.x, sonNokta.y); ctx.lineTo(n.x, n.y); ctx.stroke();
+    sonNokta = n; imzaVar = true;
+    document.getElementById('imzaPlaceholder').style.display='none';
+  });
+  canvas.addEventListener('pointerup', function(){ ciziyor=false; sonNokta=null; });
+  canvas.addEventListener('pointercancel', function(){ ciziyor=false; sonNokta=null; });
+  window.imzaTemizle = function(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    imzaVar = false;
+    document.getElementById('imzaPlaceholder').style.display='flex';
+  };
+  window.onayToggle = function(){
+    var b = document.getElementById('onayBody');
+    var acik = b.classList.toggle('acik');
+    document.getElementById('obArrow').textContent = acik ? '▼' : '▲';
+    if(acik) setTimeout(tuvalBoyutla, 60);
+  };
+  // Açılışta panel açık gelsin — iPhone'da kullanıcı adım aramasın
+  setTimeout(function(){ if(!document.getElementById('onayBody').classList.contains('acik')) onayToggle(); }, 300);
+
+  window.kvkkToggle = function(){
+    var k = document.getElementById('kvkkMetin');
+    k.classList.toggle('acik');
+    if(k.classList.contains('acik')) k.scrollIntoView({behavior:'smooth', block:'nearest'});
+  };
+
+  function hataGoster(m){
+    var el = document.getElementById('onayHata');
+    el.textContent = m; el.style.display='block';
+    el.scrollIntoView({behavior:'smooth', block:'nearest'});
+  }
+
+  var onayKaydi = null;
+  window.sozlesmeyiOnayla = function(){
+    document.getElementById('onayHata').style.display='none';
+    if(!document.getElementById('ckKvkk').checked){ hataGoster('Lütfen önce KVKK Aydınlatma Metni\'ni okuyup onaylayın.'); return; }
+    if(!document.getElementById('ckSartlar').checked){ hataGoster('Lütfen sözleşme şartlarını okuyup kabul ettiğinizi onaylayın.'); return; }
+    var kod = document.getElementById('kodInput').value.replace(/\D/g,'');
+    if(kod.length!==6){ hataGoster('Size SMS/WhatsApp ile gönderilen 6 haneli onay kodunu girin.'); return; }
+    if(kod !== String(D.onayKodu||'').replace(/\D/g,'')){ hataGoster('Onay kodu hatalı. Lütfen size gönderilen kodu kontrol edin.'); return; }
+    if(!imzaVar){ hataGoster('Lütfen imza alanına parmağınızla imzanızı atın.'); return; }
+    var imzaData = canvas.toDataURL('image/png');
+    var damga = onayDamgasi(D.sozNo, kod);
+    var zaman = new Date();
+    onayKaydi = { damga: damga, zaman: zaman, imza: imzaData };
+    // Sonuç görünümü
+    document.getElementById('sKiraci').textContent = (D.musteri&&D.musteri.ad)||'';
+    document.getElementById('sDamga').textContent = damga;
+    document.getElementById('sImzaImg').src = imzaData;
+    // Yazdırma bloğu
+    document.getElementById('ibImzaImg').src = imzaData;
+    document.getElementById('ibKiraci').textContent = (D.musteri&&D.musteri.ad)||'—';
+    document.getElementById('ibSozNo').textContent = D.sozNo;
+    document.getElementById('ibZaman').textContent = zaman.toLocaleDateString('tr-TR')+' '+zaman.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});
+    document.getElementById('ibDamga').textContent = damga;
+    document.body.classList.add('imzali');
+    document.getElementById('onayPanel').style.display='none';
+    var s = document.getElementById('sonuc');
+    s.classList.add('acik');
+    s.scrollIntoView({behavior:'smooth'});
+  };
+
+  window.onayliYazdir = function(){
+    if(!onayKaydi) return;
+    window.print();
+  };
+
+  window.waBildir = function(){
+    if(!onayKaydi) return;
+    var tel = String((D.firmaWa||'')).replace(/[^0-9]/g,'').replace(/^0/,'90');
+    var metin = 'Sayın PEKDOĞRU yetkilisi, ' + (D.sozNo||'') + ' numaralı kira sözleşmesini okudum, onayladım ve imzaladım.\nOnay Damgası: ' + onayKaydi.damga + '\n' + onayKaydi.zaman.toLocaleString('tr-TR');
+    if(tel){
+      window.open('https://wa.me/'+tel+'?text='+encodeURIComponent(metin), '_blank');
+    }else{
+      if(navigator.share){
+        navigator.share({text:metin}).catch(function(){});
+      }else{
+        try{ navigator.clipboard.writeText(metin); alert('Onay mesajı kopyalandı — şirkete WhatsApp\'tan gönderin:\n\n'+metin); }
+        catch(e){ alert('Onay mesajınız:\n\n'+metin); }
+      }
+    }
+  };
+})();
+</script>
+</body>
+</html>
