@@ -2569,16 +2569,16 @@
      olduğu için önceki tüm katmanları ezer; önceki katmanlara dokunulmadı.
      ====================================================================== */
   :root, html[data-theme="dark"], html[data-theme="light"]{
-    --font-display:'Bricolage Grotesque','Instrument Sans',-apple-system,'Segoe UI',Arial,sans-serif;
-    --font-body:'Instrument Sans',-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;
-    --font-ui:'Instrument Sans',-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;
+    --font-display:'Manrope',-apple-system,'Segoe UI',Arial,sans-serif;
+    --font-body:'Manrope',-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;
+    --font-ui:'Manrope',-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;
     --radius:12px;
     --radius-sm:8px;
     --radius-lg:12px;
-    --lux-accent:#00A99D;
+    --lux-accent:#0F766E;
     --lux-bright:#3FD3C6;
-    --lux-deep:#017F76;
-    --accent-hover:#017F76;
+    --lux-deep:#0C5F59;
+    --accent-hover:#0C5F59;
   }
 
   /* --- Koyu tema (data-theme="dark" VEYA niteliksiz): aynı dilin koyu çevirisi --- */
@@ -2589,46 +2589,46 @@
     --surface-3:#2A2F35;
     --border:rgba(255,255,255,.10);
     --border-2:rgba(255,255,255,.18);
-    --text:#EDEBE6;
-    --text-2:#A6ADA9;
-    --text-3:#7C837F;
+    --text:#E7EAEC;
+    --text-2:#A5ADB3;
+    --text-3:#7E878D;
     --accent-blue:#00A99D;
     --blue-dim:rgba(0,169,157,.14);
     --mint-tint:rgba(0,169,157,.12);
     --sidebar-bg:#1C1F23;
-    --paper:#EDEBE6;
-    --steel-100:#EDEBE6;
-    --steel-300:#7C837F;
-    --steel-500:#A6ADA9;
+    --paper:#E7EAEC;
+    --steel-100:#E7EAEC;
+    --steel-300:#7E878D;
+    --steel-500:#A5ADB3;
     --steel-600:#2A2F35;
     --shadow-soft:0 1px 2px rgba(0,0,0,.25);
     --shadow-lift:0 1px 3px rgba(0,0,0,.30);
     --glow:rgba(0,169,157,.12);
   }
 
-  /* --- Açık tema (data-theme="light"): kırık-beyaz zemin, düz çizgi dili --- */
+  /* --- Açık tema (data-theme="light"): kırık-beyaz zemin, nötr grafit metin, kurumsal koyu turkuaz --- */
   html[data-theme="light"]{
     --bg:#F4F4F1;
     --surface:#FFFFFF;
-    --surface-2:#EDEFEA;
-    --surface-3:#E1E5DE;
-    --border:rgba(31,42,40,.12);
-    --border-2:rgba(31,42,40,.22);
-    --text:#1F2A28;
-    --text-2:#5C6E6A;
-    --text-3:#879692;
-    --accent-blue:#00857B;
-    --blue-dim:rgba(0,133,123,.10);
-    --mint-tint:#E4F0ED;
+    --surface-2:#EEF0F0;
+    --surface-3:#E2E5E6;
+    --border:rgba(28,36,41,.12);
+    --border-2:rgba(28,36,41,.22);
+    --text:#1C2429;
+    --text-2:#5A666E;
+    --text-3:#8B959B;
+    --accent-blue:#0F766E;
+    --blue-dim:rgba(15,118,110,.10);
+    --mint-tint:#E4EFED;
     --sidebar-bg:#1B2B29;
-    --paper:#1F2A28;
-    --steel-100:#1F2A28;
-    --steel-300:#879692;
-    --steel-500:#5C6E6A;
-    --steel-600:#E1E5DE;
-    --shadow-soft:0 1px 2px rgba(31,42,40,.05);
-    --shadow-lift:0 2px 6px rgba(31,42,40,.08);
-    --glow:rgba(0,133,123,.12);
+    --paper:#1C2429;
+    --steel-100:#1C2429;
+    --steel-300:#8B959B;
+    --steel-500:#5A666E;
+    --steel-600:#E2E5E6;
+    --shadow-soft:0 1px 2px rgba(28,36,41,.05);
+    --shadow-lift:0 2px 6px rgba(28,36,41,.08);
+    --glow:rgba(15,118,110,.12);
   }
 
   /* --- Tipografi: karakterli grotesk başlık + yumuşak gövde --- */
@@ -2724,7 +2724,7 @@
   }
   .field input:focus,.field select:focus,.field textarea:focus,.filters input:focus,.filters select:focus{
     border-color:var(--accent-blue) !important;
-    box-shadow:0 0 0 2px rgba(0,133,123,.15) !important;
+    box-shadow:0 0 0 2px rgba(15,118,110,.16) !important;
   }
   .field input::placeholder,.filters input::placeholder{color:var(--text-3);}
 
