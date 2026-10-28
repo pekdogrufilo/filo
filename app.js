@@ -2176,6 +2176,100 @@ async function sozMusteriOnayIsle(id){
   }
 }
 
+// ===== v.336: Teslim Fotoğrafları (Avis/Garenta tarzı tablet akışı) =====
+// Sözleşme kaydına tablet kamerasıyla araç fotoğrafları eklenir; Teslim Tutanağı
+// (Ek-1) fotoğraflarla birlikte yazdırılır. Fotoğraflar fotoSikistir() ile 1280px
+// JPEG'e indirilir — kayıt boyutu ve depolama kotası korunur.
+function sozFotoGaleriAc(id){
+  const rec = sozlesmeler.find(r=>r.id===id);
+  if(!rec){ showToast('Sözleşme kaydı bulunamadı.', true); return; }
+  if(!rec.data) rec.data = {};
+  if(!Array.isArray(rec.data.teslimFotolar)) rec.data.teslimFotolar = [];
+  sozFotoGaleriCiz(rec);
+}
+function sozFotoGaleriCiz(rec){
+  sozFotoKapat();
+  const el = document.createElement('div');
+  el.className = 'overlay show';
+  el.id = 'sozFotoOverlay';
+  el.style.cssText = 'z-index:80;';
+  el.onclick = (ev)=>{ if(ev.target===el) sozFotoKapat(); };
+  const fotolar = rec.data.teslimFotolar||[];
+  el.innerHTML = `
+    <div class="modal" style="width:min(760px,94vw);max-height:92vh;max-height:92dvh;display:flex;flex-direction:column;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding-bottom:12px;border-bottom:1px solid var(--border);">
+        <h3 style="font-family:var(--font-display);font-size:17px;">📷 Teslim Fotoğrafları <span style="font-weight:400;font-size:12.5px;color:var(--text-3);">${esc(rec.sozNo||'')}</span></h3>
+        <button class="close-x" onclick="sozFotoKapat()" title="Kapat" style="background:var(--surface-2);border:1px solid var(--border);border-radius:10px;width:34px;height:34px;font-size:16px;cursor:pointer;color:var(--text);">✕</button>
+      </div>
+      <div style="padding:12px 0 6px;display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="add-btn" style="padding:10px 18px;border-radius:12px;font-size:13.5px;" onclick="sozFotoCek('${rec.id}')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:-2px;margin-right:4px;"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/><circle cx="12" cy="13" r="3"/></svg>
+          Kamera ile Çek
+        </button>
+        <button class="settings-btn" style="padding:10px 18px;border-radius:12px;font-size:13.5px;" onclick="sozFotoSec('${rec.id}')">🖼️ Galeriden Seç</button>
+        <span style="font-size:12px;color:var(--text-3);align-self:center;">Fotoğraflar otomatik sıkıştırılır (${fotolar.length} foto)</span>
+      </div>
+      <div style="overflow-y:auto;flex:1;">
+        ${fotolar.length ? `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;padding:6px 0 14px;">
+          ${fotolar.map((f,i)=>`
+            <div style="position:relative;border-radius:14px;overflow:hidden;border:1px solid var(--border);box-shadow:var(--shadow-soft);background:var(--surface-2);">
+              <img src="${f.data}" alt="Teslim foto ${i+1}" style="display:block;width:100%;height:110px;object-fit:cover;">
+              <div style="padding:5px 8px;font-size:10.5px;color:var(--text-3);font-family:var(--font-mono,monospace);">${esc(f.ts||'')}</div>
+              <button onclick="sozFotoSil('${rec.id}',${i})" title="Sil" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,.55);color:#fff;border:none;border-radius:8px;width:26px;height:26px;font-size:12px;cursor:pointer;">🗑</button>
+            </div>`).join('')}
+        </div>` : `
+          <div class="empty-state" style="padding:26px 0;">
+            <div class="empty-state-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/><circle cx="12" cy="13" r="3"/></svg></div>
+            <div class="empty-state-title">Henüz fotoğraf yok</div>
+            <div class="empty-state-desc">Tabletle "Kamera ile Çek"e basın — araç ön/arka/yan görünümlerini, hasar noktalarını ve km göstergesini çekin. Çektikleriniz Teslim Tutanağı'na (Ek-1) eklenir.</div>
+          </div>`}
+      </div>
+      <div style="padding-top:12px;border-top:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="add-btn" style="flex:1;padding:11px 0;border-radius:12px;font-size:13.5px;" onclick="sozFotoKapat();teslimTutanakAc(sozlesmeler.find(x=>x.id==='${rec.id}').data)">📄 Fotoğraflı Teslim Tutanağını Yazdır</button>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+}
+function sozFotoKapat(){ document.getElementById('sozFotoOverlay')?.remove(); }
+function sozFotoSec(id){ sozFotoDosyaAl(id, false); }
+function sozFotoCek(id){ sozFotoDosyaAl(id, true); }
+function sozFotoDosyaAl(id, kameradan){
+  const rec = sozlesmeler.find(r=>r.id===id);
+  if(!rec) return;
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.multiple = true;
+  if(kameradan) input.setAttribute('capture','environment');
+  input.onchange = async ()=>{
+    const files = Array.from(input.files||[]);
+    if(!files.length) return;
+    showToast(files.length + ' fotoğraf işleniyor…');
+    if(!Array.isArray(rec.data.teslimFotolar)) rec.data.teslimFotolar = [];
+    for(const file of files){
+      if(file.size > 25*1024*1024){ showToast('Fotoğraf çok büyük (25MB üstü) — atlandı.', true); continue; }
+      try{
+        const data = await fotoSikistir(file, 1280, 0.7);
+        if(data){
+          rec.data.teslimFotolar.push({ ts: new Date().toLocaleString('tr-TR'), data });
+        }
+      }catch(e){ console.error('sozFotoDosyaAl:', e); }
+    }
+    await persistSozlesmeler();
+    logActivity('edit', 'Teslim fotoğrafı eklendi: <b>'+esc(rec.sozNo||'')+'</b> · '+files.length+' foto');
+    sozFotoGaleriCiz(rec);
+    showToast('✅ Fotoğraflar sözleşmeye eklendi.');
+  };
+  input.click();
+}
+async function sozFotoSil(id, idx){
+  const rec = sozlesmeler.find(r=>r.id===id);
+  if(!rec || !Array.isArray(rec.data.teslimFotolar)) return;
+  rec.data.teslimFotolar.splice(idx, 1);
+  await persistSozlesmeler();
+  sozFotoGaleriCiz(rec);
+}
+
 function daysLeft(dateStr){
   if(!dateStr) return null;
   const parts = String(dateStr).split('-').map(Number);
@@ -5536,6 +5630,25 @@ function teslimTutanakHtml(d){
   const logoTag = logoSrc ? `<img src="${logoSrc}" alt="" style="display:block;margin:0 auto 10px;max-height:64px;">` : '';
   const aracSatirlar = d.araclar.map(a=>`
     <tr><td style="text-align:center;"><strong>${esc(a.plaka)}</strong></td><td>${esc([a.marka,a.model].filter(Boolean).join(' ')||'—')}</td><td style="text-align:center;">${esc(a.modelYili||'—')}</td><td style="text-align:center;">${esc(a.renk||'—')}</td><td style="text-align:center;">${esc(a.teslimKm||'—')}</td><td style="text-align:center;">${esc(d.yakit||'Dolu')}</td></tr>`).join('');
+  // v.336: teslim fotoğrafları — galeriden (teslimFotolar) + sihirbazın eski tekil alanları
+  const fotoListe = [];
+  if(Array.isArray(d.teslimFotolar)) d.teslimFotolar.forEach(f=>{ const u=(f&&f.data)||f; if(typeof u==='string'&&u.startsWith('data:image')) fotoListe.push(u); });
+  ['teslimFoto1','teslimFoto2','teslimFoto3'].forEach(k=>{ if(typeof d[k]==='string'&&d[k].startsWith('data:image')) fotoListe.push(d[k]); });
+  const fotoBolum = fotoListe.length ? `
+<h2>${d.araclar?'5':'4'}. Araç Fotoğrafları (Teslim Anı)</h2>
+<p style="font-size:11px;">Aşağıdaki fotoğraflar teslim anında çekilmiş olup aracın mevcut durumu ile hasar/kusur varsa bunların belgesidir.</p>
+<table style="border:none;">
+  ${Array.from({length:Math.ceil(fotoListe.length/2)},(_,r)=>`
+  <tr>
+    <td style="border:1px solid #999;padding:6px;width:50%;text-align:center;">
+      <img src="${fotoListe[r*2]}" style="max-width:100%;max-height:78mm;border:1px solid #999;">
+      <div style="font-size:10px;margin-top:3px;">Foto ${r*2+1}</div>
+    </td>
+    <td style="border:1px solid #999;padding:6px;width:50%;text-align:center;${fotoListe[r*2+1]?'':'border:none;'}">
+      ${fotoListe[r*2+1]?`<img src="${fotoListe[r*2+1]}" style="max-width:100%;max-height:78mm;border:1px solid #999;"><div style="font-size:10px;margin-top:3px;">Foto ${r*2+2}</div>`:''}
+    </td>
+  </tr>`).join('')}
+</table>` : '';
   return `<!DOCTYPE html>
 <html lang="tr"><head><meta charset="UTF-8"><title>Araç Teslim Tutanağı — ${esc(d.plaka)}</title>
 <style>
@@ -5579,6 +5692,8 @@ ${logoTag}
 
 <h2>4. Beyan</h2>
 <p style="text-align:justify;">KİRAYA VEREN, yukarıda özellikleri yazılı araç(ları) ${esc(d.bas)} tarihinde KİRACI'ya belirtilen yakıt seviyesi ve kilometre durumunda sağlam ve temiz olarak teslim ettiğini beyan eder. KİRACI, araç(ları) bu durumda teslim aldığını, araçların mevcut hasar/kusurlarını şimdiden gördüğünü ve kabul ettiğini, aracı kira süresi sonunda ödeşmeden aynı durumda iade etmekle yükümlü olduğunu kabul ve taahhüt eder. Bu tutanak, taraflar arasındaki ${esc(d.sozNo)} numaralı kira sözleşmesinin ayrılmaz eki (Ek-1) niteliğindedir.</p>
+
+${fotoBolum}
 
 <div class="imza">
   ${imzaBoxHtml('KİRAYA VEREN / Yetkili', d.imzaKirayaVeren)}
@@ -14253,6 +14368,7 @@ function renderKiralamaPage(){
               <button onclick="sozMusteriLinkiUret(sozlesmeler.find(x=>x.id==='${r.id}'))" title="Müşteri onay linki + kod gönder" style="background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.25);color:var(--accent-blue);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">🔗 Link</button>
               ${r.sozMusteriOnay?`<span title="Onay: ${esc(r.sozMusteriOnay.damga||'')}" style="font-size:11px;color:#36A168;font-weight:700;">✅</span>`:`<button onclick="sozMusteriOnayIsle('${r.id}')" title="Müşterinin gönderdiği onay damgasını işle" style="background:rgba(232,161,50,.12);border:1px solid rgba(232,161,50,.3);color:#E8A132;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Onay İşle</button>`}
               <button onclick="teslimTutanakAc(sozlesmeler.find(x=>x.id==='${r.id}').data)" title="Ek-1 Teslim Tutanağını yeniden üret" style="background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.25);color:var(--accent-blue);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Teslim</button>
+              <button onclick="sozFotoGaleriAc('${r.id}')" title="Teslim fotoğrafları (tablet kamera)" style="background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.25);color:var(--accent-blue);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">📷 Foto${r.data&&r.data.teslimFotolar&&r.data.teslimFotolar.length?' ('+r.data.teslimFotolar.length+')':''}</button>
               <button onclick="sozKayitSil('${r.id}')" style="background:rgba(225,85,78,.1);border:1px solid rgba(225,85,78,.2);color:#E1554E;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Sil</button>
             </td>
           </tr>`;
@@ -14276,6 +14392,7 @@ function renderKiralamaPage(){
             <button onclick="sozKayitPdf('${r.id}')" style="flex:1;background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.2);color:var(--accent-blue);padding:7px 0;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">PDF</button>
             <button onclick="sozKayitDocx('${r.id}')" style="flex:1;background:rgba(54,161,104,.1);border:1px solid rgba(54,161,104,.2);color:#36A168;padding:7px 0;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Word</button>
             <button onclick="sozMusteriLinkiUret(sozlesmeler.find(x=>x.id==='${r.id}'))" style="flex:1.2;background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.25);color:var(--accent-blue);padding:7px 0;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">🔗 Link</button>
+            <button onclick="sozFotoGaleriAc('${r.id}')" style="flex:1;background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.25);color:var(--accent-blue);padding:7px 0;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">📷${r.data&&r.data.teslimFotolar&&r.data.teslimFotolar.length?' '+r.data.teslimFotolar.length:''}</button>
             ${r.sozMusteriOnay?'':`<button onclick="sozMusteriOnayIsle('${r.id}')" style="flex:1.2;background:rgba(232,161,50,.12);border:1px solid rgba(232,161,50,.3);color:#E8A132;padding:7px 0;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Onay İşle</button>`}
             <button onclick="sozKayitSil('${r.id}')" style="background:rgba(225,85,78,.1);border:1px solid rgba(225,85,78,.2);color:#E1554E;padding:7px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Sil</button>
           </div>
