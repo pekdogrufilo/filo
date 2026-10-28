@@ -2017,6 +2017,22 @@ async function persistSozlesmeler(){
 async function persistSozlesmeGruplari(){
   await storageAPI.set('sozlesmeGruplari', JSON.stringify(sozlesmeGruplari)).catch(()=>showToast('Sözleşme grubu kaydedilemedi.', true));
 }
+// v.343: Sözleşmeye araç resmi(leri)ni otomatik ekler — plakaya göre araç bulunur, model stok
+// görseli (MODEL_GORSEL) sözleşmenin teslimFotolar listesinin başına eklenir. Aynı görsel
+// zaten varsa tekrar eklenmez (idempotent); böylece sözleşme yeniden üretilse de çoğalmaz.
+function sozAracResimleriEkle(d){
+  try{
+    if(!d) return;
+    if(!Array.isArray(d.teslimFotolar)) d.teslimFotolar = [];
+    const liste = (d.araclar && d.araclar.length ? d.araclar : [{plaka:d.plaka, marka:d.marka, model:d.model, versiyon:d.versiyon}]);
+    liste.forEach(a=>{
+      const url = getAracGorsel([a.marka, a.model, a.versiyon].filter(Boolean).join(' ')) || getAracGorsel(a.model||'');
+      if(url && !d.teslimFotolar.some(f=>f && f.data===url)){
+        d.teslimFotolar.unshift({ts:'Araç Resmi ('+(a.plaka||'—')+')', data:url});
+      }
+    });
+  }catch(e){ console.error('Araç resmi ekleme hatası:', e); }
+}
 // Sözleşmeyi sisteme kaydeder; aynı kiracı+tarihler+araç seti daha önce kaydedildiyse
 // aynı kaydı günceller (PDF + Word ayrı kayıt açmaz) ve orijinal sözleşme nosunu korur.
 async function sozKaydet(d, basISO, bitisISO){
@@ -2039,6 +2055,7 @@ async function sozKaydet(d, basISO, bitisISO){
       rec.data = d;
       rec.tarih = d.tarih;
     }
+    sozAracResimleriEkle(d);
     await persistSozlesmeler();
     return rec;
   }catch(e){ console.error('Sözleşme kaydı hatası:', e); return null; }
@@ -2207,6 +2224,7 @@ function sozFotoGaleriCiz(rec){
           Kamera ile Çek
         </button>
         <button class="settings-btn" style="padding:10px 18px;border-radius:12px;font-size:13.5px;" onclick="sozFotoSec('${rec.id}')">🖼️ Galeriden Seç</button>
+        <button class="settings-btn" style="padding:10px 18px;border-radius:12px;font-size:13.5px;" onclick="sozStokResimEkle('${rec.id}')">🚗 Araç Resmi Ekle</button>
         <span style="font-size:12px;color:var(--text-3);align-self:center;">Fotoğraflar otomatik sıkıştırılır (${fotolar.length} foto)</span>
       </div>
       <div style="overflow-y:auto;flex:1;">
@@ -2231,6 +2249,15 @@ function sozFotoGaleriCiz(rec){
   document.body.appendChild(el);
 }
 function sozFotoKapat(){ document.getElementById('sozFotoOverlay')?.remove(); }
+// v.343: Eski sözleşmelere de stok araç resmini tek dokunuşla ekler (galeri boşken en hızlı yol)
+function sozStokResimEkle(id){
+  const rec = sozlesmeler.find(r=>r.id===id);
+  if(!rec){ showToast('Sözleşme kaydı bulunamadı.', true); return; }
+  const once = (rec.data.teslimFotolar||[]).length;
+  sozAracResimleriEkle(rec.data);
+  if((rec.data.teslimFotolar||[]).length === once){ showToast('Eklenecek stok araç resmi bulunamadı (model tanınmadı) — kamerayla çekebilirsiniz.', true); return; }
+  persistSozlesmeler().then(()=>sozFotoGaleriCiz(rec));
+}
 function sozFotoSec(id){ sozFotoDosyaAl(id, false); }
 function sozFotoCek(id){ sozFotoDosyaAl(id, true); }
 function sozFotoDosyaAl(id, kameradan){
@@ -5632,7 +5659,7 @@ function teslimTutanakHtml(d){
     <tr><td style="text-align:center;"><strong>${esc(a.plaka)}</strong></td><td>${esc([a.marka,a.model].filter(Boolean).join(' ')||'—')}</td><td style="text-align:center;">${esc(a.modelYili||'—')}</td><td style="text-align:center;">${esc(a.renk||'—')}</td><td style="text-align:center;">${esc(a.teslimKm||'—')}</td><td style="text-align:center;">${esc(d.yakit||'Dolu')}</td></tr>`).join('');
   // v.336: teslim fotoğrafları — galeriden (teslimFotolar) + sihirbazın eski tekil alanları
   const fotoListe = [];
-  if(Array.isArray(d.teslimFotolar)) d.teslimFotolar.forEach(f=>{ const u=(f&&f.data)||f; if(typeof u==='string'&&u.startsWith('data:image')) fotoListe.push(u); });
+  if(Array.isArray(d.teslimFotolar)) d.teslimFotolar.forEach(f=>{ const u=(f&&f.data)||f; if(typeof u==='string'&&(u.startsWith('data:image')||u.startsWith('https://')||u.startsWith('http://'))) fotoListe.push(u); });
   ['teslimFoto1','teslimFoto2','teslimFoto3'].forEach(k=>{ if(typeof d[k]==='string'&&d[k].startsWith('data:image')) fotoListe.push(d[k]); });
   const fotoBolum = fotoListe.length ? `
 <h2>${d.araclar?'5':'4'}. Araç Fotoğrafları (Teslim Anı)</h2>
@@ -12826,11 +12853,22 @@ function sozlesmeHazirGoster(sozData, opts){
         ${opts.pdf ? `<button class="add-btn" style="justify-content:center;width:100%;" onclick="sozlesmeHtmlPdf(window.__sozHazirData)">Sözleşmeyi Aç (PDF / Yazdır)</button>` : ''}
         <button class="add-btn" style="justify-content:center;width:100%;background:rgba(22,160,134,.12);" onclick="sozHazirMusteriLinki()">🔗 Müşteri Onay Linki (WhatsApp/SMS)</button>
         ${opts.tutanak ? `<button class="settings-btn" style="justify-content:center;width:100%;" onclick="teslimTutanakAc(window.__sozHazirData)">Teslim Tutanağını Aç</button>` : ''}
+        <button class="settings-btn" style="justify-content:center;width:100%;" onclick="sozHazirFotoAc()">📷 Araç Fotoğrafları (Galeri / Kamera)</button>
         <button class="settings-btn" style="justify-content:center;width:100%;" onclick="document.getElementById('sozHazirModal').remove()">Kapat</button>
       </div>
     </div>`;
   document.body.appendChild(el);
   el.onclick = e=>{ if(e.target===el) el.remove(); };
+}
+
+// v.343: Sözleşme hazır ekranından foto galerisini açar — kayıt taze oluşturulduysa __sozHazirData
+// sozlesmeler dizisindeki kayıtla eşlenir (sozNo / nesne kimliği üzerinden).
+function sozHazirFotoAc(){
+  const d = window.__sozHazirData;
+  if(!d){ showToast('Sözleşme verisi bulunamadı.', true); return; }
+  const rec = sozlesmeler.find(r=>r.data===d) || sozlesmeler.find(r=>d.sozNo && r.sozNo===d.sozNo);
+  if(!rec){ showToast('Sözleşme kaydı bulunamadı.', true); return; }
+  sozFotoGaleriAc(rec.id);
 }
 
 // v.268: "EKSİKLERİ TAMAMLAYALIM" — v.267'deki "SÖZLEŞME HAZIRLARKEN EKRAN GİDİYOR" düzeltmesi
