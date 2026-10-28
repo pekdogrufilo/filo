@@ -2783,3 +2783,124 @@
   .toast.err{border-left-color:var(--red,#C0392B);}
   .storage-warn{background:var(--amber-dim,rgba(201,134,31,.12));color:var(--amber,#C9861F);}
   ::selection{background:var(--accent-blue);color:#fff;}
+
+  /* ======================================================================
+     v.334 — "Yumuşak Işık" MOBİL & TABLET katmanı (TEK YETKİLİ)
+     Yüzen hap alt menü, çekmece sidebar, alt-sheet modaller, kart dilinin
+     mobil çevirisi, tablet 2 kolon ızgaraları, iOS odak-zoom koruması.
+     Bu blok dosyanın en sonunda olduğu için önceki tüm mobil kuralları ezer.
+     ====================================================================== */
+
+  /* --- A) Dokunmatik temeller --- */
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%;}
+  body{overscroll-behavior-y:contain;}
+  button,.bn-item,.sb-item,.chip,.bn-tile,.v-card{touch-action:manipulation;}
+  @media (hover:none){
+    .card:hover,.dcard:hover,.v-card:hover,.stat:hover,.dash-stats:hover{box-shadow:var(--shadow-soft) !important;}
+  }
+
+  /* --- B) Yüzen hap alt menü (≤900px): kenardan kopuk, blur'lu, gölgeli kart --- */
+  @media (max-width:900px){
+    .bottom-nav{
+      left:max(10px, env(safe-area-inset-left,0px));
+      right:max(10px, env(safe-area-inset-right,0px));
+      bottom:calc(10px + env(safe-area-inset-bottom,0px));
+      border-radius:24px;
+      border:1px solid var(--border);
+      box-shadow:var(--shadow-lift);
+      background:rgba(28,31,35,.90);
+      padding:5px 4px;
+    }
+    html[data-theme="light"] .bottom-nav{background:rgba(255,255,255,.90);}
+    .bn-item{color:var(--text-3);border-radius:16px;}
+    .bn-item.active{color:var(--accent-blue);background:var(--mint-tint);}
+    .bn-item.active svg{transform:none;}
+    .bn-item:active{opacity:1;background:var(--surface-2);}
+  }
+  /* Yatay telefon: etiketler gizlenir, yalnız simge */
+  @media (max-width:900px) and (max-height:460px){
+    .bn-item span{display:none;}
+    .bn-item{padding:9px 2px;}
+  }
+
+  /* --- C) Sayfa alt boşluğu + FAB yüzen menünün üstünde kalır --- */
+  @media (max-width:900px){
+    .page{padding-bottom:104px;}
+    .mobil-fab{
+      bottom:calc(96px + env(safe-area-inset-bottom,0px));
+      width:56px;height:56px;
+      box-shadow:var(--shadow-lift);
+      transition:transform .15s ease,background .15s ease;
+    }
+    .mobil-fab:active{transform:scale(.94);}
+  }
+  @media (max-width:640px){
+    #filoKaydetBtn{bottom:calc(100px + env(safe-area-inset-bottom,0px));}
+  }
+
+  /* --- D) Mobil çekmece sidebar: yumuşak gölge + yuvarlak sağ kenar --- */
+  @media (max-width:900px){
+    .sidebar.show{border-radius:0 24px 24px 0;box-shadow:var(--shadow-lift);}
+    .sb-overlay.show{background:rgba(20,22,26,.45);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);}
+  }
+
+  /* --- E) m-card (mobil kiralama/araca kartları): masaüstü kart diliyle aynı --- */
+  .m-card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:20px;
+    box-shadow:var(--shadow-soft);
+    padding:14px 16px;
+    margin-bottom:10px;
+  }
+  .m-card-head{padding-bottom:10px;margin-bottom:10px;border-bottom:1px dashed var(--border);}
+  .m-card-label{color:var(--text-3);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;}
+  .m-card-val{font-weight:600;color:var(--text);}
+
+  /* --- F) Tablet (701–1100px): tek kolon çöküşü yerine sakin 2 kolon --- */
+  @media (min-width:701px) and (max-width:1100px){
+    .dash-grid,.dg-21,.dg-3,.dg-141,.dg-1120{grid-template-columns:repeat(2,1fr);}
+    .stats{grid-template-columns:repeat(4,1fr);}
+  }
+  @media (min-width:701px) and (max-width:900px){
+    .stats{grid-template-columns:repeat(4,1fr);}
+  }
+
+  /* --- G) iOS odak-zoom koruması: odaklanan alan 16px'ten küçük olamaz --- */
+  @media (max-width:640px){
+    input,select,textarea{font-size:16px !important;}
+  }
+
+  /* --- H) Modaller mobilde alt-sheet hissi: yuvarlak üst + yapışkan sekmeler/aksiyonlar --- */
+  @media (max-width:640px){
+    .modal{width:100%;max-height:94vh;max-height:94dvh;border-radius:20px 20px 0 0 !important;}
+    .modal-tabs{
+      position:sticky;top:0;z-index:5;
+      background:var(--surface);
+      box-shadow:0 1px 0 var(--border);
+    }
+    .modal-actions{
+      position:sticky;bottom:0;z-index:5;
+      background:var(--surface);
+      border-top:1px solid var(--border);
+    }
+  }
+
+  /* --- I) Yatay kaydırmalı tablolar: ince kaydırma çubuğu, kart çerçevesi --- */
+  .table-wrap::-webkit-scrollbar{height:8px;}
+  .table-wrap::-webkit-scrollbar-track{background:transparent;}
+  .table-wrap::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:99px;}
+  @media (max-width:640px){
+    .table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:4px 10px;}
+    .table-wrap table{background:transparent;}
+  }
+
+  /* --- J) Alt sheet ("Daha Fazla"): tile ikonları yumuşak dilde --- */
+  .bn-tile-ic{background:var(--mint-tint);color:var(--accent-blue);}
+  .bn-tile{border-radius:16px;}
+  .bn-tile:active{background:var(--surface-2);}
+  .bn-sheet{box-shadow:0 -18px 50px -20px rgba(0,0,0,.35);}
+  .bn-sheet-handle{background:var(--border-2);}
+
+  /* --- K) Alt menü rozeti: marka turkuazı --- */
+  .bn-badge{background:var(--accent-blue);}
