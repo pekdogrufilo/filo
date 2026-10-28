@@ -12081,11 +12081,11 @@ function leadTeklifPdf(){
   const html = `<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>Araç Kiralama Teklifi ${teklifNo} — ${esc(s.ad||'')}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
   <style>
     *{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     :root{--teal:#017F76;--teal-b:#00A99D;--ink:#0B2B28;--mut:#5E7370;--line:#DCE8E6;--tint:#F3FAF8;}
-    body{font-family:'Manrope',Arial,Helvetica,sans-serif;font-size:12px;line-height:1.65;color:var(--ink);max-width:800px;margin:0 auto;padding:24px;background:#fff;}
+    body{font-family:'Inter',Arial,Helvetica,sans-serif;font-size:12px;line-height:1.65;color:var(--ink);max-width:800px;margin:0 auto;padding:24px;background:#fff;}
     .mono{font-family:'IBM Plex Mono',Consolas,monospace;font-variant-numeric:tabular-nums;}
     b{font-weight:700;}
     /* — filigran — */
@@ -12097,20 +12097,20 @@ function leadTeklifPdf(){
     .mh-left{display:flex;align-items:center;gap:14px;}
     .mh-logo{width:58px;height:58px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
     .mh-logo img{width:100%;height:100%;object-fit:contain;}
-    .mh-name{font-family:'Manrope',sans-serif;font-size:20px;font-weight:800;letter-spacing:.3px;color:var(--ink);line-height:1.2;}
+    .mh-name{font-family:'Inter',sans-serif;font-size:20px;font-weight:800;letter-spacing:.3px;color:var(--ink);line-height:1.2;}
     .mh-tag{font-size:10px;font-weight:600;color:var(--teal);letter-spacing:1.8px;text-transform:uppercase;margin-top:3px;}
     .mh-meta{text-align:right;font-size:10.5px;color:var(--mut);line-height:1.9;}
-    .mh-meta .no{font-family:'Manrope',sans-serif;font-size:15px;font-weight:800;color:var(--ink);letter-spacing:.5px;}
+    .mh-meta .no{font-family:'Inter',sans-serif;font-size:15px;font-weight:800;color:var(--ink);letter-spacing:.5px;}
     /* — belge başlığı — */
     .doc-title{margin:24px 0 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
-    .doc-title .t{font-family:'Manrope',sans-serif;font-size:23px;font-weight:800;letter-spacing:2px;color:var(--ink);text-transform:uppercase;}
+    .doc-title .t{font-family:'Inter',sans-serif;font-size:23px;font-weight:800;letter-spacing:2px;color:var(--ink);text-transform:uppercase;}
     .doc-title .rule{flex:1;height:1px;background:var(--line);min-width:30px;}
     .chip{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.5px;color:var(--teal);background:var(--tint);border:1px solid var(--line);border-radius:7px;padding:4px 12px;white-space:nowrap;}
     /* — müşteri + teklif künyesi — */
     .meta{display:grid;grid-template-columns:1.35fr 1fr;gap:12px;margin-bottom:20px;}
     .mcard{border:1px solid var(--line);border-radius:12px;padding:14px 18px;background:var(--tint);}
     .mcard .l{font-size:9px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1.2px;}
-    .mcard .v{font-family:'Manrope',sans-serif;font-size:16px;font-weight:700;color:var(--ink);margin-top:2px;line-height:1.35;}
+    .mcard .v{font-family:'Inter',sans-serif;font-size:16px;font-weight:700;color:var(--ink);margin-top:2px;line-height:1.35;}
     .mcard .satir{font-size:11.5px;color:var(--mut);margin-top:5px;display:flex;gap:7px;align-items:baseline;}
     .mcard .satir .sl{font-size:9.5px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.8px;min-width:52px;}
     .knye{display:flex;flex-direction:column;gap:0;}
@@ -12120,7 +12120,7 @@ function leadTeklifPdf(){
     .knye .sv{font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--ink);}
     /* — kalemler — */
     table{width:100%;border-collapse:collapse;font-size:11.5px;page-break-inside:avoid;}
-    thead th{background:#0B2B28;color:#fff;font-family:'Manrope',sans-serif;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:10px 10px;text-align:left;}
+    thead th{background:#0B2B28;color:#fff;font-family:'Inter',sans-serif;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:10px 10px;text-align:left;}
     th.r,td.r{text-align:right;} th.c,td.c{text-align:center;}
     td.r{white-space:nowrap;}
     tbody td{padding:10px 10px;border-bottom:1px solid var(--line);vertical-align:top;}
@@ -12132,10 +12132,10 @@ function leadTeklifPdf(){
     .tot-row .mono{font-weight:600;color:var(--ink);}
     .tot-aylik{margin-top:10px;display:flex;justify-content:space-between;align-items:center;background:var(--tint);border:1px solid var(--line);border-left:4px solid var(--teal-b);border-radius:0 9px 9px 0;padding:9px 14px;font-size:12.5px;}
     .tot-aylik .mono{font-size:14px;font-weight:700;color:var(--ink);}
-    .genel{margin-top:8px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(120deg,#0B2B28,#017F76);color:#fff;border-radius:11px;padding:13px 18px;font-family:'Manrope',sans-serif;font-size:13px;font-weight:800;letter-spacing:1px;text-transform:uppercase;}
+    .genel{margin-top:8px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(120deg,#0B2B28,#017F76);color:#fff;border-radius:11px;padding:13px 18px;font-family:'Inter',sans-serif;font-size:13px;font-weight:800;letter-spacing:1px;text-transform:uppercase;}
     .genel .mono{font-size:18px;font-weight:700;letter-spacing:0;}
     /* — şartlar — */
-    .sec-baslik{font-family:'Manrope',sans-serif;font-size:13px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;color:var(--ink);margin:26px 0 12px;display:flex;align-items:center;gap:10px;page-break-after:avoid;}
+    .sec-baslik{font-family:'Inter',sans-serif;font-size:13px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;color:var(--ink);margin:26px 0 12px;display:flex;align-items:center;gap:10px;page-break-after:avoid;}
     .sec-baslik::before{content:'';width:22px;height:4px;background:var(--teal-b);border-radius:2px;}
     .sart{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);page-break-inside:avoid;}
     .sart:last-child{border-bottom:none;}
@@ -12146,7 +12146,7 @@ function leadTeklifPdf(){
     .kabul{display:flex;gap:44px;margin-top:44px;page-break-inside:avoid;}
     .kbox{flex:1;text-align:center;}
     .kbox .k-t{font-size:10px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1px;}
-    .kbox .k-n{font-family:'Manrope',sans-serif;font-size:13px;font-weight:700;color:var(--ink);margin-top:2px;}
+    .kbox .k-n{font-family:'Inter',sans-serif;font-size:13px;font-weight:700;color:var(--ink);margin-top:2px;}
     .kline{border-top:1px solid #9AB0AD;margin-top:58px;padding-top:6px;font-size:10px;color:var(--mut);}
     /* — künye alt — */
     .foot{margin-top:30px;border-top:1px solid var(--line);padding-top:10px;font-size:10px;color:#7A8A88;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;}

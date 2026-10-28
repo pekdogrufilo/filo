@@ -6,29 +6,29 @@
 <title>Araç Kiralama Teklifi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
   *{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact;margin:0;padding:0;}
   :root{--teal:#017F76;--teal-b:#00A99D;--ink:#0B2B28;--mut:#5E7370;--line:#DCE8E6;--tint:#F3FAF8;}
-  body{font-family:'Manrope',Arial,sans-serif;font-size:14px;line-height:1.6;color:var(--ink);background:#EEF3F2;padding:18px 12px 60px;}
+  body{font-family:'Inter',Arial,sans-serif;font-size:14px;line-height:1.6;color:var(--ink);background:#EEF3F2;padding:18px 12px 60px;}
   .sayfa{max-width:800px;margin:0 auto;background:#fff;border-radius:14px;padding:28px 26px 34px;box-shadow:0 8px 30px rgba(11,43,40,.10);}
   .mono{font-family:'IBM Plex Mono',Consolas,monospace;font-variant-numeric:tabular-nums;}
   .masthead{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;padding-bottom:15px;border-bottom:3px solid var(--teal);flex-wrap:wrap;}
   .mh-left{display:flex;align-items:center;gap:13px;}
   .mh-logo{width:56px;height:56px;border:1px solid var(--line);border-radius:12px;padding:6px;flex-shrink:0;background:#fff;}
   .mh-logo img{width:100%;height:100%;object-fit:contain;}
-  .mh-name{font-family:'Manrope',sans-serif;font-size:19px;font-weight:800;color:var(--ink);line-height:1.2;}
+  .mh-name{font-family:'Inter',sans-serif;font-size:19px;font-weight:800;color:var(--ink);line-height:1.2;}
   .mh-tag{font-size:9.5px;font-weight:600;color:var(--teal);letter-spacing:1.6px;text-transform:uppercase;margin-top:3px;}
   .mh-meta{text-align:right;font-size:11px;color:var(--mut);line-height:1.9;}
-  .mh-meta .no{font-family:'Manrope',sans-serif;font-size:15px;font-weight:800;color:var(--ink);}
+  .mh-meta .no{font-family:'Inter',sans-serif;font-size:15px;font-weight:800;color:var(--ink);}
   .doc-title{margin:22px 0 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
-  .doc-title .t{font-family:'Manrope',sans-serif;font-size:22px;font-weight:800;letter-spacing:2px;text-transform:uppercase;}
+  .doc-title .t{font-family:'Inter',sans-serif;font-size:22px;font-weight:800;letter-spacing:2px;text-transform:uppercase;}
   .doc-title .rule{flex:1;height:1px;background:var(--line);min-width:24px;}
   .chip{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;color:var(--teal);background:var(--tint);border:1px solid var(--line);border-radius:20px;padding:4px 12px;white-space:nowrap;}
   .meta{display:grid;grid-template-columns:1.35fr 1fr;gap:11px;margin-bottom:20px;}
   .mcard{border:1px solid var(--line);border-radius:12px;padding:13px 16px;background:var(--tint);}
   .mcard .l{font-size:8.5px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1.2px;}
-  .mcard .v{font-family:'Manrope',sans-serif;font-size:15px;font-weight:700;margin-top:2px;line-height:1.35;}
+  .mcard .v{font-family:'Inter',sans-serif;font-size:15px;font-weight:700;margin-top:2px;line-height:1.35;}
   .mcard .satir{font-size:12px;color:var(--mut);margin-top:5px;display:flex;gap:7px;align-items:baseline;}
   .mcard .satir .sl{font-size:9px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.8px;min-width:52px;}
   .knye .satir{display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;border-bottom:1px dashed var(--line);font-size:12px;}
@@ -37,7 +37,7 @@
   .knye .sv{font-family:'IBM Plex Mono',monospace;font-weight:600;}
   .tscroll{overflow-x:auto;}
   table{width:100%;border-collapse:collapse;font-size:12.5px;}
-  thead th{background:#0B2B28;color:#fff;font-family:'Manrope',sans-serif;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:10px 8px;text-align:left;white-space:nowrap;}
+  thead th{background:#0B2B28;color:#fff;font-family:'Inter',sans-serif;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:10px 8px;text-align:left;white-space:nowrap;}
   th.r,td.r{text-align:right;} th.c,td.c{text-align:center;}
   td.r{white-space:nowrap;}
   tbody td{padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:top;}
@@ -48,9 +48,9 @@
   .tot-row .mono{font-weight:600;color:var(--ink);}
   .tot-aylik{margin-top:10px;display:flex;justify-content:space-between;align-items:center;background:var(--tint);border:1px solid var(--line);border-left:4px solid var(--teal-b);border-radius:0 9px 9px 0;padding:9px 14px;font-size:13px;}
   .tot-aylik .mono{font-size:14.5px;font-weight:700;color:var(--ink);}
-  .genel{margin-top:8px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(120deg,#0B2B28,#017F76);color:#fff;border-radius:11px;padding:12px 16px;font-family:'Manrope',sans-serif;font-size:12.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;}
+  .genel{margin-top:8px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(120deg,#0B2B28,#017F76);color:#fff;border-radius:11px;padding:12px 16px;font-family:'Inter',sans-serif;font-size:12.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;}
   .genel .mono{font-size:17px;letter-spacing:0;}
-  .sec-baslik{font-family:'Manrope',sans-serif;font-size:13px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;margin:26px 0 12px;display:flex;align-items:center;gap:10px;}
+  .sec-baslik{font-family:'Inter',sans-serif;font-size:13px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;margin:26px 0 12px;display:flex;align-items:center;gap:10px;}
   .sec-baslik::before{content:'';width:22px;height:4px;background:var(--teal-b);border-radius:2px;}
   .sart{display:flex;gap:11px;padding:9px 0;border-bottom:1px solid var(--line);}
   .sart:last-child{border-bottom:none;}
@@ -60,18 +60,18 @@
   .kabul{display:flex;gap:34px;margin-top:34px;}
   .kbox{flex:1;text-align:center;min-width:0;}
   .k-t{font-size:9.5px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1px;}
-  .k-n{font-family:'Manrope',sans-serif;font-size:13px;font-weight:700;margin-top:2px;}
+  .k-n{font-family:'Inter',sans-serif;font-size:13px;font-weight:700;margin-top:2px;}
   .k-img{margin-top:10px;max-width:220px;max-height:90px;margin-left:auto;margin-right:auto;}
   .kline{border-top:1px solid #9AB0AD;margin-top:46px;padding-top:6px;font-size:10px;color:var(--mut);}
   .foot{margin-top:28px;border-top:1px solid var(--line);padding-top:10px;font-size:10.5px;color:#7A8A88;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;}
   .foot b{color:#4B6B67;}
   /* imza paneli */
   .imza-panel{border:2px dashed var(--teal-b);border-radius:12px;padding:14px;margin-top:26px;background:var(--tint);}
-  .imza-panel h4{font-family:'Manrope',sans-serif;font-size:14px;font-weight:800;color:var(--ink);margin-bottom:4px;}
+  .imza-panel h4{font-family:'Inter',sans-serif;font-size:14px;font-weight:800;color:var(--ink);margin-bottom:4px;}
   .imza-panel .ip-not{font-size:12px;color:var(--mut);margin-bottom:10px;}
   .imza-cv{width:100%;height:150px;background:#fff;border:1px solid var(--line);border-radius:9px;touch-action:none;cursor:crosshair;display:block;}
   .imza-btns{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
-  .btn{border:none;border-radius:9px;padding:10px 18px;font-family:'Manrope',sans-serif;font-size:13px;font-weight:700;cursor:pointer;}
+  .btn{border:none;border-radius:9px;padding:10px 18px;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;cursor:pointer;}
   .btn-ana{background:linear-gradient(120deg,#00A99D,#017F76);color:#fff;flex:1;min-width:200px;}
   .btn-yan{background:var(--surface,#fff);border:1px solid var(--line);color:var(--mut);}
   .uyari{background:rgba(225,85,78,.08);border:1px solid rgba(225,85,78,.3);color:#B23A34;border-radius:10px;padding:14px 16px;font-size:13.5px;max-width:560px;margin:0 auto;}

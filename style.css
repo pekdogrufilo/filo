@@ -2569,9 +2569,9 @@
      olduğu için önceki tüm katmanları ezer; önceki katmanlara dokunulmadı.
      ====================================================================== */
   :root, html[data-theme="dark"], html[data-theme="light"]{
-    --font-display:'Manrope',-apple-system,'Segoe UI',Arial,sans-serif;
-    --font-body:'Manrope',-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;
-    --font-ui:'Manrope',-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;
+    --font-display:'Inter',-apple-system,'Segoe UI',Arial,sans-serif;
+    --font-body:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;
+    --font-ui:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;
     --radius:12px;
     --radius-sm:8px;
     --radius-lg:12px;
@@ -2919,3 +2919,144 @@
   .alert-count{border-radius:5px;}
   /* Sekme/üst çubuk gölgeleri: tek hairline */
   .topbar,.th,.page-head{box-shadow:none;}
+
+  /* ======================================================================
+     v.341 — "AVIS" tasarım dili (TEK YETKİLİ KATMAN)
+     Referans: avis.com — kırmızı #D4002A + siyah + beyaz, blok yazılar,
+     dikdörtgen butonlar, hairline çizgiler. Turkuaz panele veda eder;
+     (müşteri teklif belgeleri bu turda turkuaz kalır).
+     ====================================================================== */
+  :root, html[data-theme="dark"]{
+    --bg:#141518;
+    --surface:#1B1C20;
+    --surface-2:#222328;
+    --surface-3:#2A2B31;
+    --border:rgba(255,255,255,.10);
+    --border-2:rgba(255,255,255,.18);
+    --text:#EFEFEF;
+    --text-2:#A8A8A8;
+    --text-3:#7D7D7D;
+    --accent-blue:#E5173D;
+    --blue-dim:rgba(229,23,61,.15);
+    --mint-tint:rgba(229,23,61,.12);
+    --paper:#EFEFEF;
+    --steel-100:#EFEFEF;
+    --steel-300:#7D7D7D;
+    --steel-500:#A8A8A8;
+    --steel-600:#2A2B31;
+    --lux-accent:#E5173D;
+    --lux-bright:#FF4D6B;
+    --lux-deep:#B00021;
+    --accent-hover:#B00021;
+    --shadow-soft:0 1px 2px rgba(0,0,0,.30);
+    --shadow-lift:0 2px 6px rgba(0,0,0,.35);
+    --glow:rgba(229,23,61,.14);
+  }
+  html[data-theme="light"]{
+    --bg:#F4F4F2;
+    --surface:#FFFFFF;
+    --surface-2:#F4F4F2;
+    --surface-3:#E9E9E7;
+    --border:rgba(17,17,17,.10);
+    --border-2:rgba(17,17,17,.20);
+    --text:#111111;
+    --text-2:#5A5A5A;
+    --text-3:#8A8A8A;
+    --accent-blue:#D4002A;
+    --blue-dim:rgba(212,0,42,.08);
+    --mint-tint:#FBEDEF;
+    --sidebar-bg:#FFFFFF;
+    --paper:#111111;
+    --steel-100:#111111;
+    --steel-300:#8A8A8A;
+    --steel-500:#5A5A5A;
+    --steel-600:#E9E9E7;
+    --lux-accent:#D4002A;
+    --lux-bright:#FF3352;
+    --lux-deep:#B00021;
+    --accent-hover:#B00021;
+    --shadow-soft:none;
+    --shadow-lift:0 1px 4px rgba(17,17,17,.06);
+    --glow:rgba(212,0,42,.10);
+  }
+
+  /* --- Avis başlık dili: SİYAH, BÜYÜK HARF, EKSTRA BOLD + kırmızı sol kuralı --- */
+  h1{
+    text-transform:uppercase !important;
+    font-weight:800 !important;
+    letter-spacing:-.2px !important;
+    color:var(--text) !important;
+    border-left:5px solid var(--accent-blue);
+    padding-left:12px;
+  }
+  .th-title,#thTitle{text-transform:uppercase;font-weight:800;}
+
+  /* --- Sidebar (açık tema): BEYAZ, siyah metin, aktifte kırmızı sol kuralı --- */
+  html[data-theme="light"] .sidebar{background:#FFFFFF !important;border-right:1px solid var(--border) !important;box-shadow:none !important;}
+  html[data-theme="light"] .sidebar .sb-item{color:#333333 !important;}
+  html[data-theme="light"] .sidebar .sb-item svg{color:#7A7A7A !important;}
+  html[data-theme="light"] .sidebar .sb-item:hover{background:#F4F4F2 !important;color:#111111 !important;}
+  html[data-theme="light"] .sidebar .sb-item:hover svg{color:#111111 !important;}
+  html[data-theme="light"] .sidebar .sb-item.active{background:#FBEDEF !important;color:#D4002A !important;box-shadow:inset 3px 0 0 #D4002A !important;}
+  html[data-theme="light"] .sidebar .sb-item.active svg{color:#D4002A !important;}
+  html[data-theme="dark"] .sidebar .sb-item.active{background:rgba(229,23,61,.14) !important;color:#FF4D6B !important;box-shadow:inset 3px 0 0 #E5173D !important;}
+  html[data-theme="dark"] .sidebar .sb-item.active svg{color:#FF4D6B !important;}
+
+  /* --- Butonlar: kırmızı DİKDÖRTGEN (6px), outline secondary --- */
+  .add-btn,.modal-actions .save,#filoKaydetBtn,.mobil-fab,.lock-btn-main{
+    background:var(--accent-blue) !important;
+    color:#fff !important;
+    border:none !important;
+    border-radius:6px !important;
+  }
+  .mobil-fab{border-radius:999px !important;}
+  .add-btn:hover,.modal-actions .save:hover,#filoKaydetBtn:hover,.lock-btn-main:hover{background:var(--accent-hover) !important;}
+  .export-btn,.print-btn,.lock-btn,.modal-actions .cancel{
+    background:var(--surface);
+    color:var(--text);
+    border:1px solid var(--border-2);
+    border-radius:6px;
+  }
+  .export-btn:hover,.print-btn:hover,.lock-btn:hover,.modal-actions .cancel:hover{
+    border-color:var(--text);
+    color:var(--text);
+    background:var(--surface);
+  }
+  .chip{border-radius:5px;}
+  .chip.active{background:var(--accent-blue);color:#fff;}
+
+  /* --- Kartlar: 8px, gölgesiz, hairline --- */
+  .dcard,.card,.alert-panel,.filters,.yp-grid,.stat,.dash-stats,.m-card{
+    border-radius:8px !important;
+    box-shadow:none !important;
+  }
+  .stat .n{color:var(--text);}
+  .stat .l{color:var(--text-3) !important;}
+  .dstat-strong .dstat-txt .n{color:var(--text) !important;}
+
+  /* --- Formlar: kırmızı focus --- */
+  .field input:focus,.field select:focus,.field textarea:focus,.filters input:focus,.filters select:focus{
+    border-color:var(--accent-blue) !important;
+    box-shadow:0 0 0 2px rgba(212,0,42,.14) !important;
+  }
+
+  /* --- Splash & giriş: nötr siyah/beyaz + kırmızı bar --- */
+  .splash-grid-bg{background-image:linear-gradient(rgba(0,0,0,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,.025) 1px,transparent 1px) !important;}
+  html:not([data-theme="light"]) .splash-grid-bg{background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px) !important;}
+  .splash-glow,html[data-theme="light"] .splash-glow{background:radial-gradient(closest-side,rgba(212,0,42,.07),transparent 70%) !important;}
+  html:not([data-theme="light"]) .splash-glow{background:radial-gradient(closest-side,rgba(229,23,61,.10),transparent 70%) !important;}
+  .splash-bar{background:var(--accent-blue) !important;opacity:1 !important;}
+  html[data-theme="light"] .splash{background:#F4F4F2 !important;}
+  html[data-theme="light"] .splash h2{color:#111111 !important;}
+  html[data-theme="light"] .splash .sd{color:#5A5A5A !important;}
+  html[data-theme="light"] .splash-stat .n{color:#111111 !important;}
+  html[data-theme="light"] .splash-stat .l{color:#8A8A8A !important;}
+  html[data-theme="light"] .lock-screen{background:#F4F4F2 !important;}
+  html[data-theme="light"] .lock-screen h2{color:#111111 !important;}
+
+  /* --- Rozet / etiket: 4px dikdörtgen --- */
+  .badge{border-radius:4px !important;}
+
+  /* --- Vurgu ikon ve detayları otomatik kırmızıya döner (token değişimi) --- */
+  .field label .req,.link,.linklike,a{color:var(--accent-blue);}
+  ::selection{background:var(--accent-blue);color:#fff;}
