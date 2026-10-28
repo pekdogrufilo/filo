@@ -2572,9 +2572,9 @@
     --font-display:'Bricolage Grotesque','Instrument Sans',-apple-system,'Segoe UI',Arial,sans-serif;
     --font-body:'Instrument Sans',-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;
     --font-ui:'Instrument Sans',-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;
-    --radius:20px;
-    --radius-sm:12px;
-    --radius-lg:20px;
+    --radius:12px;
+    --radius-sm:8px;
+    --radius-lg:12px;
     --lux-accent:#00A99D;
     --lux-bright:#3FD3C6;
     --lux-deep:#017F76;
@@ -2587,48 +2587,48 @@
     --surface:#1C1F23;
     --surface-2:#22262B;
     --surface-3:#2A2F35;
-    --border:rgba(255,255,255,.08);
-    --border-2:rgba(255,255,255,.16);
+    --border:rgba(255,255,255,.10);
+    --border-2:rgba(255,255,255,.18);
     --text:#EDEBE6;
     --text-2:#A6ADA9;
     --text-3:#7C837F;
     --accent-blue:#00A99D;
-    --blue-dim:rgba(0,169,157,.16);
-    --mint-tint:rgba(0,169,157,.14);
+    --blue-dim:rgba(0,169,157,.14);
+    --mint-tint:rgba(0,169,157,.12);
     --sidebar-bg:#1C1F23;
     --paper:#EDEBE6;
     --steel-100:#EDEBE6;
     --steel-300:#7C837F;
     --steel-500:#A6ADA9;
     --steel-600:#2A2F35;
-    --shadow-soft:0 1px 2px rgba(0,0,0,.30),0 6px 18px -8px rgba(0,0,0,.40);
-    --shadow-lift:0 2px 6px rgba(0,0,0,.35),0 14px 34px -10px rgba(0,0,0,.50);
-    --glow:rgba(0,169,157,.14);
+    --shadow-soft:0 1px 2px rgba(0,0,0,.25);
+    --shadow-lift:0 1px 3px rgba(0,0,0,.30);
+    --glow:rgba(0,169,157,.12);
   }
 
-  /* --- Açık tema (data-theme="light"): sıcak kırık-beyaz zemin --- */
+  /* --- Açık tema (data-theme="light"): kırık-beyaz zemin, düz çizgi dili --- */
   html[data-theme="light"]{
-    --bg:#F7F6F2;
+    --bg:#F4F4F1;
     --surface:#FFFFFF;
-    --surface-2:#E6F4F1;
-    --surface-3:#DCEBE8;
-    --border:rgba(31,42,40,.08);
-    --border-2:rgba(31,42,40,.16);
+    --surface-2:#EDEFEA;
+    --surface-3:#E1E5DE;
+    --border:rgba(31,42,40,.12);
+    --border-2:rgba(31,42,40,.22);
     --text:#1F2A28;
-    --text-2:#667A77;
-    --text-3:#8CA29E;
-    --accent-blue:#00A99D;
-    --blue-dim:rgba(0,169,157,.12);
-    --mint-tint:#E6F4F1;
+    --text-2:#5C6E6A;
+    --text-3:#879692;
+    --accent-blue:#00857B;
+    --blue-dim:rgba(0,133,123,.10);
+    --mint-tint:#E4F0ED;
     --sidebar-bg:#1B2B29;
     --paper:#1F2A28;
     --steel-100:#1F2A28;
-    --steel-300:#8CA29E;
-    --steel-500:#667A77;
-    --steel-600:#DCEBE8;
-    --shadow-soft:0 1px 2px rgba(31,42,40,.05),0 4px 14px -6px rgba(31,42,40,.10),0 18px 44px -18px rgba(31,42,40,.14);
-    --shadow-lift:0 2px 4px rgba(31,42,40,.06),0 10px 26px -8px rgba(31,42,40,.16),0 28px 60px -20px rgba(31,42,40,.20);
-    --glow:rgba(0,169,157,.14);
+    --steel-300:#879692;
+    --steel-500:#5C6E6A;
+    --steel-600:#E1E5DE;
+    --shadow-soft:0 1px 2px rgba(31,42,40,.05);
+    --shadow-lift:0 2px 6px rgba(31,42,40,.08);
+    --glow:rgba(0,133,123,.12);
   }
 
   /* --- Tipografi: karakterli grotesk başlık + yumuşak gövde --- */
@@ -2640,56 +2640,56 @@
   .dcard h3,.dcard h4{font-weight:700;}
   .sub{color:var(--text-2);}
 
-  /* --- Kartlar: 20px radius + hairline border + yüzen yumuşak gölge; hover'da gölge derinleşir (transform yok) --- */
+  /* --- Kartlar: 12px radius + hairline border + neredeyse düz; hover'da çizgi koyulaşır (balon gölge yok) --- */
   .dcard,.card,.alert-panel,.filters,.yp-grid{
     background:var(--surface) !important;
     border:1px solid var(--border) !important;
-    border-radius:20px !important;
+    border-radius:12px !important;
     box-shadow:var(--shadow-soft) !important;
   }
-  .card:hover,.dcard:hover{transform:none;box-shadow:var(--shadow-lift);}
+  .card:hover,.dcard:hover{transform:none;box-shadow:var(--shadow-lift);border-color:var(--border-2);}
   .card.flash{box-shadow:0 0 0 2px var(--accent-blue) !important;}
-  .v-card{border-radius:20px;box-shadow:var(--shadow-soft);border:1px solid var(--border);}
-  .v-card:hover{transform:none;box-shadow:var(--shadow-lift);}
+  .v-card{border-radius:12px;box-shadow:var(--shadow-soft);border:1px solid var(--border);}
+  .v-card:hover{transform:none;box-shadow:var(--shadow-lift);border-color:var(--border-2);}
   .card-band{border-radius:0;}
 
   /* --- Kart üst bantları: düz renk (degrade yok) --- */
   .card-band.kirada{background:var(--green,#36A168);}
-  .card-band.musait{background:var(--text-3,#8CA29E);}
+  .card-band.musait{background:var(--text-3,#879692);}
   .card-band.serviste{background:var(--amber,#E8A132);}
 
-  /* --- İstatistik kartları --- */
+  /* --- İstatistik kartları: mini uppercase etiket + mono rakam --- */
   .stat{
     background:var(--surface) !important;
     border:1px solid var(--border) !important;
-    border-radius:20px !important;
+    border-radius:12px !important;
     box-shadow:var(--shadow-soft) !important;
   }
-  .stat:hover{transform:none !important;box-shadow:var(--shadow-lift) !important;}
+  .stat:hover{transform:none !important;box-shadow:var(--shadow-lift) !important;border-color:var(--border-2);}
   .stat .n{font-family:var(--font-mono);font-weight:600;color:var(--text);}
-  .stat .l{color:var(--text-2);font-weight:600;}
+  .stat .l{color:var(--text-3) !important;font-weight:600;text-transform:uppercase;font-size:11px;letter-spacing:.07em;}
 
   /* --- KPI şeridi (dash-stats): tek sakin şerit korunur, renk dili yenilenir --- */
   .dash-stats{
     background:var(--surface) !important;
     border:1px solid var(--border) !important;
     border-top:1px solid var(--border) !important;
-    border-radius:20px !important;
+    border-radius:12px !important;
     box-shadow:var(--shadow-soft) !important;
   }
   .dstat-ic,.dstat-strong .dstat-ic{color:var(--accent-blue) !important;}
   .dstat-txt .l{color:var(--text-3) !important;}
   .dstat-strong .dstat-txt .n{color:var(--text) !important;}
 
-  /* --- Butonlar: primary düz turkuaz, secondary outline; degrade yok --- */
+  /* --- Butonlar: primary düz turkuaz, secondary outline; degrade ve ışıma yok --- */
   .add-btn,.mobil-fab,.modal-actions .save,#filoKaydetBtn{
     background:var(--accent-blue) !important;
     color:#fff !important;
     border:none !important;
   }
-  .add-btn,.modal-actions .save{border-radius:12px;}
+  .add-btn,.modal-actions .save{border-radius:9px;}
   .mobil-fab{border-radius:999px;}
-  #filoKaydetBtn{border-radius:999px;}
+  #filoKaydetBtn{border-radius:9px;}
   .add-btn:hover,.mobil-fab:hover,.modal-actions .save:hover,#filoKaydetBtn:hover{
     background:var(--accent-hover) !important;
   }
@@ -2697,7 +2697,7 @@
     background:var(--surface);
     color:var(--text);
     border:1px solid var(--border-2);
-    border-radius:12px;
+    border-radius:9px;
   }
   .export-btn:hover,.print-btn:hover,.lock-btn:hover{
     border-color:var(--accent-blue);
@@ -2705,12 +2705,12 @@
     background:var(--surface);
     transform:none;
   }
-  .modal-actions .cancel,.modal-actions .close-x{border-radius:12px;}
+  .modal-actions .cancel,.modal-actions .close-x{border-radius:9px;}
   .chip{
     background:var(--surface);
     border:1px solid var(--border-2);
     color:var(--text-2);
-    border-radius:999px;
+    border-radius:7px;
   }
   .chip:hover:not(.active){border-color:var(--accent-blue);color:var(--accent-blue);}
   .chip.active{background:var(--accent-blue);color:#fff;border-color:transparent;}
@@ -2720,37 +2720,37 @@
     background:var(--surface) !important;
     border:1px solid var(--border-2) !important;
     color:var(--text) !important;
-    border-radius:12px !important;
+    border-radius:8px !important;
   }
   .field input:focus,.field select:focus,.field textarea:focus,.filters input:focus,.filters select:focus{
     border-color:var(--accent-blue) !important;
-    box-shadow:0 0 0 3px rgba(0,169,157,.14) !important;
+    box-shadow:0 0 0 2px rgba(0,133,123,.15) !important;
   }
   .field input::placeholder,.filters input::placeholder{color:var(--text-3);}
 
-  /* --- Rozet / pill: pastel tint zemin + koyu metin --- */
-  .badge{border-radius:999px;border:none;}
+  /* --- Rozet / etiket: dikdörtgen tag (hap değil), tint zemin + koyu metin --- */
+  .badge{border-radius:5px;border:none;font-weight:600;}
   html[data-theme="light"] .badge.kirada{background:rgba(31,157,91,.12);color:#1F7A48;}
   html[data-theme="light"] .badge.musait{background:rgba(102,122,119,.12);color:#51635F;}
   html[data-theme="light"] .badge.serviste{background:rgba(201,134,31,.14);color:#8F6215;}
   html[data-theme="light"] .badge.pert{background:rgba(102,122,119,.12);color:#51635F;}
   html[data-theme="light"] .badge.satildi{background:rgba(155,126,216,.14);color:#6D4FB0;}
 
-  /* --- Sidebar: beyaz yüzey, nane tint aktif pill + turkuaz metin --- */
+  /* --- Sidebar: koyu petrol yüzey, dikdörtgen öğe; aktifte sol kenar çubuğu + düz zemin (ışıma yok) --- */
   .sidebar{background:var(--sidebar-bg) !important;border-right:1px solid var(--border) !important;}
-  .sidebar .sb-item{color:var(--text-2) !important;border-radius:999px !important;}
+  .sidebar .sb-item{color:var(--text-2) !important;border-radius:8px !important;}
   .sidebar .sb-item svg{color:var(--text-3) !important;}
   .sidebar .sb-item:hover{background:rgba(127,131,128,.10) !important;color:var(--text) !important;}
   .sidebar .sb-item:hover svg{color:var(--accent-blue) !important;}
-  .sidebar .sb-item.active{background:var(--mint-tint) !important;color:var(--accent-blue) !important;box-shadow:none !important;}
+  .sidebar .sb-item.active{background:rgba(0,169,157,.14) !important;color:var(--accent-blue) !important;box-shadow:inset 3px 0 0 var(--accent-blue) !important;}
   .sidebar .sb-item.active svg{color:var(--accent-blue) !important;}
-  html[data-theme="light"] .sidebar{background:#1B2B29 !important;border-right:none !important;box-shadow:0 0 44px rgba(31,42,40,.12) !important;}
+  html[data-theme="light"] .sidebar{background:#1B2B29 !important;border-right:none !important;box-shadow:none !important;}
   html[data-theme="light"] .sidebar .sb-item{color:#AFC4C0 !important;}
   html[data-theme="light"] .sidebar .sb-item svg{color:#7FA39D !important;}
   html[data-theme="light"] .sidebar .sb-item:hover{background:rgba(255,255,255,.08) !important;color:#FFFFFF !important;}
   html[data-theme="light"] .sidebar .sb-item:hover svg{color:#3FD3C6 !important;}
-  html[data-theme="light"] .sidebar .sb-item.active{background:var(--accent-blue) !important;color:#FFFFFF !important;box-shadow:0 6px 18px rgba(0,169,157,.35) !important;}
-  html[data-theme="light"] .sidebar .sb-item.active svg{color:#FFFFFF !important;}
+  html[data-theme="light"] .sidebar .sb-item.active{background:rgba(0,169,157,.18) !important;color:#3FD3C6 !important;box-shadow:inset 3px 0 0 #00A99D !important;}
+  html[data-theme="light"] .sidebar .sb-item.active svg{color:#3FD3C6 !important;}
   .sidebar .sb-brand-text{color:var(--text) !important;font-weight:700 !important;}
   html[data-theme="light"] .sidebar .sb-brand-text{color:#FFFFFF !important;}
   .sidebar .sb-brand-sub,.sidebar .sb-version,.sidebar .sb-group-head,.sidebar .sb-section{color:var(--text-3) !important;}
@@ -2799,20 +2799,20 @@
     .card:hover,.dcard:hover,.v-card:hover,.stat:hover,.dash-stats:hover{box-shadow:var(--shadow-soft) !important;}
   }
 
-  /* --- B) Yüzen hap alt menü (≤900px): kenardan kopuk, blur'lu, gölgeli kart --- */
+  /* --- B) Yüzen alt menü (≤900px): düz yüzey, ince çizgi, hafif gölge --- */
   @media (max-width:900px){
     .bottom-nav{
       left:max(10px, env(safe-area-inset-left,0px));
       right:max(10px, env(safe-area-inset-right,0px));
       bottom:calc(10px + env(safe-area-inset-bottom,0px));
-      border-radius:24px;
-      border:1px solid var(--border);
+      border-radius:14px;
+      border:1px solid var(--border-2);
       box-shadow:var(--shadow-lift);
-      background:rgba(28,31,35,.90);
+      background:rgba(28,31,35,.96);
       padding:5px 4px;
     }
-    html[data-theme="light"] .bottom-nav{background:rgba(255,255,255,.90);}
-    .bn-item{color:var(--text-3);border-radius:16px;}
+    html[data-theme="light"] .bottom-nav{background:rgba(255,255,255,.97);}
+    .bn-item{color:var(--text-3);border-radius:9px;}
     .bn-item.active{color:var(--accent-blue);background:var(--mint-tint);}
     .bn-item.active svg{transform:none;}
     .bn-item:active{opacity:1;background:var(--surface-2);}
@@ -2838,9 +2838,9 @@
     #filoKaydetBtn{bottom:calc(100px + env(safe-area-inset-bottom,0px));}
   }
 
-  /* --- D) Mobil çekmece sidebar: yumuşak gölge + yuvarlak sağ kenar --- */
+  /* --- D) Mobil çekmece sidebar: ince gölge, az yuvarlak sağ kenar --- */
   @media (max-width:900px){
-    .sidebar.show{border-radius:0 24px 24px 0;box-shadow:var(--shadow-lift);}
+    .sidebar.show{border-radius:0 14px 14px 0;box-shadow:var(--shadow-lift);}
     .sb-overlay.show{background:rgba(20,22,26,.45);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);}
   }
 
@@ -2848,12 +2848,12 @@
   .m-card{
     background:var(--surface);
     border:1px solid var(--border);
-    border-radius:20px;
+    border-radius:12px;
     box-shadow:var(--shadow-soft);
     padding:14px 16px;
     margin-bottom:10px;
   }
-  .m-card-head{padding-bottom:10px;margin-bottom:10px;border-bottom:1px dashed var(--border);}
+  .m-card-head{padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid var(--border);}
   .m-card-label{color:var(--text-3);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;}
   .m-card-val{font-weight:600;color:var(--text);}
 
@@ -2873,7 +2873,7 @@
 
   /* --- H) Modaller mobilde alt-sheet hissi: yuvarlak üst + yapışkan sekmeler/aksiyonlar --- */
   @media (max-width:640px){
-    .modal{width:100%;max-height:94vh;max-height:94dvh;border-radius:20px 20px 0 0 !important;}
+    .modal{width:100%;max-height:94vh;max-height:94dvh;border-radius:12px 12px 0 0 !important;}
     .modal-tabs{
       position:sticky;top:0;z-index:5;
       background:var(--surface);
@@ -2891,16 +2891,31 @@
   .table-wrap::-webkit-scrollbar-track{background:transparent;}
   .table-wrap::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:99px;}
   @media (max-width:640px){
-    .table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:4px 10px;}
+    .table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:4px 10px;}
     .table-wrap table{background:transparent;}
   }
 
-  /* --- J) Alt sheet ("Daha Fazla"): tile ikonları yumuşak dilde --- */
+  /* --- J) Alt sheet ("Daha Fazla"): tile ikonları düz dilde --- */
   .bn-tile-ic{background:var(--mint-tint);color:var(--accent-blue);}
-  .bn-tile{border-radius:16px;}
+  .bn-tile{border-radius:10px;}
   .bn-tile:active{background:var(--surface-2);}
-  .bn-sheet{box-shadow:0 -18px 50px -20px rgba(0,0,0,.35);}
+  .bn-sheet{box-shadow:0 -8px 30px -14px rgba(0,0,0,.30);}
   .bn-sheet-handle{background:var(--border-2);}
 
   /* --- K) Alt menü rozeti: marka turkuazı --- */
   .bn-badge{background:var(--accent-blue);}
+
+  /* ======================================================================
+     v.337 — "Keskin Kurumsal" rötuşları
+     Balonlaşan eski katman kalıntıları: modal gölgesi, buton ışıması,
+     alt-sheet radius. Işıma ve derin degrade gölgeler kalkar.
+     ====================================================================== */
+  .modal{border-radius:12px !important;box-shadow:0 8px 32px rgba(0,0,0,.18) !important;border:1px solid var(--border) !important;}
+  html[data-theme="dark"] .modal{box-shadow:0 8px 32px rgba(0,0,0,.45) !important;}
+  .modal-actions .save:hover{box-shadow:none !important;}
+  .mobil-fab{box-shadow:var(--shadow-lift) !important;}
+  .bn-sheet{border-radius:14px 14px 0 0 !important;}
+  .splash-logo,.lock-logo-wrap{border-radius:14px;}
+  .alert-count{border-radius:5px;}
+  /* Sekme/üst çubuk gölgeleri: tek hairline */
+  .topbar,.th,.page-head{box-shadow:none;}
