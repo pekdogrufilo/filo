@@ -40,19 +40,28 @@ const RATE_LIMIT_MAX = 30;
 const RATE_LIMIT_WINDOW_MS = 5 * 60 * 1000;
 const MAX_BODY_BYTES = 20 * 1024 * 1024; // belge okuma istekleri görsel/PDF içerebilir
 
+// --- SMS (Netgsm) ayarları — Cloudflare Secrets olarak tanımlanır:
+//     SMS_USER  : Netgsm API kullanıcı adı
+//     SMS_PASS  : Netgsm API şifresi
+//     SMS_HEADER: Onaylı gönderici başlığı (örn. PEKDOGRU)
+// Secret'lar tanımlı değilse /send-sms 503 döner; panel WhatsApp yedeğine düşer.
+const SMS_RATE_LIMIT_MAX = 10; // IP başına 5 dakikada en fazla 10 SMS (maliyet koruması)
+
 // --- Bellek içi hız sayacı (izolasyon başına; Cloudflare Rate Limiting kuralıyla
 // --- birlikte kullanılması önerilir — bkz. dağıtım adımı 4).
 const _rateHits = new Map();
-function rateLimitExceeded(ip) {
+function rateLimitExceeded(ip, map, max) {
   const now = Date.now();
-  let arr = _rateHits.get(ip);
-  if (!arr) { arr = []; _rateHits.set(ip, arr); }
+  const store = map || _rateHits;
+  const limit = max || RATE_LIMIT_MAX;
+  let arr = store.get(ip);
+  if (!arr) { arr = []; store.set(ip, arr); }
   while (arr.length && now - arr[0] > RATE_LIMIT_WINDOW_MS) arr.shift();
-  if (arr.length >= RATE_LIMIT_MAX) return true;
+  if (arr.length >= limit) return true;
   arr.push(now);
-  if (_rateHits.size > 5000) {
-    const ilkAnahtar = _rateHits.keys().next().value;
-    _rateHits.delete(ilkAnahtar);
+  if (store.size > 5000) {
+    const ilkAnahtar = store.keys().next().value;
+    store.delete(ilkAnahtar);
   }
   return false;
 }
@@ -108,6 +117,13 @@ export default {
     }
 
     const ip = request.headers.get('CF-Connecting-IP') || 'bilinmeyen';
+
+    // --- Yol yönlendirme: /send-sms ayrı servis (aynı worker, aynı origin koruması).
+    const yol = new URL(request.url).pathname.replace(/\/+$/, '');
+    if (yol === '/send-sms') {
+      return handleSendSms(request, env, origin, ip);
+    }
+
     if (rateLimitExceeded(ip)) {
       return json(429, { error: 'Çok fazla istek — lütfen birkaç dakika sonra tekrar deneyin.' }, origin);
     }
@@ -151,3 +167,76 @@ export default {
     }
   },
 };
+
+// =============================================================================
+// /send-sms — Netgsm REST üzerinden onay kodu SMS'i (v.333)
+// İstek: { tel: '905xxxxxxxxx' | '053x...' | '53x...', mesaj: '...' }
+// Yanıt: { ok:true, bulkId } | { ok:false, error, netgsmCode? }
+// =============================================================================
+const _smsRateHits = new Map();
+const NETGSM_CODE_ACIKLAMA = {
+  '20': 'Mesaj başlığı (gönderici adı) tanımlı değil veya hatalı.',
+  '30': 'Kredi/bakiye yetersiz.',
+  '40': 'İstek limiti aşıldı veya mesaj gönderilemedi.',
+  '50': 'Abonelik bulunamadı / erişim yetkisi yok.',
+  '51': 'Abonelik tanımı hatalı.',
+  '60': 'Kullanıcı adı/şifre hatalı.',
+  '70': 'Hatalı sorgulama (JSON formatı bozuk).',
+  '80': 'Gönderim sınırı aşıldı (aynı numaraya çok fazla mesaj).',
+  '85': 'Aynı numaraya aynı metin çok sık gönderildi (mükerrer gönderim koruması).',
+};
+
+async function handleSendSms(request, env, origin, ip) {
+  // SMS para harcayan bir işlem — Gemini'den daha sıkı hız sınırı.
+  if (rateLimitExceeded(ip, _smsRateHits, SMS_RATE_LIMIT_MAX)) {
+    return json(429, { ok: false, error: 'Çok fazla SMS isteği — lütfen birkaç dakika sonra tekrar deneyin.' }, origin);
+  }
+
+  const smsUser = env.SMS_USER;
+  const smsPass = env.SMS_PASS;
+  const smsHeader = env.SMS_HEADER;
+  if (!smsUser || !smsPass || !smsHeader) {
+    return json(503, {
+      ok: false,
+      error: 'sms-config-yok',
+      message: 'SMS sağlayıcı henüz yapılandırılmamış. Cloudflare → Worker → Settings → Variables and Secrets: SMS_USER, SMS_PASS, SMS_HEADER secret\'larını ekleyin.',
+    }, origin);
+  }
+
+  let payload;
+  try {
+    payload = await request.json();
+  } catch (e) {
+    return json(400, { ok: false, error: 'Geçersiz istek gövdesi (JSON parse hatası).' }, origin);
+  }
+
+  const tel = String(payload.tel || '').replace(/[^0-9]/g, '').replace(/^0+/, '');
+  const mesaj = String(payload.mesaj || '').trim();
+  if (!/^90\d{10}$/.test(tel)) {
+    return json(400, { ok: false, error: 'Geçersiz telefon numarası: ' + tel }, origin);
+  }
+  if (!mesaj || mesaj.length > 480) {
+    return json(400, { ok: false, error: 'Mesaj boş veya 480 karakterden uzun.' }, origin);
+  }
+
+  try {
+    const auth = 'Basic ' + btoa(smsUser + ':' + smsPass);
+    const res = await fetch('https://api.netgsm.com.tr/sms/send/rest', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': auth },
+      body: JSON.stringify({ msgheader: smsHeader, mainbody: mesaj, no: [tel] }),
+    });
+    const data = await res.json().catch(() => ({}));
+    const code = String(data.code || data.status || '');
+    if (code === '200') {
+      return json(200, { ok: true, bulkId: data.bulkid || '' }, origin);
+    }
+    return json(200, {
+      ok: false,
+      netgsmCode: code,
+      error: NETGSM_CODE_ACIKLAMA[code] || ('Netgsm hatası: kod ' + code),
+    }, origin);
+  } catch (e) {
+    return json(502, { ok: false, error: 'SMS sağlayıcısına ulaşılamadı: ' + (e && e.message ? e.message : e) }, origin);
+  }
+}
