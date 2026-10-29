@@ -3208,3 +3208,118 @@
     --font-body:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;
     --font-ui:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;
   }
+
+  /* ======================================================================
+     v.345 — "SAMSARA DERİN UYGULAMA" (köklü görsel düzen)
+     Artık sadece renk değil: KPI kartları, sayfa başlıkları, tablolar,
+     topbar, modal ve hızlı işlemler Samsara platform düzenine taşınır.
+     Mantık dokunulmaz — yalnızca görsel katman.
+     ====================================================================== */
+
+  /* --- Sayfa başlığı: Samsara ölçeği --- */
+  h1{font-size:26px !important;font-weight:700 !important;letter-spacing:-.4px !important;}
+  .topbar{background:var(--bg) !important;border-bottom:1px solid var(--border) !important;padding:16px 0 14px !important;}
+  .topbar .sub,.page-sub{color:var(--text-2) !important;font-size:13.5px;}
+
+  /* --- KPI kartları: MOCKUP'TAKİ DEV DİL — beyaz kart, mini uppercase etiket, dev mono rakam --- */
+  .dash-stats{
+    gap:14px !important;
+    background:transparent !important;
+    border:none !important;
+    box-shadow:none !important;
+    padding:0 !important;
+    border-radius:0 !important;
+  }
+  .dstat{
+    background:var(--surface) !important;
+    border:1px solid var(--border) !important;
+    border-radius:14px !important;
+    box-shadow:var(--shadow-soft) !important;
+    padding:18px 18px 16px !important;
+    flex-direction:column !important;
+    align-items:flex-start !important;
+    gap:10px !important;
+    transition:box-shadow .15s ease,border-color .15s ease,transform .15s ease;
+  }
+  .dstat:hover{box-shadow:var(--shadow-lift) !important;border-color:var(--border-2);transform:translateY(-1px);}
+  .dstat-ic{
+    width:38px !important;height:38px !important;min-width:38px !important;
+    border-radius:10px !important;
+    display:flex;align-items:center;justify-content:center;
+    background:var(--mint-tint) !important;color:var(--accent-blue) !important;
+  }
+  .dstat-ic svg{width:18px;height:18px;}
+  .dstat-txt{display:flex;flex-direction:column;gap:2px;}
+  .dstat-txt .l{
+    color:var(--text-3) !important;
+    font-size:11px !important;font-weight:600 !important;
+    text-transform:uppercase !important;letter-spacing:.08em !important;
+  }
+  .dstat-txt .n{
+    color:var(--text) !important;
+    font-family:var(--font-mono) !important;
+    font-size:26px !important;font-weight:600 !important;
+    line-height:1.15 !important;letter-spacing:-.5px;
+  }
+  .dstat-txt .d{color:var(--text-2) !important;font-size:12px;}
+  .dstat.dstat-strong .n{color:var(--text) !important;}
+
+  /* --- Kartlar: Samsara yüzeyi — 14px radius, net başlık satırı --- */
+  .card,.dcard,.alert-panel,.yp-grid{
+    background:var(--surface) !important;
+    border:1px solid var(--border) !important;
+    border-radius:14px !important;
+    box-shadow:var(--shadow-soft) !important;
+  }
+  .card h2,.card h3,.card .card-title{
+    font-size:16px;font-weight:700;letter-spacing:-.2px;color:var(--text);
+  }
+  .card h2 svg,.card h3 svg{color:var(--accent-blue);}
+
+  /* --- Tablolar: Samsara veri ızgarası --- */
+  .th{
+    background:transparent !important;
+    border-bottom:1px solid var(--border) !important;
+    padding:12px 16px !important;
+    font-size:15px;
+  }
+  table{border-collapse:separate !important;border-spacing:0 !important;}
+  .dataTable thead th,.tbl-head th,thead th{
+    color:var(--text-3) !important;
+    font-size:11px !important;font-weight:600 !important;
+    text-transform:uppercase !important;letter-spacing:.07em !important;
+    background:transparent !important;
+    border-bottom:1px solid var(--border) !important;
+    padding:10px 12px !important;
+  }
+  .dataTable tbody td,.tbl tbody td,tbody td{
+    border-bottom:1px solid var(--border) !important;
+    padding:11px 12px !important;
+    color:var(--text);
+  }
+  tbody tr:hover td{background:var(--surface-2) !important;}
+
+  /* --- Hızlı işlemler: kare ikon chip + etiket (mockup dili) --- */
+  .qa-btn,.quick-action,.settings-btn.qa{
+    border:1px solid var(--border) !important;
+    border-radius:14px !important;
+    background:var(--surface) !important;
+  }
+
+  /* --- Modal: Samsara diyalog dili --- */
+  .modal{border-radius:16px !important;overflow:hidden;}
+  .modal h2{font-size:18px;font-weight:700;letter-spacing:-.2px;}
+  .modal-actions{border-top:1px solid var(--border);padding-top:14px;}
+
+  /* --- Sidebar derinlik: bölüm etiketleri Samsara mini uppercase --- */
+  .sidebar .sb-group,.sidebar .sb-section-title{
+    color:#6E8394 !important;
+    font-size:10.5px !important;font-weight:700 !important;
+    text-transform:uppercase !important;letter-spacing:.1em !important;
+  }
+
+  /* --- Bildirim/uyarı bantları: yumuşak tint --- */
+  .alert-panel{border-left:4px solid var(--accent-blue) !important;}
+
+  /* --- Rozetler: pastel tint + koyu metin (Samsara status dili) --- */
+  .badge{font-weight:600 !important;letter-spacing:.01em;}
