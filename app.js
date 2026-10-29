@@ -234,17 +234,35 @@ async function withRetry(fn, deneme=3, tabanMs=1000){
 const CLOUD_CFG_KEY = 'filoPaneli_cloudConfig';
 const FIRESTORE_CHUNK_LIMIT = 700000; // ~700KB, Firestore'un ~1MiB doküman sınırının altında güvenli pay
 
+// v.346: VARSAYILAN bulut yapılandırması koda gömülü. Firebase web yapılandırmaları tasarım
+// gereği gizli değildir (güvenlik Firestore kuralları + Authentication ile sağlanır). Artık her
+// cihaz (iPad/telefon dahil) ilk açılışta doğrudan bulut modunda başlar — "yerel mod + 4 haneli
+// PIN" yoluna düşmez; giriş her yerde e-posta+şifre ile yapılır ve aynı bulut verisi görünür.
+const EMBEDDED_CLOUD_CFG = {
+  apiKey: "AIzaSyDKiMKNT2JWg_qzMjhf8yZm1UtzIiVX4dA",
+  authDomain: "pekdogrufilo-dc74d.firebaseapp.com",
+  projectId: "pekdogrufilo-dc74d",
+  storageBucket: "pekdogrufilo-dc74d.firebasestorage.app",
+  messagingSenderId: "74585686270",
+  appId: "1:74585686270:web:4ea6a74af2a330fe74e5af",
+  measurementId: "G-6Z9T9S5CCL"
+};
 function getCloudConfig(){
   try{
     const raw = localStorage.getItem(CLOUD_CFG_KEY);
-    return raw ? JSON.parse(raw) : null;
-  }catch(e){ return null; }
+    if(!raw) return EMBEDDED_CLOUD_CFG;
+    const cfg = JSON.parse(raw);
+    return (cfg && cfg.__kapali) ? null : cfg;
+  }catch(e){ return EMBEDDED_CLOUD_CFG; }
 }
 function saveCloudConfig(cfg){
   localStorage.setItem(CLOUD_CFG_KEY, JSON.stringify(cfg));
 }
 function clearCloudConfig(){
-  localStorage.removeItem(CLOUD_CFG_KEY);
+  // v.346: "Bağlantıyı kaldır" artık yapılandırmayı silmez — __kapali işareti yazar.
+  // (Kodda gömülü varsayılan yapılandırma olduğu için silmek anlamsız olurdu; bir sonraki
+  // açılışta yine buluta bağlanırdı. İşaret ile kullanıcı gerçekten yerel moda dönebilir.)
+  localStorage.setItem(CLOUD_CFG_KEY, JSON.stringify({__kapali:1}));
 }
 
 // ===== AI ayarları =====
