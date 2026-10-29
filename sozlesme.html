@@ -420,6 +420,29 @@
   }
 
   var onayKaydi = null;
+  // v.351: Elektronik iz — onayın hangi cihazda, ne zaman, hangi IP'den yapıldığı.
+  // IP zorunlu değil: api.ipify.org'a ulaşılamazsa sessizce atlanır, onay akışı bloklanmaz.
+  var izIP = null;
+  function ipAl(){
+    try{
+      var t = setTimeout(function(){ izIP = izIP || null; }, 3500);
+      fetch('https://api.ipify.org?format=json').then(function(r){ return r.json(); })
+        .then(function(j){ clearTimeout(t); izIP = (j && j.ip) || izIP; })
+        .catch(function(){ clearTimeout(t); });
+    }catch(e){}
+  }
+  function cihazKisa(){
+    var ua = navigator.userAgent;
+    if(/iPad|Tablet/i.test(ua)) return 'iPad/Tablet';
+    if(/iPhone/i.test(ua)) return 'iPhone';
+    if(/Android/i.test(ua)) return 'Android telefon';
+    if(/Windows/i.test(ua)) return 'Windows PC';
+    if(/Macintosh|Mac OS/i.test(ua)) return 'Mac';
+    return 'Cihaz';
+  }
+  function izMetni(zaman){
+    return zaman.toLocaleString('tr-TR') + ' · ' + cihazKisa() + ' · Ekran ' + (screen.width||'?') + 'x' + (screen.height||'?') + (izIP ? ' · IP ' + izIP : '');
+  }
   window.sozlesmeyiOnayla = function(){
     document.getElementById('onayHata').style.display='none';
     if(!document.getElementById('ckKvkk').checked){ hataGoster('Lütfen önce KVKK Aydınlatma Metni\'ni okuyup onaylayın.'); return; }
@@ -431,7 +454,8 @@
     var imzaData = canvas.toDataURL('image/png');
     var damga = onayDamgasi(D.sozNo, kod);
     var zaman = new Date();
-    onayKaydi = { damga: damga, zaman: zaman, imza: imzaData };
+    ipAl();
+    onayKaydi = { damga: damga, zaman: zaman, imza: imzaData, iz: izMetni(zaman) };
     // Sonuç görünümü
     document.getElementById('sKiraci').textContent = (D.musteri&&D.musteri.ad)||'';
     document.getElementById('sDamga').textContent = damga;
@@ -457,7 +481,9 @@
   window.waBildir = function(){
     if(!onayKaydi) return;
     var tel = String((D.firmaWa||'')).replace(/[^0-9]/g,'').replace(/^0/,'90');
-    var metin = 'Sayın PEKDOĞRU yetkilisi, ' + (D.sozNo||'') + ' numaralı kira sözleşmesini okudum, onayladım ve imzaladım.\nOnay Damgası: ' + onayKaydi.damga + '\n' + onayKaydi.zaman.toLocaleString('tr-TR');
+    // v.351: mesajın sonuna elektronik iz satırı eklenir — yönetici tüm mesajı "Onay İşle"ye
+    // yapıştırdığında iz (zaman/cihaz/IP) sözleşme kaydına işlenir.
+    var metin = 'Sayın PEKDOĞRU yetkilisi, ' + (D.sozNo||'') + ' numaralı kira sözleşmesini okudum, onayladım ve imzaladım.\nOnay Damgası: ' + onayKaydi.damga + '\n' + onayKaydi.zaman.toLocaleString('tr-TR') + '\nİz: ' + izMetni(onayKaydi.zaman);
     if(tel){
       window.open('https://wa.me/'+tel+'?text='+encodeURIComponent(metin), '_blank');
     }else{

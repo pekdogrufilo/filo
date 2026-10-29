@@ -2197,15 +2197,19 @@ async function sozMusteriOnayIsle(id){
   const rec = sozlesmeler.find(r=>r.id===id);
   if(!rec){ showToast('Sözleşme kaydı bulunamadı.', true); return; }
   if(!rec.sozOnayKodu){ showToast('Bu sözleşme için henüz müşteri linki üretilmemiş — önce "Link" butonunu kullanın.', true); return; }
-  const girdi = prompt('Müşteri sözleşmeyi onaylayınca ekranda gördüğü 7 haneli ONAY DAMGASI\'nı buraya yapıştırın:\n\nSözleşme: ' + (rec.sozNo||'—') + '\nKiracı: ' + (rec.kiraci||'—') + '\n\n(Onay kodu: ' + rec.sozOnayKodu + ')');
+  const girdi = prompt('Müşteri sözleşmeyi onaylayınca ekranda gördüğü 7 haneli ONAY DAMGASI\'nı buraya yapıştırın:\n\nSözleşme: ' + (rec.sozNo||'—') + '\nKiracı: ' + (rec.kiraci||'—') + '\n\nİpucu: müşterinin WhatsApp onay mesajını olduğu gibi de yapıştırabilirsiniz — damga otomatik bulunur, varsa "İz:" satırı (zaman/cihaz/IP) kayda işlenir.\n\n(Onay kodu: ' + rec.sozOnayKodu + ')');
   if(girdi===null) return;
   const beklenen = rec.sozOnayDamga || sozOnayDamga(rec.sozNo, rec.sozOnayKodu);
-  if(girdi.trim().toUpperCase() === beklenen){
-    rec.sozMusteriOnay = { ts: new Date().toISOString(), damga: beklenen };
+  // v.351: damga tek başına ya da tüm WhatsApp mesajı içinde yapıştırılabilir; "İz:" satırı
+  // (müşteri sayfasının eklediği zaman/cihaz/IP bilgisi) varsa elektronik iz olarak kaydedilir.
+  const girdiBuyuk = girdi.trim().toUpperCase();
+  if(girdiBuyuk === beklenen || girdiBuyuk.includes(beklenen)){
+    const izM = girdi.match(/İz\s*:\s*([^\n]+)/i);
+    rec.sozMusteriOnay = { ts: new Date().toISOString(), damga: beklenen, ...(izM ? { iz: izM[1].trim() } : {}) };
     await persistSozlesmeler();
     renderCurrentPage();
-    showToast('✅ Müşteri onayı işlendi: ' + (rec.sozNo||''));
-    logActivity('edit', 'Müşteri onayı işlendi: <b>'+esc(rec.sozNo||'')+'</b> · '+esc(rec.kiraci||''));
+    showToast('✅ Müşteri onayı işlendi: ' + (rec.sozNo||'') + (izM ? ' — elektronik iz kaydedildi.' : ''));
+    logActivity('edit', 'Müşteri onayı işlendi: <b>'+esc(rec.sozNo||'')+'</b> · '+esc(rec.kiraci||'')+(izM?' · elektronik iz alındı':''));
   }else{
     showToast('Onay damgası eşleşmedi — kodu kontrol edin.', true);
   }
@@ -2313,6 +2317,119 @@ async function sozFotoSil(id, idx){
   rec.data.teslimFotolar.splice(idx, 1);
   await persistSozlesmeler();
   sozFotoGaleriCiz(rec);
+}
+
+// ===== v.351: Islak İmza İkamesi =====
+// Elektronik onayın (damga + çizilen imza + elektronik iz) yanına ikinci ispat katmanı:
+// çıktısı yazdırılıp imzalatmış sözleşme sayfalarının fotoğrafları kayda eklenir.
+// Elektronik onayın gücü tartışmalı bir ihtilafda imzalı kopyanın fotoğrafı en güçlü delildir.
+function sozIslakAc(id){
+  const rec = sozlesmeler.find(r=>r.id===id);
+  if(!rec){ showToast('Sözleşme kaydı bulunamadı.', true); return; }
+  if(!rec.data) rec.data = {};
+  if(!Array.isArray(rec.data.islakFotolar)) rec.data.islakFotolar = [];
+  sozIslakCiz(rec);
+}
+function sozIslakCiz(rec){
+  sozIslakKapat();
+  const el = document.createElement('div');
+  el.className = 'overlay show';
+  el.id = 'sozIslakOverlay';
+  el.style.cssText = 'z-index:80;';
+  el.onclick = (ev)=>{ if(ev.target===el) sozIslakKapat(); };
+  const fotolar = rec.data.islakFotolar||[];
+  const onay = rec.sozMusteriOnay;
+  el.innerHTML = `
+    <div class="modal" style="width:min(760px,94vw);max-height:92vh;max-height:92dvh;display:flex;flex-direction:column;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding-bottom:12px;border-bottom:1px solid var(--border);">
+        <h3 style="font-family:var(--font-display);font-size:17px;">✍️ Islak İmza İkamesi <span style="font-weight:400;font-size:12.5px;color:var(--text-3);">${esc(rec.sozNo||'')}</span></h3>
+        <button class="close-x" onclick="sozIslakKapat()" title="Kapat" style="background:var(--surface-2);border:1px solid var(--border);border-radius:10px;width:34px;height:34px;font-size:16px;cursor:pointer;color:var(--text);">✕</button>
+      </div>
+      <div style="margin:12px 0 0;padding:10px 14px;border-radius:12px;font-size:12.5px;line-height:1.5;${onay?'background:rgba(54,161,104,.08);border:1px solid rgba(54,161,104,.2);':'background:rgba(232,161,50,.08);border:1px solid rgba(232,161,50,.25);'}">
+        ${onay
+          ? `<b style="color:#36A168;">✅ Elektronik onay alındı</b> — Damga ${esc(onay.damga||'')}${onay.iz?`<br><span style="color:var(--text-3);">Elektronik iz: ${esc(onay.iz)}</span>`:''}`
+          : '<b style="color:#E8A132;">⏳ Elektronik onay henüz alınmadı</b> — müşteriye "Link" ile onay sayfasını gönderin; ıslak imzayı tek başına da kullanabilirsiniz.'}
+      </div>
+      <div style="padding:12px 0 6px;display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="add-btn" style="padding:10px 18px;border-radius:12px;font-size:13.5px;" onclick="sozIslakCek('${rec.id}')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:-2px;margin-right:4px;"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/><circle cx="12" cy="13" r="3"/></svg>
+          Kamera ile Çek
+        </button>
+        <button class="settings-btn" style="padding:10px 18px;border-radius:12px;font-size:13.5px;" onclick="sozIslakSec('${rec.id}')">🖼️ Galeriden Seç</button>
+        <span style="font-size:12px;color:var(--text-3);align-self:center;">İmzalı sayfaları fotoğraflayın (${fotolar.length} sayfa)</span>
+      </div>
+      <div style="overflow-y:auto;flex:1;">
+        ${fotolar.length ? `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;padding:6px 0 14px;">
+          ${fotolar.map((f,i)=>`
+            <div style="position:relative;border-radius:14px;overflow:hidden;border:1px solid var(--border);box-shadow:var(--shadow-soft);background:var(--surface-2);cursor:zoom-in;" onclick="sozIslakBuyut('${rec.id}',${i})">
+              <img src="${f.data}" alt="İmzalı sayfa ${i+1}" style="display:block;width:100%;height:170px;object-fit:cover;object-position:top;">
+              <div style="padding:5px 8px;font-size:10.5px;color:var(--text-3);font-family:var(--font-mono,monospace);">${esc(f.ts||'')}</div>
+              <button onclick="event.stopPropagation();sozIslakSil('${rec.id}',${i})" title="Sil" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,.55);color:#fff;border:none;border-radius:8px;width:26px;height:26px;font-size:12px;cursor:pointer;">🗑</button>
+            </div>`).join('')}
+        </div>` : `
+          <div class="empty-state" style="padding:26px 0;">
+            <div class="empty-state-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M9 15h6M9 11h2"/></svg></div>
+            <div class="empty-state-title">İmzalı sayfa fotoğrafı yok</div>
+            <div class="empty-state-desc">Sözleşmenin çıktısını alıp (PDF/Word) müşteriyle birlikte imzalatın; imzalı sayfaların fotoğrafını "Kamera ile Çek" ile buraya ekleyin. Elektronik onay + ıslak imza birlikte en güçlü ispat olur.</div>
+          </div>`}
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+}
+function sozIslakKapat(){ document.getElementById('sozIslakOverlay')?.remove(); }
+function sozIslakSec(id){ sozIslakDosyaAl(id, false); }
+function sozIslakCek(id){ sozIslakDosyaAl(id, true); }
+function sozIslakDosyaAl(id, kameradan){
+  const rec = sozlesmeler.find(r=>r.id===id);
+  if(!rec) return;
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.multiple = true;
+  if(kameradan) input.setAttribute('capture','environment');
+  input.onchange = async ()=>{
+    const files = Array.from(input.files||[]);
+    if(!files.length) return;
+    showToast(files.length + ' sayfa işleniyor…');
+    if(!Array.isArray(rec.data.islakFotolar)) rec.data.islakFotolar = [];
+    for(const file of files){
+      if(file.size > 25*1024*1024){ showToast('Fotoğraf çok büyük (25MB üstü) — atlandı.', true); continue; }
+      try{
+        const data = await fotoSikistir(file, 1280, 0.7);
+        if(data){
+          rec.data.islakFotolar.push({ ts: new Date().toLocaleString('tr-TR'), data });
+        }
+      }catch(e){ console.error('sozIslakDosyaAl:', e); }
+    }
+    await persistSozlesmeler();
+    logActivity('edit', 'Islak imza sayfası eklendi: <b>'+esc(rec.sozNo||'')+'</b> · '+files.length+' sayfa');
+    sozIslakCiz(rec);
+    showToast('✅ İmzalı sayfalar sözleşmeye eklendi.');
+  };
+  input.click();
+}
+async function sozIslakSil(id, idx){
+  const rec = sozlesmeler.find(r=>r.id===id);
+  if(!rec || !Array.isArray(rec.data.islakFotolar)) return;
+  rec.data.islakFotolar.splice(idx, 1);
+  await persistSozlesmeler();
+  sozIslakCiz(rec);
+}
+function sozIslakBuyut(id, idx){
+  const rec = sozlesmeler.find(r=>r.id===id);
+  if(!rec || !rec.data || !Array.isArray(rec.data.islakFotolar)) return;
+  const f = rec.data.islakFotolar[idx];
+  if(!f) return;
+  const el = document.createElement('div');
+  el.className = 'overlay show';
+  el.id = 'sozIslakBuyutOverlay';
+  el.style.cssText = 'z-index:81;';
+  el.onclick = ()=>el.remove();
+  el.innerHTML = `<div style="max-width:min(860px,95vw);max-height:92dvh;display:flex;flex-direction:column;gap:10px;">
+    <img src="${f.data}" alt="İmzalı sayfa" style="max-width:100%;max-height:84dvh;object-fit:contain;border-radius:14px;box-shadow:var(--shadow-soft);background:#fff;">
+    <div style="text-align:center;font-size:12px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.6);">${esc(rec.sozNo||'')} · imzalı sayfa ${idx+1} · ${esc(f.ts||'')} — kapatmak için dokunun</div>
+  </div>`;
+  document.body.appendChild(el);
 }
 
 function daysLeft(dateStr){
@@ -14430,7 +14547,7 @@ function renderKiralamaPage(){
         <tbody>${gorunen.map(r=>{
           const d = sozDurumOf(r);
           return `<tr style="box-shadow:inset 3px 0 0 ${d.color};">
-            <td style="font-family:var(--font-mono,monospace);font-weight:700;">${esc(r.sozNo)}${r.sozMusteriOnay?'<div style="font-size:10px;color:#36A168;font-weight:700;letter-spacing:.3px;">✅ MÜŞTERİ ONAYLADI</div>':(r.sozOnayKodu?'<div style="font-size:10px;color:#E8A132;font-weight:700;letter-spacing:.3px;">⏳ LINK GÖNDERİLDİ</div>':'')}</td>
+            <td style="font-family:var(--font-mono,monospace);font-weight:700;">${esc(r.sozNo)}${r.sozMusteriOnay?`<div title="${r.sozMusteriOnay.iz?'Elektronik iz: '+esc(r.sozMusteriOnay.iz):'Onay: '+esc(r.sozMusteriOnay.damga||'')}" style="font-size:10px;color:#36A168;font-weight:700;letter-spacing:.3px;">✅ MÜŞTERİ ONAYLADI</div>`:(r.sozOnayKodu?'<div style="font-size:10px;color:#E8A132;font-weight:700;letter-spacing:.3px;">⏳ LINK GÖNDERİLDİ</div>':'')}</td>
             <td>${esc(r.tarih||'—')}</td>
             <td>${esc(r.kiraci||'—')}${r.kiraciVKN?`<div style="font-size:11px;color:var(--steel-300);">VKN/TC: ${esc(r.kiraciVKN)}</div>`:''}</td>
             <td style="font-size:12px;">${esc(r.aracOzet||'—')}</td>
@@ -14443,6 +14560,7 @@ function renderKiralamaPage(){
               ${r.sozMusteriOnay?`<span title="Onay: ${esc(r.sozMusteriOnay.damga||'')}" style="font-size:11px;color:#36A168;font-weight:700;">✅</span>`:`<button onclick="sozMusteriOnayIsle('${r.id}')" title="Müşterinin gönderdiği onay damgasını işle" style="background:rgba(232,161,50,.12);border:1px solid rgba(232,161,50,.3);color:#E8A132;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Onay İşle</button>`}
               <button onclick="teslimTutanakAc(sozlesmeler.find(x=>x.id==='${r.id}').data)" title="Ek-1 Teslim Tutanağını yeniden üret" style="background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.25);color:var(--accent-blue);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Teslim</button>
               <button onclick="sozFotoGaleriAc('${r.id}')" title="Teslim fotoğrafları (tablet kamera)" style="background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.25);color:var(--accent-blue);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">📷 Foto${r.data&&r.data.teslimFotolar&&r.data.teslimFotolar.length?' ('+r.data.teslimFotolar.length+')':''}</button>
+              <button onclick="sozIslakAc('${r.id}')" title="Islak imza ikamesi — imzalı sayfa fotoğrafları" style="background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.25);color:var(--accent-blue);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">✍️ Islak${r.data&&r.data.islakFotolar&&r.data.islakFotolar.length?' ('+r.data.islakFotolar.length+')':''}</button>
               <button onclick="sozKayitSil('${r.id}')" style="background:rgba(225,85,78,.1);border:1px solid rgba(225,85,78,.2);color:#E1554E;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Sil</button>
             </td>
           </tr>`;
@@ -14467,6 +14585,7 @@ function renderKiralamaPage(){
             <button onclick="sozKayitDocx('${r.id}')" style="flex:1;background:rgba(54,161,104,.1);border:1px solid rgba(54,161,104,.2);color:#36A168;padding:7px 0;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Word</button>
             <button onclick="sozMusteriLinkiUret(sozlesmeler.find(x=>x.id==='${r.id}'))" style="flex:1.2;background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.25);color:var(--accent-blue);padding:7px 0;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">🔗 Link</button>
             <button onclick="sozFotoGaleriAc('${r.id}')" style="flex:1;background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.25);color:var(--accent-blue);padding:7px 0;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">📷${r.data&&r.data.teslimFotolar&&r.data.teslimFotolar.length?' '+r.data.teslimFotolar.length:''}</button>
+            <button onclick="sozIslakAc('${r.id}')" style="flex:1;background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.25);color:var(--accent-blue);padding:7px 0;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">✍️${r.data&&r.data.islakFotolar&&r.data.islakFotolar.length?' '+r.data.islakFotolar.length:''}</button>
             ${r.sozMusteriOnay?'':`<button onclick="sozMusteriOnayIsle('${r.id}')" style="flex:1.2;background:rgba(232,161,50,.12);border:1px solid rgba(232,161,50,.3);color:#E8A132;padding:7px 0;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Onay İşle</button>`}
             <button onclick="sozKayitSil('${r.id}')" style="background:rgba(225,85,78,.1);border:1px solid rgba(225,85,78,.2);color:#E1554E;padding:7px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Sil</button>
           </div>
