@@ -8,6 +8,9 @@
   <url><loc>https://www.pekdogru.com/haberler/</loc><priority>0.5</priority></url>
   <url><loc>https://www.pekdogru.com/filo-kiralama/</loc><priority>0.9</priority></url>
   <url><loc>https://www.pekdogru.com/konya-arac-kiralama/</loc><priority>0.9</priority></url>
+  <url><loc>https://www.pekdogru.com/konya-kurumsal-arac-kiralama/</loc><priority>0.8</priority></url>
+  <url><loc>https://www.pekdogru.com/konya-uzun-donem-arac-kiralama/</loc><priority>0.8</priority></url>
+  <url><loc>https://www.pekdogru.com/konya-ticari-arac-kiralama/</loc><priority>0.8</priority></url>
   <url><loc>https://www.pekdogru.com/ikinci-el-arac/</loc><priority>0.9</priority></url>
   <url><loc>https://www.pekdogru.com/lojistik/</loc><priority>0.8</priority></url>
   <url><loc>https://www.pekdogru.com/hayvancilik/</loc><priority>0.8</priority></url>
