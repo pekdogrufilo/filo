@@ -62,6 +62,24 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // index.html için network-first: yeni sürüm hemen görünür, çevrimdışıysa önbellek.
+  // v.344: cache:'reload' — tarayıcının 10 dk'lık GitHub Pages HTTP cache'ini BYPASS eder;
+  // aksi halde yeni sürüm yayınlansa bile kullanıcı 10 dk'ya kadar eski paneli görebiliyordu.
+  if (request.mode === 'navigate' || url.pathname.endsWith('/index.html') || url.pathname === '/filo/' || url.pathname === '/') {
+    event.respondWith(
+      fetch(request, { cache: 'reload' })
+        .then((res) => {
+          if (res && res.status === 200) {
+            const copy = res.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+          }
+          return res;
+        })
+        .catch(() => caches.match(request))
+    );
+    return;
+  }
+
   // index.html için network-first: yeni sürüm hemen görünür, çevrimdışıysa önbellek
   event.respondWith(
     fetch(request)
