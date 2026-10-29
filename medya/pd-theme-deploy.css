@@ -1,0 +1,26 @@
+/* Pekdogru Filo - tasarim duzeltme katmani v1 */
+/* 1) Tipografi birligi: serif karisikligini kaldir, tek kurumsal font */
+.font-display,
+h1.font-display, h2.font-display, h3.font-display {
+  font-family: 'Manrope', ui-sans-serif, system-ui, sans-serif !important;
+  letter-spacing: -0.025em !important;
+}
+h1, h2, h3 { text-wrap: balance; }
+
+/* 2) Hero: gercek filo fotosu daha belirgin olsun, logo karti kaldirildi */
+section[class*="min-h"] > img[src*="/assets/konya-"] { opacity: .55 !important; }
+
+/* 3) Deger kartlari (Temel Ilkelerimiz): stok fotolarsiz tem tipografik kart */
+.pd-val {
+  border-top: 3px solid #d21f26 !important;
+  background: #fff;
+}
+.pd-val h3 { margin: 0 0 8px; }
+
+/* 4) Faaliyet / kart fotolarinda tutarli kadraj */
+img[src*="/assets/konya-filo-kiralama-filosu.jpg"] { object-fit: cover; }
+
+/* 5) Kucuk ekranlarda hero basligi nefes alsin */
+@media (max-width: 640px) {
+  section[class*="min-h"] h1 { font-size: 2.35rem !important; }
+}
