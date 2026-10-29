@@ -5545,7 +5545,7 @@ function krBelgeAlanlariUygula(bilgi){
   if(kiraciBosMu){
     setIfEmpty('krKiraci', adSoyad, 'kiracı adı');
     const tcVkn = (bilgi.tc && typeof tcknGecerliMi==='function' && tcknGecerliMi(String(bilgi.tc))) ? bilgi.tc
-                : (bilgi.vkn && typeof vknGecerliMi==='function' && vknGecerliMi(String(bilgi.vkn))) ? bilgi.vkn : '';
+                : (()=>{ const t=vknTemizle(bilgi.vkn); return (t && typeof vknGecerliMi==='function' && vknGecerliMi(t)) ? t : ''; })();
     setIfEmpty('krVKN', tcVkn, 'TC/VKN');
     setIfEmpty('krTel', bilgi.telefon, 'telefon');
     setIfEmpty('krAdres', bilgi.adres, 'kiracı adresi');
@@ -15578,7 +15578,18 @@ async function belgeAnalizEtCoklu(onceden){
 // alanın üzerine ASLA yazılmaz — sadece boş alanlar doldurulur (bkz. sozlesmeAlanlariUygula
 // ile aynı "asla sessizce üzerine yazma" ilkesi). Gemini anahtarı yoksa (getGeminiKey())
 // sessizce devre dışı kalır, kullanıcı alanları elle doldurmaya devam edebilir.
-const MUSTERI_BELGE_SYSTEM = 'Sen bir müşteri kimlik/vergi belgesi okuyan asistansın. Sana T.C. kimlik kartı, nüfus cüzdanı, ehliyet, vergi levhası ya da FİRMA KAŞESİ gibi bir belge görüntüsü/PDF\'i verilecek. SADECE şu JSON nesnesini döndür, başka hiçbir metin veya kod bloğu ekleme:\n{"musteriTuru": "bireysel"|"sirket"|null, "ad": string|null, "soyad": string|null, "tc": string|null, "ehliyetNo": string|null, "ehliyetSinifi": string|null, "ehliyetTarihi": "YYYY-MM-DD"|null, "firmaAdi": string|null, "vkn": string|null, "vergiDairesi": string|null, "yetkiliAdi": string|null, "adres": string|null, "telefon": string|null}\nKurallar: Belge T.C. kimlik kartı/nüfus cüzdanıysa "musteriTuru":"bireysel" yap, "ad", "soyad", "tc" (11 haneli T.C. kimlik no) alanlarını doldur; belgede adres yazıyorsa "adres"i de doldur. Belge ehliyet ise "musteriTuru":"bireysel" yap, "ad", "soyad", "ehliyetNo", "ehliyetSinifi" (B, C, D gibi sınıf/sınıfları virgülle ayırarak) ve "ehliyetTarihi" (ilk veriliş ya da geçerlilik tarihi, YYYY-MM-DD) alanlarını doldur. Belge vergi levhası ise "musteriTuru":"sirket" yap, "firmaAdi" (unvan), "vkn" (10 haneli vergi kimlik no), "vergiDairesi", belgede varsa "yetkiliAdi" ve "adres" alanlarını doldur. Belge bir FİRMA KAŞESİ (yuvarlak/oval/dikdörtgen şirket mührü) ise "musteriTuru":"sirket" yap: kaşedeki DAIREDÜZ yazıyı dikkatle oku — kaşeler genellikle ortada firma UNVANI (büyük yazı), çevresinde küçük harfle vergi dairesi ve VKN/Vergi No içerir. Okuyabildiğin her alanı doldur: "firmaAdi" (ortadaki unvan), "vkn" (10 haneli, çember üzerindeki küçük yazıda), "vergiDairesi" (örn. "SELÇUKLU V.D." gibi — sonundaki V.D./Vergi Dairesi ibaresini at), "adres"/"telefon" kaşede yazıyorsa doldur, "yetkiliAdi" kaşede geçmiyorsa null bırak. Kaşede VKN net okunamıyorsa "vkn"yi null bırak ama "firmaAdi" okunabiliyorsa onu mutlaka doldur. Salt görsel ama içinde OKUNABİLİR firma/vkn/vergi dairesi yazısı bulunan her belgeyi işle; yalnızca HİÇBİR okunabilir kimlik/vergi bilgisi yoksa TÜM alanları null bırak, "musteriTuru"yu da null yap. Emin olmadığın hiçbir alanı tahmin etme, null yaz.';
+const MUSTERI_BELGE_SYSTEM = 'Sen bir müşteri kimlik/vergi belgesi okuyan asistansın. Sana T.C. kimlik kartı, nüfus cüzdanı, ehliyet, vergi levhası ya da FİRMA KAŞESİ gibi bir belge görüntüsü/PDF\'i verilecek. SADECE şu JSON nesnesini döndür, başka hiçbir metin veya kod bloğu ekleme:\n{"musteriTuru": "bireysel"|"sirket"|null, "ad": string|null, "soyad": string|null, "tc": string|null, "ehliyetNo": string|null, "ehliyetSinifi": string|null, "ehliyetTarihi": "YYYY-MM-DD"|null, "firmaAdi": string|null, "vkn": string|null, "vergiDairesi": string|null, "yetkiliAdi": string|null, "adres": string|null, "telefon": string|null}\nKurallar: Belge T.C. kimlik kartı/nüfus cüzdanıysa "musteriTuru":"bireysel" yap, "ad", "soyad", "tc" (11 haneli T.C. kimlik no) alanlarını doldur; belgede adres yazıyorsa "adres"i de doldur. Belge ehliyet ise "musteriTuru":"bireysel" yap, "ad", "soyad", "ehliyetNo", "ehliyetSinifi" (B, C, D gibi sınıf/sınıfları virgülle ayırarak) ve "ehliyetTarihi" (ilk veriliş ya da geçerlilik tarihi, YYYY-MM-DD) alanlarını doldur. Belge vergi levhası ise "musteriTuru":"sirket" yap, "firmaAdi" (unvan), "vkn" (10 haneli vergi kimlik no), "vergiDairesi", belgede varsa "yetkiliAdi" ve "adres" alanlarını doldur. Belge bir FİRMA KAŞESİ (yuvarlak/oval/dikdörtgen şirket mührü) ise "musteriTuru":"sirket" yap: kaşedeki DAIREDÜZ yazıyı dikkatle oku — kaşeler genellikle ortada firma UNVANI (büyük yazı), çevresinde küçük harfle vergi dairesi ve VKN/Vergi No içerir. Okuyabildiğin her alanı doldur: "firmaAdi" (ortadaki unvan), "vkn" (10 haneli, çember üzerindeki küçük yazıda), "vergiDairesi" (örn. "SELÇUKLU V.D." gibi — sonundaki V.D./Vergi Dairesi ibaresini at), "adres"/"telefon" kaşede yazıyorsa doldur, "yetkiliAdi" kaşede geçmiyorsa null bırak. VKN OKUMA KURALI (hem kaşe hem vergi levhası için): "vkn" alanını doldurmadan önce görüntüdeki TÜM küçük yazıyı tara — VKN çoğu zaman çember üzerinde "VKN", "Vergi No" ya da vergi dairesi ibaresinin hemen yanındadır ve boşluklu ("1234 567890"), noktalı ("123.456.7890"), tireli ya da iki satıra bölünmüş yazılabilir; sayıyı HANE HANE oku, boşluk/nokta/tireleri at ve yalnızca 10 rakamı birleştirerek yaz, sonra her haneyi bir kez daha teker teker kontrol et. Kaşede/levhada VKN hiçbir biçimde okunamıyorsa "vkn"yi null bırak ama "firmaAdi" okunabiliyorsa onu mutlaka doldur. Salt görsel ama içinde OKUNABİLİR firma/vkn/vergi dairesi yazısı bulunan her belgeyi işle; yalnızca HİÇBİR okunabilir kimlik/vergi bilgisi yoksa TÜM alanları null bırak, "musteriTuru"yu da null yap. Emin olmadığın hiçbir alanı tahmin etme, null yaz.';
+// v.349: VKN'yi rakam-dışı karakterlerden temizler — model "12 345 67890" ya da
+// "12.345.6789.0" gibi boşluklu/noktalı varyasyon döndürse bile düz 10 haneye indirilir.
+function vknTemizle(v){
+  const s = String(v||'').replace(/[^0-9]/g,'');
+  if(s.length===10) return s;
+  if(s.length>10) return s.slice(-10); // örn. "VKN:1234567890" birleşik okunduysa sondaki 10 hane
+  return '';
+}
+// v.349: İlk geçişte firma adı okunup VKN gelmediyse (kaşe/vergi levhası demek), aynı görsele
+// SALT VKN odaklı ikinci bir geçiş yapılır — lite model ~3 sn sürdüğü için kullanıcıyı bekletmez.
+const VKN_OKUMA_SYSTEM = 'Sen bir belgeden SADECE vergi kimlik numarası (VKN) okuyan asistansın. Görüntüde firma kaşesi (yuvarlak/oval çember mühür), vergi levhası ya da başka bir resmi belge olabilir. VKN genellikle kaşenin çemberi üzerinde küçük harflerle yazılıdır: "VKN", "Vergi No" ya da vergi dairesi ibaresinin yanındaki 10 haneli sayıdır; boşluklu ("1234 567890"), noktalı ("123.456.7890") ya da iki satıra bölünmüş yazılabilir. Görevin: 1) Görüntüdeki tüm küçük yazıları tarayıp VKN/Vergi No ibaresini bul. 2) Sayıyı HANE HANE oku, boşluk/nokta/tireleri at, yalnızca 10 rakamı birleştir. 3) Her haneyi bir kez daha teker teker doğrula. SADECE şu JSON nesnesini döndür, başka hiçbir metin ekleme: {"vkn": "10 haneli sayı veya null", "okunabilirlik": "net"|"soluk"|"okunamıyor"}. Hiç sayı okuyamıyorsan {"vkn":null,"okunabilirlik":"okunamıyor"} döndür. Asla uydurma, tahmin etme.';
 async function musteriBelgeAnalizEt(onceden){
   for(let deneme=0; deneme<2; deneme++){
     try{
@@ -15587,7 +15598,27 @@ async function musteriBelgeAnalizEt(onceden){
         {text:'Bu belgeyi oku ve istenen JSON formatında yanıtla.'}
       ]}], {temperature:0, maxOutputTokens:1024}, GEMINI_LITE_MODELS);
       const bilgi = JSON.parse(yanit.replace(/```json|```/g,'').trim());
-      if(bilgi && typeof bilgi==='object') return bilgi;
+      if(bilgi && typeof bilgi==='object'){
+        // v.349: VKN boşluklu/noktalı geldiyse temizle; hiç gelmediyse ama firma adı okunduysa
+        // salt-VKN ikinci geçiş — yalnızca resmi kontrol-hanesi algoritmasını geçen değer kabul edilir.
+        if(bilgi.vkn){
+          const t = vknTemizle(bilgi.vkn);
+          if(t && (typeof vknGecerliMi!=='function' || vknGecerliMi(t))) bilgi.vkn = t;
+        }else if(bilgi.firmaAdi){
+          try{
+            const y2 = await geminiChatFetch(VKN_OKUMA_SYSTEM, [{role:'user', parts:[
+              {inline_data:{mime_type:onceden.mime, data:onceden.b64}},
+              {text:'Bu belgedeki vergi kimlik numarasını (VKN) oku ve istenen JSON formatında yanıtla.'}
+            ]}], {temperature:0, maxOutputTokens:256}, GEMINI_LITE_MODELS);
+            const b2 = JSON.parse(y2.replace(/```json|```/g,'').trim());
+            if(b2 && b2.vkn){
+              const t = vknTemizle(b2.vkn);
+              if(t && (typeof vknGecerliMi!=='function' || vknGecerliMi(t))) bilgi.vkn = t;
+            }
+          }catch(_){}
+        }
+        return bilgi;
+      }
     }catch(e){
       if(deneme===0) await new Promise(r=>setTimeout(r,3000));
     }
@@ -15618,7 +15649,7 @@ function musteriBelgeAlanlariDoldur(bilgi){
   const ehTarih = bilgi.ehliyetTarihi ? normalizeExtractedDate(bilgi.ehliyetTarihi) : '';
   if(ehTarih) setIfEmpty('mfEhliyetTarihi', ehTarih, 'ehliyet tarihi');
   setIfEmpty('mfFirmaAdi', bilgi.firmaAdi, 'firma/kurum adı');
-  if(bilgi.vkn && typeof vknGecerliMi==='function' && vknGecerliMi(String(bilgi.vkn))) setIfEmpty('mfVkn', bilgi.vkn, 'VKN');
+  if(bilgi.vkn){ const t=vknTemizle(bilgi.vkn); if(t && typeof vknGecerliMi==='function' && vknGecerliMi(t)) setIfEmpty('mfVkn', t, 'VKN'); }
   setIfEmpty('mfVergiDairesi', bilgi.vergiDairesi, 'vergi dairesi');
   setIfEmpty('mfYetkiliAdi', bilgi.yetkiliAdi, 'yetkili adı');
   setIfEmpty('mfAdres', bilgi.adres, 'adres');
