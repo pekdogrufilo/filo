@@ -5089,6 +5089,8 @@ ${logoTag}
 }
 function iadeTutanakAc(v, b){
   const html = iadeTutanakHtml(v, b);
+  // v.354: dokunmatik cihazda tutanak GERÇEK ayrı sekmede açılır (bkz. belgeYeniSekmedeAc).
+  if(dokunmatikCihazMi() && belgeYeniSekmedeAc(html, `iade_tutanagi_${v.plaka.replace(/\s+/g,'-')}_${b.iadeTarih}`)) return;
   let w = guvenliYazdirmaPenceresi(); // v.268: ekran-gitme koruması
   if(w && w.document){
     w.document.open('text/html');
@@ -5895,6 +5897,8 @@ ${fotoBolum}
 }
 function teslimTutanakAc(d){
   const html = teslimTutanakHtml(d);
+  // v.354: dokunmatik cihazda tutanak GERÇEK ayrı sekmede açılır (bkz. belgeYeniSekmedeAc).
+  if(dokunmatikCihazMi() && belgeYeniSekmedeAc(html, `teslim_tutanagi_${(d.plaka||'arac').replace(/\s+/g,'-')}_${(d.tarih||'').replace(/\./g,'-')}`)) return;
   let w = guvenliYazdirmaPenceresi(); // v.268: ekran-gitme koruması
   if(w && w.document){
     w.document.open('text/html');
@@ -13063,6 +13067,9 @@ function guvenliYazdirmaPenceresi(onceAcilan){
 // htmlYazdirVeyaIndir: belgeyi yeni pencerede açıp yazdır penceresini getirir; pencere açılamazsa
 // paneli hiç bozmadan belgeyi HTML dosyası olarak indirir ve kullanıcıya ne yapacağını söyler.
 function htmlYazdirVeyaIndir(html, dosyaAdi, onceAcilan){
+  // v.354: dokunmatik cihazda belge GERÇEK ayrı sekmede açılır — panel asla değişmez,
+  // iOS'ta "Bitti" ile panele dönülür (bkz. belgeYeniSekmedeAc). Masaüstü akışı aynen kalır.
+  if(dokunmatikCihazMi() && !onceAcilan && belgeYeniSekmedeAc(html, dosyaAdi)) return true;
   const w = guvenliYazdirmaPenceresi(onceAcilan);
   if(w){
     w.document.open('text/html');
@@ -13086,9 +13093,87 @@ function htmlYazdirVeyaIndir(html, dosyaAdi, onceAcilan){
   return false;
 }
 
+// ===== v.354: Tablet/iPad belge açılışı — gerçek ayrı sekme + gömülü Yazdır/PDF çubuğu =====
+// Eski akış (window.open + document.write + w.print()) iPad'de ayrı sekme yaratamıyor:
+// PWA/standalone modda belge panelin yerine açılıyor ya da pop-up engellenip .html dosyası
+// iniyor; panele dönüş yolu kalmıyor. Yeni akış: belge HTML'i Blob URL'e çevrilip
+// <a target="_blank"> ile açılır — iOS PWA'da bu, "Bitti" butonlu uygulama içi sayfa olarak
+// açılır; "Bitti"ye dokununca doğrudan PANELE dönülür. Panel tarafı hiçbir document.write
+// yapmaz; masaüstünde normal tarayıcı sekmesi açılır.
+function dokunmatikCihazMi(){
+  try{ return !!(window.matchMedia && window.matchMedia('(pointer:coarse)').matches); }catch(e){ return false; }
+}
+// Belge HTML'ine gömülü üst çubuk: kullanıcının YENİ SEKMEDEKİ kendi dokunuşuyla window.print()
+// çağrılır (iOS'ta güvenilir) ve jsPDF+html2canvas ile gerçek .pdf üretilebilir. Çubuk
+// yazdırma çıktısında gizlenir (@media print).
+function belgeCubuguEkle(html, dosyaAdi){
+  const fd = String(dosyaAdi||'belge').replace(/\.html?$/i,'');
+  const cubuk = `
+<div id="belgeCubugu" style="position:fixed;top:0;left:0;right:0;z-index:2147483000;display:flex;gap:8px;align-items:center;justify-content:center;padding:9px 10px;background:#152238;box-shadow:0 2px 10px rgba(0,0,0,.35);">
+  <button onclick="window.print()" style="background:#00A389;color:#fff;border:none;border-radius:8px;padding:9px 14px;font-size:13px;font-weight:600;cursor:pointer;">🖨 Yazdır / PDF kaydet</button>
+  <button id="belgePdfBtn" onclick="belgePdfIndir()" style="background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:8px;padding:9px 14px;font-size:13px;font-weight:600;cursor:pointer;">⬇️ PDF indir</button>
+  <span id="belgePdfDurum" style="color:#fff;font-size:12px;"></span>
+</div>
+<style>@media print{#belgeCubugu{display:none !important;} body{padding-top:0 !important;}}</style>
+<script>
+(function(){
+  try{ document.body.style.paddingTop='52px'; }catch(e){}
+  window.belgePdfIndir = async function(){
+    const btn=document.getElementById('belgePdfBtn'), durum=document.getElementById('belgePdfDurum');
+    const notla=function(m){ if(durum) durum.textContent=m; };
+    try{
+      if(btn) btn.disabled=true; notla('⏳ PDF hazırlanıyor...');
+      const yukle=function(cdnler){ return new Promise(function(res,rej){ let i=0; const dene=function(){ if(i>=cdnler.length) return rej(new Error('yuklenemedi')); const s=document.createElement('script'); s.src=cdnler[i++]; s.onload=res; s.onerror=function(){ s.remove(); dene(); }; document.head.appendChild(s); }; dene(); }); };
+      if(!window.html2canvas) await yukle(['https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js','https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js']);
+      if(!window.jspdf) await yukle(['https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js','https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js']);
+      const cubuk=document.getElementById('belgeCubugu');
+      if(cubuk) cubuk.style.display='none';
+      try{ document.body.style.paddingTop='0'; }catch(e){}
+      const canvas = await html2canvas(document.body,{scale:2,useCORS:true,backgroundColor:'#ffffff'});
+      const jsPDF = (window.jspdf&&window.jspdf.jsPDF)||window.jsPDF;
+      const pdf = new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+      const pw=210, ph=297;
+      const imgW=pw, imgH=canvas.height*imgW/canvas.width;
+      const sayfa=Math.max(1,Math.ceil(imgH/ph));
+      const veri=canvas.toDataURL('image/jpeg',0.92);
+      for(let i=0;i<sayfa;i++){ if(i>0) pdf.addPage(); pdf.addImage(veri,'JPEG',0,-i*ph,imgW,imgH); }
+      pdf.save(${JSON.stringify(fd)}.replace(/\\s+/g,'-')+'.pdf');
+      notla('✅ PDF indirildi');
+    }catch(e){
+      notla('⚠️ PDF üretilemedi — "Yazdır / PDF kaydet" düğmesini kullanın');
+    }finally{
+      const c=document.getElementById('belgeCubugu'); if(c) c.style.display='';
+      if(btn) btn.disabled=false;
+    }
+  };
+})();
+</script>`;
+  if(/<\/body>/i.test(html)) return html.replace(/<\/body>/i, cubuk+'</body>');
+  return html + cubuk;
+}
+function belgeYeniSekmedeAc(html, dosyaAdi){
+  try{
+    const blob = new Blob([belgeCubuguEkle(html, dosyaAdi)], {type:'text/html;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.target = '_blank'; a.rel = 'noopener';
+    document.body.appendChild(a); a.click(); a.remove();
+    // Sekme belgeyi yükleyene kadar URL canlı kalmalı — kısa süreli cihazlarda 5sn yetmez.
+    setTimeout(function(){ try{ URL.revokeObjectURL(url); }catch(e){} }, 120000);
+    return true;
+  }catch(e){ return false; }
+}
+
 function sozlesmeHtmlPdf(d, preOpenedWin){
   const log = document.getElementById('sozlesmeLog');
   const html = sozlesmeHtml(d);
+  // v.354: dokunmatik cihazda (iPad/tablet/telefon) sözleşme GERÇEK ayrı sekmede açılır ve
+  // sekmenin kendi çubuğundan yazdırılır/PDF indirilir — panel görünümü asla değişmez,
+  // iOS'ta "Bitti" ile panele dönülür. Masaüstü akışı (aşağıda) aynen korunur.
+  if(dokunmatikCihazMi() && !preOpenedWin && belgeYeniSekmedeAc(html, `sozlesme_${(d.plaka||'arac').replace(/\s+/g,'-')}_${(d.tarih||'').replace(/\./g,'-')}`)){
+    if(log) log.innerHTML = '<div style="color:#36A168;font-size:13px;font-weight:600;">✅ Sözleşme ayrı sekmede açıldı — çubuktan yazdırın veya PDF indirin; panele "Bitti" ile dönün.</div>';
+    return;
+  }
   // v.267: "SÖZLEŞME HAZIRLARKEN EKRAN GİDİYOR" — bu fonksiyon önceden burada DOĞRUDAN
   // window.open('','_blank') çağırıyordu, ama kirayaVerVeSozlesme/sozlesmeOlustur içinde bu çağrıya
   // gelene kadar birkaç await (persist, sozKaydet, storageAPI.set...) geçiyordu. Tarayıcılar bir
