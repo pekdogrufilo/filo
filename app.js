@@ -13832,7 +13832,9 @@ function ykModalGoster(){
   el.className = 'iade-modal';
   el.id = 'ykModal';
   el.innerHTML = ykSihirbaziHtml();
-  el.addEventListener('click', e=>{ if(e.target===el) el.remove(); });
+  // v.353: kart dışına dokununca sihirbaz KAPATILMAZ — iPad'de kartın kenarına yanlış dokunuş
+  // o ana kadar girilen tüm kiralama formunu kaybettiriyordu. Kapatma yalnızca Vazgeç/Kapat
+  // ve küçült butonlarıyla olur (İade Al formundaki dışa-dokun-kapat davranışı aynen kalır).
   document.body.appendChild(el);
   ykFiyatOneriGuncelle();
 }

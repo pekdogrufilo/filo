@@ -756,6 +756,22 @@
   .iade-foot{padding:16px 22px;border-top:1px solid var(--line);display:flex;gap:10px;justify-content:flex-end;}
   .iade-btn-save{background:var(--accent-blue);color:#fff;border:none;font-family:var(--font-ui);font-weight:600;font-size:13.5px;padding:10px 22px;border-radius:8px;cursor:pointer;}
   .iade-btn-cancel{background:none;border:1px solid var(--line);color:var(--paper);font-family:var(--font-ui);font-size:13px;padding:10px 18px;border-radius:8px;cursor:pointer;}
+  /* v.353: iPad/tablet dokunmatik cihazlarda iOS Safari, 16px'ten küçük girdiye odaklanınca
+     sayfayı otomatik zoomluyor (odak kaybolunca geri geliyor). 16px kuralı eskiden yalnızca
+     ≤560px genişlikteydi — iPad (768-1024px) bu kurala hiç uymuyordu ve adım adım kiralama /
+     iade formlarında her alana dokunuşta sayfa zıplıyordu. pointer:coarse tüm dokunmatik
+     cihazları (iPhone, iPad, Android tablet) kapsar; masaüstünü etkilemez. */
+  @media (hover:none) and (pointer:coarse){
+    .field input,.field select,.search-wrap input,.cloud-textarea,
+    .iade-field input,.iade-field select,.iade-field textarea,
+    .masraf-add-row select,.masraf-add-row input{font-size:16px;}
+    .iade-field input,.iade-field select,.iade-field textarea{padding:11px 12px;}
+  }
+  /* v.353: tablet genişliğinde iade/kiralama kartı iki kolonlu formun rahat sığması için genişler
+     (≤480px'te tek kolona düşen .iade-row bu aralıkta iki kolon kalır). */
+  @media (min-width:561px) and (max-width:1024px){
+    .iade-card{max-width:640px;}
+  }
   .vehicle-quick-panel{background:var(--surface);border:1px solid var(--line);border-radius:16px 16px 0 0;width:100%;max-width:620px;max-height:70vh;display:flex;flex-direction:column;animation:slideUp .25s var(--ease);}
   @keyframes slideUp{from{transform:translateY(40px);opacity:0;}to{transform:translateY(0);opacity:1;}}
   @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
