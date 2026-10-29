@@ -2139,24 +2139,28 @@ async function sozMusteriLinkiUret(rec){
     ? location.origin + location.pathname.replace(/[^/]*$/, '')
     : 'https://pekdogrufilo.github.io/filo/';
   const url = kok + 'sozlesme.html#d=' + b64;
-  const metin = 'Sayın ' + (d.kiraci||'') + ', ' + (rec.sozNo||'') + ' numaralı kira sözleşmeniz onayınızı bekliyor. Sözleşmeyi buradan inceleyip onaylayabilirsiniz: ' + url + '\nOnay kodunuz: ' + rec.sozOnayKodu;
-  // v.333: Onay kodu önce SMS ile gider (Avis/Hedef Filo akışı gibi); link ise
-  // uzun olduğu için WhatsApp'tan gider. SMS yapılandırılmamışsa WhatsApp yedeği.
+  // v.355: müşteri isteği — WhatsApp mesajına SÖZLEŞME LİNKİ KONMAZ. Müşteri önündedir;
+  // sözleşme tablette görünür, müşteriye yalnızca onay kodu WhatsApp'tan gider ve müşteri
+  // kodu tabletteki onay ekranına girer (Avis/Hedef Filo akışı). Uzun link kafa karıştırıyor,
+  // ayrıca .html olarak açılma şikâyetinin de kaynağıydı. `url` yedekte tutulur.
+  const metin = 'Sayın ' + (d.kiraci||'') + ', ' + (rec.sozNo||'') + ' numaralı kira sözleşmeniz onayınıza hazır. Onay kodunuz: ' + rec.sozOnayKodu + '\nBu kodu size gösterilen sözleşme onay ekranına girerek sözleşmeyi onaylayabilirsiniz.\nPEKDOGRU Filo';
+  // v.333/v.355: Onay kodu önce SMS ile gider (Avis/Hedef Filo akışı gibi); SMS
+  // yapılandırılmamışsa WhatsApp yedeği — mesajda yalnızca kod vardır, link konmaz.
   const smsSonuc = await sozOnayKoduSmsGonder(d.kiraciTel, rec.sozNo||'', rec.sozOnayKodu);
   (async()=>{
     try{
       await navigator.clipboard.writeText(metin);
-      showToast('Sözleşme linki + onay kodu kopyalandı — WhatsApp\'tan gönderebilirsiniz.');
+      showToast('Onay bildirimi kopyalandı — WhatsApp\'tan gönderebilirsiniz.');
     }catch(e){
       const ta = document.createElement('textarea');
       ta.value = metin; document.body.appendChild(ta); ta.select();
       document.execCommand('copy'); ta.remove();
-      showToast('Sözleşme linki + onay kodu kopyalandı.');
+      showToast('Onay bildirimi kopyalandı.');
     }
     const smsDurum = smsSonuc.ok
       ? '📱 Onay kodu müşterinin telefonuna SMS ile gönderildi (kod: ' + rec.sozOnayKodu + ').'
       : '⚠️ SMS gönderilemedi (' + smsSonuc.error + ') — onay kodu WhatsApp mesajında yer alacak.';
-    if(confirm(smsDurum + '\n\nSözleşme linkini WhatsApp\'tan göndermek için mesajı açmak ister misiniz?\n\nKiracı: ' + (d.kiraci||'—') + '\nTelefon: ' + (d.kiraciTel||'yok') + '\nOnay kodu: ' + rec.sozOnayKodu)){
+    if(confirm(smsDurum + '\n\nOnay bildirimini WhatsApp\'tan göndermek için mesajı açmak ister misiniz?\n\nKiracı: ' + (d.kiraci||'—') + '\nTelefon: ' + (d.kiraciTel||'yok') + '\nOnay kodu: ' + rec.sozOnayKodu)){
       const tel = String(d.kiraciTel||'').replace(/[^0-9]/g,'').replace(/^0/,'90');
       window.open('https://wa.me/' + tel + '?text=' + encodeURIComponent(metin), '_blank');
     }
@@ -2166,7 +2170,7 @@ async function sozMusteriLinkiUret(rec){
 // SMS sağlayıcı yapılandırılmamışsa (worker 503 sms-config-yok) ok:false döner;
 // panel sessizce WhatsApp yedeğine düşer — akış hiçbir koşulda bloklanmaz.
 async function sozOnayKoduSmsGonder(telHammadde, sozNo, kod){
-  const smsMetin = 'PEKDOGRU Filo kira sozlesmesi ' + sozNo + ' — onay kodunuz: ' + kod + '. Sozlesme linki WhatsApp ile gonderilmistir.';
+  const smsMetin = 'PEKDOGRU Filo kira sozlesmesi ' + sozNo + ' — onay kodunuz: ' + kod + '. Bu kodu sozlesme onay ekranina girin.';
   let tel = String(telHammadde||'').replace(/[^0-9]/g,'');
   if(tel.startsWith('90') && tel.length === 12){ /* zaten 90'lı */ }
   else if(tel.startsWith('0') && tel.length === 11){ tel = '90' + tel.slice(1); }
