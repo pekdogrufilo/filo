@@ -4249,6 +4249,14 @@ const GEMINI_MODELS = [
   'gemini-3.1-flash-lite',
 ];
 const GEMINI_PROXY_URL = 'https://filo-gemini-proxy.hasan-huseyin-pekdogru.workers.dev/';
+// v.348: Belge okuma (kimlik/ehliyet/kaşe/fiş) için hız-öncelikli sıra — lite modeller
+// büyük flash'lardan ~10 kat hızlı dönüyor ve yapısal JSON çıkarma için yeterli.
+const GEMINI_LITE_MODELS = [
+  'gemini-3.5-flash-lite',
+  'gemini-3.1-flash-lite',
+  'gemini-3.5-flash',
+  'gemini-3.7-flash',
+];
 
 function getGeminiKey(){
   // Geriye dönük uyumluluk: kod tabanında onlarca yer "AI özelliği aktif mi" diye bunun
@@ -4361,11 +4369,18 @@ async function callGeminiDirect(system, userText, contentBlock, modelIdx=0, retr
 // daha uzun bir bekleme sonrası TÜM modeller üzerinden ikinci bir tur daha deneniyor. Bu, geçici
 // bir kesintiyi aşma şansını önemli ölçüde artırıyor; kalıcı/anlamsız hatalarda (ör. 400) hâlâ
 // hiç beklemeden direkt hata veriliyor.
-async function geminiChatFetch(system, contents, generationConfig){
+async function geminiChatFetch(system, contents, generationConfig, preferredModels){
+  // v.348: Belge okuma gibi basit-yapısal görevler için çağrı tarafı lite-öncelikli model
+  // listesi verebilir — büyük flash modelleri Google tarafında ~35-40 sn sürerken lite
+  // modeller ~3 sn'de dönüyor (ölçüm: 2026-10-29). preferredModels verilmezse klasik
+  // sıra (büyük→küçük) kullanılır; asistan kalitesi korunur.
+  const modelListe = (Array.isArray(preferredModels) && preferredModels.length)
+    ? preferredModels
+    : GEMINI_MODELS;
   let lastErr = 'Yanıt alınamadı.';
   for(let tur=0; tur<2; tur++){
-    for(let i=0;i<GEMINI_MODELS.length;i++){
-      const MODEL = GEMINI_MODELS[i];
+    for(let i=0;i<modelListe.length;i++){
+      const MODEL = modelListe[i];
       const controller = new AbortController();
       // v.331: 60 sn beklemek çok uzundu — gerçek bir yanıt genelde ilk ~30 sn içinde gelir,
       // 45 sn'i geçen istek artık beklemek yerine sıradaki modele geçiyor (toplam hata
@@ -11496,7 +11511,7 @@ async function waMesajIsle(){
       '- adSoyad, telefon (rakamlar), email (yoksa null), ihtiyacTuru (ör. "Filo Kiralama (Ticari)"), adet (araç sayısı sayı), sureAy (ay cinsinden süre sayı; gün ise ay\u0027a çevir), sehir, aciklama (mesajdaki diğer notlar), tarih (YYYY-MM-DD, yoksa bugün)',
       'SADECE şu JSON\'ı döndür, başka hiçbir metin yok: {"kayitlar":[...],"teklifler":[...]}'
     ].join('\n');
-    const text = await geminiChatFetch(system, [{role:'user',parts:[{text:'BUGÜN: '+todayISO()+'\n\nMESAJLAR:\n'+raw}]}], {temperature:0, maxOutputTokens:4096});
+    const text = await geminiChatFetch(system, [{role:'user',parts:[{text:'BUGÜN: '+todayISO()+'\n\nMESAJLAR:\n'+raw}]}], {temperature:0, maxOutputTokens:4096}, GEMINI_LITE_MODELS);
     let cleaned = (text||'').replace(/```json|```/g,'').trim();
     const m = cleaned.match(/\{[\s\S]*\}/);
     if(m) cleaned = m[0];
@@ -15520,7 +15535,7 @@ async function belgeAnalizEt(onceden){
       const yanit = await geminiChatFetch(OTO_BELGE_SYSTEM, [{role:'user', parts:[
         {inline_data:{mime_type:onceden.mime, data:onceden.b64}},
         {text:'Bu belgeyi oku ve istenen JSON formatında yanıtla.'}
-      ]}], {temperature:0, maxOutputTokens:1024});
+      ]}], {temperature:0, maxOutputTokens:1024}, GEMINI_LITE_MODELS);
       const bilgi = JSON.parse(yanit.replace(/```json|```/g,'').trim());
       if(bilgi && typeof bilgi==='object') return bilgi;
     }catch(e){
@@ -15547,7 +15562,7 @@ async function belgeAnalizEtCoklu(onceden){
       const yanit = await geminiChatFetch(OTO_BELGE_COKLU_SYSTEM, [{role:'user', parts:[
         {inline_data:{mime_type:onceden.mime, data:onceden.b64}},
         {text:'Bu belgeyi oku ve istenen JSON formatında yanıtla.'}
-      ]}], {temperature:0, maxOutputTokens:4096});
+      ]}], {temperature:0, maxOutputTokens:4096}, GEMINI_LITE_MODELS);
       const bilgi = JSON.parse(yanit.replace(/```json|```/g,'').trim());
       if(bilgi && typeof bilgi==='object' && Array.isArray(bilgi.kayitlar) && bilgi.kayitlar.length) return bilgi;
     }catch(e){
@@ -15570,7 +15585,7 @@ async function musteriBelgeAnalizEt(onceden){
       const yanit = await geminiChatFetch(MUSTERI_BELGE_SYSTEM, [{role:'user', parts:[
         {inline_data:{mime_type:onceden.mime, data:onceden.b64}},
         {text:'Bu belgeyi oku ve istenen JSON formatında yanıtla.'}
-      ]}], {temperature:0, maxOutputTokens:1024});
+      ]}], {temperature:0, maxOutputTokens:1024}, GEMINI_LITE_MODELS);
       const bilgi = JSON.parse(yanit.replace(/```json|```/g,'').trim());
       if(bilgi && typeof bilgi==='object') return bilgi;
     }catch(e){
