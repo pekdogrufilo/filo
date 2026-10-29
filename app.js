@@ -8013,16 +8013,19 @@ function validPlaka(p){
 }
 
 // v.208: Ortak form validasyon yardımcıları
+// v.350: Sabit hatlar da geçerli — Türkiye'de şehirler arası numaralar 0 2xx / 0 3xx ile başlar
+// (ör. Konya 0332), yalnızca cep telefonu 0 5xx'tir. +90 uluslararası öneki de temizlenir.
 function telefonFormatla(tel){
-  const s = String(tel||'').replace(/\D/g,'');
+  let s = String(tel||'').replace(/\D/g,'');
   if(!s) return '';
+  if(s.startsWith('90') && s.length>=12) s = s.slice(2);
   if(s.startsWith('0')) return s;
-  if(s.startsWith('5')) return '0'+s;
+  if(/^[235]/.test(s)) return '0'+s;
   return s;
 }
 function telefonGecerliMi(tel){
   const s = String(tel||'').replace(/\D/g,'');
-  return /^0?5[0-9]{9}$/.test(s);
+  return /^0?[235][0-9]{9}$/.test(s);
 }
 function telefonMaskeliGoster(tel){
   const s = telefonFormatla(tel);
@@ -19285,7 +19288,7 @@ async function musteriKaydet(id){
   // v.208: Telefon formatla ve doğrula
   veri.telefon = telefonFormatla(veri.telefon);
   if(veri.telefon && !telefonGecerliMi(veri.telefon)){
-    errEl.textContent = 'Telefon numarası geçersiz. Örnek: 05XX XXX XX XX';
+    errEl.textContent = 'Telefon numarası geçersiz. Örnek: 05XX XXX XX XX veya 0332 XXX XX XX';
     errEl.style.display='block';
     showToast('Geçersiz telefon numarası.', true);
     return;

@@ -1,5 +1,5 @@
 /* PEKDOĞRU Filo Paneli — Service Worker v.332 */
-const CACHE_NAME = 'filo-panel-v349';
+const CACHE_NAME = 'filo-panel-v350';
 const SHELL_ASSETS = [
   './',
   './index.html',
