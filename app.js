@@ -4852,8 +4852,13 @@ function openIadeForm(id){
             <input type="number" id="iadeKmBas" min="0" placeholder="0" value="${baslangicKm}" oninput="updateIadeKmDiff()">
           </div>
           <div class="iade-field">
+            <!-- v.352: "İade km" artık ÖNCEKİ iadenin bayat değeriyle ön-doldurulmaz (yalnızca
+                 mevcut teslim km'sinden yüksek bir değer varsa korunur). Yeni kiralama başladığında
+                 eski iade km'si (örn. 34BBN577'de 253.000) alana yazılıyor, teslim km'si ondan
+                 büyük olduğu için form açılır açılmaz "İade km, teslim km'den küçük olamaz" uyarısı
+                 çıkıyor ve kullanıcı gerçek iade km'sini girmiş gibi görünse de kayıt bloklanıyordu. -->
             <label>İade km (dönüş)</label>
-            <input type="number" id="iadeKmBitis" min="0" placeholder="0" value="${v.iadeKm||''}" oninput="updateIadeKmDiff()">
+            <input type="number" id="iadeKmBitis" min="0" placeholder="0" value="${(Number(v.teslimKm)>0 && Number(v.iadeKm)>Number(v.teslimKm))?v.iadeKm:''}" oninput="updateIadeKmDiff()">
           </div>
         </div>
         <div class="iade-field">
@@ -4988,7 +4993,8 @@ function updateIadeKmDiff(){
       el.textContent = 'Kullanım: '+(bit-bas).toLocaleString('tr-TR')+' km';
       el.style.color = '#E8A132';
     } else if(bas>0 && bit>0 && bit<=bas){
-      el.textContent = "İade km, teslim km'den küçük olamaz";
+      // v.352: uyarıya gerçek sayılar eklendi — kullanıcı hangi alanın yanlış olduğunu görür.
+      el.textContent = "İade km ("+bit.toLocaleString('tr-TR')+"), teslim km'den ("+bas.toLocaleString('tr-TR')+") küçük/eşit olamaz — teslim km'yi kontrol edin";
       el.style.color = 'var(--safety)';
     } else { el.textContent = ''; }
   }
@@ -5109,7 +5115,15 @@ async function saveIade(id){
   const kmBas = Number(document.getElementById('iadeKmBas')?.value)||0;
   const kmBit = Number(document.getElementById('iadeKmBitis')?.value)||0;
   if(kmBas>0 && kmBit>0 && kmBit<=kmBas){
-    showToast("İade km, teslim km'den küçük olamaz.", true); return;
+    // v.352: hata mesajı gerçek sayıları gösteriyor — körlenmiş "düşük olamaz" yerine kullanıcı
+    // hangi değerin neden reddedildiğini görür.
+    showToast(`İade km (${kmBit.toLocaleString('tr-TR')}), teslim km'den (${kmBas.toLocaleString('tr-TR')}) küçük/eşit olamaz. Teslim km alanını kontrol edin.`, true); return;
+  }
+  // v.352: teslim km aracın bilinen en son km'sinden yüksekse şüpheli — kullanıcının
+  // "iade km düşük olamaz (oysa düşük değil)" hatasının asıl kökü genelde yanlış girilmiş
+  // teslim km'sidir (örn. fazladan hane). Engelleme yok, yalnızca onay sorulur.
+  if(kmBas>0 && Number(v.sonKm)>0 && kmBas>Number(v.sonKm)){
+    if(!confirm(`Teslim km (${kmBas.toLocaleString('tr-TR')}), aracın bilinen en son km'sinden (${Number(v.sonKm).toLocaleString('tr-TR')}) yüksek — bu genelde yanlış girilmiş teslim km'sidir. Yine de kaydedilsin mi?`)) return;
   }
   const idx = vehicles.findIndex(x=>x.id===id);
   const kiraBas = document.getElementById('iadeKiraBas')?.value||'';
@@ -5967,6 +5981,9 @@ async function kirayaVerVeSozlesme(format){
       kmAsimFiyat: kmAsim!=='' && kmAsim!=null && !isNaN(Number(kmAsim)) ? Number(kmAsim) : (v.kmAsimFiyat||undefined),
       depozito: depozito!=='' && depozito!=null && !isNaN(Number(depozito)) ? Number(depozito) : (v.depozito||undefined),
       renk: renk||v.renk||'',
+      // v.352: yeni kiralama başlarken ÖNCEKİ iadenin bayat iade km alanları temizlenir —
+      // eski iade km'si İade Al formuna ön-dolup "İade km düşük olamaz" yanılgısı yaratıyordu.
+      iadeKm: undefined, iadeKmKullanim: undefined, iadeKmHakki: undefined, iadeKmAsim: undefined,
       kiraGecmisi: [...(v.kiraGecmisi||[]), {bas, bitis, yer: kiraci, teslimKm: teslimKm||v.teslimKm||0, iadeKm:0, yakit:'', hasar:'', not: notlar||''}],
     };
   });
@@ -12921,6 +12938,8 @@ async function sozlesmeOlustur(format){
       kmAsimFiyat: kmAsimNum,
       depozito: depozitoNum,
       renk: renk||v.renk||'',
+      // v.352: bkz. kirayaVerVeSozlesme — önceki iadenin bayat iade km alanları temizlenir.
+      iadeKm: undefined, iadeKmKullanim: undefined, iadeKmHakki: undefined, iadeKmAsim: undefined,
       kiraGecmisi: [...(v.kiraGecmisi||[]), {bas, bitis, yer: kiraci, teslimKm: teslimKmNum, iadeKm:0, yakit:'', hasar:'', not: notlar||''}],
     };
     await persist();
@@ -14066,6 +14085,8 @@ async function ykTeslimEt(){
     kmLimiti: r.kmLimiti!=null ? r.kmLimiti : v.kmLimiti,
     kmAsimFiyat: r.fazlaKmBedeli!=null ? r.fazlaKmBedeli : v.kmAsimFiyat,
     depozito: r.depozito!=null ? r.depozito : v.depozito,
+    // v.352: bkz. kirayaVerVeSozlesme — önceki iadenin bayat iade km alanları temizlenir.
+    iadeKm: undefined, iadeKmKullanim: undefined, iadeKmHakki: undefined, iadeKmAsim: undefined,
     kiraGecmisi: [...(v.kiraGecmisi||[]), {bas:r.baslangic, bitis:r.bitis, yer:kiraci, teslimKm: teslimKm||v.teslimKm||0, iadeKm:0, yakit:'', hasar:'', not: r.ekHizmetler||''}],
   };
   await persist();
@@ -15224,6 +15245,8 @@ async function saveTeslimBilgisi(){
     kmLimiti: Number(document.getElementById('fKmLimiti').value)||undefined,
     sonBakimKm: Number(document.getElementById('fBakimKm').value)||undefined,
     bakimPeriyotKm: Number(document.getElementById('fBakimPeriyot').value)||undefined,
+    // v.352: bkz. kirayaVerVeSozlesme — önceki iadenin bayat iade km alanları temizlenir.
+    iadeKm: undefined, iadeKmKullanim: undefined, iadeKmHakki: undefined, iadeKmAsim: undefined,
     ...teslimFields,
   });
   await persist();
