@@ -27,7 +27,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="./style.css?v=358">
+<link rel="stylesheet" href="./style.css?v=359">
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#F4F4F2" id="themeColorMeta">
 <script>
@@ -69,39 +69,32 @@
 <script>(function(){try{var b=document.body,i=0;while(b.firstChild&&i++<6){var n=b.firstChild;if(n.nodeType!==3)break;var t=n.textContent.trim();if(!t||/^(r?ipt>|script>|<\/scr)/.test(t)){b.removeChild(n);}else break;}}catch(e){}})();</script>
 
 <div class="lock-screen" id="lockScreen">
-  <svg class="lock-ribbon-bg" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-    <defs>
-      <linearGradient id="lrDark" x1="0%" y1="0%" x2="100%" y2="60%">
-        <stop offset="0%" stop-color="#0e1512"/>
-        <stop offset="45%" stop-color="#1f5c4d"/>
-        <stop offset="55%" stop-color="#0b6f5c"/>
-        <stop offset="100%" stop-color="#0e1512"/>
-      </linearGradient>
-      <linearGradient id="lrMid" x1="0%" y1="0%" x2="100%" y2="60%">
-        <stop offset="0%" stop-color="#123f34"/>
-        <stop offset="45%" stop-color="#159a80"/>
-        <stop offset="55%" stop-color="#16a086"/>
-        <stop offset="100%" stop-color="#123f34"/>
-      </linearGradient>
-      <linearGradient id="lrBright" x1="0%" y1="0%" x2="100%" y2="60%">
-        <stop offset="0%" stop-color="#0b6f5c"/>
-        <stop offset="45%" stop-color="#8fe9d2"/>
-        <stop offset="55%" stop-color="#eafff9"/>
-        <stop offset="100%" stop-color="#0b6f5c"/>
-      </linearGradient>
-    </defs>
-    <g opacity=".9">
-      <path d="M -100 650 C 200 780, 380 260, 680 340 C 950 410, 1020 80, 1400 160" fill="none" stroke="url(#lrDark)" stroke-width="130" stroke-linecap="round"/>
-      <path d="M -100 650 C 200 780, 380 260, 680 340 C 950 410, 1020 80, 1400 160" fill="none" stroke="url(#lrMid)" stroke-width="78" stroke-linecap="round"/>
-      <path d="M -100 630 C 200 760, 380 240, 680 320 C 950 390, 1020 60, 1400 140" fill="none" stroke="url(#lrBright)" stroke-width="20" stroke-linecap="round" opacity=".85"/>
-    </g>
-    <g opacity=".55">
-      <path d="M -100 120 C 250 40, 480 420, 850 380 C 1080 355, 1150 560, 1400 500" fill="none" stroke="url(#lrDark)" stroke-width="90" stroke-linecap="round"/>
-      <path d="M -100 120 C 250 40, 480 420, 850 380 C 1080 355, 1150 560, 1400 500" fill="none" stroke="url(#lrMid)" stroke-width="46" stroke-linecap="round"/>
-      <path d="M -100 105 C 250 25, 480 405, 850 365 C 1080 340, 1150 545, 1400 485" fill="none" stroke="url(#lrBright)" stroke-width="12" stroke-linecap="round" opacity=".8"/>
-    </g>
-  </svg>
-  <div class="lock-grid-bg"></div>
+  <div class="lk-brand" aria-hidden="true">
+    <svg class="lk-routes" viewBox="0 0 700 1000" preserveAspectRatio="xMidYMid slice">
+      <path d="M-60 720 C 140 660, 200 380, 400 420 C 560 452, 640 300, 780 240" fill="none" stroke="rgba(63,217,190,.38)" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="3 11"/>
+      <path d="M-60 260 C 120 220, 260 480, 460 560 C 600 616, 700 720, 780 860" fill="none" stroke="rgba(0,195,137,.26)" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="3 11"/>
+      <circle cx="400" cy="420" r="11" fill="none" stroke="rgba(63,217,190,.32)" stroke-width="1.5"/>
+      <circle class="lk-dot" cx="400" cy="420" r="5" fill="#3FD9BE"/>
+      <circle class="lk-dot" cx="460" cy="560" r="4" fill="#00C389" style="animation-delay:1.1s"/>
+      <circle class="lk-dot" cx="620" cy="318" r="4" fill="#3FD9BE" style="animation-delay:2s"/>
+    </svg>
+    <div class="lk-brand-in">
+      <div>
+        <div class="lk-mark">PEKDOĞRU</div>
+        <div class="lk-mark-sub">Filo Kiralama Hizmetleri</div>
+      </div>
+      <div>
+        <h1 class="lk-head">Filonuz,<br><em>kontrolünüzde.</em></h1>
+        <p class="lk-head-sub">Kiralama, sözleşme, bakım ve raporlama — tüm filo operasyonunuz tek panelde, bulutla senkron.</p>
+      </div>
+      <div class="lk-feats">
+        <span class="lk-feat"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 1 0-.9-8.9 6 6 0 0 0-11.4 1.9A3.5 3.5 0 0 0 6 19z"/></svg>Bulut senkron</span>
+        <span class="lk-feat"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>7/24 erişim</span>
+        <span class="lk-feat"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M11 18h2"/></svg>Mobil &amp; tablet</span>
+      </div>
+    </div>
+  </div>
+  <div class="lk-form">
   <div class="lock-card" id="lockCard">
     <div class="lock-card-inner">
       <div class="lock-header">
@@ -113,8 +106,9 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0 0;">Sürüm: 2026-10-30.358</div>
+      <div class="lk-version">Sürüm: 2026-10-30.359</div>
     </div>
+  </div>
   </div>
 </div>
 
@@ -267,7 +261,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-10-30.358</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-10-30.359</div>
     </div>
   </aside>
 
@@ -949,7 +943,7 @@
 </div>
 
 
-<script src="./app.js?v=358" defer></script>
+<script src="./app.js?v=359" defer></script>
 <script>
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('./sw.js')

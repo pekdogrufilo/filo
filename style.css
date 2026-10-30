@@ -412,58 +412,6 @@
   .bell-dot{position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;background:var(--coral);border:2px solid var(--asphalt-900);display:none;}
   .bell-dot.show{display:block;}
 
-  /* ===== Kilit ekranı ===== */
-  /* ===== GİRİŞ EKRANI ===== */
-  .lock-screen{position:fixed;inset:0;z-index:500;display:none;align-items:center;justify-content:center;background:var(--bg);overflow:hidden;}
-  .lock-screen.show{display:flex;}
-  .lock-screen::before{content:"";position:absolute;width:900px;height:900px;border-radius:50%;background:radial-gradient(circle,rgba(22,160,134,.10) 0%,transparent 70%);top:-300px;left:-300px;pointer-events:none;}
-  .lock-screen::after{content:"";position:absolute;width:700px;height:700px;border-radius:50%;background:radial-gradient(circle,rgba(54,161,104,.06) 0%,transparent 70%);bottom:-200px;right:-150px;pointer-events:none;}
-  .lock-grid-bg{position:absolute;inset:0;background-image:linear-gradient(rgba(22,160,134,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(22,160,134,.03) 1px,transparent 1px);background-size:64px 64px;pointer-events:none;}
-
-  .lock-split{display:contents;}
-  .lock-brand-panel{display:none;}
-  .lock-form-panel{display:contents;}
-  .lock-brand-name{display:none;}
-  .lock-logo{display:none;}
-
-  .lock-card{position:relative;z-index:10;width:100%;max-width:400px;margin:20px;animation:popIn .4s var(--ease);}
-  .lock-card-inner{background:rgba(15,17,23,.92);border:1px solid var(--border);border-radius:var(--radius-lg);padding:40px 36px;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);box-shadow:0 32px 80px rgba(0,0,0,.5),0 0 0 1px rgba(22,160,134,.08);}
-
-  .lock-header{text-align:center;margin-bottom:32px;}
-  .lock-logo-wrap{width:76px;height:76px;background:var(--fixed-light);border-radius:20px;display:flex;align-items:center;justify-content:center;padding:11px;margin:0 auto 18px;box-shadow:0 8px 32px rgba(0,0,0,.4),0 0 0 1px rgba(255,255,255,.15);}
-  .lock-logo-wrap img{width:100%;height:100%;object-fit:contain;}
-  .lock-firm{font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--paper);letter-spacing:-.2px;margin:0 0 5px;}
-  .lock-tagline{font-size:12px;color:var(--text-3);letter-spacing:1.8px;text-transform:uppercase;}
-  .lock-divider{width:32px;height:2px;background:var(--accent-blue);border-radius:2px;margin:18px auto 0;opacity:.7;}
-
-  @media(max-width:480px){
-    .lock-card{margin:12px;}
-    .lock-card-inner{padding:28px 22px;border-radius:var(--radius-lg);}
-    .lock-logo-wrap{width:60px;height:60px;}
-    .lock-firm{font-size:17px;}
-  }
-  .lock-logo img{width:100%;height:100%;object-fit:contain;}
-  .lock-brand-name{font-family:var(--font-ui);font-weight:700;font-size:13px;letter-spacing:.5px;color:var(--steel-100);margin-bottom:22px;}
-  .lock-icon-wrap{display:none;}
-  .lock-card h2{font-family:var(--font-display);font-size:16px;margin:0 0 4px;font-weight:600;color:var(--text);text-align:center;}
-  .lock-card .lsub{color:var(--text-2);font-size:13px;margin-bottom:24px;line-height:1.5;text-align:center;}
-  .lock-field{position:relative;margin-bottom:14px;text-align:left;}
-  .lock-field label{display:block;font-size:13px;color:var(--text-3);margin-bottom:7px;font-weight:500;letter-spacing:.3px;}
-  .lock-field input{width:100%;background:var(--surface-2);border:1px solid var(--border-2);color:var(--paper);padding:13px 44px 13px 14px;border-radius:10px;font-family:var(--font-mono);font-size:16px;letter-spacing:3px;transition:border-color .15s ease, box-shadow .15s ease;}
-  .lock-field input::placeholder{color:var(--text-3);letter-spacing:1px;}
-  .lock-field input:focus{outline:none;border-color:rgba(22,160,134,.55);box-shadow:0 0 0 3px rgba(22,160,134,.12);}
-  .lock-field .eye{position:absolute;right:12px;top:36px;background:none;border:none;color:var(--text-3);cursor:pointer;padding:4px;display:flex;}
-  .lock-field .eye:hover{color:rgba(255,255,255,.7);}
-  .lock-card.shake{animation:shake .45s ease;}
-  .lock-err{color:var(--coral);font-size:13px;margin:2px 0 6px;min-height:16px;}
-  .lock-btn-main{width:100%;background:var(--accent-blue);color:#fff;border:none;font-family:var(--font-ui);font-weight:600;font-size:15px;padding:14px;border-radius:var(--radius-sm);cursor:pointer;margin-top:10px;transition:filter .15s ease;box-shadow:0 1px 3px rgba(0,0,0,.2);letter-spacing:.3px;}
-  .lock-btn-main:hover:not(:disabled){opacity:.88;transform:translateY(-1px);}
-  .lock-btn-main:disabled{opacity:.35;cursor:not-allowed;}
-  .lock-forgot{margin-top:18px;font-size:13px;color:var(--text-3);text-decoration:underline;cursor:pointer;background:none;border:none;font-family:var(--font-ui);}
-  .lock-forgot:hover{color:var(--text-2);}
-  .lock-note{display:flex;gap:8px;align-items:flex-start;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;padding:10px 12px;margin-top:18px;text-align:left;font-size:13px;color:var(--text-2);line-height:1.5;}
-  .lock-note svg{flex-shrink:0;margin-top:1px;color:var(--accent-blue);}
-
   .lock-btn{width:42px;height:42px;padding:0;justify-content:center;}
   .settings-wrap{position:relative;}
   .settings-menu{position:absolute;top:48px;right:0;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow-md);min-width:180px;z-index:60;display:none;overflow:hidden;animation:popIn .15s var(--ease);}
@@ -1194,9 +1142,6 @@
     border-color:var(--accent-blue);box-shadow:0 0 0 3.5px var(--blue-dim);background:var(--surface);outline:none;
   }
   .field label{color:var(--text-2);font-weight:500;font-size:12.5px;}
-  /* Giriş kartı */
-  .lock-card{border:1px solid var(--border);border-top:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:0 20px 60px rgba(0,0,0,.4);}
-  html[data-theme="light"] .lock-card{box-shadow:0 12px 44px rgba(0,0,0,.1);}
   .splash-glow{background:radial-gradient(closest-side, rgba(22,160,134,.16), transparent 70%);}
   .splash-brand,.lock-brand{font-weight:700;letter-spacing:-.03em;}
   /* Tablolar: sade başlık */
@@ -1645,27 +1590,12 @@
   /* Birincil eylem = marka rengi (bakir); kirmizi yalniz tehlike */
   .modal-actions .save{background:linear-gradient(135deg,#CE4A38,#A93A2B);box-shadow:0 4px 16px rgba(22,160,134,.30);}
   .modal-actions .save:hover{box-shadow:0 6px 22px rgba(22,160,134,.42);}
-  /* Kilit/kurulum ekrami kontrasti */
-  .lock-card .lsub{color:var(--text) !important;opacity:.75;}
-  .lock-field label{color:var(--text) !important;opacity:.8;font-weight:600;}
-  .lock-note{color:var(--text) !important;opacity:.75;}
-  .lock-tagline{color:var(--text-2) !important;}
+  /* Splash .sd kontrasti */
   .splash .sd{color:var(--text-2) !important;}
   .sb-brand-sub{opacity:.85 !important;}
   /* Basliklar ve metin hiyerarsisi */
   .th-sub,.bn-sub{color:var(--text-2);}
 
-  /* v.111 — kilit kartı SABİT koyu bileşen (her temada): metinler her zaman beyaz, okunur */
-  .lock-firm,.lock-card h2{color:#F6F5F3 !important;}
-  .lock-card .lsub{color:rgba(246,245,243,.8) !important;opacity:1 !important;}
-  .lock-field label{color:rgba(246,245,243,.88) !important;opacity:1 !important;}
-  .lock-forgot{color:rgba(246,245,243,.65) !important;}
-  .lock-forgot:hover{color:rgba(246,245,243,.92) !important;}
-  .lock-field input{background:rgba(255,255,255,.09) !important;border-color:rgba(255,255,255,.16) !important;color:#F6F5F3 !important;}
-  .lock-field input::placeholder{color:rgba(255,255,255,.42) !important;}
-  .lock-field .eye{color:rgba(246,245,243,.6) !important;}
-  .lock-note{background:rgba(255,255,255,.07) !important;border-color:rgba(255,255,255,.12) !important;color:rgba(246,245,243,.8) !important;}
-  html[data-theme="light"] .lock-logo-wrap{background:#FFFFFF !important;box-shadow:0 4px 18px rgba(20,20,25,.14) !important;}
   /* Splash temaya uyar: koyu temada beyaz, açık temada mürekkep */
   html:not([data-theme="light"]) .splash h2,
   html:not([data-theme="light"]) .splash-stat .n{color:#F6F5F3 !important;}
@@ -1822,19 +1752,7 @@
   .toast{background:var(--surface) !important;color:var(--text) !important;border-left:3px solid var(--blue) !important;}
   .toast.err{border-left-color:var(--red) !important;}
   .badge{background:var(--blue-dim) !important;color:var(--blue) !important;}
-  /* ---- Kilit ekrani: sabit koyu bileşen ---- */
-  .lock-screen,.lock-backdrop{background:#0A0B0D !important;}
-  .lock-card-inner{background:#15171B !important;border:1px solid rgba(255,255,255,.10) !important;}
-  .lock-firm,.lock-card h2{color:#F2F3F4 !important;}
-  .lock-card .lsub{color:#AEB3BA !important;opacity:1 !important;}
-  .lock-field label{color:#AEB3BA !important;opacity:1 !important;}
-  .lock-field input{background:rgba(255,255,255,.08) !important;border-color:rgba(255,255,255,.15) !important;color:#F2F3F4 !important;}
-  .lock-field input::placeholder{color:#6E747D !important;}
-  .lock-field .eye{color:#8A9099 !important;}
-  .lock-note{background:rgba(255,255,255,.06) !important;border-color:rgba(255,255,255,.11) !important;color:#AEB3BA !important;}
-  .lock-forgot{color:#7C828B !important;}
-  .lock-forgot:hover{color:#F2F3F4 !important;}
-  .lock-logo-wrap,.splash-logo{background:#FFFFFF !important;}
+  .splash-logo{background:#FFFFFF !important;}
   /* Splash temaya uyar */
   html[data-theme="light"] .splash{background:#F5F8F7 !important;}
   html[data-theme="light"] .splash h2{color:#123B38 !important;}
@@ -1986,95 +1904,6 @@
     background:radial-gradient(900px 360px at 100% -8%, var(--glow), transparent 60%);
     background-repeat:no-repeat;
   }
-
-  /* ================================================================
-     v.123 — Giriş ekranı, kullanıcının gönderdiği "Login form V7" referans
-     görseline BİREBİR yakın: koyu zemin üzerinde GERÇEK, NET bir altın/
-     bronz kurdele grafiği (SVG, bulanık gölge değil — bkz. .lock-ribbon-bg
-     markup'ı), buzlu cam kart, ikonlu alanlar, parlamalı ALTIN buton.
-     Bu ekranın altın vurgusu uygulamanın geri kalanındaki kırmızı marka
-     renginden bilerek bağımsız (--lock-accent) — referansta da öyleydi.
-     Sadece bu ekranın CSS'i — giriş mantığı hiç değişmedi. ============ */
-  .lock-screen{
-    --lock-accent:#16A086;
-    --lock-accent-bright:#5FD9BE;
-    --lock-accent-dim:rgba(22,160,134,.16);
-    background:#0E1113 !important;
-    overflow:hidden;
-  }
-  .lock-ribbon-bg{
-    position:absolute;
-    inset:0;
-    width:100%;
-    height:100%;
-    z-index:0;
-  }
-  .lock-screen .lock-grid-bg{display:none;}
-  .lock-screen::after{
-    content:"";
-    position:absolute;
-    inset:0;
-    background:radial-gradient(1100px 700px at 50% 55%, transparent 30%, rgba(11,9,6,.55) 75%, rgba(11,9,6,.85) 100%);
-    pointer-events:none;
-    z-index:1;
-  }
-  .lock-card{z-index:2;}
-  .lock-card-inner{
-    background:rgba(16,18,20,.74) !important;
-    backdrop-filter:blur(12px) saturate(115%);
-    -webkit-backdrop-filter:blur(12px) saturate(115%);
-    border:1px solid rgba(22,160,134,.28) !important;
-    box-shadow:0 30px 80px rgba(0,0,0,.55), 0 0 0 1px rgba(22,160,134,.10) !important;
-  }
-  .lock-card h2 i{color:var(--lock-accent);font-style:normal;}
-  .lock-firm,.lock-tagline{color:#F6F0E4 !important;}
-  .lock-divider{background:var(--lock-accent) !important;}
-  .lock-field label{color:#C9C2B4 !important;}
-  .lock-field.has-icon input{padding-left:40px;}
-  .lock-field .lf-ic{position:absolute;left:13px;top:37px;color:var(--lock-accent);display:flex;pointer-events:none;opacity:.8;}
-  .lock-field input{background:rgba(255,255,255,.06) !important;border-color:rgba(22,160,134,.22) !important;color:#F6F0E4 !important;}
-  .lock-field input::placeholder{color:rgba(246,240,228,.35) !important;}
-  .lock-field .eye{color:rgba(22,160,134,.65) !important;}
-  .lock-field input:focus{border-color:var(--lock-accent) !important;box-shadow:0 0 0 3px var(--lock-accent-dim) !important;}
-  .lock-btn-main{
-    background:var(--accent-blue) !important;
-    color:#fff !important;
-    box-shadow:0 1px 3px rgba(0,0,0,.25) !important;
-    font-weight:600 !important;
-    border:none !important;
-  }
-  .lock-btn-main:hover{filter:brightness(1.08) !important;}
-  .lock-note{background:rgba(22,160,134,.07) !important;border-color:rgba(22,160,134,.16) !important;color:#C9C2B4 !important;}
-  @media (max-width:640px){
-    .lock-ribbon-bg{opacity:.75;}
-  }
-
-  /* ================================================================
-     v.124 — Giriş ekranı ince ayarları: kurdeleye hafif "nefes alan"
-     hareket, logoya altın parlama halkası, kart üstüne ince altın çizgi,
-     butona geçiş ışığı, arkadaki kırmızı "Kaydet" düğmesi/rozeti giriş
-     ekranı açıkken gizleniyor (tema çakışmasın diye). Sadece görsel —
-     JS/giriş mantığı değişmedi. ================================== */
-  /* v.311: giriş ekranı kurdelesinin sürekli "nefes alma" animasyonu kaldırıldı —
-     sabit ve dingin duruyor; dekoratif hareket AI estetiğinin işaretiydi. */
-  @media (prefers-reduced-motion:reduce){ .lock-ribbon-bg{animation:none;} }
-
-  /* v.148: nabız gibi atan altın parlama kaldırıldı (sade/bankacılık kimliği) —
-     logo artık sabit, hafif bir gölgeyle duruyor. */
-  .lock-logo-wrap{
-    position:relative;
-    box-shadow:0 0 0 1px rgba(22,160,134,.22), 0 4px 14px rgba(0,0,0,.3) !important;
-  }
-
-  .lock-card-inner{position:relative;overflow:hidden;}
-  .lock-card-inner::before{
-    content:"";
-    position:absolute;top:0;left:8%;right:8%;height:2px;
-    background:linear-gradient(90deg, transparent, var(--lock-accent-bright), var(--lock-accent), transparent);
-    opacity:.85;
-  }
-
-  .lock-btn-main{position:relative;}
 
   body:has(.lock-screen.show) #filoKaydetBtn,
   body:has(.lock-screen.show) #filoOtkRozet{
@@ -3067,7 +2896,6 @@
   html[data-theme="light"] .splash .sd{color:#5A5A5A !important;}
   html[data-theme="light"] .splash-stat .n{color:#111111 !important;}
   html[data-theme="light"] .splash-stat .l{color:#8A8A8A !important;}
-  html[data-theme="light"] .lock-screen{background:#F4F4F2 !important;}
   html[data-theme="light"] .lock-screen h2{color:#111111 !important;}
 
   /* --- Rozet / etiket: 4px dikdörtgen --- */
@@ -3211,7 +3039,6 @@
   html[data-theme="light"] .splash .sd{color:#5A6B7A !important;}
   html[data-theme="light"] .splash-stat .n{color:#16283A !important;}
   html[data-theme="light"] .splash-stat .l{color:#8A99A6 !important;}
-  html[data-theme="light"] .lock-screen{background:#F7F8FA !important;}
   html[data-theme="light"] .lock-screen h2{color:#16283A !important;}
 
   /* --- Link/selection teal --- */
@@ -3339,3 +3166,135 @@
 
   /* --- Rozetler: pastel tint + koyu metin (Samsara status dili) --- */
   .badge{font-weight:600 !important;letter-spacing:.01em;}
+
+  /* ======================================================================
+     v.359 — GİRİŞ EKRANI "FİLO OPERASYON MERKEZİ" (TEK YETKİLİ KATMAN)
+     Önceki tüm kilit ekranı katmanları (kurdele/cam kart/sabit koyu)
+     kaldırıldı. Masaüstü (≥980px): solda HER ZAMAN koyu lacivert marka
+     paneli (rota motifi), sağda temaya uyan sade form. Küçük ekranlarda
+     yalnız form kartı. JS sözleşmesi korunur (lockBody/lockCard/eye/lf-ic).
+     ====================================================================== */
+  .lock-screen{
+    --lk-teal:#00A389;
+    --lk-teal-bright:#3FD9BE;
+    position:fixed;inset:0;z-index:500;display:none;
+    align-items:stretch;justify-content:stretch;
+    background:var(--bg);overflow:hidden;
+  }
+  .lock-screen.show{display:flex;}
+  .lk-brand{
+    display:none;
+    position:relative;flex:1.15 1 0;min-width:0;
+    background:
+      radial-gradient(900px 620px at 78% 16%, rgba(0,163,137,.15), transparent 62%),
+      radial-gradient(720px 520px at 10% 90%, rgba(0,195,137,.10), transparent 60%),
+      linear-gradient(158deg,#0B1725 0%,#13293D 52%,#0E1F30 100%);
+    overflow:hidden;
+  }
+  .lk-brand::before{
+    content:"";position:absolute;inset:0;
+    background-image:radial-gradient(rgba(140,190,180,.14) 1px,transparent 1.4px);
+    background-size:26px 26px;
+    -webkit-mask-image:linear-gradient(115deg,rgba(0,0,0,.9),transparent 80%);
+    mask-image:linear-gradient(115deg,rgba(0,0,0,.9),transparent 80%);
+  }
+  .lk-routes{position:absolute;inset:0;width:100%;height:100%;}
+  .lk-routes path{animation:lkDash 40s linear infinite;}
+  @keyframes lkDash{to{stroke-dashoffset:-460;}}
+  .lk-routes .lk-dot{animation:lkPulse 3.4s ease-in-out infinite;}
+  @keyframes lkPulse{0%,100%{opacity:.4}50%{opacity:1}}
+  @media (prefers-reduced-motion:reduce){.lk-routes path,.lk-routes .lk-dot{animation:none;}}
+  .lk-brand-in{
+    position:relative;z-index:2;height:100%;box-sizing:border-box;
+    display:flex;flex-direction:column;justify-content:space-between;
+    padding:46px 54px 42px;max-width:600px;
+    animation:lkUp .7s var(--ease) both;
+  }
+  @keyframes lkUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+  .lk-mark{font-family:var(--font-display);font-weight:800;font-size:19px;color:#F2F7F6;letter-spacing:-.02em;}
+  .lk-mark-sub{font-family:var(--font-mono);font-size:10px;letter-spacing:3.2px;color:var(--lk-teal-bright);margin-top:7px;text-transform:uppercase;}
+  .lk-head{font-family:var(--font-display);font-weight:800;font-size:42px;line-height:1.13;color:#F2F7F6 !important;letter-spacing:-.025em;margin:0;}
+  .lock-screen .lk-brand h1{color:#F2F7F6 !important;}
+  .lk-head em{font-style:normal;background:linear-gradient(92deg,var(--lk-teal-bright),#00C389);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .lk-head-sub{margin:20px 0 0;font-size:14.5px;line-height:1.68;color:rgba(226,238,235,.72);max-width:42ch;}
+  .lk-feats{display:flex;gap:26px;flex-wrap:wrap;}
+  .lk-feat{display:flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:10.5px;letter-spacing:1.6px;text-transform:uppercase;color:rgba(214,230,226,.62);}
+  .lk-feat svg{color:var(--lk-teal-bright);opacity:.9;flex-shrink:0;}
+
+  .lk-form{
+    flex:1 1 0;min-width:0;box-sizing:border-box;
+    display:flex;align-items:center;justify-content:center;
+    padding:28px 20px;overflow:auto;
+    background:var(--bg);
+  }
+  html[data-theme="light"] .lk-form{background:#F3F5F7;}
+  .lock-card{position:relative;width:100%;max-width:400px;margin:0;animation:popIn .4s var(--ease);}
+  .lock-card-inner{
+    position:relative;overflow:hidden;box-sizing:border-box;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:18px;
+    padding:38px 34px;
+    box-shadow:0 24px 70px rgba(10,20,30,.35);
+  }
+  html[data-theme="light"] .lock-card-inner{background:#FFFFFF;box-shadow:0 18px 50px rgba(15,25,40,.10);}
+  .lock-card-inner::before{
+    content:"";position:absolute;top:0;left:0;right:0;height:3px;
+    background:linear-gradient(90deg,var(--lk-teal),var(--lk-teal-bright),var(--lk-teal));
+  }
+  .lock-header{text-align:center;margin-bottom:28px;}
+  .lock-logo-wrap{
+    width:64px;height:64px;background:#FFFFFF;border-radius:16px;
+    display:flex;align-items:center;justify-content:center;padding:10px;margin:0 auto 16px;
+    box-shadow:0 6px 20px rgba(10,20,30,.18),0 0 0 1px rgba(10,20,30,.06);
+  }
+  .lock-logo-wrap img{width:100%;height:100%;object-fit:contain;}
+  .lock-firm{font-family:var(--font-display);font-size:19px;font-weight:800;color:var(--text);letter-spacing:-.02em;margin:0 0 5px;}
+  .lock-tagline{font-family:var(--font-mono);font-size:10px;color:var(--text-3);letter-spacing:2.6px;text-transform:uppercase;}
+  .lock-divider{width:34px;height:2px;background:var(--lk-teal);border-radius:2px;margin:16px auto 0;opacity:.75;}
+  .lock-icon-wrap{display:none;}
+  .lock-card h2{font-family:var(--font-display);font-size:17px;margin:0 0 6px;font-weight:700;color:var(--text);text-align:center;letter-spacing:-.01em;}
+  .lock-card h2 i{color:var(--lk-teal);font-style:normal;}
+  .lock-card .lsub{color:var(--text-2);font-size:13px;margin-bottom:22px;line-height:1.55;text-align:center;}
+  .lock-field{position:relative;margin-bottom:14px;text-align:left;}
+  .lock-field label{display:block;font-size:12px;color:var(--text-2);margin-bottom:7px;font-weight:600;letter-spacing:.2px;}
+  .lock-field input{
+    width:100%;box-sizing:border-box;
+    background:var(--surface-2);border:1px solid var(--border-2);color:var(--text);
+    padding:13px 44px 13px 14px;border-radius:11px;
+    font-family:var(--font-mono);font-size:15px;letter-spacing:2px;
+    transition:border-color .15s ease,box-shadow .15s ease;
+  }
+  .lock-field.has-icon input{padding-left:40px;}
+  .lock-field input::placeholder{color:var(--text-3);letter-spacing:1px;}
+  .lock-field input:focus{outline:none;border-color:var(--lk-teal);box-shadow:0 0 0 3px rgba(0,163,137,.16);}
+  .lock-field .lf-ic{position:absolute;left:13px;top:36px;color:var(--lk-teal);display:flex;pointer-events:none;opacity:.85;}
+  .lock-field .eye{position:absolute;right:12px;top:36px;background:none;border:none;color:var(--text-3);cursor:pointer;padding:4px;display:flex;}
+  .lock-field .eye:hover{color:var(--text);}
+  .lock-card.shake{animation:shake .45s ease;}
+  .lock-err{color:var(--coral);font-size:13px;margin:2px 0 6px;min-height:16px;}
+  .lock-btn-main{
+    width:100%;box-sizing:border-box;position:relative;
+    background:linear-gradient(135deg,#00A389,#00BC85);color:#fff;border:none;
+    font-family:var(--font-ui);font-weight:700;font-size:15px;padding:14px;border-radius:11px;cursor:pointer;margin-top:10px;
+    transition:filter .15s ease,transform .15s ease;
+    box-shadow:0 8px 20px rgba(0,163,137,.28);letter-spacing:.2px;
+  }
+  .lock-btn-main:hover:not(:disabled){filter:brightness(1.07);transform:translateY(-1px);}
+  .lock-btn-main:active{transform:translateY(0);}
+  .lock-btn-main:disabled{opacity:.4;cursor:not-allowed;}
+  .lock-forgot{margin-top:16px;font-size:13px;color:var(--text-3);text-decoration:none;cursor:pointer;background:none;border:none;font-family:var(--font-ui);font-weight:500;}
+  .lock-forgot:hover{color:var(--lk-teal);text-decoration:underline;}
+  .lock-note{display:flex;gap:8px;align-items:flex-start;background:rgba(0,163,137,.07);border:1px solid rgba(0,163,137,.18);border-radius:10px;padding:11px 13px;margin-top:18px;text-align:left;font-size:12.5px;color:var(--text-2);line-height:1.55;}
+  .lock-note svg{flex-shrink:0;margin-top:1px;color:var(--lk-teal);}
+  .lk-version{font-size:10.5px;color:var(--text-3);text-align:center;padding:14px 0 0;font-family:var(--font-mono);}
+
+  @media(min-width:980px){
+    .lk-brand{display:block;}
+  }
+  @media(max-width:480px){
+    .lk-form{padding:16px 12px;}
+    .lock-card-inner{padding:28px 20px;}
+    .lock-logo-wrap{width:56px;height:56px;}
+    .lock-firm{font-size:17px;}
+  }
