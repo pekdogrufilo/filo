@@ -10734,9 +10734,72 @@ function renderDashboard(){
   // v.263: bu mini kutular artık kullanılmıyor — 4 metriği de yukarıdaki tek KPI şeridine taşıdık
   // (bkz. dash-stats bloğu), miniKutu() fonksiyonu bu yüzden kaldırıldı.
 
+  // ===== v.361: Karşılama ekranı (Tasarım D) — foto hero + 3 dikkat kartı =====
+  const saat361 = new Date().getHours();
+  const selam361 = saat361<12 ? 'Günaydın' : (saat361<18 ? 'İyi günler' : 'İyi akşamlar');
+  const karsiAd361 = (window.currentUserDoc && (window.currentUserDoc.adSoyad || window.currentUserDoc.email))
+    ? esc(String(window.currentUserDoc.adSoyad || window.currentUserDoc.email).split(' ')[0]) : '';
+  const bugun361 = todayISO();
+  const bugunKiralamalar361 = (rentals||[]).filter(r=>r.basISO===bugun361 || r.teslimTarih===bugun361).map(r=>{
+    const v = vehicles.find(x=>x.id===r.vehicleId);
+    return { plaka: v ? v.plaka : '—', kim: r.kiraci || musteriGoruntuAdi((customers||[]).find(c=>c.id===r.customerId)) || '—', tur: r.teslimTarih===bugun361 ? 'Teslim' : 'Başlangıç' };
+  });
+  const bakimUyarlari361 = [
+    ...vehicles.filter(v=>v.durum==='Serviste').map(v=>({ plaka:v.plaka, aci:'Bakım / serviste', renk:'#E8A132' })),
+    ...urgent.filter(u=>u.tip!=='Kira Bitişi' && u.tip!=='Sözleşme Bitişi' && u.dl<=15).map(u=>({
+      plaka:u.plaka, aci: u.tip + (u.dl<0 ? ' — '+Math.abs(u.dl)+' gün geçti' : ' — '+u.dl+' gün kaldı'), renk: u.dl<0 ? '#E1554E' : '#E8A132'
+    }))
+  ];
+  const gecikenOdemeler361 = (typeof customers!=='undefined' ? customers : [])
+    .map(c=>({ ad: musteriGoruntuAdi(c) || 'Müşteri', tutar: customerCariOzet(c.id).vadesiGecen }))
+    .filter(x=>x.tutar>0).sort((a,b)=>b.tutar-a.tutar);
+
   const page = document.getElementById('page-genel-bakis');
   page.innerHTML = `
     <div id="dashYedekUyari"></div>
+
+    <!-- v.361: Karşılama hero kartı (Tasarım D) — giriş ekranıyla aynı foto dili -->
+    <div style="position:relative;border-radius:16px;overflow:hidden;margin-bottom:14px;min-height:190px;background:linear-gradient(120deg,rgba(10,20,32,.88) 0%,rgba(10,20,32,.55) 55%,rgba(10,20,32,.35) 100%),url('./login-filo.jpg') center/cover no-repeat,#0B1725;box-shadow:var(--shadow-md);">
+      <div style="padding:24px 26px 20px;position:relative;z-index:1;">
+        <div style="font-family:var(--font-mono,monospace);font-size:10.5px;letter-spacing:2.6px;text-transform:uppercase;color:rgba(214,230,226,.75);">${bugunTarihi}</div>
+        <div style="font-family:var(--font-display);font-weight:800;font-size:26px;color:#F2F7F6;letter-spacing:-.02em;margin-top:8px;">${selam361}${karsiAd361?', '+karsiAd361:''}. <span style="color:#3FD9BE;">Filonuz hazır.</span></div>
+        <div style="font-size:13.5px;color:rgba(226,238,235,.78);margin-top:6px;">${total} araçlı filonuzda ${kirada} araç kirada — doluluk %${pct(kirada)}${dashGecikenTahsilat>0?', <b style="color:#FFB4AD;">'+fmtTL2(dashGecikenTahsilat)+' geciken tahsilat</b> var':''}.</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;">
+          <span style="background:rgba(255,255,255,.14);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.22);color:#fff;border-radius:9px;padding:6px 12px;font-size:12px;font-weight:700;">🚐 ${kirada} Kirada</span>
+          <span style="background:rgba(255,255,255,.14);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.22);color:#fff;border-radius:9px;padding:6px 12px;font-size:12px;font-weight:700;">✓ ${musait} Müsait</span>
+          <span style="background:rgba(255,255,255,.14);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.22);color:#fff;border-radius:9px;padding:6px 12px;font-size:12px;font-weight:700;">🔧 ${serviste} Serviste</span>
+          <span style="background:rgba(63,217,190,.22);border:1px solid rgba(63,217,190,.4);color:#CFF5EC;border-radius:9px;padding:6px 12px;font-size:12px;font-weight:700;">Doluluk %${pct(kirada)}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- v.361: 3 dikkat kartı — Bugünün Kiralamaları / Bakım Uyarıları / Geciken Ödemeler -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-bottom:16px;">
+      <div class="dcard" style="margin:0;padding:16px 18px;cursor:pointer;" onclick="switchPage('kiralama')">
+        <div style="display:flex;align-items:center;gap:9px;margin-bottom:10px;">
+          <span style="width:32px;height:32px;border-radius:9px;background:rgba(22,160,134,.13);display:flex;align-items:center;justify-content:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="15" height="10" rx="2"/><path d="M17 10h3l2 3v4h-5"/><circle cx="7" cy="19" r="1.6"/><circle cx="17.5" cy="19" r="1.6"/></svg></span>
+          <div style="font-size:13.5px;font-weight:800;color:var(--text);">Bugünün Kiralamaları</div>
+          <span style="margin-left:auto;font-size:17px;font-weight:800;color:${bugunKiralamalar361.length?'var(--accent-blue)':'var(--text-3)'};">${bugunKiralamalar361.length}</span>
+        </div>
+        ${bugunKiralamalar361.length ? bugunKiralamalar361.map(x=>`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-top:1px solid var(--border);font-size:12px;"><b style="font-family:var(--font-mono,monospace);color:var(--text);">${esc(x.plaka)}</b><span style="color:var(--text-2);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(x.kim)}</span><span style="color:var(--text-3);font-size:11px;">${x.tur}</span></div>`).join('') : '<div style="font-size:12px;color:var(--text-3);padding:4px 0;">Bugün başlayan/teslim edilecek kiralama yok.</div>'}
+      </div>
+      <div class="dcard" style="margin:0;padding:16px 18px;cursor:pointer;" onclick="switchPage('bildirimler')">
+        <div style="display:flex;align-items:center;gap:9px;margin-bottom:10px;">
+          <span style="width:32px;height:32px;border-radius:9px;background:rgba(232,161,50,.14);display:flex;align-items:center;justify-content:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E8A132" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></span>
+          <div style="font-size:13.5px;font-weight:800;color:var(--text);">Bakım Uyarıları</div>
+          <span style="margin-left:auto;font-size:17px;font-weight:800;color:${bakimUyarlari361.length?'#E8A132':'var(--text-3)'};">${bakimUyarlari361.length}</span>
+        </div>
+        ${bakimUyarlari361.length ? bakimUyarlari361.slice(0,4).map(x=>`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-top:1px solid var(--border);font-size:12px;"><b style="font-family:var(--font-mono,monospace);color:var(--text);">${esc(x.plaka||'—')}</b><span style="color:${x.renk};flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(x.aci)}</span></div>`).join('') : '<div style="font-size:12px;color:var(--text-3);padding:4px 0;">Bakımda araç ve yaklaşan bakım uyarısı yok.</div>'}
+      </div>
+      <div class="dcard" style="margin:0;padding:16px 18px;cursor:pointer;" onclick="switchPage('cari')">
+        <div style="display:flex;align-items:center;gap:9px;margin-bottom:10px;">
+          <span style="width:32px;height:32px;border-radius:9px;background:rgba(225,85,78,.13);display:flex;align-items:center;justify-content:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E1554E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></span>
+          <div style="font-size:13.5px;font-weight:800;color:var(--text);">Geciken Ödemeler</div>
+          <span style="margin-left:auto;font-size:17px;font-weight:800;color:${gecikenOdemeler361.length?'#E1554E':'var(--text-3)'};">${gecikenOdemeler361.length}</span>
+        </div>
+        ${gecikenOdemeler361.length ? gecikenOdemeler361.slice(0,4).map(x=>`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-top:1px solid var(--border);font-size:12px;"><span style="color:var(--text);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(x.ad)}</span><b style="color:#E1554E;">${fmtTL2(x.tutar)}</b></div>`).join('') : '<div style="font-size:12px;color:var(--text-3);padding:4px 0;">Vadesi geçen tahsilat yok. 👍</div>'}
+      </div>
+    </div>
 
     <!-- FAZ3: Cari & Tahsilat KPI döşemeleri — mevcut .dash-stats/.dstat deseniyle birebir aynı -->
     <!-- v.263: "panel çok karıştı" geri bildirimi — bu 2 kutuluk şerit ile aşağıdaki "Filo Durumu"
