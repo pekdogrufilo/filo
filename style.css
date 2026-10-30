@@ -3347,3 +3347,82 @@
       linear-gradient(180deg, #0C1B2A 0%, #13293D 55%, #0E2033 100%) !important;
   }
   html[data-theme="light"] .sidebar .sb-item{color:#C3D2DE !important;}
+
+  /* ======================================================================
+     v.363 — AÇILIŞ SPLASH "FOTO FULL" (kullanıcı seçimi, tasarım 2)
+     Tam ekran filo fotoğrafı (giriş ekranıyla aynı görsel) + koyu overlay;
+     ortada buzlu cam kart: beyaz logo plakası, PEKDOĞRU, teal alt yazı,
+     filo özet rozetleri. Bu blok dosya sonunda olduğundan önceki tüm
+     splash katmanlarını geçersiz kılar; açık temada da foto sabit kalır.
+     ====================================================================== */
+  .splash{
+    background:
+      linear-gradient(180deg, rgba(8,16,26,.62) 0%, rgba(8,16,26,.38) 45%, rgba(6,12,20,.85) 100%),
+      url('./login-filo.jpg') center/cover no-repeat, #0B1725 !important;
+  }
+  .splash-grid-bg,.splash-glow{display:none !important;}
+  .splash-inner{
+    background:rgba(10,20,32,.45);
+    backdrop-filter:blur(14px) saturate(120%);
+    -webkit-backdrop-filter:blur(14px) saturate(120%);
+    border:1px solid rgba(255,255,255,.18);
+    border-radius:20px;
+    padding:34px 44px 30px;
+    box-shadow:0 24px 70px rgba(4,10,18,.5);
+    margin:0 16px;
+  }
+  .splash-logo{
+    background:#FFFFFF !important;
+    box-shadow:0 8px 26px rgba(4,10,18,.45), 0 0 0 1px rgba(255,255,255,.25) !important;
+  }
+  .splash h2{color:#F2F7F6 !important;}
+  .splash .sd{color:#3FD9BE !important;opacity:1 !important;}
+  .splash-stat{
+    background:rgba(255,255,255,.13) !important;
+    border:1px solid rgba(255,255,255,.22) !important;
+    backdrop-filter:blur(6px);
+    -webkit-backdrop-filter:blur(6px);
+  }
+  .splash-stat .n{color:#FFFFFF !important;}
+  .splash-stat .l{color:rgba(242,247,246,.75) !important;}
+  .splash-stat.warn{background:rgba(225,85,78,.22) !important;border-color:rgba(225,85,78,.45) !important;}
+  .splash-stat.warn .n{color:#FFB4AD !important;}
+  .splash-bar{background:rgba(255,255,255,.85) !important;opacity:.9 !important;height:2px !important;}
+  .splash-dots span{background:rgba(242,247,246,.7) !important;}
+  /* Tema-özgüllüklü eski kuralları geçersiz kılan eşit özgüllükte son söz:
+     ışık/koyu temadan bağımsız splash HER ZAMAN foto + beyaz yazı. */
+  html[data-theme="light"] .splash,
+  html:not([data-theme="light"]) .splash{
+    background:
+      linear-gradient(180deg, rgba(8,16,26,.62) 0%, rgba(8,16,26,.38) 45%, rgba(6,12,20,.85) 100%),
+      url('./login-filo.jpg') center/cover no-repeat, #0B1725 !important;
+  }
+  html[data-theme="light"] .splash h2,
+  html:not([data-theme="light"]) .splash h2{color:#F2F7F6 !important;}
+  html[data-theme="light"] .splash .sd,
+  html:not([data-theme="light"]) .splash .sd{color:#3FD9BE !important;}
+  html[data-theme="light"] .splash-stat,
+  html:not([data-theme="light"]) .splash-stat{
+    background:rgba(255,255,255,.13) !important;
+    border:1px solid rgba(255,255,255,.22) !important;
+  }
+  html[data-theme="light"] .splash-stat .n,
+  html:not([data-theme="light"]) .splash-stat .n{color:#FFFFFF !important;}
+  html[data-theme="light"] .splash-stat .l,
+  html:not([data-theme="light"]) .splash-stat .l{color:rgba(242,247,246,.75) !important;}
+  html[data-theme="light"] .splash-stat.warn,
+  html:not([data-theme="light"]) .splash-stat.warn{
+    background:rgba(225,85,78,.22) !important;
+    border-color:rgba(225,85,78,.45) !important;
+  }
+  html[data-theme="light"] .splash-stat.warn .n,
+  html:not([data-theme="light"]) .splash-stat.warn .n{color:#FFB4AD !important;}
+  html[data-theme="light"] .splash-bar,
+  html:not([data-theme="light"]) .splash-bar{background:rgba(255,255,255,.85) !important;opacity:.9 !important;}
+  html[data-theme="light"] .splash-logo,
+  html:not([data-theme="light"]) .splash-logo{
+    background:#FFFFFF !important;
+    box-shadow:0 8px 26px rgba(4,10,18,.45), 0 0 0 1px rgba(255,255,255,.25) !important;
+  }
+  html[data-theme="light"] .splash-grid-bg,
+  html[data-theme="light"] .splash-glow{display:none !important;}
