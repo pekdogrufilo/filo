@@ -13079,7 +13079,7 @@ function guvenliYazdirmaPenceresi(onceAcilan){
 // paneli hiç bozmadan belgeyi HTML dosyası olarak indirir ve kullanıcıya ne yapacağını söyler.
 function htmlYazdirVeyaIndir(html, dosyaAdi, onceAcilan){
   // v.354: dokunmatik cihazda belge GERÇEK ayrı sekmede açılır — panel asla değişmez,
-  // iOS'ta "Bitti" ile panele dönülür (bkz. belgeYeniSekmedeAc). Masaüstü akışı aynen kalır.
+  // belge KALICI ayrı pencerede durur (bkz. belgeYeniSekmedeAc). Masaüstü akışı aynen kalır.
   if(dokunmatikCihazMi() && !onceAcilan && belgeYeniSekmedeAc(html, dosyaAdi)) return true;
   const w = guvenliYazdirmaPenceresi(onceAcilan);
   if(w){
@@ -13107,10 +13107,10 @@ function htmlYazdirVeyaIndir(html, dosyaAdi, onceAcilan){
 // ===== v.354: Tablet/iPad belge açılışı — gerçek ayrı sekme + gömülü Yazdır/PDF çubuğu =====
 // Eski akış (window.open + document.write + w.print()) iPad'de ayrı sekme yaratamıyor:
 // PWA/standalone modda belge panelin yerine açılıyor ya da pop-up engellenip .html dosyası
-// iniyor; panele dönüş yolu kalmıyor. Yeni akış: belge HTML'i Blob URL'e çevrilip
-// <a target="_blank"> ile açılır — iOS PWA'da bu, "Bitti" butonlu uygulama içi sayfa olarak
-// açılır; "Bitti"ye dokununca doğrudan PANELE dönülür. Panel tarafı hiçbir document.write
-// yapmaz; masaüstünde normal tarayıcı sekmesi açılır.
+// iniyor; panele dönüş yolu kalmıyor. v.357: belge HTML'i Blob URL'e çevrilip ÖNCE
+// window.open('_blank') ile açılır — Safari/iOS PWA'da belge ayrı ve KALICI bir pencere/sekme
+// olarak durur (Google Chrome sekmesi gibi); açılamazsa <a target="_blank"> anchor yolu
+// denenir. Panel tarafı hiçbir document.write yapmaz; masaüstünde normal tarayıcı sekmesi açılır.
 function dokunmatikCihazMi(){
   try{ return !!(window.matchMedia && window.matchMedia('(pointer:coarse)').matches); }catch(e){ return false; }
 }
@@ -13166,11 +13166,22 @@ function belgeYeniSekmedeAc(html, dosyaAdi){
   try{
     const blob = new Blob([belgeCubuguEkle(html, dosyaAdi)], {type:'text/html;charset=utf-8'});
     const url = URL.createObjectURL(blob);
+    const temizle = function(){ setTimeout(function(){ try{ URL.revokeObjectURL(url); }catch(e){} }, 120000); };
+    // v.357: ÖNCE window.open('_blank') — Safari'de ve iOS 16.4+ PWA'da bu, belgeyi uygulama
+    // değiştiricide/sekmelerde ayrı bir KALICI pencere olarak açar: kullanıcı panele dönse bile
+    // belge sayfası yerinde durur (Google Chrome sekmesi gibi), "anlık çıkıp kaybolmaz".
+    // w===window dönerse Safari mevcut görünümü blob'a taşımaya çalışıyor demektir — yüklemeyi
+    // durdurup güvenli anchor yoluna düşer; panel tarafı ASLA document.write yapmaz.
+    try{
+      const w = window.open(url, '_blank');
+      if(w && w !== window){ temizle(); return true; }
+      if(w === window){ try{ w.stop(); }catch(eStop){} }
+    }catch(eOpen){}
+    // Fallback (eski v.354 davranışı): <a target="_blank"> anchor tıklaması.
     const a = document.createElement('a');
     a.href = url; a.target = '_blank'; a.rel = 'noopener';
     document.body.appendChild(a); a.click(); a.remove();
-    // Sekme belgeyi yükleyene kadar URL canlı kalmalı — kısa süreli cihazlarda 5sn yetmez.
-    setTimeout(function(){ try{ URL.revokeObjectURL(url); }catch(e){} }, 120000);
+    temizle();
     return true;
   }catch(e){ return false; }
 }
@@ -13179,10 +13190,10 @@ function sozlesmeHtmlPdf(d, preOpenedWin){
   const log = document.getElementById('sozlesmeLog');
   const html = sozlesmeHtml(d);
   // v.354: dokunmatik cihazda (iPad/tablet/telefon) sözleşme GERÇEK ayrı sekmede açılır ve
-  // sekmenin kendi çubuğundan yazdırılır/PDF indirilir — panel görünümü asla değişmez,
-  // iOS'ta "Bitti" ile panele dönülür. Masaüstü akışı (aşağıda) aynen korunur.
+  // sekmenin kendi çubuğundan yazdırılır/PDF indirilir — panel görünümü asla değişmez, belge
+  // KALICI ayrı pencerede durur. Masaüstü akışı (aşağıda) aynen korunur.
   if(dokunmatikCihazMi() && !preOpenedWin && belgeYeniSekmedeAc(html, `sozlesme_${(d.plaka||'arac').replace(/\s+/g,'-')}_${(d.tarih||'').replace(/\./g,'-')}`)){
-    if(log) log.innerHTML = '<div style="color:#36A168;font-size:13px;font-weight:600;">✅ Sözleşme ayrı sekmede açıldı — çubuktan yazdırın veya PDF indirin; panele "Bitti" ile dönün.</div>';
+    if(log) log.innerHTML = '<div style="color:#36A168;font-size:13px;font-weight:600;">✅ Sözleşme ayrı sekmede açıldı — sekme açık kalır; çubuktan yazdırın veya PDF indirin, panele üstteki sekmelerden/uygulama değiştiriciden dönün.</div>';
     return;
   }
   // v.267: "SÖZLEŞME HAZIRLARKEN EKRAN GİDİYOR" — bu fonksiyon önceden burada DOĞRUDAN
