@@ -1,10 +1,10 @@
 /* PEKDOĞRU Filo Paneli — Service Worker v.332 */
-const CACHE_NAME = 'filo-panel-v368';
+const CACHE_NAME = 'filo-panel-v369';
 const SHELL_ASSETS = [
   './',
   './index.html',
-  './app.js?v=368',
-  './style.css?v=368',
+  './app.js?v=369',
+  './style.css?v=369',
   './login-filo2.jpg',
   './firebase-app-compat.js',
   './firebase-firestore-compat.js',
