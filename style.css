@@ -3187,7 +3187,7 @@
     position:relative;flex:1.15 1 0;min-width:0;
     background:
       linear-gradient(180deg, rgba(10,20,32,.60) 0%, rgba(10,20,32,.34) 42%, rgba(6,12,20,.84) 100%),
-      url('./login-filo.jpg') center/cover no-repeat, #0B1725;
+      url('./login-filo2.jpg') center/cover no-repeat, #0B1725;
     overflow:hidden;
   }
   .lk-brand::before{content:none;}
@@ -3303,7 +3303,7 @@
   .sidebar{
     background:
       linear-gradient(180deg, rgba(8,16,26,0) 46%, rgba(8,16,26,.38) 64%, rgba(6,12,20,.9) 96%),
-      url('./login-filo.jpg') center bottom / 100% 48% no-repeat,
+      url('./login-filo2.jpg') center bottom / 100% 48% no-repeat,
       linear-gradient(180deg, #0C1B2A 0%, #13293D 55%, #0E2033 100%) !important;
     border-right:none !important;
   }
@@ -3343,7 +3343,7 @@
   html[data-theme="light"] .sidebar{
     background:
       linear-gradient(180deg, rgba(8,16,26,0) 46%, rgba(8,16,26,.38) 64%, rgba(6,12,20,.9) 96%),
-      url('./login-filo.jpg') center bottom / 100% 48% no-repeat,
+      url('./login-filo2.jpg') center bottom / 100% 48% no-repeat,
       linear-gradient(180deg, #0C1B2A 0%, #13293D 55%, #0E2033 100%) !important;
   }
   html[data-theme="light"] .sidebar .sb-item{color:#C3D2DE !important;}
@@ -3358,7 +3358,7 @@
   .splash{
     background:
       linear-gradient(180deg, rgba(8,16,26,.62) 0%, rgba(8,16,26,.38) 45%, rgba(6,12,20,.85) 100%),
-      url('./login-filo.jpg') center/cover no-repeat, #0B1725 !important;
+      url('./login-filo2.jpg') center/cover no-repeat, #0B1725 !important;
   }
   .splash-grid-bg,.splash-glow{display:none !important;}
   .splash-inner{
@@ -3395,7 +3395,7 @@
   html:not([data-theme="light"]) .splash{
     background:
       linear-gradient(180deg, rgba(8,16,26,.62) 0%, rgba(8,16,26,.38) 45%, rgba(6,12,20,.85) 100%),
-      url('./login-filo.jpg') center/cover no-repeat, #0B1725 !important;
+      url('./login-filo2.jpg') center/cover no-repeat, #0B1725 !important;
   }
   html[data-theme="light"] .splash h2,
   html:not([data-theme="light"]) .splash h2{color:#F2F7F6 !important;}
