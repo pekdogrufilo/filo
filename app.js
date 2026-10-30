@@ -13107,10 +13107,15 @@ function htmlYazdirVeyaIndir(html, dosyaAdi, onceAcilan){
 // ===== v.354: Tablet/iPad belge açılışı — gerçek ayrı sekme + gömülü Yazdır/PDF çubuğu =====
 // Eski akış (window.open + document.write + w.print()) iPad'de ayrı sekme yaratamıyor:
 // PWA/standalone modda belge panelin yerine açılıyor ya da pop-up engellenip .html dosyası
-// iniyor; panele dönüş yolu kalmıyor. v.357: belge HTML'i Blob URL'e çevrilip ÖNCE
-// window.open('_blank') ile açılır — Safari/iOS PWA'da belge ayrı ve KALICI bir pencere/sekme
-// olarak durur (Google Chrome sekmesi gibi); açılamazsa <a target="_blank"> anchor yolu
-// denenir. Panel tarafı hiçbir document.write yapmaz; masaüstünde normal tarayıcı sekmesi açılır.
+// iniyor; panele dönüş yolu kalmıyor.
+// v.357 DERSİ: window.open(blobURL) iPad Safari'de güvenilir DEĞİL — belge anlık çıkıp
+// kayboldu, hatta window.open mevcut görünümü döndürüp blob'a yönlendirince sözleşme
+// SIRASINDA panelin ekranı gitti. Bu yüzden blob URL ve window.open tamamen terk edildi.
+// v.358: Belge HTML'i localStorage üzerinden HOSTINGTEKİ GERÇEK SAYFAYA (belge.html)
+// taşınır ve <a target="_blank"> ile açılır. Gerçek URL, iPad Safari'de KALICI sekme açar
+// (Google Chrome sekmesi gibi): sekme bir kez açılınca paneldeki akış yarımda kalsa bile
+// yerinde durur; panel görünümü asla el değiştirmez. Fotoğraflı tutanaklar gibi localStorage'a
+// sığmayacak (≈4MB üstü) belgelerde eski blob-anchor yolu güvenlik ağı olarak kalır.
 function dokunmatikCihazMi(){
   try{ return !!(window.matchMedia && window.matchMedia('(pointer:coarse)').matches); }catch(e){ return false; }
 }
@@ -13164,24 +13169,25 @@ function belgeCubuguEkle(html, dosyaAdi){
 }
 function belgeYeniSekmedeAc(html, dosyaAdi){
   try{
-    const blob = new Blob([belgeCubuguEkle(html, dosyaAdi)], {type:'text/html;charset=utf-8'});
-    const url = URL.createObjectURL(blob);
-    const temizle = function(){ setTimeout(function(){ try{ URL.revokeObjectURL(url); }catch(e){} }, 120000); };
-    // v.357: ÖNCE window.open('_blank') — Safari'de ve iOS 16.4+ PWA'da bu, belgeyi uygulama
-    // değiştiricide/sekmelerde ayrı bir KALICI pencere olarak açar: kullanıcı panele dönse bile
-    // belge sayfası yerinde durur (Google Chrome sekmesi gibi), "anlık çıkıp kaybolmaz".
-    // w===window dönerse Safari mevcut görünümü blob'a taşımaya çalışıyor demektir — yüklemeyi
-    // durdurup güvenli anchor yoluna düşer; panel tarafı ASLA document.write yapmaz.
+    const tamHtml = belgeCubuguEkle(html, dosyaAdi);
+    // v.358: birincil yol — gerçek sayfa (belge.html) + localStorage aktarımı.
     try{
-      const w = window.open(url, '_blank');
-      if(w && w !== window){ temizle(); return true; }
-      if(w === window){ try{ w.stop(); }catch(eStop){} }
-    }catch(eOpen){}
-    // Fallback (eski v.354 davranışı): <a target="_blank"> anchor tıklaması.
+      if(tamHtml.length <= 4200000){ // localStorage güvenli sınırı (≈4MB) altındaysa
+        localStorage.setItem('filoBelgePaylasim', JSON.stringify({ html: tamHtml, ad: String(dosyaAdi||'belge'), ts: Date.now() }));
+        const a = document.createElement('a');
+        a.href = 'belge.html?y=' + Date.now(); // gerçek URL — iPad Safari'de KALICI sekme
+        a.target = '_blank'; a.rel = 'noopener';
+        document.body.appendChild(a); a.click(); a.remove();
+        return true;
+      }
+    }catch(eStore){ /* kota doldu vb. → aşağıdaki blob güvenlik ağına düş */ }
+    // Güvenlik ağı: çok büyük belgeler (fotoğraflı tutanaklar) için eski blob-anchor yolu.
+    const blob = new Blob([tamHtml], {type:'text/html;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url; a.target = '_blank'; a.rel = 'noopener';
     document.body.appendChild(a); a.click(); a.remove();
-    temizle();
+    setTimeout(function(){ try{ URL.revokeObjectURL(url); }catch(e){} }, 120000);
     return true;
   }catch(e){ return false; }
 }
