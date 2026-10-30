@@ -3186,19 +3186,12 @@
     display:none;
     position:relative;flex:1.15 1 0;min-width:0;
     background:
-      radial-gradient(900px 620px at 78% 16%, rgba(0,163,137,.15), transparent 62%),
-      radial-gradient(720px 520px at 10% 90%, rgba(0,195,137,.10), transparent 60%),
-      linear-gradient(158deg,#0B1725 0%,#13293D 52%,#0E1F30 100%);
+      linear-gradient(180deg, rgba(10,20,32,.60) 0%, rgba(10,20,32,.34) 42%, rgba(6,12,20,.84) 100%),
+      url('./login-filo.jpg') center/cover no-repeat, #0B1725;
     overflow:hidden;
   }
-  .lk-brand::before{
-    content:"";position:absolute;inset:0;
-    background-image:radial-gradient(rgba(140,190,180,.14) 1px,transparent 1.4px);
-    background-size:26px 26px;
-    -webkit-mask-image:linear-gradient(115deg,rgba(0,0,0,.9),transparent 80%);
-    mask-image:linear-gradient(115deg,rgba(0,0,0,.9),transparent 80%);
-  }
-  .lk-routes{position:absolute;inset:0;width:100%;height:100%;}
+  .lk-brand::before{content:none;}
+  .lk-routes{display:none;}
   .lk-routes path{animation:lkDash 40s linear infinite;}
   @keyframes lkDash{to{stroke-dashoffset:-460;}}
   .lk-routes .lk-dot{animation:lkPulse 3.4s ease-in-out infinite;}
