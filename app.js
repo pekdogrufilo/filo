@@ -9410,7 +9410,21 @@ function pageGrupBarCiz(key){
     return `<button onclick="switchPage('${p}')" style="padding:9px 20px;border-radius:999px;font-size:13px;font-weight:${on?700:600};cursor:pointer;border:1px solid ${on?'var(--accent-blue)':'var(--border-2)'};background:${on?'var(--accent-blue)':'var(--surface)'};color:${on?'#fff':'var(--text-2)'};">${esc(PAGE_GROUP_ETIKET[p]||PAGE_META[p].title)}</button>`;
   }).join('')}</div>`;
 }
+// v.362: Sol menü alt bandındaki "Filo Doluluk" rozetini günceller.
+// vehicles dizisi her veri yüklemesinde/kaydedilmede yenilendiğinden switchPage ve
+// renderDashboard içinden çağrılması yeterli — ayrı dinleyici gerekmez.
+function sbDolulukGuncelle(){
+  const el = document.getElementById('sbDolulukVal');
+  if(!el) return;
+  try{
+    const toplam = (vehicles||[]).length;
+    const kirada = (vehicles||[]).filter(v=>v.durum==='Kirada').length;
+    el.textContent = toplam ? ('%' + Math.round(kirada*100/toplam)) : '—';
+  }catch(e){ /* sessiz: rozet kritik değil */ }
+}
+
 function switchPage(key){
+  sbDolulukGuncelle();
   if(!PAGE_META[key]) return;
   // FAZ9: savunma amaçlı ikinci kontrol — sidebar'daki [data-superadmin-only] öğesi CSS ile
   // gizlense bile, konsoldan doğrudan switchPage('super-admin') çağrılırsa burada da
@@ -10604,6 +10618,7 @@ function filoSaglikSkoruHTML(){
 }
 
 function renderDashboard(){
+  sbDolulukGuncelle();
   const total = vehicles.length;
   // FAZ3: Cari & Tahsilat KPI'ları — customerCariOzet üzerinden hesaplanır.
   // "Bekleyen Tahsilat": vadesi henüz geçmemiş kalan bakiye kısmı. "Geciken Tahsilat": vadesi geçmiş kısım.
