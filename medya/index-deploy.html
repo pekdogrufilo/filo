@@ -36,7 +36,7 @@
     <script>document.addEventListener('submit',function(e){var f=e.target;if(!f||f.id!=='pd-lead-form')return;var t=f.querySelector('.pd-lead-tel'),p=f.querySelector('.pd-lead-ep');if((t&&t.value.trim())||(p&&p.value.trim())){gtag('event','teklif_formu',{sayfa:location.pathname});}},true);document.addEventListener('click',function(e){var a=e.target&&e.target.closest?e.target.closest('a[href^="tel:"],a[href*="wa.me"],a[href*="whatsapp."]'):null;if(!a)return;var h=a.getAttribute('href')||'';if(h.indexOf('tel:')===0){gtag('event','telefon_tiklama',{hedef:h});}else{gtag('event','whatsapp_tiklama',{hedef:h});}},true);</script>
     <!-- Google Search Console doğrulama kodu buraya eklenecek -->
     <link rel="stylesheet" href="/pd-motion.css?v=1">
-    <link rel="stylesheet" href="/pd-theme.css?v=1">
+    <link rel="stylesheet" href="/pd-theme.css?v=2">
     <script src="/pd-motion.js?v=2" defer></script>
     <script src="/pd-fix.js?v=1" defer></script>
     <script src="/pd-lead.js?v=1" defer></script>
@@ -85,7 +85,11 @@
 <div class="wrap">
   <h2>Konya Araç Kiralama Filosu</h2>
   <figure style="margin:0 0 24px">
-    <video class="pd-video" src="/assets/konya-filo-tanitim-2.mp4" poster="/assets/konya-filo-kiralama-filosu.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Pekdoğru filo kiralama — Konya filo parkı drone çekimi; binek otomobil ve ticari araçlar"></video>
+    <div class="pd-cycle" role="img" aria-label="Pekdoğru filo parkı — Konya; binek otomobil ve ticari araç filosu">
+      <img src="/assets/konya-filo-dron-ust.jpg" alt="Pekdoğru filo parkı drone görüntüsü — Konya araç kiralama filosu">
+      <img src="/assets/konya-doblo-filo-2.jpg" alt="Pekdoğru ticari araç filosu — Ford Transit, Ford Courier ve Fiat Doblo, Konya" loading="lazy">
+      <img src="/assets/konya-egea-filo.jpg" alt="Pekdoğru binek araç filosu — Fiat Egea, Konya" loading="lazy">
+    </div>
     <figcaption style="font-size:13px;color:#5a6572;margin-top:10px">Pekdoğru filo parkı — Konya. Binek otomobil ve ticari araç filosu tek çatı altında.</figcaption>
   </figure>
   <div class="stats">
@@ -95,7 +99,7 @@
     <div><b>7/24</b> Operasyon Desteği</div>
   </div>
   <h2>Konya'da Filo ve Araç Kiralama Hizmet Kapsamı</h2>
-  <ul>
+  <ul class="kapsam">
     <li><a href="/filo-kiralama/">Kurumsal filo kiralama</a> — uzun dönem, bakım-sigorta dahil esnek çözümler</li>
     <li><a href="/konya-kurumsal-arac-kiralama/">Konya kurumsal araç kiralama</a> — şirket ve kamu filoları için özel çözümler</li>
     <li><a href="/konya-uzun-donem-arac-kiralama/">Konya uzun dönem araç kiralama</a> — aylık ve yıllık sözleşmeler</li>
@@ -117,9 +121,9 @@
   -->
   <h2>Kamu ve Kurumsal Çözümler</h2>
   <p>Pekdoğru, birçok kamu kurumunun soförlü ve soförsüz araç kiralama yüklenicisidir. Kamu ihale süreçlerinde gerekli evrak ve dokümantasyon desteği sağlanır; şirket müşterilerine şeffaf sözleşme ve 7/24 operasyon desteği sunulur.</p>
-  <p>Birlikte çalıştığımız kurumlardan bazıları: Düzce Üniversitesi, T.C. Konya İl Sağlık Müdürlüğü, KOSKİ, T.C. Eskişehir İl Sağlık Müdürlüğü, T.C. Isparta İl Sağlık Müdürlüğü, T.C. Kütahya İl Sağlık Müdürlüğü, Çorum Belediyesi, Fethiye Belediyesi, Konya Karayolları 3. Bölge Müdürlüğü ve Anadolu Ecza Deposu.</p>
+  <p class="pd-kurum">Birlikte çalıştığımız kurumlardan bazıları: Düzce Üniversitesi, T.C. Konya İl Sağlık Müdürlüğü, KOSKİ, T.C. Eskişehir İl Sağlık Müdürlüğü, T.C. Isparta İl Sağlık Müdürlüğü, T.C. Kütahya İl Sağlık Müdürlüğü, Çorum Belediyesi, Fethiye Belediyesi, Konya Karayolları 3. Bölge Müdürlüğü ve Anadolu Ecza Deposu.</p>
   <h2>4 Adımda Kiralama Süreci</h2>
-  <ol>
+  <ol class="pd-adim">
     <li><strong>İhtiyacınızı Belirtin</strong> — araç tipi, süre ve adedi seçin; formu 1 dakikada doldurun.</li>
     <li><strong>Filonuz Hazırlansın</strong> — ihtiyaca uygun araç ve paket içeriğini birlikte belirleyelim.</li>
     <li><strong>Şeffaf Teklif Sunalım</strong> — sürpriz kalem yok; tüm kalemler yazılı ve net şekilde sunulur.</li>
@@ -150,18 +154,18 @@
   var t=setInterval(function(){
     n++;
     var hero=document.querySelector('section.relative.flex');
-    var existing=document.querySelector('img[src="/assets/konya-filo-kiralama-filosu.jpg"]');
+    var existing=document.querySelector('.pd-cycle');
     if(hero&&!existing){
       clearInterval(t);
-      if(!document.getElementById('pd-cine-stil')){
-        var st=document.createElement('style');st.id='pd-cine-stil';
-        st.textContent='#pd-cine{width:100%;border-radius:12px;overflow:hidden;background:#0d3d5e;margin:0 0 8px}#pd-cine video{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover}';
+      if(!document.getElementById('pd-cycle-stil')){
+        var st=document.createElement('style');st.id='pd-cycle-stil';
+        st.textContent='.pd-cycle{position:relative;width:100%;aspect-ratio:16/9;border-radius:14px;overflow:hidden;background:#0d3d5e;margin:0 0 8px}.pd-cycle img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;animation:pd-dongu 24s infinite;will-change:opacity,transform}.pd-cycle img:nth-child(1){animation-delay:0s}.pd-cycle img:nth-child(2){animation-delay:8s}.pd-cycle img:nth-child(3){animation-delay:16s}@keyframes pd-dongu{0%{opacity:0;transform:scale(1.06)}4.17%{opacity:1;transform:scale(1.07)}29.17%{opacity:1;transform:scale(1.14)}33.33%{opacity:0;transform:scale(1.14)}100%{opacity:0;transform:scale(1.06)}}@media(prefers-reduced-motion:reduce){.pd-cycle img{animation:none}.pd-cycle img:nth-child(1){opacity:1}}';
         document.head.appendChild(st);
       }
       var f=document.createElement('figure');
       f.style.margin='0 0 24px';
       f.style.width='100%';
-      f.innerHTML='<div id="pd-cine"><video src="/assets/konya-filo-tanitim-2.mp4" poster="/assets/konya-filo-kiralama-filosu.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Pekdo\u011fru filo kiralama \u2014 Konya filo park\u0131 drone \u00e7ekimi; binek otomobil ve ticari ara\u00e7lar"></video></div><figcaption style="font-size:13px;color:#64748b;margin-top:8px">Pekdo\u011fru filo park\u0131 \u2014 Konya. Binek otomobil ve ticari ara\u00e7 filosu tek \u00e7at\u0131 alt\u0131nda.</figcaption>';
+      f.innerHTML='<div class="pd-cycle" role="img" aria-label="Pekdo\u011fru filo park\u0131 \u2014 Konya; binek otomobil ve ticari ara\u00e7 filosu"><img src="/assets/konya-filo-dron-ust.jpg" alt="Pekdo\u011fru filo park\u0131 drone g\u00f6r\u00fcnt\u00fcs\u00fc \u2014 Konya ara\u00e7 kiralama filosu"><img src="/assets/konya-doblo-filo-2.jpg" alt="Pekdo\u011fru ticari ara\u00e7 filosu \u2014 Ford Transit, Ford Courier ve Fiat Doblo, Konya" loading="lazy"><img src="/assets/konya-egea-filo.jpg" alt="Pekdo\u011fru binek ara\u00e7 filosu \u2014 Fiat Egea, Konya" loading="lazy"></div><figcaption style="font-size:13px;color:#64748b;margin-top:8px">Pekdo\u011fru filo park\u0131 \u2014 Konya. Binek otomobil ve ticari ara\u00e7 filosu tek \u00e7at\u0131 alt\u0131nda.</figcaption>';
       hero.parentNode.insertBefore(f,hero.nextSibling);
     }
     var foot=document.querySelector('footer');

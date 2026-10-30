@@ -1,5 +1,30 @@
-/* Pekdogru Filo - tasarim duzeltme katmani v1 */
-/* 1) Tipografi birligi: serif karisikligini kaldir, tek kurumsal font */
+/* PEKDOĞRU — pd-theme.css v2
+   Premium tasarım sistemi: marka kırmızısı + koyu mürekkep, tek tipografi (Manrope),
+   tutarlı buton/kart/rozet dili. Yalnızca enjeksiyon katmanı — React paketine dokunmaz.
+   SEO metinleri, başlıklar ve yapılandırılmış veriler hiç etkilenmez. */
+
+:root {
+  --pd-red: #d21f26;
+  --pd-red-dark: #a81820;
+  --pd-ink: #0a1622;
+  --pd-navy: #0d3d5e;
+  --pd-body: #1c2430;
+  --pd-muted: #5a6572;
+  --pd-line: #e8ecf1;
+  --pd-paper: #f7f8fa;
+  --pd-radius: 14px;
+  --pd-shadow: 0 10px 30px rgba(10, 22, 34, .08);
+  --pd-shadow-lg: 0 18px 44px rgba(10, 22, 34, .14);
+}
+
+::selection { background: rgba(210, 31, 38, .18); }
+a:focus-visible, button:focus-visible {
+  outline: 3px solid rgba(210, 31, 38, .45);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* ---------- 1) Tipografi ---------- */
 .font-display,
 h1.font-display, h2.font-display, h3.font-display {
   font-family: 'Manrope', ui-sans-serif, system-ui, sans-serif !important;
@@ -7,20 +32,284 @@ h1.font-display, h2.font-display, h3.font-display {
 }
 h1, h2, h3 { text-wrap: balance; }
 
-/* 2) Hero: gercek filo fotosu daha belirgin olsun, logo karti kaldirildi */
-section[class*="min-h"] > img[src*="/assets/konya-"] { opacity: .55 !important; }
+/* Bölüm başlığı: güçlü ölçek + kırmızı vurgu çizgisi (metinle birlikte hareket eder) */
+main h2 {
+  font-family: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em;
+  font-size: clamp(1.55rem, 2.6vw, 2.2rem) !important;
+  line-height: 1.2;
+}
+main h2::before {
+  content: "";
+  display: inline-block;
+  width: 26px; height: 4px;
+  border-radius: 2px;
+  background: var(--pd-red);
+  vertical-align: middle;
+  margin-right: 14px;
+}
 
-/* 3) Deger kartlari (Temel Ilkelerimiz): stok fotolarsiz tem tipografik kart */
-.pd-val {
-  border-top: 3px solid #d21f26 !important;
+/* ---------- 2) Hero ---------- */
+section[class*="min-h"] > img[src*="/assets/konya-"] { opacity: .55 !important; }
+section[class*="min-h"] h1 {
+  font-size: clamp(2.35rem, 5.4vw, 4.1rem) !important;
+  line-height: 1.08 !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.03em;
+}
+
+/* ---------- 3) Buton sistemi ---------- */
+/* React teklif butonu: marka kırmızısı */
+main a[href*="teklif"] {
+  background: var(--pd-red) !important;
+  color: #fff !important;
+  border-radius: 10px !important;
+}
+/* Statik blok CTA'ları: mavi değil, marka kırmızısı */
+#seo-static a.cta {
+  background: var(--pd-red);
+  border-radius: 10px;
+  padding: 13px 24px;
+  box-shadow: 0 6px 18px rgba(210, 31, 38, .25);
+  transition: transform .2s ease, box-shadow .2s ease, background-color .2s ease;
+}
+#seo-static a.cta:hover { background: var(--pd-red-dark); transform: translateY(-2px); box-shadow: 0 10px 26px rgba(210, 31, 38, .35); }
+#seo-static a.cta.alt {
   background: #fff;
+  color: var(--pd-red);
+  border: 2px solid var(--pd-red);
+  box-shadow: none;
+}
+#seo-static a.cta.alt:hover { background: #fff; box-shadow: 0 8px 20px rgba(210, 31, 38, .15); }
+
+/* ---------- 4) Kart sistemi (React grid kartları) ---------- */
+main .grid > * {
+  background: #fff;
+  border: 1px solid var(--pd-line);
+  border-radius: var(--pd-radius);
+  box-shadow: var(--pd-shadow);
+  transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  main .grid > *:hover { border-color: rgba(210, 31, 38, .35); box-shadow: var(--pd-shadow-lg); }
+}
+
+/* ---------- 5) Footer: koyu kurumsal zemin ---------- */
+footer {
+  background: var(--pd-ink) !important;
+  color: #b7c0cb !important;
+}
+footer h2, footer h3, footer h4, footer strong { color: #fff !important; }
+footer a { color: #cbd5e1 !important; transition: color .2s ease; }
+footer a:hover { color: #fff !important; }
+footer p, footer span, footer li, footer div { color: #b7c0cb; }
+footer a.cta, footer [class*="btn"] { color: #fff !important; }
+
+/* ---------- 6) Statik SEO bloğu (#seo-static) tasarım sistemi ---------- */
+#seo-static { font-size: 16px; }
+#seo-static .wrap { max-width: 1120px; }
+#seo-static header {
+  padding: 18px 0;
+  border-bottom: 1px solid var(--pd-line);
+}
+#seo-static header strong {
+  color: var(--pd-ink);
+  letter-spacing: .02em;
+}
+#seo-static nav a {
+  color: var(--pd-body);
+  position: relative;
+  transition: color .2s ease;
+}
+#seo-static nav a:hover { color: var(--pd-red); }
+
+#seo-static .hero {
+  padding: 72px 0;
+  background: linear-gradient(180deg, #fff 0%, var(--pd-paper) 100%);
+  border-bottom: 1px solid var(--pd-line);
+}
+#seo-static h1 {
+  font-size: clamp(2rem, 4.5vw, 3.1rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--pd-ink);
+}
+#seo-static h2 {
+  font-size: clamp(1.5rem, 2.6vw, 2.05rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--pd-ink);
+  margin: 44px 0 14px;
+}
+#seo-static h2::before {
+  content: "";
+  display: inline-block;
+  width: 26px; height: 4px;
+  border-radius: 2px;
+  background: var(--pd-red);
+  vertical-align: middle;
+  margin-right: 14px;
+}
+#seo-static h3 {
+  font-weight: 700;
+  color: var(--pd-ink);
+  border-left: 3px solid var(--pd-red);
+  padding-left: 10px;
+}
+#seo-static p { color: var(--pd-body); }
+#seo-static ul { padding-left: 0; list-style: none; }
+#seo-static ul li {
+  padding: 7px 0 7px 22px;
+  position: relative;
+}
+#seo-static ul li::before {
+  content: "";
+  position: absolute; left: 2px; top: 15px;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--pd-red);
+}
+#seo-static ul li a { color: var(--pd-body); font-weight: 600; }
+#seo-static ul li a:hover { color: var(--pd-red); }
+@media (min-width: 820px) {
+  #seo-static ul.kapsam { columns: 2; column-gap: 40px; }
+}
+
+/* Sayaçlar: premium kart görünümü */
+#seo-static .stats {
+  gap: 16px;
+  margin: 28px 0 8px;
+}
+#seo-static .stats > div {
+  background: #fff;
+  border: 1px solid var(--pd-line);
+  border-radius: var(--pd-radius);
+  box-shadow: var(--pd-shadow);
+  padding: 18px 22px;
+  flex: 1 1 180px;
+  border-top: 3px solid var(--pd-red);
+}
+#seo-static .stats b {
+  font-size: 30px;
+  font-weight: 800;
+  color: var(--pd-red);
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+}
+#seo-static .stats > div {
+  color: var(--pd-muted);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* Kurum listesi: güven callout kutusu */
+#seo-static .pd-kurum {
+  background: var(--pd-paper);
+  border: 1px solid var(--pd-line);
+  border-left: 4px solid var(--pd-navy);
+  border-radius: 12px;
+  padding: 16px 20px;
+  color: var(--pd-body);
+}
+
+/* 4 Adım: numaralı kart akışı */
+#seo-static ol.pd-adim {
+  list-style: none;
+  counter-reset: pd-adim;
+  padding: 0;
+  margin: 20px 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 16px;
+}
+#seo-static ol.pd-adim > li {
+  counter-increment: pd-adim;
+  background: #fff;
+  border: 1px solid var(--pd-line);
+  border-radius: var(--pd-radius);
+  box-shadow: var(--pd-shadow);
+  padding: 20px 18px 18px;
+  position: relative;
+}
+#seo-static ol.pd-adim > li::before {
+  content: counter(pd-adim);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px; height: 34px;
+  border-radius: 10px;
+  background: var(--pd-red);
+  color: #fff;
+  font-weight: 800;
+  font-size: 16px;
+  margin-bottom: 10px;
+}
+#seo-static ol.pd-adim > li strong {
+  display: block;
+  color: var(--pd-ink);
+  margin-bottom: 4px;
+}
+
+#seo-static footer {
+  background: var(--pd-ink);
+  border-top: 3px solid var(--pd-red);
+  padding: 36px 0 28px;
+  color: #b7c0cb;
+}
+#seo-static footer strong { color: #fff; }
+#seo-static footer a { color: #cbd5e1; }
+#seo-static footer a:hover { color: #fff; }
+
+/* ---------- 7) Medya döngüsü: 3 gerçek fotoğraf, yalnızca yavaş zoom ---------- */
+.pd-cycle {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--pd-radius);
+  overflow: hidden;
+  background: var(--pd-navy);
+}
+.pd-cycle img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  animation: pd-dongu 24s infinite;
+  will-change: opacity, transform;
+}
+.pd-cycle img:nth-child(1) { animation-delay: 0s; }
+.pd-cycle img:nth-child(2) { animation-delay: 8s; }
+.pd-cycle img:nth-child(3) { animation-delay: 16s; }
+@keyframes pd-dongu {
+  0%     { opacity: 0; transform: scale(1.06); }
+  4.17%  { opacity: 1; transform: scale(1.07); }
+  29.17% { opacity: 1; transform: scale(1.14); }
+  33.33% { opacity: 0; transform: scale(1.14); }
+  100%   { opacity: 0; transform: scale(1.06); }
+}
+
+/* ---------- 8) Değer kartları (v1'den korunur) ---------- */
+.pd-val {
+  border-top: 3px solid var(--pd-red) !important;
+  background: #fff;
+  box-shadow: var(--pd-shadow);
 }
 .pd-val h3 { margin: 0 0 8px; }
 
-/* 4) Faaliyet / kart fotolarinda tutarli kadraj */
+/* Faaliyet / kart fotolarında tutarlı kadraj */
 img[src*="/assets/konya-filo-kiralama-filosu.jpg"] { object-fit: cover; }
 
-/* 5) Kucuk ekranlarda hero basligi nefes alsin */
+/* ---------- 9) Küçük ekranlar ---------- */
 @media (max-width: 640px) {
   section[class*="min-h"] h1 { font-size: 2.35rem !important; }
+  #seo-static .hero { padding: 48px 0; }
+  #seo-static .stats > div { flex: 1 1 46%; }
+}
+
+/* ---------- 10) Azaltılmış hareket ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .pd-cycle img { animation: none !important; }
+  .pd-cycle img:nth-child(1) { opacity: 1; }
+  #seo-static a.cta, main .grid > * { transition: none !important; }
 }
