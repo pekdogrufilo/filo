@@ -3465,37 +3465,23 @@
   html[data-theme="light"] .sidebar .sb-item{color:#AFC0CE !important;}
 
   /* ======================================================================
-     v.369 — SOL MENÜ "CAM BUZLU" BİREBİR (kullanıcı: mockup 6'nın aynısı)
-     Fotoğraf GERÇEK buzlu cam arkasında: sticky-pseudo tekniği ile CSS
-     blur(22px) uygulanır, panel süt beyazı buz olur. Menü öğeleri KOYU
-     SLATE yazı; aktif öğe TAM BEYAZ cam satır + güçlü blur + mavi vurgu
-     noktası; PEKDOĞRU lacivert. Panelin geri kalanına dokunulmadı.
-     Not: Tema önekli kurallar, eski sürümlerin yüksek özgüllüklü kurallarını
-     ezmek için bilinçli tekrarlanıyor. isolation:isolate, ::before'un
-     negatif z-index ile içerik ARKASINA kilitlenmesini sağlar.
+     v.370 — SOL MENÜ "CAM BUZLU" GARANTİLİ VERSİYON
+     v369'daki sticky-pseudo + CSS filter blur tekniği iPad Safari'de
+     bozulabildiği için KALDIRILDI. Yerine fotoğraf (login-filo.jpg)
+     sunucu tarafında önceden bulanıklaştırıldı (login-filo-blur.jpg) ve
+     düz background olarak verildi — filtre/position hilesi yok,
+     her tarayıcıda (eski iOS dahil) aynı görünür.
+     Panel: açık buzlu cam; menü yazıları KOYU SLATE; aktif öğe TAM BEYAZ
+     cam satır + mavi vurgu noktası; PEKDOĞRU lacivert.
      ====================================================================== */
   .sidebar,html[data-theme="dark"] .sidebar,html[data-theme="light"] .sidebar{
-    background:rgba(238,243,248,.9) !important;
+    background-color:#DCE6EE !important;
+    background-image:linear-gradient(rgba(246,250,253,.52), rgba(240,246,251,.60)), url('login-filo-blur.jpg') !important;
+    background-size:cover !important;
+    background-position:center !important;
+    background-repeat:no-repeat !important;
+    background-attachment:scroll !important;
     border-right:1px solid rgba(255,255,255,.55) !important;
-    isolation:isolate;
-  }
-  .sidebar::before{
-    content:'';
-    position:sticky;
-    top:0;
-    display:block;
-    align-self:stretch;
-    flex-shrink:0;
-    height:100vh;
-    margin-bottom:-100vh;
-    background-image:linear-gradient(rgba(246,250,253,.46), rgba(240,246,251,.56)), url('login-filo.jpg');
-    background-size:cover;
-    background-position:center;
-    background-attachment:scroll;
-    filter:blur(20px) saturate(1.45);
-    transform:scale(1.18);
-    z-index:-1;
-    pointer-events:none;
   }
   .sidebar{scrollbar-color:rgba(40,60,80,.3) transparent;}
   .sidebar::-webkit-scrollbar-track{background:rgba(255,255,255,.25);}
