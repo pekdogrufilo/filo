@@ -1,10 +1,13 @@
 /* PEKDOĞRU Filo Paneli — Service Worker v.332 */
-const CACHE_NAME = 'filo-panel-v355';
+const CACHE_NAME = 'filo-panel-v356';
 const SHELL_ASSETS = [
   './',
   './index.html',
-  './style.css?v=333',
-  './app.js?v=333',
+  './app.js?v=356',
+  './style.css?v=356',
+  './firebase-app-compat.js',
+  './firebase-firestore-compat.js',
+  './firebase-auth-compat.js',
   './teklif.html',
   './sozlesme.html',
   './logo.png',
@@ -48,16 +51,49 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(request.url);
 
-  // Harici CDN kütüphaneleri için network-first
+  // v.356: TABLET PERFORMANSI — sürümlü/az değişen varlıklar için cache-first
+  // (stale-while-revalidate): önbellekte varsa ANINDA sunulur, güncelleme arka planda yapılır.
+  // Eski network-first stratejisinde tablet (yavaş Wi-Fi/hücresel) HER açılışta 1.75MB app.js +
+  // 500KB Firebase SDK + fontlar için ağ round-trip'i bekliyordu; panel yavaş hissediyordu.
+  // Güvenlik: sürümlü URL'ler (?v=NNN) her sürümde değiştiği için eski sürüm asla sunulmaz;
+  // yeni sürümün yeni URL'i ilk istekte ağdan çekilip önbelleğe yazılır.
+  const yol = url.pathname;
+  const surumlu = url.search.includes('v=');
+  const sabitSdk = /firebase-(app|firestore|auth)-compat\.js$/.test(yol);
+  const statikVarlik = /\.(js|css|woff2?|png|svg|ico|json)(\?|$)/.test(yol);
+  const htmlMi = yol.endsWith('.html') || yol.endsWith('/');
+  if (surumlu || sabitSdk || (statikVarlik && !htmlMi)) {
+    event.respondWith(
+      caches.match(request).then((hit) => {
+        const agTazele = fetch(request)
+          .then((res) => {
+            if (res && res.status === 200) {
+              const copy = res.clone();
+              caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+            }
+            return res;
+          })
+          .catch(() => hit);
+        return hit || agTazele;
+      })
+    );
+    return;
+  }
+
+  // Harici CDN kütüphaneleri + Google Fonts için de cache-first (v.356): fontlar ve jsPDF/
+  // html2canvas gibi kütüphaneler tablette her açılışta ağ beklemesin; arka planda tazelenir.
   if (url.origin !== self.location.origin) {
     event.respondWith(
-      fetch(request)
-        .then((res) => {
-          const copy = res.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
-          return res;
-        })
-        .catch(() => caches.match(request))
+      caches.match(request).then((hit) => {
+        const agTazele = fetch(request)
+          .then((res) => {
+            const copy = res.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+            return res;
+          })
+          .catch(() => hit);
+        return hit || agTazele;
+      })
     );
     return;
   }

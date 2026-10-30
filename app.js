@@ -2991,6 +2991,13 @@ document.getElementById('excelInput').onchange = (e)=>{
   e.target.value = '';
 };
 
+// v.356: arama kutusunda her tuş vuruşunda tüm sayfayı yeniden çizmek tablette takılma
+// yaratıyordu — tuş vuruşları 250ms'lik pencerede birleştirilir, yazma bitince tek render.
+function aramaGecikmeli(anahtar, fn, ms){
+  clearTimeout(window['__deb_'+anahtar]);
+  window['__deb_'+anahtar] = setTimeout(fn, ms||250);
+}
+
 function showToast(msg, isErr){
   const old = document.querySelector('.toast');
   if(old) old.remove();
@@ -16332,7 +16339,7 @@ function belgeMerkeziBolumuHtml(){
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
       <input type="text" id="bmArama" placeholder="Plaka / müşteri / tür ara…" value="${esc(f.q)}"
-        oninput="window.__belgeMerkezFiltre=Object.assign({},window.__belgeMerkezFiltre,{q:this.value});belgeMerkeziListesiYenile();"
+        oninput="window.__belgeMerkezFiltre=Object.assign({},window.__belgeMerkezFiltre,{q:this.value});aramaGecikmeli('belgeMerkezi',belgeMerkeziListesiYenile);"
         style="${selStyle}flex:1;min-width:160px;">
       <select onchange="window.__belgeMerkezFiltre=Object.assign({},window.__belgeMerkezFiltre,{tur:this.value});renderBelgelerPage();" style="${selStyle}">
         <option value="">Tüm türler</option>
@@ -17370,7 +17377,7 @@ function renderMusterilerPage(){
     <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
       <div class="search-wrap" style="flex:1;min-width:220px;margin-bottom:0;">
         <input id="musteriAramaInput" type="text" placeholder="Müşteri veya kurum adına göre ara..." value="${esc(window.__musteriArama||'')}"
-          oninput="window.__musteriArama=this.value;window.__musteriFokus=true;renderMusterilerPage()">
+          oninput="window.__musteriArama=this.value;window.__musteriFokus=true;aramaGecikmeli('musteriler',renderMusterilerPage);">
       </div>
       <span style="font-size:13px;color:var(--text-3);white-space:nowrap;">${gercekMusteriler.length} gerçek kayıt · ${tumu.length} araç kaydından türetilmiş</span>
       <button class="add-btn" onclick="musteriFormAc()" style="padding:9px 16px;font-size:13px;">+ Yeni Müşteri</button>
@@ -18896,7 +18903,7 @@ function renderTedarikcilerPage(){
     <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
         <input type="text" value="${esc(window.__tedarikciArama||'')}" placeholder="Tedarikçi ara..." autocomplete="off"
-          oninput="window.__tedarikciArama=this.value;renderTedarikcilerPage()"
+          oninput="window.__tedarikciArama=this.value;aramaGecikmeli('tedarikciler',renderTedarikcilerPage)"
           style="background:var(--surface-2);border:1px solid var(--line);color:var(--paper);padding:8px 12px;border-radius:8px;font-size:12.5px;min-width:180px;font-family:inherit;">
         <select onchange="window.__tedarikciSiralama=this.value;renderTedarikcilerPage()" style="background:var(--surface-2);border:1px solid var(--line);color:var(--paper);padding:8px 10px;border-radius:8px;font-size:12.5px;">
           <option value="bakiye_desc" ${siralama==='bakiye_desc'?'selected':''}>Bakiye (çoktan aza)</option>
