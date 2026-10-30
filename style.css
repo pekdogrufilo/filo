@@ -3463,3 +3463,94 @@
     background:linear-gradient(180deg,#0C1B2A 0%,#0F2233 58%,#0C1B2A 100%) !important;
   }
   html[data-theme="light"] .sidebar .sb-item{color:#AFC0CE !important;}
+
+  /* ======================================================================
+     v.368 — SOL MENÜ "CAM BUZLU" (kullanıcı seçimi, 6)
+     Menü artık gün batımı filo fotoğrafı üzerinde buzlu cam panel.
+     Foto sabitlenir (fixed attachment) — menü kayarken cam hissi korunur.
+     Aktif öğe: tam beyaz buzlu cam satır (backdrop blur) + koyu navy
+     yazı + mavi vurgu noktası. Panelin geri kalanına dokunulmadı.
+     Not: Tema önekli (dark/light) kurallar, eski sürümlerin daha yüksek
+     özgüllüklü kurallarını ezmek için bilinçli olarak tekrarlanıyor.
+     ====================================================================== */
+  .sidebar,html[data-theme="dark"] .sidebar,html[data-theme="light"] .sidebar{
+    background-color:#0C1B2A !important;
+    background-image:
+      linear-gradient(168deg, rgba(16,28,42,.34) 0%, rgba(10,20,32,.60) 55%, rgba(8,16,26,.76) 100%),
+      url('login-filo.jpg') !important;
+    background-size:cover,cover !important;
+    background-position:center,center !important;
+    background-repeat:no-repeat,no-repeat !important;
+    background-attachment:scroll,fixed !important;
+    border-right:1px solid rgba(255,255,255,.16) !important;
+  }
+  .sidebar,html[data-theme="dark"] .sidebar,html[data-theme="light"] .sidebar{
+    scrollbar-color:rgba(255,255,255,.4) transparent;
+  }
+  .sidebar::-webkit-scrollbar-track{background:rgba(255,255,255,.06);}
+  .sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.35);border-radius:10px;border:2px solid transparent;background-clip:content-box;}
+  .sidebar::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.5);background-clip:content-box;}
+  .sidebar .sb-brand-text{color:#FFFFFF !important;font-weight:700 !important;}
+  .sidebar .sb-brand-sub{color:rgba(217,228,238,.72) !important;}
+  .sidebar .sb-brand-mark{background:#FFFFFF !important;border:none !important;box-shadow:0 2px 12px rgba(0,0,0,.4) !important;}
+  .sidebar .sb-search-trigger{
+    background:rgba(255,255,255,.10) !important;
+    border:1px solid rgba(255,255,255,.16) !important;
+    color:#D9E4EE !important;
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+  }
+  .sidebar .sb-search-trigger:hover{background:rgba(255,255,255,.17) !important;color:#FFFFFF !important;}
+  .sidebar .sb-search-trigger .sb-kbd{background:rgba(255,255,255,.14) !important;color:#C9D7E3 !important;}
+  .sidebar .sb-item,html[data-theme="dark"] .sidebar .sb-item,html[data-theme="light"] .sidebar .sb-item{
+    color:#D9E4EE !important;border-radius:10px !important;
+  }
+  .sidebar .sb-item svg,html[data-theme="dark"] .sidebar .sb-item svg,html[data-theme="light"] .sidebar .sb-item svg{
+    color:#9DB2C4 !important;transition:color .15s ease;
+  }
+  .sidebar .sb-item:hover:not(.active),html[data-theme="dark"] .sidebar .sb-item:hover:not(.active),html[data-theme="light"] .sidebar .sb-item:hover:not(.active){
+    background:rgba(255,255,255,.10) !important;color:#FFFFFF !important;
+  }
+  .sidebar .sb-item:hover:not(.active) svg,html[data-theme="dark"] .sidebar .sb-item:hover:not(.active) svg,html[data-theme="light"] .sidebar .sb-item:hover:not(.active) svg{
+    color:#FFFFFF !important;
+  }
+  .sidebar .sb-item.active,html[data-theme="dark"] .sidebar .sb-item.active,html[data-theme="light"] .sidebar .sb-item.active{
+    background:rgba(255,255,255,.88) !important;
+    color:#0E2237 !important;
+    backdrop-filter:blur(16px) saturate(1.3);
+    -webkit-backdrop-filter:blur(16px) saturate(1.3);
+    box-shadow:0 6px 20px rgba(4,10,18,.38) !important;
+    border-radius:10px !important;
+  }
+  .sidebar .sb-item.active svg,html[data-theme="dark"] .sidebar .sb-item.active svg,html[data-theme="light"] .sidebar .sb-item.active svg{
+    color:#0E2237 !important;
+  }
+  .sidebar .sb-item.active::before{
+    content:'' !important;
+    position:static !important;
+    width:5px;height:5px;flex-shrink:0;
+    border-radius:50%;
+    background:#2563EB;
+    box-shadow:0 0 8px rgba(37,99,235,.85);
+  }
+  .sidebar .sb-group-head,html[data-theme="dark"] .sidebar .sb-group-head,html[data-theme="light"] .sidebar .sb-group-head{
+    color:rgba(217,228,238,.55) !important;
+  }
+  .sidebar .sb-group-head:hover{color:#FFFFFF !important;}
+  .sidebar .sb-section{color:rgba(217,228,238,.5) !important;}
+  .sidebar .sb-divider{background:rgba(255,255,255,.14) !important;}
+  .sidebar .sb-collapse-btn{color:rgba(217,228,238,.6) !important;}
+  .sidebar .sb-collapse-btn:hover{background:rgba(255,255,255,.10) !important;color:#FFFFFF !important;}
+  .sidebar .sb-foot{
+    background:transparent !important;
+    backdrop-filter:none !important;
+    -webkit-backdrop-filter:none !important;
+    border-top:1px solid rgba(255,255,255,.14) !important;
+  }
+  .sidebar .sb-user{border-top:1px solid rgba(255,255,255,.12) !important;}
+  .sidebar .sb-user-avatar{background:rgba(255,255,255,.16) !important;color:#FFFFFF !important;}
+  .sidebar .sb-user-name,html[data-theme="dark"] .sidebar .sb-user-name,html[data-theme="light"] .sidebar .sb-user-name{color:#F2F7FA !important;}
+  .sidebar .sb-user-role,html[data-theme="dark"] .sidebar .sb-user-role,html[data-theme="light"] .sidebar .sb-user-role{color:rgba(217,228,238,.65) !important;}
+  .sidebar .sb-version,html[data-theme="dark"] .sidebar .sb-version,html[data-theme="light"] .sidebar .sb-version{color:rgba(226,236,244,.55) !important;}
+  .sidebar .sb-foot-tag,html[data-theme="dark"] .sidebar .sb-foot-tag,html[data-theme="light"] .sidebar .sb-foot-tag{color:rgba(226,236,244,.6) !important;}
+  .sidebar .sb-foot-brand,html[data-theme="dark"] .sidebar .sb-foot-brand,html[data-theme="light"] .sidebar .sb-foot-brand{color:rgba(226,236,244,.8) !important;}
