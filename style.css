@@ -3426,3 +3426,40 @@
   }
   html[data-theme="light"] .splash-grid-bg,
   html[data-theme="light"] .splash-glow{display:none !important;}
+
+  /* ======================================================================
+     v.365 — SOL MENÜ "ÇİFT TON" (kullanıcı seçimi, E — bankacılık dili)
+     Foto alt bant (v.362) kaldırıldı: saf lacivert zemin, aktif öğe
+     BEYAZ kart içinde koyu navy yazı + sol kenarda teal şerit — yüksek
+     kontrast, kurumsal banka ciddiyeti. Doluluk rozeti gizlendi.
+     ====================================================================== */
+  .sidebar{
+    background:linear-gradient(180deg,#0C1B2A 0%,#0F2233 58%,#0C1B2A 100%) !important;
+    border-right:1px solid rgba(255,255,255,.07) !important;
+  }
+  .sb-doluluk{display:none !important;}
+  .sidebar .sb-foot{
+    background:transparent !important;
+    backdrop-filter:none !important;
+    -webkit-backdrop-filter:none !important;
+    border-top:1px solid rgba(255,255,255,.08) !important;
+    margin-top:0 !important;
+  }
+  .sidebar .sb-item{color:#AFC0CE !important;border-radius:10px !important;}
+  .sidebar .sb-item svg{color:#7E93A6 !important;transition:color .15s ease;}
+  .sidebar .sb-item:hover{background:rgba(255,255,255,.06) !important;color:#FFFFFF !important;}
+  .sidebar .sb-item:hover svg{color:#FFFFFF !important;}
+  .sidebar .sb-item.active{
+    background:#FFFFFF !important;
+    color:#10263B !important;
+    box-shadow:inset 3px 0 0 #00C389, 0 6px 18px rgba(4,10,18,.4) !important;
+  }
+  .sidebar .sb-item.active svg{color:#10263B !important;}
+  .sidebar .sb-group-head{color:rgba(175,192,206,.5) !important;}
+  .sidebar .sb-user-name,.sidebar .sb-user-role{color:#E8EFF4 !important;}
+  .sidebar .sb-version{color:rgba(232,239,244,.5) !important;}
+  .sidebar .sb-foot-tag{color:rgba(232,239,244,.55) !important;}
+  html[data-theme="light"] .sidebar{
+    background:linear-gradient(180deg,#0C1B2A 0%,#0F2233 58%,#0C1B2A 100%) !important;
+  }
+  html[data-theme="light"] .sidebar .sb-item{color:#AFC0CE !important;}
