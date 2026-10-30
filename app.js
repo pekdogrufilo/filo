@@ -1343,10 +1343,12 @@ function getTheme(){
   try{ return localStorage.getItem('filoPaneli_theme') || 'light'; }catch(e){ return 'light'; }
 }
 function setTheme(theme){
-  document.documentElement.setAttribute('data-theme', theme === 'light' ? 'light' : 'dark');
-  try{ localStorage.setItem('filoPaneli_theme', theme); }catch(e){}
+  // v.366: "Açık Kurumsal" kimlik — panel kalıcı olarak AÇIK temada sabitlendi.
+  // Kullanıcı tercihine bakılmaksızın light uygulanır (koyu lacivert kimlik kaldırıldı).
+  document.documentElement.setAttribute('data-theme', 'light');
+  try{ localStorage.setItem('filoPaneli_theme', 'light'); }catch(e){}
   const metaEl = document.getElementById('themeColorMeta');
-  if(metaEl) metaEl.setAttribute('content', theme === 'light' ? '#F5F8F7' : '#0B0C0E');
+  if(metaEl) metaEl.setAttribute('content', '#F5F8F7');
   updateThemeToggleUI();
 }
 function toggleTheme(){
@@ -10773,17 +10775,17 @@ function renderDashboard(){
   page.innerHTML = `
     <div id="dashYedekUyari"></div>
 
-    <!-- v.361: Karşılama hero kartı (Tasarım D) — giriş ekranıyla aynı foto dili -->
-    <div style="position:relative;border-radius:16px;overflow:hidden;margin-bottom:14px;min-height:190px;background:linear-gradient(120deg,rgba(10,20,32,.88) 0%,rgba(10,20,32,.55) 55%,rgba(10,20,32,.35) 100%),url('./login-filo.jpg') center/cover no-repeat,#0B1725;box-shadow:var(--shadow-md);">
+    <!-- v.366: Karşılama hero kartı — açık kurumsal kimlik (beyaz kart, mavi vurgu) -->
+    <div style="position:relative;border-radius:16px;margin-bottom:14px;min-height:150px;background:#FFFFFF;border:1px solid var(--border);box-shadow:var(--shadow-sm);">
       <div style="padding:24px 26px 20px;position:relative;z-index:1;">
-        <div style="font-family:var(--font-mono,monospace);font-size:10.5px;letter-spacing:2.6px;text-transform:uppercase;color:rgba(214,230,226,.75);">${bugunTarihi}</div>
-        <div style="font-family:var(--font-display);font-weight:800;font-size:26px;color:#F2F7F6;letter-spacing:-.02em;margin-top:8px;">${selam361}${karsiAd361?', '+karsiAd361:''}. <span style="color:#3FD9BE;">Filonuz hazır.</span></div>
-        <div style="font-size:13.5px;color:rgba(226,238,235,.78);margin-top:6px;">${total} araçlı filonuzda ${kirada} araç kirada — doluluk %${pct(kirada)}${dashGecikenTahsilat>0?', <b style="color:#FFB4AD;">'+fmtTL2(dashGecikenTahsilat)+' geciken tahsilat</b> var':''}.</div>
+        <div style="font-family:var(--font-mono,monospace);font-size:10.5px;letter-spacing:2.6px;text-transform:uppercase;color:var(--text-3);">${bugunTarihi}</div>
+        <div style="font-family:var(--font-display);font-weight:800;font-size:26px;color:var(--text);letter-spacing:-.02em;margin-top:8px;">${selam361}${karsiAd361?', '+karsiAd361:''}. <span style="color:var(--accent-blue);">Filonuz hazır.</span></div>
+        <div style="font-size:13.5px;color:var(--text-2);margin-top:6px;">${total} araçlı filonuzda ${kirada} araç kirada — doluluk %${pct(kirada)}${dashGecikenTahsilat>0?', <b style="color:#C63B33;">'+fmtTL2(dashGecikenTahsilat)+' geciken tahsilat</b> var':''}.</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;">
-          <span style="background:rgba(255,255,255,.14);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.22);color:#fff;border-radius:9px;padding:6px 12px;font-size:12px;font-weight:700;">🚐 ${kirada} Kirada</span>
-          <span style="background:rgba(255,255,255,.14);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.22);color:#fff;border-radius:9px;padding:6px 12px;font-size:12px;font-weight:700;">✓ ${musait} Müsait</span>
-          <span style="background:rgba(255,255,255,.14);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.22);color:#fff;border-radius:9px;padding:6px 12px;font-size:12px;font-weight:700;">🔧 ${serviste} Serviste</span>
-          <span style="background:rgba(63,217,190,.22);border:1px solid rgba(63,217,190,.4);color:#CFF5EC;border-radius:9px;padding:6px 12px;font-size:12px;font-weight:700;">Doluluk %${pct(kirada)}</span>
+          <span style="background:#F1F4F8;border:1px solid var(--border);color:var(--text);border-radius:9px;padding:6px 12px;font-size:12px;font-weight:700;">🚐 ${kirada} Kirada</span>
+          <span style="background:#F1F4F8;border:1px solid var(--border);color:var(--text);border-radius:9px;padding:6px 12px;font-size:12px;font-weight:700;">✓ ${musait} Müsait</span>
+          <span style="background:#F1F4F8;border:1px solid var(--border);color:var(--text);border-radius:9px;padding:6px 12px;font-size:12px;font-weight:700;">🔧 ${serviste} Serviste</span>
+          <span style="background:#EAF1FE;border:1px solid #C7DBFB;color:#1D4ED8;border-radius:9px;padding:6px 12px;font-size:12px;font-weight:700;">Doluluk %${pct(kirada)}</span>
         </div>
       </div>
     </div>
