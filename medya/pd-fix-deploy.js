@@ -38,9 +38,9 @@
       /* --- HERO: gercek filo fotosu, logo karti kaldirildi, marka metni --- */
       var heroImg = document.querySelector('section[class*="min-h"] img[src="/assets/images/filo.webp"]');
       if (heroImg) {
-        heroImg.src = '/assets/konya-kurumsal-filo-2.jpg';
-        heroImg.style.opacity = '.55';
-        heroImg.alt = 'Pekdo\u011fru Filo ara\u00e7 filosu \u2014 Konya';
+        heroImg.src = '/assets/login-filo.jpg';
+        heroImg.style.opacity = '.5';
+        heroImg.alt = 'Pekdo\u011fru filo ara\u00e7lar\u0131 g\u00fcn bat\u0131m\u0131nda \u2014 Konya ara\u00e7 kiralama filosu';
       }
       var heroSection = document.querySelector('section[class*="min-h"]');
       if (heroSection) {
