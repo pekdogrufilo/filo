@@ -4,6 +4,25 @@
 <meta charset="UTF-8">
 <title>Filo Kontrol Paneli</title>
 <meta name="robots" content="noindex, nofollow">
+<script>
+  /* v.372: Tablet/PWA'da takılı kalan eski Service Worker'ı güvenlik amaçlı
+     temizle. Sadece kayıtlı SW varsa unregister edip sayfayı bir kez yeniler;
+     sonrasında yeni SW (v372) kurulur. */
+  (function(){
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(regs){
+        if (regs.length) {
+          regs.forEach(function(r){ r.unregister(); });
+          if (location.search.indexOf('sw-reset=372') === -1) {
+            var url = location.href.split('?')[0] + '?sw-reset=372';
+            if (location.hash) url += location.hash;
+            location.replace(url);
+          }
+        }
+      }).catch(function(){});
+    }
+  })();
+</script>
 <!-- FAZ10 güvenlik: Content-Security-Policy. Bu uygulama TEK bir HTML dosyası olduğu için
      ana mantığın tamamı inline script etiketleri içinde ve onclick="..." gibi inline event
      handler'lar YAYGIN kullanılıyor — bu yüzden script-src/style-src 'unsafe-inline' İÇERMEK
@@ -27,7 +46,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="./style.css?v=371">
+<link rel="stylesheet" href="./style.css?v=372">
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#F4F4F2" id="themeColorMeta">
 <script>
@@ -106,7 +125,7 @@
         <div class="lock-divider"></div>
       </div>
       <div id="lockBody"></div>
-      <div class="lk-version">Sürüm: 2026-10-31.371</div>
+      <div class="lk-version">Sürüm: 2026-10-31.372</div>
     </div>
   </div>
   </div>
@@ -267,7 +286,7 @@
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-3);" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-10-31.371</div>
+      <div class="sb-version" style="font-family:var(--font-mono,monospace);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;padding:7px 0;letter-spacing:.2px;">Sürüm 2026-10-31.372</div>
     </div>
   </aside>
 
@@ -949,7 +968,7 @@
 </div>
 
 
-<script src="./app.js?v=371" defer></script>
+<script src="./app.js?v=372" defer></script>
 <script>
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('./sw.js')

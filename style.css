@@ -3465,27 +3465,36 @@
   html[data-theme="light"] .sidebar .sb-item{color:#AFC0CE !important;}
 
   /* ======================================================================
-     v.371 — SOL MENÜ "SHOWROOM" (kullanıcı seçimi: 5, birebir)
-     Üst bölge: filo (minübüs) fotoğrafı koyu laciverte (#0D1B2A) yumuşak
-     geçişle kararıyor — showroom bandı. PEKDOĞRU logosu (kendi logomuz)
-     beyaz karo üzerinde, kelime beyaz. Alt bölge: düz koyu lacivert menü;
-     öğeler yumuşak beyaz; AKTİF ÖĞE kırmızı (#D93A3A) hap — marka
-     kırmızısı — beyaz yazı. Font: panelin mevcut Inter ailesi (mockup ile
-     aynı karakter). Saf CSS background — filtre/position hilesi YOK,
-     her tarayıcıda (eski iOS dahil) aynı görünür. Tema önekli kurallar,
-     eski yüksek özgüllüklü kuralları ezmek için bilinçli tekrarlanıyor.
+     v.372 — SOL MENÜ "SHOWROOM" GÜVENLİ VERSİYON
+     v371'deki çoklu background-size (100% 100%, auto 62%) ifadesi eski
+     iPad Safari'de çökebiliyordu. Çözüm: fotoğraf ayrı ::before katmanında,
+     düz CSS position/height ile üstte %48 yükseklikte; alt kısım düz koyu
+     lacivert (#0D1B2A). Hiç filtre/background-size hilesi yok.
+     Üst bant: filo fotoğrafı koyu laciverte yumuşak geçişle kararıyor.
+     PEKDOĞRU logosu beyaz karo üzerinde, kelime beyaz. Alt menü: düz koyu
+     lacivert; öğeler yumuşak beyaz; AKTİF ÖĞE marka kırmızısı (#D93A3A)
+     gradyan hap, beyaz yazı.
      ====================================================================== */
   .sidebar,html[data-theme="dark"] .sidebar,html[data-theme="light"] .sidebar{
-    background-color:#0D1B2A !important;
-    background-image:
-      linear-gradient(180deg, rgba(13,27,42,.14) 0%, rgba(13,27,42,.42) 24%, rgba(13,27,42,.80) 46%, #0D1B2A 62%, #0D1B2A 100%),
-      url('login-filo.jpg') !important;
-    background-size:100% 100%, auto 62% !important;
-    background-position:top center, top center !important;
-    background-repeat:no-repeat !important;
-    background-attachment:scroll !important;
+    background:#0D1B2A !important;
     border-right:1px solid rgba(255,255,255,.10) !important;
+    position:relative;
   }
+  .sidebar::before{
+    content:'';
+    position:absolute;
+    top:0;left:0;right:0;
+    height:48%;
+    background-image:
+      linear-gradient(180deg, rgba(13,27,42,.10) 0%, rgba(13,27,42,.35) 30%, rgba(13,27,42,.70) 65%, #0D1B2A 100%),
+      url('login-filo.jpg');
+    background-size:cover, cover;
+    background-position:top center, top center;
+    background-repeat:no-repeat, no-repeat;
+    pointer-events:none;
+    z-index:0;
+  }
+  .sidebar > * { position:relative; z-index:1; }
   .sidebar{scrollbar-color:rgba(255,255,255,.28) transparent;}
   .sidebar::-webkit-scrollbar-track{background:rgba(255,255,255,.05);}
   .sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.26);border-radius:10px;border:2px solid transparent;background-clip:content-box;}
