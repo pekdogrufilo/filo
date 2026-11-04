@@ -303,6 +303,7 @@ img[src*="/assets/konya-filo-kiralama-filosu.jpg"] { object-fit: cover; }
 
 /* ---------- 9) Küçük ekranlar ---------- */
 @media (max-width: 640px) {
+  #pd-yuzen { display: none !important; }
   section[class*="min-h"] h1 { font-size: 2.35rem !important; }
   #seo-static .hero { padding: 48px 0; }
   #seo-static .stats > div { flex: 1 1 46%; }
