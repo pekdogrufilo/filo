@@ -309,6 +309,11 @@ img[src*="/assets/konya-filo-kiralama-filosu.jpg"] { object-fit: cover; }
   #seo-static .stats > div { flex: 1 1 46%; }
 }
 
+/* ---------- Footer address: keep clear of floating contact actions ---------- */
+@media (min-width: 641px) and (max-width: 1120px) {
+  footer { padding-right: 140px !important; }
+}
+
 /* ---------- 10) Azaltılmış hareket ---------- */
 @media (prefers-reduced-motion: reduce) {
   .pd-cycle img { animation: none !important; }
