@@ -3561,3 +3561,31 @@
   .sidebar .sb-version,html[data-theme="dark"] .sidebar .sb-version,html[data-theme="light"] .sidebar .sb-version{color:rgba(226,236,244,.5) !important;}
   .sidebar .sb-foot-tag,html[data-theme="dark"] .sidebar .sb-foot-tag,html[data-theme="light"] .sidebar .sb-foot-tag{color:rgba(226,236,244,.55) !important;}
   .sidebar .sb-foot-brand,html[data-theme="dark"] .sidebar .sb-foot-brand,html[data-theme="light"] .sidebar .sb-foot-brand{color:#F2F7FA !important;}
+
+  /* ======================================================================
+     v.373 — TABLET/MOBİL: OVERLAY DONMA DÜZELTMESİ ("teklif verirken ekran
+     donuyor") — iPad'de teklif formu gibi overlay'lerde klavye açılınca
+     ekran donuyordu. Üç kök neden, üç düzeltme (yalnızca dokunmatik
+     cihazlarda @media (pointer:coarse)):
+     1) Tam ekran backdrop-filter:blur(3px) eski iPad GPU'sunu kilitliyor
+        → blur kaldırıldı, kayıp koyuluk için arka plan biraz koyulaştı.
+     2) position:fixed + align-items:center + taşan içerik = iOS'ta üst
+        kenara erişilemez, dokunuşlar ölü bölgeye düşer → kartlar TEPEYE
+        yaslanıp overlay kendisi kaydırılabilir (overflow-y:auto,
+        -webkit-overflow-scrolling:touch) oldu.
+     3) Aktif giriş alanı klavyenin altında kalıyordu → app.js'teki global
+        focusin dinleyicisi (v.373) alanı klavye açıldıktan sonra görünüme
+        kaydırır. Masaüstü akışı değişmedi.
+     ====================================================================== */
+  @media (pointer:coarse){
+    .overlay,.iade-modal{
+      backdrop-filter:none !important;
+      -webkit-backdrop-filter:none !important;
+      background:rgba(8,10,13,.82) !important;
+      align-items:flex-start !important;
+      overflow-y:auto;
+      -webkit-overflow-scrolling:touch;
+    }
+    .overlay > *:first-child,.iade-modal > *:first-child{margin-top:auto;}
+    .overlay > *:last-child,.iade-modal > *:last-child{margin-bottom:auto;}
+  }

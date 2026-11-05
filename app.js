@@ -3008,6 +3008,34 @@ function showToast(msg, isErr){
   setTimeout(()=>t.remove(), 5500);
 }
 
+// v.373: "teklif verirken ekran donuyor" — iPad/dokunmatik cihazlarda klavye
+// açıldığında odaklanan giriş alanı ekranın (klavyenin) altında kalıyor, kart
+// position:fixed overlay içinde kaldığı için alan görünmez/erişilmez oluyor ve
+// ekrana "dondu" gibi geliyordu. Bu dinleyici, dokunmatik cihazlarda bir overlay
+// (.overlay / .iade-modal / .modal) içindeki alan odaklandığında, klavye açılma
+// animasyonu bittikten sonra (~350ms) alanı görünür alana kaydırır; kartın kendi
+// scroll kabı da varsa onu da hizalar. Masaüstünde (pointer:coarse değil) çalışmaz.
+document.addEventListener('focusin', function(ev){
+  if(!window.matchMedia || !window.matchMedia('(pointer:coarse)').matches) return;
+  const hedef = ev.target;
+  if(!hedef || !hedef.getBoundingClientRect) return;
+  if(!/^(INPUT|TEXTAREA|SELECT)$/.test(hedef.tagName)) return;
+  const kap = hedef.closest('.overlay, .iade-modal, .modal');
+  if(!kap) return;
+  setTimeout(function(){
+    try{
+      hedef.scrollIntoView({behavior:'smooth', block:'center'});
+      // iOS'ta fixed örtü kayması: kartın kendi scroll kabı varsa onu da hizala
+      // (scrollIntoView bazen örtünün iç scroll'unu etkilemez).
+      const karta = hedef.closest('.iade-card, [style*="max-height"]');
+      if(karta && karta.scrollHeight > karta.clientHeight){
+        const r = hedef.getBoundingClientRect(), kr = karta.getBoundingClientRect();
+        karta.scrollTop += (r.top - kr.top) - (karta.clientHeight / 2 - r.height / 2);
+      }
+    }catch(e){}
+  }, 350);
+}, true);
+
 // v.179: "sözleşme yaparken panelde bir bilgi ihtiyacı oldu (örn. fiyata bakmak istedim)
 // o sözleşme ekranı kapanmasın" — sözleşme sihirbazlarını (Araç Kirala / Yeni Kiralama)
 // kapatıp veriyi kaybetmek yerine KÜÇÜLTME imkanı. Modal .remove() edilmez; sadece
@@ -12211,7 +12239,9 @@ function leadTeklifRender(){
     </div>
   </div>`;
   document.body.appendChild(el);
-  el.onclick = e=>{ if(e.target===el) el.remove(); };
+  // v.373: dışa dokununca kapatma KALDIRILDI — iPad'de "donan" ekranda panik
+  // dokunuşlar formu kapatıp girilen teklifi siliyordu (v.353'te sihirbaz için
+  // alınan kararla aynı). Kapatma yalnızca sağ üstteki ✕ butonuyla olur.
 }
 // v.327: teklif → lead yazıcı; Kaydet ve Müşteri Linki üretimi aynı noktadan yazar, böylece
 // gönderilen link her zaman lead'e kayıtlı son teklifin birebir kopyasıdır.
