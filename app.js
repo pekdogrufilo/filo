@@ -2030,7 +2030,17 @@ async function arsivYedektenKurtarUygula(){
 
 // ===== Kayıtlı Sözleşmeler =====
 async function persistSozlesmeler(){
-  await storageAPI.set('sozlesmeler', JSON.stringify(sozlesmeler)).catch(()=>showToast('Sözleşme kaydedilemedi.', true));
+  // v.374: artık başarısızlık SİLESSİZ kalmıyor — false döner, çağıran yer (foto yükleme
+  // akışı vb.) kalıcı uyarı gösterip tekrar deneme imkânı sunar. "Fotoğrafları yükledim
+  // ama göremiyorum" şikâyetinin kökü: iPad'de zayıf bağlantıda bulut yazması tam
+  // bitmeden uygulama kapanınya kadar sessizce kaybediliyordu.
+  try{
+    await withStorageTimeout(storageAPI.set('sozlesmeler', JSON.stringify(sozlesmeler)), 30000);
+    return true;
+  }catch(e){
+    showToast((e && /zaman aşımı/i.test(e.message||'')) ? e.message : 'Sözleşme kaydedilemedi — bağlantı gelene kadar bu ekranı kapatmayın.', true);
+    return false;
+  }
 }
 async function persistSozlesmeGruplari(){
   await storageAPI.set('sozlesmeGruplari', JSON.stringify(sozlesmeGruplari)).catch(()=>showToast('Sözleşme grubu kaydedilemedi.', true));
@@ -2097,6 +2107,76 @@ async function sozKayitSil(id){
   await persistSozlesmeler();
   renderCurrentPage();
   showToast('Sözleşme kaydı silindi.');
+}
+
+// v.374: KİRA TARİHİ DÜZENLEME — "kira tarihini değiştirececem onu da yapamıyorum".
+// Sözleşme oluşturulduktan sonra tarihleri değiştiren HİÇBİR ekran yoktu. Bu form;
+// sözleşme kaydını, kiralama kaydını (rentals), aracın kira bitiş/teslim tarihlerini
+// ve kira geçmişi girdisini TEK SEFERDE tutarlı şekilde günceller.
+function sozTarihDuzenleAc(id){
+  const rec = sozlesmeler.find(r=>r.id===id);
+  if(!rec){ showToast('Sözleşme kaydı bulunamadı.', true); return; }
+  if(!requireAdmin()) return;
+  document.getElementById('sozTarihModal')?.remove();
+  const el = document.createElement('div');
+  el.className = 'overlay show';
+  el.id = 'sozTarihModal';
+  el.style.cssText = 'z-index:80;';
+  el.innerHTML = `
+    <div class="modal" style="width:min(460px,94vw);">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding-bottom:12px;border-bottom:1px solid var(--border);">
+        <h3 style="font-family:var(--font-display);font-size:16px;">📅 Kira Tarihini Düzenle <span style="font-weight:400;font-size:12px;color:var(--text-3);">${esc(rec.sozNo||'')}</span></h3>
+        <button class="close-x" onclick="document.getElementById('sozTarihModal').remove()" title="Kapat" style="background:var(--surface-2);border:1px solid var(--border);border-radius:10px;width:32px;height:32px;font-size:15px;cursor:pointer;color:var(--text);">✕</button>
+      </div>
+      <div style="padding:14px 0 4px;">
+        <p style="font-size:12.5px;color:var(--text-2);margin:0 0 12px;line-height:1.5;">Başlangıç ve bitiş tarihlerini değiştirin — sözleşme kaydı, kiralama durumu, aracın kira bitişi ve kira geçmişi birlikte güncellenir. Araç şu an <b>Kirada</b>ysa paneldeki dönüş tarihi de düzelir.</p>
+        <div class="iade-row">
+          <div class="iade-field"><label>Başlangıç tarihi</label><input type="date" id="sozTBas" value="${rec.basISO||''}"></div>
+          <div class="iade-field"><label>Bitiş tarihi</label><input type="date" id="sozTBitis" value="${rec.bitisISO||''}"></div>
+        </div>
+        <p id="sozTarihErr" style="display:none;color:#E1554E;font-size:12px;margin:6px 0 0;"></p>
+      </div>
+      <div class="iade-foot" style="border-top:1px solid var(--border);padding-top:12px;display:flex;gap:8px;">
+        <button class="iade-btn-cancel" style="flex:1;" onclick="document.getElementById('sozTarihModal').remove()">Vazgeç</button>
+        <button class="iade-btn-save" style="flex:1;" onclick="sozTarihDuzenleKaydet('${rec.id}')">Kaydet</button>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+}
+async function sozTarihDuzenleKaydet(id){
+  const rec = sozlesmeler.find(r=>r.id===id);
+  if(!rec) return;
+  const bas = document.getElementById('sozTBas')?.value;
+  const bitis = document.getElementById('sozTBitis')?.value;
+  const err = document.getElementById('sozTarihErr');
+  if(!bas || !bitis){ if(err){ err.style.display='block'; err.textContent='Her iki tarihi de girin.'; } return; }
+  if(bitis < bas){ if(err){ err.style.display='block'; err.textContent='Bitiş tarihi başlangıçtan sonra olmalı.'; } return; }
+  const basTxt = bas.split('-').reverse().join('.');
+  const bitisTxt = bitis.split('-').reverse().join('.');
+  // 1) Sözleşme kaydı (eski başlangıç tarihi önce yakalanır — kira geçmişi eşleştirmesi için)
+  const eskiBasISO = rec.basISO;
+  rec.basISO = bas; rec.bitisISO = bitis;
+  if(rec.data){ rec.data.bas = basTxt; rec.data.bitis = bitisTxt; rec.data.sure = sozlesmeSureMetni(bas, bitis); }
+  // 2) Kiralama durumu kaydı (rentals)
+  const r = rentals.find(x=>x.sozlesmeId===rec.id);
+  if(r){ r.baslangic = bas; r.bitis = bitis; await persistRentals(); }
+  // 3) Araç kayıtları + kira geçmişi
+  const plakalar = rec.plakalar||[];
+  let aracDegisti = false;
+  vehicles.forEach((v,i)=>{
+    if(!plakalar.includes(v.plaka)) return;
+    if(v.kiraBitis){ vehicles[i].kiraBitis = bitis; aracDegisti = true; }
+    if(v.sozlesmeBitis){ vehicles[i].sozlesmeBitis = bitis; aracDegisti = true; }
+    if(v.durum==='Kirada' && v.teslimTarih){ vehicles[i].teslimTarih = bas; aracDegisti = true; }
+    (vehicles[i].kiraGecmisi||[]).forEach(k=>{ if(k.bas===eskiBasISO){ k.bas = bas; k.bitis = bitis; } });
+  });
+  if(aracDegisti) await persist();
+  const sozTamam = await persistSozlesmeler();
+  document.getElementById('sozTarihModal')?.remove();
+  renderCurrentPage();
+  if(sozTamam) showToast('✅ Kira tarihleri güncellendi: '+basTxt+' → '+bitisTxt);
+  else showToast('Tarihler bu ekranda güncellendi ama buluta yazılamadı — bağlantı gelince tekrar Kaydet\'e basın.', true);
+  logActivity('edit', `Kira tarihleri düzenlendi: <b>${esc(rec.sozNo)}</b> · ${basTxt} → ${bitisTxt}`);
 }
 
 // v.332: MÜŞTERİ ONAY AKIŞI — sözleşme, teklifteki gibi verisi link içinde taşınan
@@ -2308,12 +2388,46 @@ function sozFotoDosyaAl(id, kameradan){
         }
       }catch(e){ console.error('sozFotoDosyaAl:', e); }
     }
-    await persistSozlesmeler();
+    // v.374: kaydın gerçekten buluta yazıldığını DOĞRULA — başarısızsa galeri kapanmaz,
+    // kırmızı uyarı bandı çıkar; kullanıcı "Tekrar Dene"yene kadar (ya da bağlantı
+    // gelene kadar) fotoğraflar cihaz belleğinde bekler. Eskiden sessizce kayboluyordu.
+    const tamam = await persistSozlesmeler();
+    if(!tamam){
+      sozFotoKayitUyariGoster(rec);
+      return;
+    }
     logActivity('edit', 'Teslim fotoğrafı eklendi: <b>'+esc(rec.sozNo||'')+'</b> · '+files.length+' foto');
     sozFotoGaleriCiz(rec);
-    showToast('✅ Fotoğraflar sözleşmeye eklendi.');
+    showToast('✅ Fotoğraflar sözleşmeye kaydedildi (bulut onaylı).');
   };
   input.click();
+}
+// v.374: fotoğraf bulut kaydı başarısızsa kalıcı uyarı bandı — fotoğraflar henüz
+// cihaz belleğinde; ekran kapatılırsa KAYBEDİLİR. Tekrar Dene butonu yeniden yazar.
+function sozFotoKayitUyariGoster(rec){
+  sozFotoKapat();
+  const el = document.createElement('div');
+  el.className = 'overlay show';
+  el.id = 'sozFotoOverlay';
+  el.style.cssText = 'z-index:85;';
+  el.innerHTML = `
+    <div class="modal" style="width:min(520px,94vw);text-align:center;">
+      <div style="width:46px;height:46px;border-radius:50%;background:rgba(225,85,78,.15);color:#E1554E;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;font-size:22px;font-weight:700;">!</div>
+      <h3 style="margin:0 0 8px;font-size:16px;color:var(--paper);">Fotoğraflar henüz KAYDEDİLEMEDİ</h3>
+      <p style="margin:0 0 14px;font-size:13px;color:var(--text-2);line-height:1.5;">İnternet bağlantısı zayıf olabilir. ${((rec.data.teslimFotolar)||[]).length} fotoğraf bu ekranda bekliyor — <b>bu pencereyi kapatırsanız kaybolur.</b> Bağlantı düzelince "Tekrar Dene"ye basın.</p>
+      <div style="display:flex;gap:8px;">
+        <button class="add-btn" style="flex:1;justify-content:center;" onclick="sozFotoTekrarDene('${rec.id}')">Tekrar Dene</button>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+}
+async function sozFotoTekrarDene(id){
+  const rec = sozlesmeler.find(r=>r.id===id);
+  if(!rec) return;
+  showToast('Tekrar kaydediliyor…');
+  const tamam = await persistSozlesmeler();
+  if(tamam){ sozFotoKapat(); sozFotoGaleriCiz(rec); showToast('✅ Fotoğraflar sözleşmeye kaydedildi (bulut onaylı).'); }
+  else showToast('Yine kaydedilemedi — bağlantıyı kontrol edip tekrar deneyin.', true);
 }
 async function sozFotoSil(id, idx){
   const rec = sozlesmeler.find(r=>r.id===id);
@@ -5935,6 +6049,27 @@ ${fotoBolum}
 </body></html>`;
 }
 function teslimTutanakAc(d){
+  // v.374: "teslim tutanağında dolu yazmış" — bu tutanak sonradan (Sözleşmeler listesi,
+  // foto galerisi vb.) sözleşme kaydı (rec.data) üzerinden açıldığında, teslim adımında
+  // seçilen yakıt/km o kayda HİÇ yazılmıyordu (yalnızca ilk açılıştaki kopyaya yazılıyordu).
+  // İyileştirme: rentals içinde bu sözleşmeye bağlı, teslimKontrol'u dolu bir kayıt varsa
+  // (yakıt + km gerçek teslim anında kaydedilir) Tutanağa O değerler yansıtılır ve kalıcı
+  // olarak sözleşme kaydına da geri yazılır. Böylece v374'ten önce üretilmiş kayıtlar
+  // (ör. kullanıcının elindeki sözleşme) da otomatik düzelir.
+  try{
+    const rec = sozlesmeler.find(x=>x.data===d);
+    if(rec){
+      const r = rentals.find(x=>x.sozlesmeId===rec.id && x.teslimKontrol && (x.teslimKontrol.yakitSeviyesi||x.teslimKontrol.km));
+      if(r){
+        let degisti = false;
+        if(r.teslimKontrol.yakitSeviyesi && d.yakit!==r.teslimKontrol.yakitSeviyesi){ d.yakit = r.teslimKontrol.yakitSeviyesi; degisti = true; }
+        if(r.teslimKontrol.km && Array.isArray(d.araclar)){
+          d.araclar.forEach(a=>{ const km = Number(r.teslimKontrol.km).toLocaleString('tr-TR'); if(a.teslimKm!==km){ a.teslimKm = km; degisti = true; } });
+        }
+        if(degisti) persistSozlesmeler(); // arka planda kalıcılaştır; yazdırma beklemesin
+      }
+    }
+  }catch(e){ /* iyileştirme başarısız olursa tutanak yine de açılır */ }
   const html = teslimTutanakHtml(d);
   // v.354: dokunmatik cihazda tutanak GERÇEK ayrı sekmede açılır (bkz. belgeYeniSekmedeAc).
   if(dokunmatikCihazMi() && belgeYeniSekmedeAc(html, `teslim_tutanagi_${(d.plaka||'arac').replace(/\s+/g,'-')}_${(d.tarih||'').replace(/\./g,'-')}`)) return;
@@ -14310,7 +14445,9 @@ async function ykTeslimEt(){
     depozito: r.depozito!=null ? r.depozito : v.depozito,
     // v.352: bkz. kirayaVerVeSozlesme — önceki iadenin bayat iade km alanları temizlenir.
     iadeKm: undefined, iadeKmKullanim: undefined, iadeKmHakki: undefined, iadeKmAsim: undefined,
-    kiraGecmisi: [...(v.kiraGecmisi||[]), {bas:r.baslangic, bitis:r.bitis, yer:kiraci, teslimKm: teslimKm||v.teslimKm||0, iadeKm:0, yakit:'', hasar:'', not: r.ekHizmetler||''}],
+    // v.374: kira geçmişine yakıt artık BOŞ değil, teslim adımında seçilen değer yazılır
+    // ("teslim tutanağında dolu yazmış" — geçmiş kayıtları da gerçek yakıtla tutulmalı).
+    kiraGecmisi: [...(v.kiraGecmisi||[]), {bas:r.baslangic, bitis:r.bitis, yer:kiraci, teslimKm: teslimKm||v.teslimKm||0, iadeKm:0, yakit: yakit||'', hasar:'', not: r.ekHizmetler||''}],
   };
   await persist();
   render();
@@ -14318,6 +14455,18 @@ async function ykTeslimEt(){
   r.durum = 'teslimEdildi';
   r.teslimKontrol = { tarih: todayISO(), km: teslimKm||null, yakitSeviyesi: yakit, kontrolListesi, fotograflar: [] };
   await persistRentals();
+  // v.374: "teslimde depo boş işaretledim ama tutanakta dolu yazıyor" — seçilen yakıt
+  // yalnızca ekranda açılan KOPYAYA yazılıyordu; sözleşme kaydına (rec.data) hiç
+  // yazılmıyordu. Sonradan Sözleşmeler listesinden açılan her tutanak, sözleşme
+  // adımındaki varsayılan ("Dolu") değeri gösteriyordu. Artık kaynağa yazılıp kalıcı
+  // hale getiriliyor (sozData === sozKaydet'in rec.data'sı ile aynı nesne).
+  if(ykSihirbazState.sozData){
+    ykSihirbazState.sozData.yakit = yakit;
+    if(ykSihirbazState.sozData.araclar && ykSihirbazState.sozData.araclar[0]){
+      ykSihirbazState.sozData.araclar.forEach(a=>{ a.teslimKm = teslimKm ? teslimKm.toLocaleString('tr-TR') : (a.teslimKm||'—'); });
+    }
+  }
+  await persistSozlesmeler();
   logActivity('edit', `Araç teslim edildi (adım adım akış): <b>${esc(v.plaka)}</b> · ${esc(kiraci)}`);
   showToast(v.plaka+' teslim edildi, durum "Kirada" olarak güncellendi.');
   // Mevcut Teslim Tutanağı (Ek-1) şablonunu (teslimTutanakAc) yeniden kullan.
@@ -14802,6 +14951,7 @@ function renderKiralamaPage(){
               <button onclick="sozKayitDocx('${r.id}')" style="background:rgba(54,161,104,.1);border:1px solid rgba(54,161,104,.2);color:#36A168;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Word</button>
               <button onclick="sozMusteriLinkiUret(sozlesmeler.find(x=>x.id==='${r.id}'))" title="Müşteri onay linki + kod gönder" style="background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.25);color:var(--accent-blue);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">🔗 Link</button>
               ${r.sozMusteriOnay?`<span title="Onay: ${esc(r.sozMusteriOnay.damga||'')}" style="font-size:11px;color:#36A168;font-weight:700;">✅</span>`:`<button onclick="sozMusteriOnayIsle('${r.id}')" title="Müşterinin gönderdiği onay damgasını işle" style="background:rgba(232,161,50,.12);border:1px solid rgba(232,161,50,.3);color:#E8A132;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Onay İşle</button>`}
+              <button onclick="sozTarihDuzenleAc('${r.id}')" title="Kira başlangıç/bitiş tarihlerini düzenle" style="background:rgba(232,161,50,.12);border:1px solid rgba(232,161,50,.3);color:#E8A132;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">📅 Düzenle</button>
               <button onclick="teslimTutanakAc(sozlesmeler.find(x=>x.id==='${r.id}').data)" title="Ek-1 Teslim Tutanağını yeniden üret" style="background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.25);color:var(--accent-blue);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Teslim</button>
               <button onclick="sozFotoGaleriAc('${r.id}')" title="Teslim fotoğrafları (tablet kamera)" style="background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.25);color:var(--accent-blue);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">📷 Foto${r.data&&r.data.teslimFotolar&&r.data.teslimFotolar.length?' ('+r.data.teslimFotolar.length+')':''}</button>
               <button onclick="sozIslakAc('${r.id}')" title="Islak imza ikamesi — imzalı sayfa fotoğrafları" style="background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.25);color:var(--accent-blue);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">✍️ Islak${r.data&&r.data.islakFotolar&&r.data.islakFotolar.length?' ('+r.data.islakFotolar.length+')':''}</button>
@@ -14828,6 +14978,7 @@ function renderKiralamaPage(){
             <button onclick="sozKayitPdf('${r.id}')" style="flex:1;background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.2);color:var(--accent-blue);padding:7px 0;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">PDF</button>
             <button onclick="sozKayitDocx('${r.id}')" style="flex:1;background:rgba(54,161,104,.1);border:1px solid rgba(54,161,104,.2);color:#36A168;padding:7px 0;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Word</button>
             <button onclick="sozMusteriLinkiUret(sozlesmeler.find(x=>x.id==='${r.id}'))" style="flex:1.2;background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.25);color:var(--accent-blue);padding:7px 0;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">🔗 Link</button>
+            <button onclick="sozTarihDuzenleAc('${r.id}')" style="flex:1;background:rgba(232,161,50,.12);border:1px solid rgba(232,161,50,.3);color:#E8A132;padding:7px 0;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">📅</button>
             <button onclick="sozFotoGaleriAc('${r.id}')" style="flex:1;background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.25);color:var(--accent-blue);padding:7px 0;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">📷${r.data&&r.data.teslimFotolar&&r.data.teslimFotolar.length?' '+r.data.teslimFotolar.length:''}</button>
             <button onclick="sozIslakAc('${r.id}')" style="flex:1;background:rgba(22,160,134,.1);border:1px solid rgba(22,160,134,.25);color:var(--accent-blue);padding:7px 0;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">✍️${r.data&&r.data.islakFotolar&&r.data.islakFotolar.length?' '+r.data.islakFotolar.length:''}</button>
             ${r.sozMusteriOnay?'':`<button onclick="sozMusteriOnayIsle('${r.id}')" style="flex:1.2;background:rgba(232,161,50,.12);border:1px solid rgba(232,161,50,.3);color:#E8A132;padding:7px 0;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Onay İşle</button>`}
