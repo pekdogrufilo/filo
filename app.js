@@ -23688,6 +23688,7 @@ function renderAyarlarPage(){
         <div class="row-btns">
           <button class="settings-btn" id="apBackup">Yedekle (JSON)</button>
           <button class="settings-btn" id="apRestore">Yedekten geri yükle</button>
+          <button class="settings-btn" id="apSistemTest" style="background:rgba(22,160,134,.08);">Sistem Testi</button>
         </div>
         <div id="sonYedekInfo" style="font-size:12px;color:var(--text-3);margin-top:10px;">Son yedek: yükleniyor...</div>
       </div>
@@ -23707,6 +23708,7 @@ function renderAyarlarPage(){
   if(document.getElementById('apAi')) document.getElementById('apAi').onclick = ()=>document.getElementById('menuAiSettings')?.click();
   document.getElementById('apBackup').onclick = backupToJson;
   document.getElementById('apRestore').onclick = ()=>document.getElementById('restoreJsonInput').click();
+  if(document.getElementById('apSistemTest')) document.getElementById('apSistemTest').onclick = ()=>filoSistemTesti(true);
   sonYedekOku().then(k=>{ const info=document.getElementById('sonYedekInfo'); if(info) info.innerHTML = sonYedekMetni(k); });
   if(document.getElementById('apOtomasyonEkle')) document.getElementById('apOtomasyonEkle').onclick = ()=>automationRuleFormAc(null);
   if(document.getElementById('apOtomasyonCalistir')) document.getElementById('apOtomasyonCalistir').onclick = async ()=>{
@@ -24424,6 +24426,69 @@ function sonYedekMetni(k){
 // güncellenmemiş). Kullanıcı "yedek aldım" diyip bu yedekten geri yüklediğinde müşteri,
 // kiralama, fatura, cari, servis, lastik, yakıt, ceza, belge ve bildirim verilerinin TAMAMI
 // sessizce kayboluyordu. Şimdi tüm koleksiyonlar dahil ediliyor.
+// v.375: SİSTEM TESTİ — kritik akışların (yedek, veri bütünlüğü, yardımcı fonksiyonlar)
+// otomatik doğrulaması. Ayarlar → Yedekleme → "Sistem Testi" butonu ya da konsoldan
+// filoSistemTesti() ile çalışır. Hiçbir veriye DOKUNMAZ — yalnızca okuyup raporlar.
+// Amaç: "Excel güncel almıyor" tarzı hataları kullanıcıdan ÖNCE yakalamak.
+const FILO_TEST_KOLEKSIYONLARI = [
+  ['vehicles','Araçlar'], ['customers','Müşteriler'], ['rentals','Kiralamalar'],
+  ['sozlesmeler','Sözleşme kayıtları'], ['leads','Müşteri teklifleri'], ['ihaleler','İhaleler'],
+  ['sozlesmeGruplari','Sözleşme grupları'], ['expenses','Masraflar'], ['invoices','Faturalar'],
+  ['payments','Tahsilatlar'], ['ledger','Cari'], ['suppliers','Tedarikçiler'],
+  ['arsiv','Arşiv'], ['documents','Belgeler'], ['notifications','Bildirimler'],
+];
+function filoSistemTesti(modalGoster){
+  const sonuclar = [];
+  const test = (ad, ok, detay)=>sonuclar.push({ad, ok:!!ok, detay:detay||''});
+  // 1) Yedek kapsamı (regression guard): backupToJson'un KAYNAK KODUNDA her kalıcı
+  // koleksiyon adı geçiyor mu? İleride biri yedeği daraltırsa (v.375 öncesi gibi)
+  // bu test yakalar. (Koleksiyonlar `let` ile tanımlı olduğu için globalThis'ten
+  // dinamik okunamazlar — kaynak kod tarama güvenilir yoldur.)
+  const yedekKaynak = backupToJson.toString();
+  const yedekteOlmayan = FILO_TEST_KOLEKSIYONLARI.filter(([k])=>!yedekKaynak.includes(k)).map(e=>e[1]);
+  test('Yedek kapsamı — backupToJson tüm koleksiyonları içeriyor', yedekteOlmayan.length===0, yedekteOlmayan.length ? 'YEDEKTE YOK: '+yedekteOlmayan.join(', ') : FILO_TEST_KOLEKSIYONLARI.length+' koleksiyonun tamamı yedekte');
+  // 2) Veri bütünlüğü
+  const vid = new Set(); const vtekrar = [];
+  vehicles.forEach(v=>{ const k=String(v.id||''); if(vid.has(k)) vtekrar.push(v.plaka||k); vid.add(k); });
+  test('Araç kayıtları: ID benzersizliği', vtekrar.length===0, vtekrar.length ? vtekrar.length+' tekrarlı ID' : vehicles.length+' araç, tümü benzersiz');
+  const sozBozuk = (sozlesmeler||[]).filter(r=>!r || typeof r!=='object' || !r.data).length;
+  test('Sözleşme kayıtları: her kayıtta sözleşme verisi (data) var', sozBozuk===0, sozBozuk ? sozBozuk+' kayıt bozuk' : (sozlesmeler||[]).length+' kayıt sağlam');
+  const aktifKiralamalar = (rentals||[]).filter(r=>r.durum!=='iadeAlindi' && r.durum!=='iptal');
+  const eslesmeyen = aktifKiralamalar.filter(r=>!vehicles.some(v=>v.id===r.aracId || (r.plaka && normPlaka(v.plaka)===normPlaka(r.plaka))));
+  test('Kiralamalar: her aktif kiralama bir araçla eşleşiyor', eslesmeyen.length===0, eslesmeyen.length ? eslesmeyen.map(r=>r.plaka||r.id).join(', ')+' eşleşmiyor' : aktifKiralamalar.length+' aktif kiralama tamam');
+  const lid = new Set(); const ltekrar = [];
+  (leads||[]).forEach(l=>{ const k=String(l.id||''); if(lid.has(k)) ltekrar.push(l.adSoyad||k); lid.add(k); });
+  test('Müşteri teklifleri: ID benzersizliği', ltekrar.length===0, ltekrar.length ? ltekrar.length+' tekrar' : (leads||[]).length+' teklif tamam');
+  // 3) Yardımcı fonksiyon sağlamaları (bilinen girdi → bilinen çıktı)
+  test('Plaka doğrulama: normPlaka/validPlaka', normPlaka('34 abc 123')==='34ABC123' && validPlaka(normPlaka('34 ABC 123')) && !validPlaka('XXX'), '');
+  const dlBugun = daysLeft(todayISO());
+  test('Tarih hesabı: daysLeft(bugün) = 0', dlBugun===0, 'Sonuç: '+dlBugun);
+  // Özet
+  const hata = sonuclar.filter(s=>!s.ok).length;
+  const ozet = { toplam: sonuclar.length, hata, sonuclar };
+  if(modalGoster){
+    document.getElementById('sistemTestModal')?.remove();
+    const el = document.createElement('div');
+    el.className='overlay show'; el.id='sistemTestModal'; el.style.cssText='z-index:80;';
+    el.innerHTML = `
+      <div style="background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px;width:min(94vw,560px);max-height:88vh;overflow-y:auto;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <h3 style="margin:0;font-size:16px;color:var(--paper);">🧪 Sistem Testi <span style="font-size:12px;font-weight:400;color:var(--text-3);">${new Date().toLocaleString('tr-TR')}</span></h3>
+          <button onclick="document.getElementById('sistemTestModal').remove()" style="background:none;border:none;color:var(--text-3);cursor:pointer;font-size:16px;">✕</button>
+        </div>
+        ${sonuclar.map(s=>`<div style="display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border:1px solid var(--line);border-radius:8px;margin-bottom:6px;">
+            <span style="font-size:14px;">${s.ok?'✅':'❌'}</span>
+            <div><div style="font-size:13px;font-weight:600;color:var(--paper);">${s.ad}</div>${s.detay?`<div style="font-size:12px;color:var(--text-3);margin-top:2px;">${esc(s.detay)}</div>`:''}</div>
+          </div>`).join('')}
+        <div style="margin-top:10px;padding:10px;border-radius:8px;background:${hata?'rgba(225,85,78,.1)':'rgba(54,161,104,.1)'};font-size:13px;font-weight:600;color:${hata?'#E1554E':'#36A168'};text-align:center;">
+          ${hata ? hata+' test BAŞARISIZ — ekran görüntüsünü paylaşırsanız düzeltirim.' : 'Tüm testler geçti — sistem sağlıklı.'}
+        </div>
+      </div>`;
+    document.body.appendChild(el);
+  }
+  return ozet;
+}
+window.filoSistemTesti = filoSistemTesti;
 function backupToJson(){
   const backup = {
     olusturmaTarihi: new Date().toISOString(),
@@ -24431,6 +24496,10 @@ function backupToJson(){
     customers, rentals, invoices, payments, ledger,
     suppliers, supplierLedger, serviceParts, tires, fuelRecords, tolls, trafficFines,
     documents, notifications, automationRules, kvkkTalepleri,
+    // v.375: YEDEK AÇIĞI KAPATILDI — leads (Müşteri Teklifleri), ihaleler ve
+    // sozlesmeGruplari kalıcı koleksiyonlardı ama yedeğe HİÇ alınmıyordu: bir
+    // yedekten geri yükleme yapıldığında bu üç koleksiyon sessizce KAYBOLUYORDU.
+    leads, ihaleler, sozlesmeGruplari,
   };
   const blob = new Blob([JSON.stringify(backup, null, 2)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
@@ -24440,7 +24509,7 @@ function backupToJson(){
   a.click();
   setTimeout(()=>URL.revokeObjectURL(url), 5000);
   sonYedekKaydet();
-  logActivity('backup', `Yedek alındı (JSON indirildi — ${vehicles.length} araç, ${customers.length} müşteri, ${rentals.length} kiralama, ${invoices.length} fatura, ${expenses.length} masraf, ${(sozlesmeler||[]).length} sözleşme).`).catch(()=>{});
+  logActivity('backup', `Yedek alındı (JSON indirildi — ${vehicles.length} araç, ${customers.length} müşteri, ${rentals.length} kiralama, ${invoices.length} fatura, ${expenses.length} masraf, ${(sozlesmeler||[]).length} sözleşme, ${(leads||[]).length} teklif).`).catch(()=>{});
   const info = document.getElementById('sonYedekInfo');
   if(info) info.innerHTML = sonYedekMetni(window.__sonYedek);
   showToast('Yedek dosyası indirildi.');
@@ -24481,6 +24550,11 @@ document.getElementById('restoreJsonInput')?.addEventListener('change', async (e
     notifications = Array.isArray(data.notifications) ? data.notifications : [];
     automationRules = Array.isArray(data.automationRules) ? data.automationRules : [];
     kvkkTalepleri = Array.isArray(data.kvkkTalepleri) ? data.kvkkTalepleri : [];
+    // v.375: yedek açığı kapatma — geri yükleme tarafı. Eski yedeklerde bu alanlar yoktur;
+    // o durumda mevcut veriler KORUNUR (boşa düşürülmez), yeni yedeklerde ise birebir geri gelir.
+    if(Array.isArray(data.leads)) leads = data.leads;
+    if(Array.isArray(data.ihaleler)) ihaleler = data.ihaleler;
+    if(Array.isArray(data.sozlesmeGruplari)) sozlesmeGruplari = data.sozlesmeGruplari;
     await persist();
     await persistExpenses();
     await storageAPI.set('activityLog', JSON.stringify(activityLog)).catch(()=>{});
@@ -24503,6 +24577,10 @@ document.getElementById('restoreJsonInput')?.addEventListener('change', async (e
     await persistNotifications();
     await persistAutomationRules();
     await persistKvkkTalepleri();
+    // v.375: yedek açığı — geri yüklenen üç koleksiyonun kalıcılığı
+    await persistLeads();
+    await persistIhaleler();
+    await persistSozlesmeGruplari();
     updateArsivSayi();
     buildSirketFilter();
     render();
