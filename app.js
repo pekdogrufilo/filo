@@ -24440,12 +24440,8 @@ const FILO_TEST_KOLEKSIYONLARI = [
 function filoSistemTesti(modalGoster){
   const sonuclar = [];
   const test = (ad, ok, detay)=>sonuclar.push({ad, ok:!!ok, detay:detay||''});
-  // 1) Yedek kapsamı (regression guard): backupToJson'un KAYNAK KODUNDA her kalıcı
-  // koleksiyon adı geçiyor mu? İleride biri yedeği daraltırsa (v.375 öncesi gibi)
-  // bu test yakalar. (Koleksiyonlar `let` ile tanımlı olduğu için globalThis'ten
-  // dinamik okunamazlar — kaynak kod tarama güvenilir yoldur.)
-  const yedekKaynak = backupToJson.toString();
-  const yedekteOlmayan = FILO_TEST_KOLEKSIYONLARI.filter(([k])=>!yedekKaynak.includes(k)).map(e=>e[1]);
+  const yedekVerisi = JSON.parse(JSON.stringify(yedekVerisiOlustur()));
+  const yedekteOlmayan = FILO_TEST_KOLEKSIYONLARI.filter(([k])=>!Array.isArray(yedekVerisi[k])).map(e=>e[1]);
   test('Yedek kapsamı — backupToJson tüm koleksiyonları içeriyor', yedekteOlmayan.length===0, yedekteOlmayan.length ? 'YEDEKTE YOK: '+yedekteOlmayan.join(', ') : FILO_TEST_KOLEKSIYONLARI.length+' koleksiyonun tamamı yedekte');
   // 2) Veri bütünlüğü
   const vid = new Set(); const vtekrar = [];
@@ -24489,8 +24485,8 @@ function filoSistemTesti(modalGoster){
   return ozet;
 }
 window.filoSistemTesti = filoSistemTesti;
-function backupToJson(){
-  const backup = {
+function yedekVerisiOlustur(){
+  return {
     olusturmaTarihi: new Date().toISOString(),
     vehicles, expenses, activityLog, sozlesmeler, arsiv, arsivSilinenler,
     customers, rentals, invoices, payments, ledger,
@@ -24501,6 +24497,9 @@ function backupToJson(){
     // yedekten geri yükleme yapıldığında bu üç koleksiyon sessizce KAYBOLUYORDU.
     leads, ihaleler, sozlesmeGruplari,
   };
+}
+function backupToJson(){
+  const backup = yedekVerisiOlustur();
   const blob = new Blob([JSON.stringify(backup, null, 2)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
