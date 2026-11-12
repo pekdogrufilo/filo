@@ -6981,12 +6981,17 @@ async function aracGalerisiAc(arac, sozlesmeler){
     }
   }
   let okunamayan = 0;
+  const hasarAnahtarlari = [];
   for(const hasar of (Array.isArray(arac.hasarlar)?arac.hasarlar:[])){
     const anahtarlar = Array.isArray(hasar.fotolar) ? [...hasar.fotolar] : [];
     if(hasar.fotoKey && !anahtarlar.includes(hasar.fotoKey)) anahtarlar.push(hasar.fotoKey);
-    for(const anahtar of anahtarlar){
-      try{ const sonuc = await storageAPI.get(anahtar); if(sonuc && sonuc.value) fotolar.push({url:sonuc.value, etiket:'Hasar fotoğrafı'}); else okunamayan++; }catch(error){ okunamayan++; }
-    }
+    hasarAnahtarlari.push(...anahtarlar);
+  }
+  const hasarFotolari = await Promise.all(hasarAnahtarlari.map(async anahtar=>{
+    try{ const sonuc = await withStorageTimeout(storageAPI.get(anahtar), 5000); return sonuc && sonuc.value; }catch(error){ return null; }
+  }));
+  for(const url of hasarFotolari){
+    if(url) fotolar.push({url, etiket:'Hasar fotoğrafı'}); else okunamayan++;
   }
   alan.textContent = '';
   const gorulen = new Set();
@@ -23788,7 +23793,7 @@ function renderAyarlarPage(){
       ${kvkkCardHTML()}
       <div class="settings-card">
         <h3><span class="settings-ic" style="background:#7B7873"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg></span> Yedekleme</h3>
-        <p>Tüm veriyi (araçlar, masraflar, kayıtlı sözleşmeler, etkinlik geçmişi) tek bir dosyaya indir, ya da bir yedekten geri yükle.</p>
+        <p>Araç, müşteri, kiralama, masraf ve sözleşme kayıtlarını JSON dosyasına indir veya geri yükle. Ayrı depolanan hasar fotoğrafları, fişler ve belgeler bu dosyaya dahil değildir.</p>
         <div class="row-btns">
           <button class="settings-btn" id="apBackup">Yedekle (JSON)</button>
           <button class="settings-btn" id="apRestore">Yedekten geri yükle</button>
@@ -24539,23 +24544,40 @@ const FILO_TEST_KOLEKSIYONLARI = [
   ['sozlesmeler','Sözleşme kayıtları'], ['leads','Müşteri teklifleri'], ['ihaleler','İhaleler'],
   ['sozlesmeGruplari','Sözleşme grupları'], ['expenses','Masraflar'], ['invoices','Faturalar'],
   ['payments','Tahsilatlar'], ['ledger','Cari'], ['suppliers','Tedarikçiler'],
-  ['arsiv','Arşiv'], ['documents','Belgeler'], ['notifications','Bildirimler'],
+  ['arsiv','Arşiv'], ['arsivSilinenler','Silinen arşiv kayıtları'],
+  ['activityLog','Etkinlik geçmişi'], ['supplierLedger','Tedarikçi cari'],
+  ['serviceParts','Servis parçaları'], ['tires','Lastikler'], ['fuelRecords','Yakıt'],
+  ['tolls','Geçişler'], ['trafficFines','Trafik cezaları'], ['documents','Belgeler'],
+  ['notifications','Bildirimler'], ['automationRules','Otomasyon'], ['kvkkTalepleri','KVKK talepleri'],
 ];
 function filoSistemTesti(modalGoster){
   const sonuclar = [];
   const test = (ad, ok, detay)=>sonuclar.push({ad, ok:!!ok, detay:detay||''});
-  const yedekVerisi = JSON.parse(JSON.stringify(yedekVerisiOlustur()));
+  const kaynakVeri = yedekVerisiOlustur();
+  const yedekVerisi = JSON.parse(JSON.stringify(kaynakVeri));
   const yedekteOlmayan = FILO_TEST_KOLEKSIYONLARI.filter(([k])=>!Array.isArray(yedekVerisi[k])).map(e=>e[1]);
   test('Yedek kapsamı — backupToJson tüm koleksiyonları içeriyor', yedekteOlmayan.length===0, yedekteOlmayan.length ? 'YEDEKTE YOK: '+yedekteOlmayan.join(', ') : FILO_TEST_KOLEKSIYONLARI.length+' koleksiyonun tamamı yedekte');
+  const sayisiDegisen = FILO_TEST_KOLEKSIYONLARI.filter(([k])=>!Array.isArray(kaynakVeri[k]) || !Array.isArray(yedekVerisi[k]) || kaynakVeri[k].length!==yedekVerisi[k].length).map(e=>e[1]);
+  test('Yedek JSON: koleksiyon sayıları korunuyor', sayisiDegisen.length===0, sayisiDegisen.length ? 'Kontrol edin: '+sayisiDegisen.join(', ') : 'Bellekteki JSON denemesi başarılı');
   // 2) Veri bütünlüğü
   const vid = new Set(); const vtekrar = [];
   vehicles.forEach(v=>{ const k=String(v.id||''); if(vid.has(k)) vtekrar.push(v.plaka||k); vid.add(k); });
   test('Araç kayıtları: ID benzersizliği', vtekrar.length===0, vtekrar.length ? vtekrar.length+' tekrarlı ID' : vehicles.length+' araç, tümü benzersiz');
   const sozBozuk = (sozlesmeler||[]).filter(r=>!r || typeof r!=='object' || !r.data).length;
   test('Sözleşme kayıtları: her kayıtta sözleşme verisi (data) var', sozBozuk===0, sozBozuk ? sozBozuk+' kayıt bozuk' : (sozlesmeler||[]).length+' kayıt sağlam');
-  const aktifKiralamalar = (rentals||[]).filter(r=>r.durum!=='iadeAlindi' && r.durum!=='iptal');
-  const eslesmeyen = aktifKiralamalar.filter(r=>!vehicles.some(v=>v.id===r.aracId || (r.plaka && normPlaka(v.plaka)===normPlaka(r.plaka))));
+  const aktifKiralamalar = (rentals||[]).filter(r=>r && r.durum!=='iadeAlindi' && r.durum!=='kapandi' && r.durum!=='iptal');
+  const eslesmeyen = aktifKiralamalar.filter(r=>!vehicles.some(v=>(r.vehicleId && v.id===r.vehicleId) || (r.aracId && v.id===r.aracId) || (r.plaka && normPlaka(v.plaka)===normPlaka(r.plaka))));
   test('Kiralamalar: her aktif kiralama bir araçla eşleşiyor', eslesmeyen.length===0, eslesmeyen.length ? eslesmeyen.map(r=>r.plaka||r.id).join(', ')+' eşleşmiyor' : aktifKiralamalar.length+' aktif kiralama tamam');
+  const sozlesmeEksik = aktifKiralamalar.filter(r=>r.sozlesmeId && !(sozlesmeler||[]).some(s=>s && s.id===r.sozlesmeId));
+  test('Kiralamalar: bağlı sözleşme kayıtları mevcut', sozlesmeEksik.length===0, sozlesmeEksik.length ? sozlesmeEksik.length+' bağlantı kontrol edilmeli' : 'Bağlantılar kontrol edildi');
+  const supheliKm = (rentals||[]).filter(r=>{
+    if(!r || !r.iadeKontrol || !r.teslimKontrol) return false;
+    const baslangic = Number(r.teslimKontrol.km);
+    const bitis = Number(r.iadeKontrol.km);
+    if(!Number.isFinite(baslangic) || !Number.isFinite(bitis) || r.iadeKontrol.km==null || r.iadeKontrol.km==='') return false;
+    return bitis<0 || (baslangic>0 && bitis>0 && bitis<baslangic/2);
+  });
+  test('İade kayıtları: olağan dışı kilometre değerleri', supheliKm.length===0, supheliKm.length ? supheliKm.length+' iade kaydı gözden geçirilmeli' : 'Belirgin tutarsızlık bulunmadı');
   const lid = new Set(); const ltekrar = [];
   (leads||[]).forEach(l=>{ const k=String(l.id||''); if(lid.has(k)) ltekrar.push(l.adSoyad||k); lid.add(k); });
   test('Müşteri teklifleri: ID benzersizliği', ltekrar.length===0, ltekrar.length ? ltekrar.length+' tekrar' : (leads||[]).length+' teklif tamam');
@@ -24581,7 +24603,7 @@ function filoSistemTesti(modalGoster){
             <div><div style="font-size:13px;font-weight:600;color:var(--paper);">${s.ad}</div>${s.detay?`<div style="font-size:12px;color:var(--text-3);margin-top:2px;">${esc(s.detay)}</div>`:''}</div>
           </div>`).join('')}
         <div style="margin-top:10px;padding:10px;border-radius:8px;background:${hata?'rgba(225,85,78,.1)':'rgba(54,161,104,.1)'};font-size:13px;font-weight:600;color:${hata?'#E1554E':'#36A168'};text-align:center;">
-          ${hata ? hata+' test BAŞARISIZ — ekran görüntüsünü paylaşırsanız düzeltirim.' : 'Tüm testler geçti — sistem sağlıklı.'}
+          ${hata ? hata+' kontrol gözden geçirilmeli — ekran görüntüsünü paylaşırsanız inceleyebiliriz.' : 'Seçilen kontroller geçti. Bu sonuç tüm işlevlerin doğrulandığı anlamına gelmez.'}
         </div>
       </div>`;
     document.body.appendChild(el);

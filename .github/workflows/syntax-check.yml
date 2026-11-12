@@ -16,6 +16,6 @@ jobs:
         with:
           node-version: 20
       - run: node scripts/check-syntax.js
-      - run: node --check app.js && node --check app.min.js && node tests/unit.test.js && node tests/customer-duplicate.test.js
+      - run: node --check app.js && node --check app.min.js && node tests/unit.test.js && node tests/customer-duplicate.test.js && node tests/system.test.js && node tests/return.test.js && node tests/contract-documents.test.js
       - run: npx --yes esbuild@0.28.2 app.js --minify-whitespace --charset=utf8 --target=es2020 --outfile=app.min.js
       - run: git diff --exit-code -- app.min.js
