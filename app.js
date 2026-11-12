@@ -3403,7 +3403,7 @@ function updateFromExcel(file){
             else if(durumVal==='SATILDI') patch.durum='Satıldı';
           }
 
-          const existing = vehicles.find(v=>v.plaka===plaka);
+          const existing = vehicles.find(v=>normPlaka(v.plaka)===normPlaka(plaka));
           if(existing){
             // v.312: KİRACI sütunundan gelen ad, müşteri eşleştirme/kiralama senkronizasyonu
             // için yer alanına da yansıtılıyor (yer sütunu yoksa).
@@ -6546,6 +6546,7 @@ function openVehicleDetail(id){
         </div>
 
         <div class="vd-tab-panel active" data-tab="genel">
+        <button id="vdFotografGalerisiAc" type="button" style="background:var(--surface);border:1px solid var(--line);color:var(--paper);padding:9px 14px;border-radius:8px;cursor:pointer;margin-bottom:14px;">Araç fotoğraflarını göster</button>
         <!-- Özet kartlar -->
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr ${v.ruhsatSeriNo?'1fr':''};gap:10px;margin-bottom:16px;">
           <div style="background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;">
@@ -6939,7 +6940,87 @@ function openVehicleDetail(id){
   `;
 
   document.body.appendChild(el);
+  el.querySelector('#vdFotografGalerisiAc').addEventListener('click', ()=>aracGalerisiAc(v, vSozler));
   el.onclick = e=>{ if(e.target===el) el.remove(); };
+}
+async function aracGalerisiAc(arac, sozlesmeler){
+  const onceki = document.getElementById('aracFotografGalerisi');
+  if(onceki) onceki.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'aracFotografGalerisi';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:96;display:flex;align-items:center;justify-content:center;padding:16px;';
+  const panel = document.createElement('div');
+  panel.style.cssText = 'background:var(--surface);border-radius:14px;width:min(100%,720px);max-height:88vh;display:flex;flex-direction:column;overflow:hidden;';
+  const header = document.createElement('div');
+  header.style.cssText = 'padding:14px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);color:var(--paper);font-weight:700;';
+  const baslik = document.createElement('span');
+  baslik.textContent = (arac.plaka||'Araç') + ' — Fotoğraflar';
+  const kapat = document.createElement('button');
+  kapat.type = 'button'; kapat.textContent = 'Kapat';
+  kapat.style.cssText = 'padding:6px 10px;cursor:pointer;';
+  kapat.addEventListener('click', ()=>overlay.remove());
+  header.append(baslik, kapat);
+  const alan = document.createElement('div');
+  alan.style.cssText = 'overflow:auto;padding:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;color:var(--paper);';
+  alan.textContent = 'Fotoğraflar yükleniyor…';
+  panel.append(header, alan); overlay.append(panel);
+  overlay.addEventListener('click', event=>{if(event.target===overlay) overlay.remove();});
+  document.body.appendChild(overlay);
+  const fotolar = [];
+  const stok = getAracGorsel([arac.marka, arac.model].filter(Boolean).join(' '));
+  if(stok) fotolar.push({url:stok, etiket:'Model görseli'});
+  for(const kayit of sozlesmeler){
+    const veri = kayit.data||{};
+    const ortak = Array.isArray(veri.araclar) && veri.araclar.length>1;
+    for(const foto of (Array.isArray(veri.teslimFotolar)?veri.teslimFotolar:[])){
+      const url = typeof foto==='string' ? foto : foto && foto.data;
+      if(url) fotolar.push({url, etiket:ortak?'Ortak sözleşme fotoğrafı':'Teslim fotoğrafı'});
+    }
+    for(const anahtar of ['teslimFoto1','teslimFoto2','teslimFoto3']){
+      if(veri[anahtar]) fotolar.push({url:veri[anahtar], etiket:ortak?'Ortak sözleşme fotoğrafı':'Teslim fotoğrafı'});
+    }
+  }
+  let okunamayan = 0;
+  for(const hasar of (Array.isArray(arac.hasarlar)?arac.hasarlar:[])){
+    const anahtarlar = Array.isArray(hasar.fotolar) ? [...hasar.fotolar] : [];
+    if(hasar.fotoKey && !anahtarlar.includes(hasar.fotoKey)) anahtarlar.push(hasar.fotoKey);
+    for(const anahtar of anahtarlar){
+      try{ const sonuc = await storageAPI.get(anahtar); if(sonuc && sonuc.value) fotolar.push({url:sonuc.value, etiket:'Hasar fotoğrafı'}); else okunamayan++; }catch(error){ okunamayan++; }
+    }
+  }
+  alan.textContent = '';
+  const gorulen = new Set();
+  for(const foto of fotolar){
+    if(typeof foto.url!=='string' || gorulen.has(foto.url)) continue;
+    let adres;
+    try{ adres = new URL(foto.url, document.baseURI); }catch(error){ continue; }
+    if(!['http:','https:','blob:','file:'].includes(adres.protocol) && !/^data:image\/(?:jpeg|png|webp|gif);base64,/i.test(foto.url)) continue;
+    gorulen.add(foto.url);
+    const kart = document.createElement('button');
+    kart.type = 'button'; kart.style.cssText = 'padding:0;background:var(--bg);border:1px solid var(--line);border-radius:8px;overflow:hidden;cursor:pointer;color:var(--paper);text-align:left;';
+    const resim = document.createElement('img');
+    resim.src = foto.url; resim.alt = foto.etiket; resim.loading = 'lazy'; resim.decoding = 'async';
+    resim.style.cssText = 'width:100%;height:110px;object-fit:cover;display:block;';
+    const etiket = document.createElement('span'); etiket.textContent = foto.etiket; etiket.style.cssText = 'display:block;padding:8px;font-size:12px;';
+    kart.append(resim, etiket);
+    kart.addEventListener('click', ()=>{
+      const buyuk = document.createElement('div');
+      buyuk.style.cssText = 'position:fixed;inset:0;z-index:97;background:rgba(0,0,0,.94);display:flex;align-items:center;justify-content:center;padding:48px 16px 16px;';
+      const tam = document.createElement('img'); tam.src = foto.url; tam.alt = foto.etiket; tam.style.cssText = 'max-width:100%;max-height:100%;object-fit:contain;';
+      const cik = document.createElement('button'); cik.type='button'; cik.textContent='Kapat'; cik.style.cssText='position:absolute;right:16px;top:16px;padding:8px 12px;cursor:pointer;';
+      cik.addEventListener('click', ()=>buyuk.remove());
+      buyuk.addEventListener('click', event=>{if(event.target===buyuk) buyuk.remove();});
+      buyuk.append(tam, cik); document.body.appendChild(buyuk);
+    });
+    alan.appendChild(kart);
+  }
+  if(okunamayan){
+    const uyari = document.createElement('div');
+    uyari.style.cssText = 'grid-column:1/-1;font-size:12px;';
+    uyari.textContent = okunamayan + ' hasar fotoğrafı bu cihazdan okunamadı.';
+    alan.appendChild(uyari);
+  }
+  if(!alan.children.length) alan.textContent = 'Bu araç için görüntülenebilir fotoğraf bulunamadı.';
 }
 // v.86: Mobil Araç Detayı sekme geçişi — masaüstünde hiç çağrılmaz (sekme çubuğu CSS ile gizli).
 function vdShowTab(tab){
@@ -19753,6 +19834,22 @@ function musteriFormTipDegisti(){
   document.getElementById('mfSirket').style.display = tip!=='bireysel' ? '' : 'none';
   document.getElementById('mfFirmaLabel').textContent = tip==='kurumsal' ? 'Kurum adı' : 'Firma adı';
 }
+function musteriTekrarBul(kayit, mevcutKayitlar, haricId){
+  const telefonAnahtari = deger=>{
+    let rakam = String(deger||'').replace(/\D/g, '');
+    if(rakam.startsWith('0090') && rakam.length===14) rakam = rakam.slice(4);
+    else if(rakam.startsWith('90') && rakam.length===12) rakam = rakam.slice(2);
+    if(rakam.length===11 && rakam.startsWith('0')) rakam = rakam.slice(1);
+    return rakam;
+  };
+  for(const musteri of mevcutKayitlar){
+    if(!musteri || (haricId != null && String(musteri.id)===String(haricId))) continue;
+    if(kayit.tc && musteri.tc && String(kayit.tc).trim()===String(musteri.tc).trim()) return {alan:'T.C. kimlik numarası', musteri};
+    if(kayit.vkn && musteri.vkn && String(kayit.vkn).trim()===String(musteri.vkn).trim()) return {alan:'vergi kimlik numarası', musteri};
+    if(kayit.telefon && musteri.telefon && telefonAnahtari(kayit.telefon)===telefonAnahtari(musteri.telefon)) return {alan:'telefon numarası', musteri};
+  }
+  return null;
+}
 async function musteriKaydet(id){
   if(!requireAdmin()) return;
   const errEl = document.getElementById('mfErr');
@@ -19810,7 +19907,14 @@ async function musteriKaydet(id){
     return;
   }
 
-  // FAZ10 (KVKK): rıza onayı olmadan müşteri kaydı OLUŞTURULAMAZ/GÜNCELLENEMEZ — bkz. Ayarlar
+  const tekrar = musteriTekrarBul(veri, customers, id);
+  if(tekrar){
+    errEl.textContent = 'Bu ' + tekrar.alan + ' zaten ' + (musteriGoruntuAdi(tekrar.musteri) || 'başka bir müşteri') + ' kaydında bulunuyor.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  // FAZ10 (KVKK): rıza onayı olmadan müşteri kaydı OLUŞTURULAMAZ/GÜNCELLENEMEZ - bkz. Ayarlar
   // > KVKK / Veri Yönetimi kartı (statik örnek metin, gerçek hukuki metin DEĞİLDİR).
   const kvkkOnayli = document.getElementById('mfKvkkOnay').checked;
   if(!kvkkOnayli){
