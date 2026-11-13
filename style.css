@@ -3589,3 +3589,58 @@
     .overlay > *:first-child,.iade-modal > *:first-child{margin-top:auto;}
     .overlay > *:last-child,.iade-modal > *:last-child{margin-bottom:auto;}
   }
+
+  html .app-shell .sidebar{width:260px;background:#f4f2ed !important;border-right:1px solid #d3d4ce !important;box-shadow:none !important;scrollbar-color:#a6ada7 #f4f2ed;font-family:"Segoe UI",sans-serif;}
+  html .app-shell .sidebar::before{display:none !important;content:none !important;}
+  html .app-shell .sidebar::-webkit-scrollbar-track{background:#f4f2ed;}
+  html .app-shell .sidebar::-webkit-scrollbar-thumb{background:#a6ada7;border:2px solid #f4f2ed;border-radius:10px;}
+  html .app-shell .sidebar::-webkit-scrollbar-thumb:hover{background:#7b8780;}
+  html .app-shell .sidebar .sb-brand{gap:12px;padding:24px 22px;background:#1e2b2d;color:#fff;}
+  html .app-shell .sidebar .sb-brand-mark{width:43px;height:43px;padding:4px;border-radius:3px;background:#fff !important;box-shadow:none !important;}
+  html .app-shell .sidebar .sb-brand-text{font-family:"Segoe UI",sans-serif;font-size:16px;line-height:1.2;letter-spacing:.08em;font-weight:700 !important;color:#fff !important;}
+  html .app-shell .sidebar .sb-brand-sub{font-family:"Segoe UI",sans-serif;font-size:10px;letter-spacing:.13em;margin-top:4px;color:#bcc6c3 !important;}
+  html .app-shell .sidebar .sb-nav{padding:19px 18px;}
+  html .app-shell .sidebar .sb-item{min-height:43px;gap:12px !important;padding:0 10px !important;margin-bottom:2px !important;border:1px solid transparent;border-radius:0 !important;background:transparent !important;box-shadow:none !important;color:#414d4b !important;font-family:"Segoe UI",sans-serif;font-size:13px !important;font-weight:600 !important;}
+  html .app-shell .sidebar .sb-item svg{width:18px !important;height:18px !important;color:#414d4b !important;stroke-width:1.7;}
+  html .app-shell .sidebar .sb-item:hover:not(.active){background:#eae8e2 !important;color:#1d2729 !important;}
+  html .app-shell .sidebar .sb-item:hover:not(.active) svg{color:#1d2729 !important;}
+  html .app-shell .sidebar .sb-item.active{background:#fff !important;color:#9f1f28 !important;border:1px solid #e0dfda;border-left:0;border-radius:0 !important;box-shadow:inset 3px 0 0 #ac2530 !important;}
+  html .app-shell .sidebar .sb-item.active svg{color:#a92430 !important;}
+  html .app-shell .sidebar .sb-group-head{padding:11px 9px 10px !important;font-family:"Segoe UI",sans-serif;font-size:10px !important;font-weight:700 !important;letter-spacing:.12em !important;color:#777f7b !important;}
+  html .app-shell .sidebar .sb-group-head:hover{color:#414d4b !important;}
+  html .app-shell .sidebar .sb-group-body{padding-left:0 !important;gap:0 !important;}
+  html .app-shell .sidebar .sb-group-body::before{display:none !important;content:none !important;}
+  html .app-shell .sidebar .sb-group-body .sb-item{padding-left:10px !important;}
+  html .app-shell .sidebar .sb-search-trigger{background:#fff !important;border:1px solid #dedfd9 !important;border-radius:3px;color:#535f5c !important;font-family:"Segoe UI",sans-serif;font-size:13px;}
+  html .app-shell .sidebar .sb-search-trigger:hover{background:#eae8e2 !important;color:#1d2729 !important;}
+  html .app-shell .sidebar .sb-search-trigger .sb-kbd{background:#f4f2ed !important;color:#737d78 !important;}
+  html .app-shell .sidebar .sb-collapse-btn{font-family:"Segoe UI",sans-serif;color:#59645f !important;border-radius:0;}
+  html .app-shell .sidebar .sb-collapse-btn:hover{background:#eae8e2 !important;color:#1d2729 !important;}
+  html .app-shell .sidebar .sb-foot{margin:0 20px;padding:0 0 14px;background:transparent !important;border:0 !important;border-top:1px solid #d5d8d1 !important;}
+  html .app-shell .sidebar .sb-foot-brand,html .app-shell .sidebar .sb-foot-tag{display:none;}
+  html .app-shell .sidebar .sb-user{padding:18px 0 12px;border:0 !important;font-family:"Segoe UI",sans-serif;}
+  html .app-shell .sidebar .sb-user:hover{background:#eae8e2 !important;}
+  html .app-shell .sidebar .sb-user-avatar{border-radius:0;background:#263638 !important;color:#fff !important;font-family:"Segoe UI",sans-serif;font-size:11px;}
+  html .app-shell .sidebar .sb-user-name{font-family:"Segoe UI",sans-serif;font-size:12px !important;font-weight:700;color:#1d2729 !important;}
+  html .app-shell .sidebar .sb-user-role{font-family:"Segoe UI",sans-serif;font-size:10px;color:#737d78 !important;}
+  html .app-shell .sidebar .sb-user > svg{color:#737d78 !important;}
+  html .app-shell .sidebar .sb-version{font-family:"Segoe UI",sans-serif !important;color:#737d78 !important;}
+  html .app-shell .sidebar.collapsed{width:64px;}
+  html .app-shell .sidebar.collapsed .sb-brand{justify-content:center;padding:24px 0;}
+  html .app-shell .sidebar.collapsed .sb-nav{padding:19px 7px;}
+  html .app-shell .sidebar.collapsed .sb-foot{margin:0 8px;padding:0 0 14px;}
+  html .app-shell .sidebar.collapsed .sb-user{justify-content:center;padding:18px 0 12px;}
+  @media (max-width:900px){
+    html .app-shell .sidebar.show{width:260px;max-width:82vw;box-shadow:0 0 40px rgba(0,0,0,.25) !important;}
+    html .app-shell .sidebar.show .sb-collapse-btn{display:none;}
+    html .app-shell .sidebar.collapsed.show .sb-brand{justify-content:flex-start;padding:24px 22px;}
+    html .app-shell .sidebar.collapsed.show .sb-brand-text,html .app-shell .sidebar.collapsed.show .sb-brand-sub,html .app-shell .sidebar.collapsed.show .sb-user-info,html .app-shell .sidebar.collapsed.show .sb-user > svg,html .app-shell .sidebar.collapsed.show .sb-version{display:block;}
+    html .app-shell .sidebar.collapsed.show .sb-nav{padding:19px 18px;}
+    html .app-shell .sidebar.collapsed.show .sb-group-head{display:flex;}
+    html .app-shell .sidebar.collapsed.show .sb-group:not(.open) .sb-group-body{display:none !important;}
+    html .app-shell .sidebar.collapsed.show .sb-search-trigger{justify-content:flex-start;padding:8px 10px;}
+    html .app-shell .sidebar.collapsed.show .sb-search-trigger span{display:inline;}
+    html .app-shell .sidebar.collapsed.show .sb-item .sb-badge{display:inline-block;}
+    html .app-shell .sidebar.collapsed.show .sb-foot{margin:0 20px;padding:0 0 14px;}
+    html .app-shell .sidebar.collapsed.show .sb-user{justify-content:flex-start;padding:18px 0 12px;}
+  }
