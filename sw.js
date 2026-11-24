@@ -1,10 +1,10 @@
 /* PEKDOĞRU Filo Paneli — Service Worker v.332 */
-const CACHE_NAME = 'filo-panel-v379';
+const CACHE_NAME = 'filo-panel-v380';
 const SHELL_ASSETS = [
   './',
   './index.html',
-  './app.min.js?v=379',
-  './style.css?v=379',
+  './app.min.js?v=380',
+  './style.css?v=380',
   './login-filo2.jpg',
   './login-filo.jpg',
   './firebase-app-compat.js',
@@ -21,7 +21,6 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(SHELL_ASSETS))
   );
-  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
@@ -32,7 +31,6 @@ self.addEventListener('activate', (event) => {
       )
     )
   );
-  self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {

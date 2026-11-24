@@ -1811,6 +1811,7 @@ function fireUrgentNotification(){
 }
 let __persistWarnTs = 0;
 async function persist(){
+  let kaydedildi = true;
   try{
     // v.134: withStorageTimeout — bkz. tanımındaki not — bir depolama isteği hata vermeden
     // sonsuza dek askıda kalırsa artık en geç 20 saniyede zaman aşımı hatasına dönüşüyor.
@@ -1818,6 +1819,7 @@ async function persist(){
     // v.270: başarılı persist sonrası "Kaydet" bekleme bayrağını sıfırla
     if(typeof window.filoKaydetBekliyor === 'function') window.filoKaydetBekliyor(false);
   }catch(e){
+    kaydedildi = false;
     console.error('Veri kaydetme hatası:', e);
     // v.270: otomatik kayıt başarısız olursa manuel Kaydet butonunu göster
     if(typeof window.filoKaydetBekliyor === 'function') window.filoKaydetBekliyor(true);
@@ -1829,7 +1831,8 @@ async function persist(){
       showToast(zamanAsimiMi ? e.message : 'UYARI: Değişiklikler kaydedilemedi (depolama alanı dolu olabilir). Lütfen Excel yedeği alıp gereksiz belge/fotoğrafları silin.', true);
     }
   }
-  otomatikKayitRozeti();
+  if(kaydedildi) otomatikKayitRozeti();
+  return kaydedildi;
 }
 // v.93: Otomatik kaydet göstergesi — persist() her çalıştığında sağ altta belirip kaybolur
 let __otkTs = 0;
@@ -2084,7 +2087,7 @@ async function sozKaydet(d, basISO, bitisISO){
       rec.tarih = d.tarih;
     }
     sozAracResimleriEkle(d);
-    await persistSozlesmeler();
+    if(!await persistSozlesmeler()) return null;
     return rec;
   }catch(e){ console.error('Sözleşme kaydı hatası:', e); return null; }
 }
@@ -2333,6 +2336,7 @@ function sozFotoGaleriCiz(rec){
         <button class="settings-btn" style="padding:10px 18px;border-radius:12px;font-size:13.5px;" onclick="sozStokResimEkle('${rec.id}')">🚗 Araç Resmi Ekle</button>
         <span style="font-size:12px;color:var(--text-3);align-self:center;">Fotoğraflar otomatik sıkıştırılır (${fotolar.length} foto)</span>
       </div>
+      <div id="sozFotoYerelUyari" style="padding:4px 0 10px;font-size:12px;color:var(--text-2);"></div>
       <div style="overflow-y:auto;flex:1;">
         ${fotolar.length ? `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;padding:6px 0 14px;">
           ${fotolar.map((f,i)=>`
@@ -2353,6 +2357,38 @@ function sozFotoGaleriCiz(rec){
       </div>
     </div>`;
   document.body.appendChild(el);
+  sozFotoYerelDurumGoster(rec.id, el);
+}
+async function sozFotoYerelDurumGoster(id, overlay){
+  const durum=overlay.querySelector('#sozFotoYerelUyari');
+  if(!durum) return;
+  try{
+    const ids=await sozTaslaklari.fotoKimlikleri(id);
+    if(!overlay.isConnected || !ids.length) return;
+    durum.textContent=ids.length+' fotoğraf bu cihazda kurtarılmayı bekliyor; diğer cihazlarla eşitlenmedi. ';
+    const button=document.createElement('button'); button.type='button'; button.textContent='Fotoğrafları kurtar';
+    button.onclick=()=>sozFotoKurtar(id, button); durum.appendChild(button);
+  }catch(error){ durum.textContent='Cihazdaki fotoğraf koruması kullanılamıyor: '+error.message; }
+}
+async function sozFotoKurtar(id, button){
+  const rec=sozlesmeler.find(item=>item.id===id);
+  if(!rec || !confirm('Bu cihazda bekleyen fotoğrafları sözleşmeye eklemeyi denemek istiyor musunuz?')) return;
+  button.disabled=true;
+  try{
+    const ids=await sozTaslaklari.fotoKimlikleri(id);
+    if(!Array.isArray(rec.data.teslimFotolar)) rec.data.teslimFotolar=[];
+    for(const fotoId of ids){
+      const foto=await sozTaslaklari.fotoOku(id,fotoId);
+      const data=await new Promise((resolve,reject)=>{
+        const reader=new FileReader(); reader.onload=()=>resolve(reader.result); reader.onerror=()=>reject(reader.error); reader.readAsDataURL(foto.blob);
+      });
+      if(!rec.data.teslimFotolar.some(item=>item?.data===data)) rec.data.teslimFotolar.push({ts:foto.zaman,data});
+    }
+    if(!await persistSozlesmeler()) throw new Error('Sözleşmeye kaydedilemedi; fotoğraflar cihazda duruyor.');
+    if(!window.__cloudSyncActive){ sozFotoGaleriCiz(rec); showToast('Fotoğraflar yalnızca bu cihazda; bulut bağlantısı bekleniyor.',true); return; }
+    await sozTaslaklari.fotoSil(id,ids);
+    sozFotoGaleriCiz(rec); showToast('Bekleyen fotoğraflar sözleşmeye kaydedildi.');
+  }catch(error){ button.disabled=false; showToast('Fotoğraflar kurtarılamadı: '+error.message,true); }
 }
 function sozFotoKapat(){ document.getElementById('sozFotoOverlay')?.remove(); }
 // v.343: Eski sözleşmelere de stok araç resmini tek dokunuşla ekler (galeri boşken en hızlı yol)
@@ -2379,32 +2415,41 @@ function sozFotoDosyaAl(id, kameradan){
     if(!files.length) return;
     showToast(files.length + ' fotoğraf işleniyor…');
     if(!Array.isArray(rec.data.teslimFotolar)) rec.data.teslimFotolar = [];
+    const yerelIdler=[];
+    let korumaHatasi=false;
+    let eklenen=0;
     for(const file of files){
-      if(file.size > 25*1024*1024){ showToast('Fotoğraf çok büyük (25MB üstü) — atlandı.', true); continue; }
+      if(file.size > 25*1024*1024){ korumaHatasi=true; showToast('Fotoğraf çok büyük (25MB üstü) — atlandı.', true); continue; }
       try{
         const data = await fotoSikistir(file, 1280, 0.7);
         if(data){
-          rec.data.teslimFotolar.push({ ts: new Date().toLocaleString('tr-TR'), data });
-        }
-      }catch(e){ console.error('sozFotoDosyaAl:', e); }
+          const zaman=new Date().toLocaleString('tr-TR');
+          try{ yerelIdler.push(await sozTaslaklari.fotoKaydet(id,data,zaman)); }
+          catch(error){ korumaHatasi=true; showToast('Fotoğraf cihaza kaydedilemedi: '+error.message, true); }
+          rec.data.teslimFotolar.push({ts:zaman,data});
+          eklenen++;
+        }else{ korumaHatasi=true; showToast('Fotoğraf işlenemedi; yeniden seçin.',true); }
+      }catch(e){ korumaHatasi=true; console.error('sozFotoDosyaAl:', e); showToast('Fotoğraf işlenemedi; yeniden seçin.',true); }
     }
-    // v.374: kaydın gerçekten buluta yazıldığını DOĞRULA — başarısızsa galeri kapanmaz,
-    // kırmızı uyarı bandı çıkar; kullanıcı "Tekrar Dene"yene kadar (ya da bağlantı
-    // gelene kadar) fotoğraflar cihaz belleğinde bekler. Eskiden sessizce kayboluyordu.
+    if(!eklenen) return;
     const tamam = await persistSozlesmeler();
     if(!tamam){
-      sozFotoKayitUyariGoster(rec);
+      sozFotoKayitUyariGoster(rec, yerelIdler.length, korumaHatasi);
       return;
     }
-    logActivity('edit', 'Teslim fotoğrafı eklendi: <b>'+esc(rec.sozNo||'')+'</b> · '+files.length+' foto');
+    if(window.__cloudSyncActive && yerelIdler.length){
+      try{ await sozTaslaklari.fotoSil(id,yerelIdler); }
+      catch(error){ showToast('Cihazdaki fotoğraf yedeği temizlenemedi; korunuyor.',true); }
+    }
+    logActivity('edit', 'Teslim fotoğrafı eklendi: <b>'+esc(rec.sozNo||'')+'</b> · '+eklenen+' foto');
     sozFotoGaleriCiz(rec);
-    showToast('✅ Fotoğraflar sözleşmeye kaydedildi (bulut onaylı).');
+    showToast(korumaHatasi ? 'Bazı fotoğraflar işlenemedi veya cihaz koruması başarısız oldu; fotoğraf sayısını kontrol edin.' : (window.__cloudSyncActive ? 'Fotoğraflar sözleşmeye kaydedildi.' : 'Fotoğraflar bu cihazda; bulut kaydı doğrulanmadı.'), !window.__cloudSyncActive || korumaHatasi);
   };
   input.click();
 }
 // v.374: fotoğraf bulut kaydı başarısızsa kalıcı uyarı bandı — fotoğraflar henüz
 // cihaz belleğinde; ekran kapatılırsa KAYBEDİLİR. Tekrar Dene butonu yeniden yazar.
-function sozFotoKayitUyariGoster(rec){
+function sozFotoKayitUyariGoster(rec, yerelSayi=0, korumaHatasi=true){
   sozFotoKapat();
   const el = document.createElement('div');
   el.className = 'overlay show';
@@ -2414,8 +2459,9 @@ function sozFotoKayitUyariGoster(rec){
     <div class="modal" style="width:min(520px,94vw);text-align:center;">
       <div style="width:46px;height:46px;border-radius:50%;background:rgba(225,85,78,.15);color:#E1554E;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;font-size:22px;font-weight:700;">!</div>
       <h3 style="margin:0 0 8px;font-size:16px;color:var(--paper);">Fotoğraflar henüz KAYDEDİLEMEDİ</h3>
-      <p style="margin:0 0 14px;font-size:13px;color:var(--text-2);line-height:1.5;">İnternet bağlantısı zayıf olabilir. ${((rec.data.teslimFotolar)||[]).length} fotoğraf bu ekranda bekliyor — <b>bu pencereyi kapatırsanız kaybolur.</b> Bağlantı düzelince "Tekrar Dene"ye basın.</p>
+      <p style="margin:0 0 14px;font-size:13px;color:var(--text-2);line-height:1.5;">${yerelSayi} fotoğraf bu cihazda korunuyor; diğer cihazlarda henüz görünmez. ${korumaHatasi ? '<b>Bazı fotoğrafların cihaz kaydı başarısız oldu; bu pencereyi kapatmayın.</b>' : 'Aynı cihazda sözleşmenin fotoğraf galerisinden kurtarabilirsiniz.'} Bağlantı düzelince "Tekrar Dene"ye basın.</p>
       <div style="display:flex;gap:8px;">
+        ${!korumaHatasi && yerelSayi ? '<button class="settings-btn" style="flex:1;" onclick="sozFotoKapat()">Kapat</button>' : ''}
         <button class="add-btn" style="flex:1;justify-content:center;" onclick="sozFotoTekrarDene('${rec.id}')">Tekrar Dene</button>
       </div>
     </div>`;
@@ -2426,14 +2472,33 @@ async function sozFotoTekrarDene(id){
   if(!rec) return;
   showToast('Tekrar kaydediliyor…');
   const tamam = await persistSozlesmeler();
-  if(tamam){ sozFotoKapat(); sozFotoGaleriCiz(rec); showToast('✅ Fotoğraflar sözleşmeye kaydedildi (bulut onaylı).'); }
+  if(tamam){ sozFotoKapat(); sozFotoGaleriCiz(rec); showToast(window.__cloudSyncActive ? 'Fotoğraflar sözleşmeye kaydedildi.' : 'Fotoğraflar bu cihazda; bulut kaydı doğrulanmadı.', !window.__cloudSyncActive); }
   else showToast('Yine kaydedilemedi — bağlantıyı kontrol edip tekrar deneyin.', true);
 }
 async function sozFotoSil(id, idx){
   const rec = sozlesmeler.find(r=>r.id===id);
   if(!rec || !Array.isArray(rec.data.teslimFotolar)) return;
+  const silinen=rec.data.teslimFotolar[idx];
+  if(!silinen) return;
   rec.data.teslimFotolar.splice(idx, 1);
-  await persistSozlesmeler();
+  if(!await persistSozlesmeler()){
+    rec.data.teslimFotolar.splice(idx, 0, silinen);
+    sozFotoGaleriCiz(rec);
+    showToast('Fotoğraf silinemedi; mevcut fotoğraf korundu.', true);
+    return;
+  }
+  try{
+    const ids=await sozTaslaklari.fotoKimlikleri(id);
+    const eslesen=[];
+    for(const fotoId of ids){
+      const foto=await sozTaslaklari.fotoOku(id,fotoId);
+      const data=await new Promise((resolve,reject)=>{
+        const reader=new FileReader(); reader.onload=()=>resolve(reader.result); reader.onerror=()=>reject(reader.error); reader.readAsDataURL(foto.blob);
+      });
+      if(data===silinen.data) eslesen.push(fotoId);
+    }
+    if(eslesen.length) await sozTaslaklari.fotoSil(id,eslesen);
+  }catch(error){ showToast('Fotoğraf silindi; cihaz yedeği temizlenemedi.', true); }
   sozFotoGaleriCiz(rec);
 }
 
@@ -3177,6 +3242,7 @@ function modalGeriGetir(modalId){
   el.classList.remove('iade-modal-min');
   el.classList.add('iade-modal');
   el.style.display = '';
+  if(el.__sozTaslak) sozTaslaklari.etkin = el.__sozTaslak;
   window.__minimizedModals = window.__minimizedModals.filter(m=>m.id!==modalId);
   minimizedBarRender();
 }
@@ -5585,12 +5651,342 @@ async function saveUzatma(id){
   showToast(v.plaka+' sözleşmesi '+fmtTarih(yeni)+' tarihine kadar uzatıldı.');
 }
 
+const sozTaslaklari = {
+  db: null,
+  acilis: null,
+  zamanlayici: null,
+  etkin: null,
+  async depo(){
+    if(this.db) return this.db;
+    if(!this.acilis) this.acilis = new Promise((resolve, reject)=>{
+      const istek = indexedDB.open('filo-sozlesme-taslaklari', 2);
+      istek.onupgradeneeded = ()=>{
+        if(!istek.result.objectStoreNames.contains('taslaklar')) istek.result.createObjectStore('taslaklar', {keyPath:'id'});
+        if(!istek.result.objectStoreNames.contains('imzalar')) istek.result.createObjectStore('imzalar');
+        if(!istek.result.objectStoreNames.contains('fotolar')){
+          const store=istek.result.createObjectStore('fotolar', {keyPath:'id'});
+          store.createIndex('sahipKayit','sahipKayit');
+        }
+      };
+      istek.onsuccess = ()=>{ this.db = istek.result; this.db.onversionchange = ()=>{ this.db.close(); this.db=null; this.acilis=null; }; resolve(this.db); };
+      istek.onerror = ()=>reject(istek.error || new Error('Cihaz deposu açılamadı'));
+      istek.onblocked = ()=>reject(new Error('Cihaz deposu başka bir sekmede kullanımda'));
+    }).catch(error=>{ this.acilis=null; throw error; });
+    return this.acilis;
+  },
+  kimlik(){
+    return window.currentUser?.uid && window.currentCompanyId && isAdmin() ? [window.currentUser.uid, window.currentCompanyId] : null;
+  },
+  yeni(tur, modal){
+    const kimlik = this.kimlik();
+    const id = typeof crypto.randomUUID==='function' ? crypto.randomUUID() : Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
+    const durum = {id, tur, kimlik, rev:0, islem:false, modal, son:'', kuyruk:Promise.resolve(true)};
+    modal.__sozTaslak = durum;
+    this.etkin = durum;
+    const yazi = document.createElement('div');
+    yazi.setAttribute('role','status');
+    yazi.style.cssText='padding:8px 14px;font-size:12px;color:var(--text-2);background:var(--surface-2);';
+    yazi.textContent = kimlik ? 'Taslak bu cihazda hazırlanıyor; diğer cihazlarla eşitlenmez.' : 'Cihaz taslağı için hesapla giriş gereklidir; bu form otomatik korunmuyor.';
+    modal.querySelector('.iade-head')?.after(yazi);
+    durum.yazi = yazi;
+    modal.addEventListener('input', ()=>this.kaydet(durum));
+    modal.addEventListener('change', ()=>this.kaydet(durum));
+    if(!this.zamanlayici) this.zamanlayici = setInterval(()=>{
+      const aktif = this.etkin;
+      if(aktif?.modal?.isConnected) this.kaydet(aktif);
+    }, 1500);
+    return durum;
+  },
+  alanlar(kapsam){
+    const sonuc = {};
+    if(!kapsam) return sonuc;
+    kapsam.querySelectorAll('input[id],select[id],textarea[id]').forEach(alan=>{
+      if(alan.type==='file' || alan.type==='password' || alan.dataset.vid) return;
+      sonuc[alan.id] = alan.type==='checkbox' || alan.type==='radio' ? {checked:alan.checked} : {value:alan.value};
+    });
+    return sonuc;
+  },
+  al(durum){
+    const modal = durum.modal;
+    const veri = {alanlar:this.alanlar(modal), islem:durum.islem, tamamlandi:!!durum.tamamlandi, kayitlar:durum.kayitlar||null, tur:durum.tur};
+    if(durum.tur==='kr'){
+      veri.adim = window.__krStep || 1;
+      veri.araclar = [...modal.querySelectorAll('.krCheck:checked')].map(el=>el.value);
+      veri.aracAlanlari = Object.assign({}, window.__krAracAlanlari || {});
+      modal.querySelectorAll('input[data-vid]').forEach(el=>{
+        const item = Object.assign({}, veri.aracAlanlari[el.dataset.vid] || {});
+        item[el.id.startsWith('krKira_')?'kira':'km'] = el.value;
+        veri.aracAlanlari[el.dataset.vid] = item;
+      });
+    }else{
+      veri.rentalId = ykSihirbazState?.rentalId || null;
+      veri.rentalDurum = veri.rentalId ? (rentals.find(r=>r.id===veri.rentalId)?.durum || null) : null;
+      const musteri = document.getElementById('musteriFormOverlay');
+      veri.musteriAlanlari = musteri?.dataset.sozTaslak===durum.id ? this.alanlar(musteri) : null;
+    }
+    return veri;
+  },
+  goster(durum, metin, hata){
+    if(durum.yazi){ durum.yazi.textContent=metin; durum.yazi.style.color=hata?'#d54c45':'var(--text-2)'; }
+  },
+  kaydet(durum, zorla){
+    if(!durum || !durum.kimlik || !durum.modal.isConnected || durum.saltOkunur || durum.cakisti) return Promise.resolve(false);
+    if(durum.gecis && !zorla) return durum.kuyruk;
+    const kimlik = this.kimlik();
+    if(!kimlik || kimlik[0]!==durum.kimlik[0] || kimlik[1]!==durum.kimlik[1]){
+      this.goster(durum, 'Oturum değişti; yeni değişiklikler bu taslağa kaydedilmiyor. Aynı hesapla tekrar giriş yapın.', true);
+      return Promise.resolve(false);
+    }
+    const veri = this.al(durum);
+    const imzalar = durum.tur==='kr' ? Object.assign({}, window.__krImza || {}) : {};
+    const parmak = JSON.stringify([veri, imzalar]);
+    if(!zorla && durum.son===parmak) return durum.kuyruk;
+    durum.son = parmak;
+    this.goster(durum, 'Taslak bu cihaza kaydediliyor; bulut eşitlemesi yok.', false);
+    durum.kuyruk = durum.kuyruk.catch(()=>false).then(async()=>{
+      try{
+        const db = await this.depo();
+        await new Promise((resolve,reject)=>{
+          const tx = db.transaction(['taslaklar','imzalar'],'readwrite');
+          const kayitlar = tx.objectStore('taslaklar');
+          const request = kayitlar.get(durum.id);
+          let cakisma = false;
+          request.onsuccess = ()=>{
+            const onceki = request.result;
+            const suanki = this.kimlik();
+            if(!suanki || suanki[0]!==kimlik[0] || suanki[1]!==kimlik[1] || (onceki?.rev || 0)!==durum.rev || (onceki && (onceki.uid!==kimlik[0] || onceki.sirket!==kimlik[1]))){ cakisma=true; tx.abort(); return; }
+            kayitlar.put({id:durum.id, uid:kimlik[0], sirket:kimlik[1], rev:durum.rev+1, zaman:Date.now(), veri});
+            const store = tx.objectStore('imzalar');
+            ['kiraci','kirayaVeren'].forEach(k=>{
+              if(imzalar[k]) store.put(imzalar[k], durum.id+':'+k);
+              else store.delete(durum.id+':'+k);
+            });
+          };
+          tx.oncomplete = ()=>resolve();
+          tx.onabort = tx.onerror = ()=>reject(new Error(cakisma?'Taslak başka sekmede değişti; üzerine yazılmadı.':'Cihaz deposuna yazılamadı.'));
+        });
+        durum.rev++;
+        if(durum.son===parmak) this.goster(durum, durum.islem ? 'Taslak bu cihazda kaydedildi; işlem durumu için mevcut kayıtları kontrol edin. Bulut eşitlemesi yok.' : 'Taslak bu cihazda kaydedildi. Bulut eşitlemesi yok.', !!durum.islem);
+        return true;
+      }catch(error){
+        durum.son='';
+        if(error.message.includes('başka sekmede')) durum.cakisti=true;
+        this.goster(durum, 'Taslak kaydedilemedi: '+error.message+' Bu ekranı kapatmayın.', true);
+        return false;
+      }
+    });
+    return durum.kuyruk;
+  },
+  async baslat(modal){
+    const durum = modal?.__sozTaslak;
+    if(!durum?.kimlik){
+      return confirm('Bu cihazda taslak koruması kullanılamıyor. İşlem kesilirse bilgiler kaybolabilir. Devam edilsin mi?');
+    }
+    if(durum.gecis || durum.islem){ showToast('Önce Kiralamalar ve Sözleşmeler kayıtlarını kontrol edin; bu taslakta işlem yarıda kalmış olabilir.', true); return false; }
+    durum.islem = true;
+    if(await this.kaydet(durum, true)) return true;
+    durum.islem = false;
+    showToast('Taslak güvenle kaydedilemedi; işlem başlatılmadı.', true);
+    return false;
+  },
+  async tamamla(modal, kayitlar){
+    const durum=modal?.__sozTaslak;
+    if(!durum?.kimlik) return;
+    durum.tamamlandi=true;
+    durum.kayitlar=kayitlar;
+    if(!await this.kaydet(durum,true)){
+      durum.tamamlandi=false;
+      showToast('Kayıtlar oluşturuldu ancak taslak durumu güncellenemedi. Tekrar işlem yapmadan kayıtları kontrol edin.',true);
+    }
+  },
+  async sonraki(modal){
+    const durum=modal?.__sozTaslak;
+    if(!durum || !durum.kimlik) return;
+    if(durum.yazi && !durum.yazi.isConnected) modal.querySelector('.iade-head')?.after(durum.yazi);
+    durum.gecis=true;
+    durum.islem=false;
+    if(!await this.kaydet(durum,true)){
+      durum.islem=true;
+      this.goster(durum, 'İşlem kaydedildi ancak taslak güncellenemedi. Devam etmeden önce kayıtları kontrol edin.', true);
+    }
+    durum.gecis=false;
+  },
+  fotoAnahtar(kimlik, sozlesmeId){ return JSON.stringify([kimlik[0],kimlik[1],sozlesmeId]); },
+  async fotoKaydet(sozlesmeId, data, zaman){
+    const kimlik=this.kimlik();
+    if(!kimlik) throw new Error('Hesapla yönetici girişi gerekli.');
+    const blob=await (await fetch(data)).blob();
+    const db=await this.depo();
+    if(!this.kimlik() || this.kimlik().join('|')!==kimlik.join('|')) throw new Error('Oturum değişti.');
+    const id=typeof crypto.randomUUID==='function' ? crypto.randomUUID() : Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
+    await new Promise((resolve,reject)=>{
+      const tx=db.transaction('fotolar','readwrite');
+      tx.objectStore('fotolar').put({id, sahipKayit:this.fotoAnahtar(kimlik,sozlesmeId), zaman, blob});
+      tx.oncomplete=()=>resolve(); tx.onerror=tx.onabort=()=>reject(tx.error || new Error('Fotoğraf cihaz deposuna yazılamadı.'));
+    });
+    return id;
+  },
+  async fotoKimlikleri(sozlesmeId){
+    const kimlik=this.kimlik(); if(!kimlik) throw new Error('Hesapla yönetici girişi gerekli.');
+    const db=await this.depo();
+    return new Promise((resolve,reject)=>{
+      const ids=[];
+      const tx=db.transaction('fotolar','readonly');
+      const req=tx.objectStore('fotolar').index('sahipKayit').openKeyCursor(IDBKeyRange.only(this.fotoAnahtar(kimlik,sozlesmeId)));
+      req.onsuccess=()=>{ const cursor=req.result; if(cursor){ ids.push(cursor.primaryKey); cursor.continue(); } };
+      tx.oncomplete=()=>resolve(ids); tx.onerror=tx.onabort=()=>reject(tx.error || new Error('Fotoğraflar okunamadı.'));
+    });
+  },
+  async fotoOku(sozlesmeId, id){
+    const kimlik=this.kimlik(); if(!kimlik) throw new Error('Hesapla yönetici girişi gerekli.');
+    const db=await this.depo();
+    return new Promise((resolve,reject)=>{
+      const tx=db.transaction('fotolar','readonly');
+      const req=tx.objectStore('fotolar').get(id);
+      tx.oncomplete=()=>{
+        const foto=req.result;
+        if(!foto || foto.sahipKayit!==this.fotoAnahtar(kimlik,sozlesmeId) || this.kimlik()?.join('|')!==kimlik.join('|')) reject(new Error('Fotoğraf veya oturum değişti.'));
+        else resolve(foto);
+      };
+      tx.onerror=tx.onabort=()=>reject(tx.error || new Error('Fotoğraf okunamadı.'));
+    });
+  },
+  async fotoSil(sozlesmeId, ids){
+    const kimlik=this.kimlik(); if(!kimlik) throw new Error('Hesapla yönetici girişi gerekli.');
+    const db=await this.depo();
+    await new Promise((resolve,reject)=>{
+      const tx=db.transaction('fotolar','readwrite');
+      const store=tx.objectStore('fotolar');
+      ids.forEach(id=>{
+        const req=store.get(id);
+        req.onsuccess=()=>{
+          if(req.result?.sahipKayit===this.fotoAnahtar(kimlik,sozlesmeId) && this.kimlik()?.join('|')===kimlik.join('|')) store.delete(id);
+          else tx.abort();
+        };
+      });
+      tx.oncomplete=()=>resolve(); tx.onerror=tx.onabort=()=>reject(tx.error || new Error('Fotoğraf silinemedi.'));
+    });
+  },
+  async liste(){
+    const kimlik=this.kimlik();
+    if(!kimlik){ showToast('Taslakları görmek için hesapla giriş yapın.', true); return; }
+    try{
+      const db=await this.depo();
+      const kayitlar=await new Promise((resolve,reject)=>{
+        const tx=db.transaction('taslaklar','readonly');
+        const req=tx.objectStore('taslaklar').getAll();
+        req.onsuccess=()=>resolve(req.result); req.onerror=()=>reject(req.error);
+      });
+      if(!this.kimlik() || this.kimlik().join('|')!==kimlik.join('|')) return;
+      const liste=kayitlar.filter(k=>k.uid===kimlik[0] && k.sirket===kimlik[1]).sort((a,b)=>b.zaman-a.zaman);
+      document.getElementById('sozTaslakListe')?.remove();
+      const overlay=document.createElement('div'); overlay.id='sozTaslakListe'; overlay.className='overlay show'; overlay.style.zIndex='420';
+      const card=document.createElement('div'); card.style.cssText='background:var(--surface);color:var(--text);padding:20px;border-radius:12px;width:min(94vw,560px);max-height:80vh;overflow:auto;';
+      const baslik=document.createElement('h3'); baslik.textContent='Bu cihazdaki sözleşme taslakları'; card.appendChild(baslik);
+      const aciklama=document.createElement('p'); aciklama.textContent='Yalnızca bu cihazda saklanır; iPad ve bilgisayar arasında eşitlenmez. Tarayıcı verileri silinirse taslaklar da silinir.'; card.appendChild(aciklama);
+      if(!liste.length){ const bos=document.createElement('p'); bos.textContent='Bu hesap için kayıtlı taslak yok.'; card.appendChild(bos); }
+      liste.forEach(k=>{
+        const satir=document.createElement('div'); satir.style.cssText='border-top:1px solid var(--border);padding:12px 0;';
+        const bilgi=document.createElement('div'); bilgi.textContent=(k.veri.tur==='kr'?'Hızlı kiralama':'Adım adım kiralama')+' · '+new Date(k.zaman).toLocaleString('tr-TR')+(k.veri.tamamlandi?' · Tamamlandı':(k.veri.islem?' · İşlem durumu kontrol edilmeli':'')); satir.appendChild(bilgi);
+        const ac=document.createElement('button'); ac.type='button'; ac.textContent='Taslağı aç'; ac.onclick=()=>this.ac(k,overlay); satir.appendChild(ac);
+        const sil=document.createElement('button'); sil.type='button'; sil.textContent='Taslağı sil'; sil.style.marginLeft='10px'; sil.onclick=()=>this.sil(k,overlay); satir.appendChild(sil); card.appendChild(satir);
+      });
+      const kapat=document.createElement('button'); kapat.type='button'; kapat.textContent='Kapat'; kapat.onclick=()=>overlay.remove(); card.appendChild(kapat);
+      overlay.appendChild(card); document.body.appendChild(overlay);
+    }catch(error){ showToast('Taslaklar açılamadı: '+error.message, true); }
+  },
+  async sil(k, overlay){
+    if(!confirm('Bu cihazdaki taslak ve taslağa ait imzalar silinsin mi?')) return;
+    const kimlik=this.kimlik(); if(!kimlik || k.uid!==kimlik[0] || k.sirket!==kimlik[1]) return;
+    if(['kiralaModal','ykModal'].some(id=>document.getElementById(id)?.__sozTaslak?.id===k.id)){ showToast('Açık taslağı silmeden önce formu kapatın.', true); return; }
+    try{
+      const db=await this.depo();
+      await new Promise((resolve,reject)=>{
+        const tx=db.transaction(['taslaklar','imzalar'],'readwrite');
+        const store=tx.objectStore('taslaklar');
+        const request=store.get(k.id);
+        let cakisma=false;
+        request.onsuccess=()=>{
+          const mevcut=request.result;
+          const simdi=this.kimlik();
+          if(!mevcut || mevcut.rev!==k.rev || !simdi || mevcut.uid!==simdi[0] || mevcut.sirket!==simdi[1]){ cakisma=true; tx.abort(); return; }
+          store.delete(k.id);
+          ['kiraci','kirayaVeren'].forEach(alan=>tx.objectStore('imzalar').delete(k.id+':'+alan));
+        };
+        tx.oncomplete=()=>resolve(); tx.onerror=tx.onabort=()=>reject(cakisma ? new Error('Taslak değişti; silinmedi. Listeyi yenileyin.') : (tx.error || new Error('Silinemedi')));
+      });
+      overlay.remove(); this.liste();
+    }catch(error){ showToast('Taslak silinemedi: '+error.message,true); }
+  },
+  alanlariUygula(modal, alanlar){
+    Object.entries(alanlar || {}).forEach(([id,deger])=>{
+      const alan=modal.querySelector('[id="'+CSS.escape(id)+'"]');
+      if(!alan) return;
+      if(Object.prototype.hasOwnProperty.call(deger,'checked')) alan.checked=deger.checked;
+      else if(Object.prototype.hasOwnProperty.call(deger,'value')) alan.value=deger.value;
+    });
+  },
+  async ac(k, overlay){
+    const kimlik=this.kimlik(); if(!kimlik || k.uid!==kimlik[0] || k.sirket!==kimlik[1]) return;
+    if(document.getElementById('kiralaModal') || document.getElementById('ykModal')){ showToast('Önce açık kiralama formunu kapatın.',true); return; }
+    try{
+      const db=await this.depo();
+      const sonuc=await new Promise((resolve,reject)=>{
+        const tx=db.transaction(['taslaklar','imzalar'],'readonly');
+        const req=tx.objectStore('taslaklar').get(k.id);
+        const kiraci=tx.objectStore('imzalar').get(k.id+':kiraci');
+        const veren=tx.objectStore('imzalar').get(k.id+':kirayaVeren');
+        tx.oncomplete=()=>resolve({kayit:req.result, kiraci:kiraci.result, veren:veren.result});
+        tx.onerror=tx.onabort=()=>reject(tx.error || new Error('Okunamadı'));
+      });
+      const kayit=sonuc.kayit;
+      if(!kayit || kayit.uid!==kimlik[0] || kayit.sirket!==kimlik[1] || !this.kimlik() || this.kimlik().join('|')!==kimlik.join('|')) throw new Error('Taslak veya oturum değişti.');
+      if(kayit.veri.tamamlandi){ showToast('Bu taslak tamamlanmış; mevcut kiralama ve sözleşme kayıtlarına bakın.'); return; }
+      if(kayit.veri.tur==='kr'){
+        if((kayit.veri.araclar||[]).some(id=>!vehicles.some(v=>v.id===id))) throw new Error('Taslağın araçlarından biri bulunamadı; taslak korunuyor.');
+        openAracKirala();
+        const modal=document.getElementById('kiralaModal'); if(!modal) return;
+        const durum=modal.__sozTaslak; durum.id=kayit.id; durum.rev=kayit.rev;
+        durum.islem=!!kayit.veri.islem || (kayit.veri.araclar||[]).some(id=>!vehicles.some(v=>v.id===id) || !!rentalAcikBul(id));
+        modal.querySelectorAll('.krCheck').forEach(el=>{ el.checked=(kayit.veri.araclar||[]).includes(el.value); });
+        window.__krAracAlanlari=Object.assign(Object.create(null),kayit.veri.aracAlanlari||{});
+        krSecimGuncelle(); this.alanlariUygula(modal,kayit.veri.alanlar);
+        window.__krImza={kiraci:sonuc.kiraci||null,kirayaVeren:sonuc.veren||null};
+        if(sonuc.kiraci) document.getElementById('krImzaKiraciDurum').textContent='Kiracı imzası alındı';
+        if(sonuc.veren) document.getElementById('krImzaKvDurum').textContent='Kiraya veren imzası alındı';
+        window.__krStep=kayit.veri.adim||1; krGoStep(window.__krStep);
+      }else{
+        const rentalId=kayit.veri.rentalId;
+        const rental=rentalId && rentals.find(item=>item.id===rentalId);
+        if(rentalId && !rental) throw new Error('Taslağın kiralama kaydı bulunamadı; taslak korunuyor.');
+        if(rental) ykDevamEt(rentalId); else openYeniKiralamaSihirbazi();
+        const modal=document.getElementById('ykModal'); if(!modal) return;
+        const durum=modal.__sozTaslak; durum.id=kayit.id; durum.rev=kayit.rev;
+        durum.saltOkunur=!!(rental && kayit.veri.rentalDurum && rental.durum!==kayit.veri.rentalDurum);
+        durum.islem=!!kayit.veri.islem || durum.saltOkunur || !!(rental && !['teklif','sozlesmeHazir'].includes(rental.durum));
+        this.alanlariUygula(modal,kayit.veri.alanlar); ykFiyatOneriGuncelle();
+        if(durum.saltOkunur){
+          modal.querySelectorAll('input,select,textarea').forEach(alan=>{ alan.disabled=true; });
+        }else if(kayit.veri.musteriAlanlari){ ykYeniMusteriAc(true); const musteri=document.getElementById('musteriFormOverlay'); this.alanlariUygula(musteri,kayit.veri.musteriAlanlari); musteriFormTipDegisti(); }
+      }
+      overlay.remove();
+      if(this.etkin?.islem) this.goster(this.etkin, 'Bu işlem yarıda kalmış olabilir. Yeni kayıt oluşturmadan önce Kiralamalar ve Sözleşmeler listesini kontrol edin.', true);
+      else this.goster(this.etkin, 'Taslak bu cihazdan açıldı. Bulut eşitlemesi yok.', false);
+    }catch(error){ showToast('Taslak açılamadı: '+error.message,true); }
+  }
+};
+window.addEventListener('pagehide', ()=>{ if(sozTaslaklari.etkin) sozTaslaklari.kaydet(sozTaslaklari.etkin); });
+document.addEventListener('input', e=>{ if(e.target.closest('#musteriFormOverlay')?.dataset.sozTaslak===sozTaslaklari.etkin?.id && sozTaslaklari.etkin?.tur==='yk') sozTaslaklari.kaydet(sozTaslaklari.etkin); });
+document.addEventListener('change', e=>{ if(e.target.closest('#musteriFormOverlay')?.dataset.sozTaslak===sozTaslaklari.etkin?.id && sozTaslaklari.etkin?.tur==='yk') sozTaslaklari.kaydet(sozTaslaklari.etkin); });
+
 // ===== Araç Kirala — hızlı kiralama + otomatik sözleşme =====
 function openAracKirala(vehicleId){
   if(!requireAdmin()){ showToast('Araç kiralamak için yönetici girişi gerekir.', true); return; }
   if(!vehicles.length){ showToast('Önce araç ekleyin.', true); return; }
+  if(document.getElementById('kiralaModal')){ modalGeriGetir('kiralaModal'); showToast('Açık kiralama formuna geri döndünüz.'); return; }
   // FAZ6: bu modal her açıldığında imza yakalama durumu sıfırlanır (önceki kiralamadan kalmasın).
   window.__krImza = {kiraci:null, kirayaVeren:null};
+  window.__krAracAlanlari = Object.create(null);
   const el = document.createElement('div');
   el.className = 'iade-modal';
   el.id = 'kiralaModal';
@@ -5787,8 +6183,8 @@ function openAracKirala(vehicleId){
         <div style="border:1px dashed var(--line);border-radius:9px;padding:8px 10px;margin-top:4px;">
           <div style="font-size:11.5px;color:var(--text-3);margin-bottom:6px;">Dijital İmza Yakalama (opsiyonel) — resmi/nitelikli elektronik imza yerine geçmez, atlanırsa sözleşme/tutanak boş imza çizgisiyle yazdırılır.</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <button type="button" onclick="imzaWidgetAc('Kiracı İmzası',(d)=>{window.__krImza.kiraci=d;document.getElementById('krImzaKiraciDurum').textContent='✓ Kiracı imzası alındı';})" style="background:var(--surface-2);border:1px solid var(--line);color:var(--text-2);padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Kiracı imzası yakala</button>
-            <button type="button" onclick="imzaWidgetAc('Kiraya Veren Yetkilisi İmzası',(d)=>{window.__krImza.kirayaVeren=d;document.getElementById('krImzaKvDurum').textContent='✓ Kiraya veren imzası alındı';})" style="background:var(--surface-2);border:1px solid var(--line);color:var(--text-2);padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Kiraya veren imzası yakala</button>
+            <button type="button" onclick="imzaWidgetAc('Kiracı İmzası',(d)=>{window.__krImza.kiraci=d;document.getElementById('krImzaKiraciDurum').textContent='✓ Kiracı imzası alındı';sozTaslaklari.kaydet(document.getElementById('kiralaModal')?.__sozTaslak);})" style="background:var(--surface-2);border:1px solid var(--line);color:var(--text-2);padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Kiracı imzası yakala</button>
+            <button type="button" onclick="imzaWidgetAc('Kiraya Veren Yetkilisi İmzası',(d)=>{window.__krImza.kirayaVeren=d;document.getElementById('krImzaKvDurum').textContent='✓ Kiraya veren imzası alındı';sozTaslaklari.kaydet(document.getElementById('kiralaModal')?.__sozTaslak);})" style="background:var(--surface-2);border:1px solid var(--line);color:var(--text-2);padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Kiraya veren imzası yakala</button>
           </div>
           <div style="display:flex;gap:14px;margin-top:6px;font-size:11px;color:#36A168;font-weight:600;">
             <span id="krImzaKiraciDurum"></span><span id="krImzaKvDurum"></span>
@@ -5804,6 +6200,7 @@ function openAracKirala(vehicleId){
   `;
   el.addEventListener('click', e=>{ if(e.target===el) el.remove(); });
   document.body.appendChild(el);
+  sozTaslaklari.yeni('kr', el);
   window.__krStep = 1;
   krGoStep(1);
   if(secili){ const cb=document.querySelector(`.krCheck[value="${secili}"]`); if(cb) cb.checked=true; krSecimGuncelle(); }
@@ -5842,6 +6239,7 @@ function krBelgeAlanlariUygula(bilgi){
     setIfEmpty('krKefil', adSoyad, 'kefil adı');
     if(bilgi.tc && typeof tcknGecerliMi==='function' && tcknGecerliMi(String(bilgi.tc))) setIfEmpty('krKefilTC', bilgi.tc, 'kefil TC');
   }
+  if(doldurulan.length) sozTaslaklari.kaydet(document.getElementById('kiralaModal')?.__sozTaslak);
   return doldurulan;
 }
 async function krBelgeYukle(fileList){
@@ -5922,6 +6320,7 @@ function krGoStep(n){
           <button class="iade-btn-save" style="background:var(--accent-blue);" onclick="kirayaVerVeSozlesme('pdf')">Kiraya Ver &amp; PDF</button>`}
     `;
   }
+  if(n!==cur) sozTaslaklari.kaydet(document.getElementById('kiralaModal')?.__sozTaslak);
 }
 
 function krListeFiltrele(){
@@ -5953,6 +6352,11 @@ function krSecimGuncelle(){
   }
   const kutu = document.getElementById('krSecilenAraclar');
   if(!kutu) return;
+  const alanlar = window.__krAracAlanlari || (window.__krAracAlanlari = Object.create(null));
+  kutu.querySelectorAll('input[data-vid]').forEach(input=>{
+    const kayit = alanlar[input.dataset.vid] || (alanlar[input.dataset.vid] = {});
+    kayit[input.id.startsWith('krKira_') ? 'kira' : 'km'] = input.value;
+  });
   if(!ids.length){ kutu.innerHTML=''; return; }
   const kiraciVar = (document.getElementById('krKiraci')?.value||'').trim();
   kutu.innerHTML = `
@@ -5968,6 +6372,11 @@ function krSecimGuncelle(){
         </div>`;
       }).join('')}
     </div>`;
+  kutu.querySelectorAll('input[data-vid]').forEach(input=>{
+    const kayit = alanlar[input.dataset.vid];
+    const alan = input.id.startsWith('krKira_') ? 'kira' : 'km';
+    if(kayit && Object.prototype.hasOwnProperty.call(kayit, alan)) input.value = kayit[alan];
+  });
 }
 
 // ===== Teslim Tutanağı (Ek-1 formatı) =====
@@ -6134,6 +6543,9 @@ async function kirayaVerVeSozlesme(format){
     }
   }
 
+  const kiralamaModali = document.getElementById('kiralaModal');
+  if(!await sozTaslaklari.baslat(kiralamaModali)) return;
+
   // 1) Tüm araçları kiraya ver
   aracVerileri.forEach(({v, kira, teslimKm})=>{
     const idx = vehicles.findIndex(x=>x.id===v.id);
@@ -6169,7 +6581,7 @@ async function kirayaVerVeSozlesme(format){
   // için). Ancak telefonda yeni pencere açılınca panel arka plana düşüp kayıt (persist) yarıda
   // kalabiliyordu. Artık önce HER ŞEY kaydediliyor, sonra "Sözleşme hazır" penceresi çıkıyor ve PDF
   // kullanıcının oradaki yeni dokunuşuyla açılıyor (bkz. sozlesmeHazirGoster).
-  await persist();
+  if(!await persist()) return;
   render();
   if(window.__currentPage && window.__currentPage!=='arac-yonetimi') renderCurrentPage();
   const tutanakIstendi = document.getElementById('krTutanak')?.checked;
@@ -6192,12 +6604,7 @@ async function kirayaVerVeSozlesme(format){
   // v.324: geçmişe dönük sözleşme tarihi — modal silinmeden önce yakalanmalı (v.202 notundaki
   // "modal kalktıktan sonra DOM'dan okuma hep null döner" deseninin aynısı).
   const krSozTarihDeger = document.getElementById('krSozTarih')?.value||'';
-  document.getElementById('kiralaModal')?.remove();
   const plakalar = secilen.map(v=>esc(v.plaka)).join(', ');
-  logActivity('edit', secilen.length===1
-    ? `<b>${plakalar}</b> kiraya verildi — ${esc(kiraci)} · ${fmtTarih(bas)} → ${fmtTarih(bitis)} · sözleşme oluşturuldu`
-    : `<b>${secilen.length} araç kiraya verildi</b> (${plakalar}) — ${esc(kiraci)} · ${fmtTarih(bas)} → ${fmtTarih(bitis)} · toplu sözleşme oluşturuldu`);
-  showToast(secilen.length===1 ? secilen[0].plaka+' kiraya verildi, sözleşme hazırlanıyor...' : secilen.length+' araç kiraya verildi, toplu sözleşme hazırlanıyor...');
 
   // 2) Sözleşme verisi — çoklu araç desteği
   const araclar = aracVerileri.map(({v, kira, teslimKm})=>({
@@ -6249,6 +6656,10 @@ async function kirayaVerVeSozlesme(format){
   if(sozData.imzaKiraci) await storageAPI.set('imza_'+sozData.sozNo+'_kiraci', sozData.imzaKiraci).catch(()=>{});
   if(sozData.imzaKirayaVeren) await storageAPI.set('imza_'+sozData.sozNo+'_kirayaVeren', sozData.imzaKirayaVeren).catch(()=>{});
   const sozRec = await sozKaydet(sozData, bas, bitis);
+  if(!sozRec){
+    showToast('Sözleşme kaydı doğrulanamadı. Taslağı ve mevcut kiralama kayıtlarını kontrol edin.', true);
+    return;
+  }
   if(format!=='pdf') sozlesmeDocx(sozData);
   // FAZ4 Part B.2: Hızlı "Araç Kirala" akışı da diğer tüm kiralamalarla aynı rentals
   // koleksiyonuna yazar. teklif/rezervasyon adımları atlanıp doğrudan 'teslimEdildi'
@@ -6271,11 +6682,15 @@ async function kirayaVerVeSozlesme(format){
     };
     customers.push(yeniC);
     krCustomerId = yeniC.id;
-    await persistCustomers();
+    if(!await persistCustomers()){
+      showToast('Müşteri kaydı doğrulanamadı. Mevcut kayıtları kontrol edin.', true);
+      return;
+    }
     logActivity('add', `Müşteri otomatik oluşturuldu: <b>${esc(kiraci)}</b> (hızlı kiralama akışından)`);
   }
+  const krKiralamaIdleri = [];
   for(const {v, kira, teslimKm} of aracVerileri){
-    await rentalOlusturVeyaGuncelle(v.id, {
+    const kiralama = await rentalOlusturVeyaGuncelle(v.id, {
       customerId: krCustomerId,
       durum: 'teslimEdildi',
       baslangic: bas, bitis: bitis,
@@ -6286,8 +6701,18 @@ async function kirayaVerVeSozlesme(format){
       ekHizmetler: notlar||'',
       teslimKontrol: { tarih: bas, km: teslimKm||null, yakitSeviyesi: krTeslimYakit, kontrolListesi: krKontrolListesi, fotograflar: [] },
       sozlesmeId: sozRec ? sozRec.id : null,
-    });
+    }, false);
+    krKiralamaIdleri.push(kiralama.id);
   }
+  if(!await persistRentals()){
+    showToast('Kiralama kaydı doğrulanamadı. Taslağı ve mevcut kayıtları kontrol edin.', true);
+    return;
+  }
+  await sozTaslaklari.tamamla(kiralamaModali, {sozlesmeId:sozRec.id, rentalIds:krKiralamaIdleri, customerId:krCustomerId});
+  kiralamaModali?.remove();
+  logActivity('edit', secilen.length===1
+    ? `<b>${plakalar}</b> kiraya verildi — ${esc(kiraci)} · ${fmtTarih(bas)} → ${fmtTarih(bitis)} · sözleşme oluşturuldu`
+    : `<b>${secilen.length} araç kiraya verildi</b> (${plakalar}) — ${esc(kiraci)} · ${fmtTarih(bas)} → ${fmtTarih(bitis)} · toplu sözleşme oluşturuldu`);
   // v.268: PDF ve teslim tutanağı artık kayıtlar BİTTİKTEN sonra, kullanıcının kendi dokunuşuyla açılır.
   sozlesmeHazirGoster(sozData, {pdf: format==='pdf', tutanak: !!tutanakIstendi,
     baslik: secilen.length===1 ? secilen[0].plaka+' kiraya verildi' : secilen.length+' araç kiraya verildi'});
@@ -14242,6 +14667,7 @@ function kiralaModalAdimAdim(){
 }
 function openYeniKiralamaSihirbazi(vehicleId){
   if(!requireAdmin()){ showToast('Bu işlem için yönetici girişi gerekir.', true); return; }
+  if(document.getElementById('ykModal')){ modalGeriGetir('ykModal'); showToast('Açık kiralama formuna geri döndünüz.'); return; }
   // v.274: araç kartından/kiralama sayfasından ön-seçimle açılış — araç Müsait ise sihirbazın
   // 2. adımında (Araç) baştan seçili gelir; geçersizse sessizce yok sayılır.
   window.__ykAracOnSecim = (vehicleId && vehicles.find(v=>v.id===vehicleId && v.durum==='Müsait')) ? vehicleId : null;
@@ -14258,6 +14684,7 @@ function openYeniKiralamaSihirbazi(vehicleId){
 // sozlesmeler kaydından) yeniden kurulup sihirbaz kaldığı adımdan devam ettirilebiliyor.
 function ykDevamEt(rentalId){
   if(!requireAdmin()){ showToast('Bu işlem için yönetici girişi gerekir.', true); return; }
+  if(document.getElementById('ykModal')){ modalGeriGetir('ykModal'); showToast('Önce açık kiralama formunu tamamlayın veya kapatın.', true); return; }
   const r = rentals.find(x=>x.id===rentalId);
   if(!r){ showToast('Kiralama kaydı bulunamadı.', true); return; }
   let sozData = null;
@@ -14278,6 +14705,7 @@ function ykModalGoster(){
   // o ana kadar girilen tüm kiralama formunu kaybettiriyordu. Kapatma yalnızca Vazgeç/Kapat
   // ve küçült butonlarıyla olur (İade Al formundaki dışa-dokun-kapat davranışı aynen kalır).
   document.body.appendChild(el);
+  sozTaslaklari.yeni('yk', el);
   ykFiyatOneriGuncelle();
 }
 // v.239: müşteri ve araç seçili olduğunda, müşterinin Fiyat Listesi'nde (bkz.
@@ -14407,14 +14835,21 @@ function ykSihirbaziHtml(){
       </div>
     </div>`;
 }
-function ykYeniMusteriAc(){
+function ykYeniMusteriAc(yukleme){
   musteriFormAc(null);
-  // Müşteri kaydedilip formu kapanınca sihirbazı yeniden çiz ki yeni müşteri seçilebilsin.
+  const musteriFormu = document.getElementById('musteriFormOverlay');
+  const taslak = document.getElementById('ykModal')?.__sozTaslak;
+  if(musteriFormu && taslak){ musteriFormu.dataset.sozTaslak=taslak.id; if(!yukleme) sozTaslaklari.kaydet(taslak); }
   const gozlemci = setInterval(()=>{
     if(!document.getElementById('musteriFormOverlay')){
       clearInterval(gozlemci);
-      const modal = document.getElementById('ykModal');
-      if(modal) modal.innerHTML = ykSihirbaziHtml();
+      const select = document.querySelector('#ykModal #ykMusteri');
+      if(select){
+        const secili = select.value;
+        select.innerHTML = '<option value="">— Müşteri seçin (opsiyonel, teklif için zorunlu değil) —</option>' +
+          musterileriSirali().map(c=>`<option value="${esc(c.id)}">${esc(musteriGoruntuAdi(c))}</option>`).join('');
+        select.value = secili;
+      }
     }
   }, 350);
 }
@@ -14428,6 +14863,8 @@ async function ykTeklifOlustur(){
   const v = vehicles.find(x=>x.id===vehicleId);
   if(!v){ showToast('Araç bulunamadı.', true); return; }
   if(v.durum!=='Müsait'){ showToast('Bu araç şu anda müsait değil.', true); return; }
+  if(rentalAcikBul(vehicleId)){ showToast('Bu araç için devam eden kiralama veya teklif var. Yeni kayıt oluşturmadan önce Kiralamalar listesini kontrol edin.', true); return; }
+  if(!await sozTaslaklari.baslat(document.getElementById('ykModal'))) return;
   const r = await rentalOlusturVeyaGuncelle(vehicleId, {
     customerId: customerId||null,
     durum: 'teklif',
@@ -14437,7 +14874,7 @@ async function ykTeklifOlustur(){
     kmLimiti: (()=>{ const n=Number(document.getElementById('ykKmLimit')?.value); return isNaN(n)||n===0?null:n; })(),
     fazlaKmBedeli: (()=>{ const n=Number(document.getElementById('ykFazlaKmBedeli')?.value); return isNaN(n)||n===0?null:n; })(),
     ekHizmetler: document.getElementById('ykEkHizmetler')?.value?.trim()||'',
-  });
+  }, false);
   // v.208: Risk limiti uyarısı (adım adım sihirbaz)
   if(customerId){
     const risk = musteriRiskDurumu(customerId, Number(document.getElementById('ykKira')?.value)||0);
@@ -14447,14 +14884,18 @@ async function ykTeklifOlustur(){
     }
   }
   ykSihirbazState = { rentalId: r.id, sozData: null };
+  if(!await persistRentals()) return;
   showToast('Kiralama teklifi oluşturuldu.');
   logActivity('add', `Kiralama teklifi oluşturuldu (adım adım akış): <b>${esc(v.plaka)}</b>`);
-  const modal = document.getElementById('ykModal'); if(modal) modal.innerHTML = ykSihirbaziHtml();
+  const modal = document.getElementById('ykModal');
+  if(modal){ modal.innerHTML = ykSihirbaziHtml(); await sozTaslaklari.sonraki(modal); }
 }
 async function ykSozlesmeyeIlerle(){
   const r = rentals.find(x=>x.id===(ykSihirbazState&&ykSihirbazState.rentalId)); if(!r) return;
   if(!r.customerId){ showToast('Sözleşme oluşturmak için önce bir müşteri seçin.', true); return; }
   const v = vehicles.find(x=>x.id===r.vehicleId); if(!v) return;
+  if(r.durum!=='teklif' || r.sozlesmeId){ showToast('Bu kiralamanın sözleşme durumunu kontrol edin; tekrar oluşturulmadı.', true); return; }
+  if(!await sozTaslaklari.baslat(document.getElementById('ykModal'))) return;
   // v.203: bu alanlar önceden sozData içine hiç okunmadan sabit ('' / 'Dolu') yazılıyordu —
   // "ÇOK EKSİKLER VAR" bildirimi üzerine, az önce hızlı sihirbazda (kirayaVerVeSozlesme)
   // düzeltilen yakıt/kefil/teslim yeri hatasının bu ADIM ADIM sihirbazdaki karşılığı bulundu.
@@ -14497,17 +14938,22 @@ async function ykSozlesmeyeIlerle(){
     sozNo: 'SOZ-'+new Date().getFullYear()+'-'+Date.now().toString().slice(-4),
   };
   const sozRec = await sozKaydet(sozData, r.baslangic, r.bitis);
+  if(!sozRec) return;
   r.durum = 'sozlesmeHazir';
-  r.sozlesmeId = sozRec ? sozRec.id : null;
-  await persistRentals();
+  r.sozlesmeId = sozRec.id;
+  if(!await persistRentals()) return;
   ykSihirbazState.sozData = sozData;
   sozlesmeHazirGoster(sozData, {pdf:true, baslik:'Sözleşme hazır — '+v.plaka, not:'Araç, bir sonraki adımda "Teslim Et" dediğinizde Kirada olarak işaretlenir.'});
   logActivity('edit', `Sözleşme hazırlandı (adım adım akış): <b>${esc(v.plaka)}</b> · ${esc(kiraci)}`);
-  const modal = document.getElementById('ykModal'); if(modal) modal.innerHTML = ykSihirbaziHtml();
+  const modal = document.getElementById('ykModal');
+  if(modal){ modal.innerHTML = ykSihirbaziHtml(); await sozTaslaklari.sonraki(modal); }
 }
 async function ykTeslimEt(){
   const r = rentals.find(x=>x.id===(ykSihirbazState&&ykSihirbazState.rentalId)); if(!r) return;
   const v = vehicles.find(x=>x.id===r.vehicleId); if(!v) return;
+  if(r.durum!=='sozlesmeHazir'){ showToast('Kiralama durumu değişmiş; teslim işlemi tekrarlanmadı.', true); return; }
+  const kiralamaModali = document.getElementById('ykModal');
+  if(!await sozTaslaklari.baslat(kiralamaModali)) return;
   const teslimKm = Number(document.getElementById('ykTeslimKm')?.value)||v.teslimKm||0;
   const yakit = document.getElementById('ykTeslimYakit')?.value||'Dolu';
   const kontrolListesi = kontrolListesiOku('ykChk');
@@ -14535,12 +14981,12 @@ async function ykTeslimEt(){
     // ("teslim tutanağında dolu yazmış" — geçmiş kayıtları da gerçek yakıtla tutulmalı).
     kiraGecmisi: [...(v.kiraGecmisi||[]), {bas:r.baslangic, bitis:r.bitis, yer:kiraci, teslimKm: teslimKm||v.teslimKm||0, iadeKm:0, yakit: yakit||'', hasar:'', not: r.ekHizmetler||''}],
   };
-  await persist();
+  if(!await persist()) return;
   render();
   if(window.__currentPage && window.__currentPage!=='arac-yonetimi') renderCurrentPage();
   r.durum = 'teslimEdildi';
   r.teslimKontrol = { tarih: todayISO(), km: teslimKm||null, yakitSeviyesi: yakit, kontrolListesi, fotograflar: [] };
-  await persistRentals();
+  if(!await persistRentals()) return;
   // v.374: "teslimde depo boş işaretledim ama tutanakta dolu yazıyor" — seçilen yakıt
   // yalnızca ekranda açılan KOPYAYA yazılıyordu; sözleşme kaydına (rec.data) hiç
   // yazılmıyordu. Sonradan Sözleşmeler listesinden açılan her tutanak, sözleşme
@@ -14552,7 +14998,8 @@ async function ykTeslimEt(){
       ykSihirbazState.sozData.araclar.forEach(a=>{ a.teslimKm = teslimKm ? teslimKm.toLocaleString('tr-TR') : (a.teslimKm||'—'); });
     }
   }
-  await persistSozlesmeler();
+  if(!await persistSozlesmeler()) return;
+  await sozTaslaklari.tamamla(kiralamaModali, {sozlesmeId:r.sozlesmeId, rentalIds:[r.id], customerId:r.customerId});
   logActivity('edit', `Araç teslim edildi (adım adım akış): <b>${esc(v.plaka)}</b> · ${esc(kiraci)}`);
   showToast(v.plaka+' teslim edildi, durum "Kirada" olarak güncellendi.');
   // Mevcut Teslim Tutanağı (Ek-1) şablonunu (teslimTutanakAc) yeniden kullan.
@@ -14621,7 +15068,8 @@ function renderKiralamaPage(){
       <button onclick="krTabSet('islem')" data-kr="islem" style="padding:9px 20px;border-radius:999px;font-size:13px;font-weight:${krAktif==='islem'?700:600};cursor:pointer;border:1px solid ${krAktif==='islem'?'var(--accent-blue)':'var(--border-2)'};background:${krAktif==='islem'?'var(--accent-blue)':'var(--surface)'};color:${krAktif==='islem'?'#fff':'var(--text-2)'};">Kiralamalar</button>
       <button onclick="krTabSet('sozlesme')" data-kr="sozlesme" style="padding:9px 20px;border-radius:999px;font-size:13px;font-weight:${krAktif==='sozlesme'?700:600};cursor:pointer;border:1px solid ${krAktif==='sozlesme'?'var(--accent-blue)':'var(--border-2)'};background:${krAktif==='sozlesme'?'var(--accent-blue)':'var(--surface)'};color:${krAktif==='sozlesme'?'#fff':'var(--text-2)'};">Sözleşmeler</button>
       <button onclick="krTabSet('gecmis')" data-kr="gecmis" style="padding:9px 20px;border-radius:999px;font-size:13px;font-weight:${krAktif==='gecmis'?700:600};cursor:pointer;border:1px solid ${krAktif==='gecmis'?'var(--accent-blue)':'var(--border-2)'};background:${krAktif==='gecmis'?'var(--accent-blue)':'var(--surface)'};color:${krAktif==='gecmis'?'#fff':'var(--text-2)'};">Geçmiş</button>
-      <button onclick="openAracKirala()" style="margin-left:auto;padding:9px 16px;border-radius:999px;font-size:12.5px;font-weight:700;cursor:pointer;border:1px solid rgba(54,161,104,.35);background:rgba(54,161,104,.12);color:#36A168;">+ Yeni Kiralama</button>
+      <button onclick="sozTaslaklari.liste()" style="margin-left:auto;padding:9px 16px;border-radius:999px;font-size:12.5px;font-weight:700;cursor:pointer;border:1px solid var(--border-2);background:var(--surface);color:var(--text);">Bu cihazdaki taslaklar</button>
+      <button onclick="openAracKirala()" style="padding:9px 16px;border-radius:999px;font-size:12.5px;font-weight:700;cursor:pointer;border:1px solid rgba(54,161,104,.35);background:rgba(54,161,104,.12);color:#36A168;">+ Yeni Kiralama</button>
     </div>
     ${isAdmin() ? `
     <div class="dcard" id="leadsKart" style="margin-bottom:16px;">
@@ -18970,7 +19418,7 @@ async function panelKiralamaFaturalariSenkronizeEt(){
 }
 // Hızlı/adım-adım akışların ortak köprüsü: bir araç için açık kaydı günceller, yoksa yeni
 // oluşturur. Var olan alanlar korunur (Object.assign ile yalnızca patch'teki alanlar değişir).
-async function rentalOlusturVeyaGuncelle(vehicleId, patch){
+async function rentalOlusturVeyaGuncelle(vehicleId, patch, kaydet=true){
   let r = rentalAcikBul(vehicleId);
   if(!r){
     r = {
@@ -18984,7 +19432,7 @@ async function rentalOlusturVeyaGuncelle(vehicleId, patch){
     rentals.push(r);
   }
   Object.assign(r, patch);
-  await persistRentals();
+  if(kaydet) await persistRentals();
   return r;
 }
 
@@ -19929,6 +20377,11 @@ async function musteriKaydet(id){
     return;
   }
   Object.assign(veri, { kvkkOnay: true, kvkkOnayTarihi: todayISO() });
+  const musteriFormu = document.getElementById('musteriFormOverlay');
+  const kiralamaModali = document.getElementById('ykModal');
+  const taslak = kiralamaModali?.__sozTaslak;
+  const kiralamadan = !!(taslak && musteriFormu?.dataset.sozTaslak===taslak.id);
+  if(kiralamadan && !await sozTaslaklari.baslat(kiralamaModali)) return;
 
   let c = id ? customers.find(x=>x.id===id) : null;
   const yeniMi = !c;
@@ -19938,8 +20391,13 @@ async function musteriKaydet(id){
     c = { id: yeniId('cus'), olusturmaTarihi: todayISO(), ...veri };
     customers.push(c);
   }
-  await persistCustomers();
+  if(!await persistCustomers()){
+    errEl.textContent = 'Müşteri kaydı doğrulanamadı. Yeniden oluşturmadan önce müşteri listesini kontrol edin.';
+    errEl.style.display = 'block';
+    return;
+  }
   const overlay = document.getElementById('musteriFormOverlay'); if(overlay) overlay.remove();
+  if(kiralamadan) await sozTaslaklari.sonraki(kiralamaModali);
   showToast(yeniMi ? 'Müşteri kaydedildi.' : 'Müşteri güncellendi.');
   logActivity('add', `Müşteri ${yeniMi?'eklendi':'güncellendi'}: <b>${esc(musteriGoruntuAdi(c))}</b>`);
   if(window.__currentPage==='musteriler') renderMusterilerPage();
@@ -24899,16 +25357,19 @@ function manualInstallTrigger(){
 }
 if('serviceWorker' in navigator){
   window.addEventListener('load', ()=>{
-    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+    navigator.serviceWorker.register('./sw.js').then(registration=>{
+      const bildir = ()=>showToast('Yeni sürüm hazır. İşlemlerinizi tamamladıktan sonra açık panel sekmelerini kapatıp yeniden açın.');
+      if(registration.waiting) bildir();
+      registration.addEventListener('updatefound', ()=>{
+        const worker = registration.installing;
+        if(worker) worker.addEventListener('statechange', ()=>{
+          if(worker.state==='installed' && navigator.serviceWorker.controller) bildir();
+        });
+      });
+    }).catch(()=>{});
   });
-  // Yeni bir sürüm (güncelleme) devreye girdiğinde sayfayı otomatik olarak
-  // bir kez yeniler ki eski, önbellekteki koddan dolayı "güncellemeyi
-  // göremiyorum" sorunu yaşanmasın.
-  let __swRefreshing = false;
   navigator.serviceWorker.addEventListener('controllerchange', ()=>{
-    if(__swRefreshing) return;
-    __swRefreshing = true;
-    window.location.reload();
+    showToast('Panel güncellemesi hazır. İşlemlerinizi tamamladıktan sonra paneli yeniden açın.');
   });
 }
 initInstallPrompt();
