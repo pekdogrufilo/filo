@@ -8,7 +8,7 @@ const child = require('node:child_process');
 const root = path.join(__dirname, '..');
 const edge = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
 const git = 'C:\\Program Files\\Git\\cmd\\git.exe';
-const oldWorker = child.execFileSync(git, ['show','HEAD:sw.js'], {cwd:root, encoding:'utf8'});
+const oldWorker = child.execFileSync(git, ['show','e34166e:sw.js'], {cwd:root, encoding:'utf8'});
 const newWorker = fs.readFileSync(path.join(root,'sw.js'),'utf8');
 assert.match(oldWorker, /skipWaiting/);
 assert.doesNotMatch(newWorker, /self\.skipWaiting\s*\(/);

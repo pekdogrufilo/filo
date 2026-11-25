@@ -21,6 +21,10 @@ window.addEventListener('load',()=>setTimeout(async()=>{
     openAracKirala();
     let modal=document.getElementById('kiralaModal');
     check(modal && modal.__sozTaslak,'quick rental did not open');
+    document.getElementById('krKiraci').value='Ekranda kalan örnek';
+    await new Promise(resolve=>setTimeout(resolve,6000));
+    check(!location.search.includes('sw-reset=372') && !window.__testUnregistered,'delayed worker reset redirected the panel');
+    check(document.getElementById('kiralaModal')===modal && document.getElementById('krKiraci').value==='Ekranda kalan örnek','open form was interrupted');
     const checks=modal.querySelectorAll('.krCheck');
     check(checks.length===2,'vehicles missing'); checks[0].checked=true; krSecimGuncelle();
     document.getElementById('krKira_0').value='14500'; document.getElementById('krTkm_0').value='13579';
@@ -54,6 +58,7 @@ window.addEventListener('load',()=>setTimeout(async()=>{
     const saved={}; let failKey='';
     storageAPI={set:async(key,value)=>{if(key===failKey) throw new Error('sample failure'); saved[key]=value;},get:async(key)=>({value:saved[key]})};
     render=()=>{}; renderCurrentPage=()=>{}; renderKiralamaPage=()=>{}; logActivity=()=>{}; showToast=()=>{}; sozlesmeHazirGoster=()=>{}; teslimTutanakAc=()=>{};
+    getAracGorsel=()=> 'https://example.invalid/stock-image.jpg';
     customers.length=0; customers.push({id:'test-c1',tip:'kurum',firmaAdi:'Örnek Firma',telefon:'03320000000'});
     sozlesmeler.length=0; rentals.length=0;
     openAracKirala(); modal=document.getElementById('kiralaModal'); const quickId=modal.__sozTaslak.id;
@@ -63,12 +68,34 @@ window.addEventListener('load',()=>setTimeout(async()=>{
     const quickDone=await read(quickId);
     check(quickDone.veri.tamamlandi && quickDone.veri.kayitlar.rentalIds.length===1,'quick completion not saved');
     check(rentals[0].sozlesmeId===quickDone.veri.kayitlar.sozlesmeId,'quick completion links missing');
+    const quickContract=sozlesmeler.find(item=>item.id===quickDone.veri.kayitlar.sozlesmeId);
+    check(!(quickContract.data.teslimFotolar||[]).length,'stock image automatically added to quick contract');
+    const realPhoto='data:image/png;base64,VEVTVA==';
+    const nativeClick=HTMLInputElement.prototype.click;
+    HTMLInputElement.prototype.click=function(){
+      if(this.type!=='file') return nativeClick.call(this);
+      const transfer=new DataTransfer(); transfer.items.add(new File(['sample'],'teslim.png',{type:'image/png'}));
+      this.files=transfer.files; window.__sampleUpload=this.onchange();
+    };
+    fotoSikistir=async file=>{check(file.name==='teslim.png','wrong upload selected');return realPhoto;};
+    sozFotoSec(quickContract.id); await window.__sampleUpload; HTMLInputElement.prototype.click=nativeClick;
+    check(quickContract.data.teslimFotolar.length===1 && quickContract.data.teslimFotolar[0].data===realPhoto,'selected delivery photo not saved');
+    const updated=await sozKaydet({...quickContract.data,teslimFotolar:undefined},quickContract.basISO,quickContract.bitisISO);
+    check(updated.data.teslimFotolar.length===1 && updated.data.teslimFotolar[0].data===realPhoto,'existing delivery photo not preserved');
+    sozFotoGaleriAc(updated.id);
+    check(document.querySelector('#sozFotoOverlay img')?.getAttribute('src')===realPhoto,'delivery gallery photo missing');
+    document.getElementById('sozFotoOverlay').click();
+    check(document.getElementById('sozFotoOverlay'),'gallery closed after background tap');
+    check(teslimTutanakHtml(updated.data).includes(realPhoto) && !teslimTutanakHtml(updated.data).includes('stock-image.jpg'),'delivery document contains wrong photo');
+    sozFotoKapat();
     check(!document.getElementById('kiralaModal'),'quick modal still open');
     openYeniKiralamaSihirbazi(); modal=document.getElementById('ykModal'); const wizardId=modal.__sozTaslak.id;
     document.getElementById('ykArac').value='test-v2'; document.getElementById('ykMusteri').value='test-c1';
     document.getElementById('ykBas').value='2026-01-01'; document.getElementById('ykBitis').value='2027-01-01';
     await ykTeklifOlustur(); check(ykSihirbazState.rentalId,'wizard offer missing');
     await ykSozlesmeyeIlerle(); check(rentals.find(item=>item.id===ykSihirbazState.rentalId).durum==='sozlesmeHazir','wizard contract missing');
+    const wizardContract=sozlesmeler.find(item=>item.id===rentals.find(entry=>entry.id===ykSihirbazState.rentalId).sozlesmeId);
+    check(!(wizardContract.data.teslimFotolar||[]).length,'stock image automatically added to wizard contract');
     document.getElementById('ykTeslimKm').value='2500'; document.getElementById('ykTeslimYakit').value='Boş';
     await ykTeslimEt(); const wizardDone=await read(wizardId);
     check(wizardDone.veri.tamamlandi && wizardDone.veri.kayitlar.rentalIds[0]===ykSihirbazState.rentalId,'wizard completion not saved');
@@ -84,7 +111,12 @@ window.addEventListener('load',()=>setTimeout(async()=>{
   }catch(error){result.textContent='FAIL: '+error.stack;}
 },2500));
 </script>`;
-const index=fs.readFileSync(path.join(root,'index.html'),'utf8').replace('</body>',inject+'</body>');
+const earlyInject=`<script>
+if(navigator.serviceWorker){
+  Object.defineProperty(navigator.serviceWorker,'getRegistrations',{value:()=>new Promise(resolve=>setTimeout(()=>resolve([{unregister:()=>{window.__testUnregistered=true;}}]),5000))});
+}
+</script>`;
+const index=fs.readFileSync(path.join(root,'index.html'),'utf8').replace('<head>','<head>'+earlyInject).replace('</body>',inject+'</body>');
 const types={'.js':'application/javascript','.css':'text/css','.html':'text/html; charset=utf-8','.jpg':'image/jpeg','.png':'image/png','.json':'application/json'};
 const server=http.createServer((req,res)=>{
   let pathname;

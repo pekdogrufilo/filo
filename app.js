@@ -2048,9 +2048,6 @@ async function persistSozlesmeler(){
 async function persistSozlesmeGruplari(){
   await storageAPI.set('sozlesmeGruplari', JSON.stringify(sozlesmeGruplari)).catch(()=>showToast('Sözleşme grubu kaydedilemedi.', true));
 }
-// v.343: Sözleşmeye araç resmi(leri)ni otomatik ekler — plakaya göre araç bulunur, model stok
-// görseli (MODEL_GORSEL) sözleşmenin teslimFotolar listesinin başına eklenir. Aynı görsel
-// zaten varsa tekrar eklenmez (idempotent); böylece sözleşme yeniden üretilse de çoğalmaz.
 function sozAracResimleriEkle(d){
   try{
     if(!d) return;
@@ -2083,10 +2080,10 @@ async function sozKaydet(d, basISO, bitisISO){
       sozlesmeler.push(rec);
     }else{
       d.sozNo = rec.sozNo; // aynı sözleşme yeniden üretiliyorsa numara sabit kalsın
+      if(!Array.isArray(d.teslimFotolar) && Array.isArray(rec.data?.teslimFotolar)) d.teslimFotolar = rec.data.teslimFotolar;
       rec.data = d;
       rec.tarih = d.tarih;
     }
-    sozAracResimleriEkle(d);
     if(!await persistSozlesmeler()) return null;
     return rec;
   }catch(e){ console.error('Sözleşme kaydı hatası:', e); return null; }
@@ -2319,7 +2316,6 @@ function sozFotoGaleriCiz(rec){
   el.className = 'overlay show';
   el.id = 'sozFotoOverlay';
   el.style.cssText = 'z-index:80;';
-  el.onclick = (ev)=>{ if(ev.target===el) sozFotoKapat(); };
   const fotolar = rec.data.teslimFotolar||[];
   el.innerHTML = `
     <div class="modal" style="width:min(760px,94vw);max-height:92vh;max-height:92dvh;display:flex;flex-direction:column;">
@@ -2333,7 +2329,7 @@ function sozFotoGaleriCiz(rec){
           Kamera ile Çek
         </button>
         <button class="settings-btn" style="padding:10px 18px;border-radius:12px;font-size:13.5px;" onclick="sozFotoSec('${rec.id}')">🖼️ Galeriden Seç</button>
-        <button class="settings-btn" style="padding:10px 18px;border-radius:12px;font-size:13.5px;" onclick="sozStokResimEkle('${rec.id}')">🚗 Araç Resmi Ekle</button>
+        <button class="settings-btn" style="padding:10px 18px;border-radius:12px;font-size:13.5px;" onclick="sozStokResimEkle('${rec.id}')">🚗 Model stok görseli ekle</button>
         <span style="font-size:12px;color:var(--text-3);align-self:center;">Fotoğraflar otomatik sıkıştırılır (${fotolar.length} foto)</span>
       </div>
       <div id="sozFotoYerelUyari" style="padding:4px 0 10px;font-size:12px;color:var(--text-2);"></div>
