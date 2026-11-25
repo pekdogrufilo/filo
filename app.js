@@ -6379,14 +6379,15 @@ function krSecimGuncelle(){
 function teslimTutanakHtml(d){
   const logoSrc = (document.querySelector('.lock-logo-wrap img')||{}).src||'';
   const logoTag = logoSrc ? `<img src="${logoSrc}" alt="" style="display:block;margin:0 auto 10px;max-height:64px;">` : '';
-  const aracSatirlar = d.araclar.map(a=>`
+  const araclar = Array.isArray(d.araclar) && d.araclar.length ? d.araclar : [{plaka:d.plaka, marka:d.marka, model:d.model, modelYili:d.modelYili, renk:d.renk, teslimKm:d.teslimKm}];
+  const aracSatirlar = araclar.map(a=>`
     <tr><td style="text-align:center;"><strong>${esc(a.plaka)}</strong></td><td>${esc([a.marka,a.model].filter(Boolean).join(' ')||'—')}</td><td style="text-align:center;">${esc(a.modelYili||'—')}</td><td style="text-align:center;">${esc(a.renk||'—')}</td><td style="text-align:center;">${esc(a.teslimKm||'—')}</td><td style="text-align:center;">${esc(d.yakit||'Dolu')}</td></tr>`).join('');
   // v.336: teslim fotoğrafları — galeriden (teslimFotolar) + sihirbazın eski tekil alanları
   const fotoListe = [];
   if(Array.isArray(d.teslimFotolar)) d.teslimFotolar.forEach(f=>{ const u=(f&&f.data)||f; if(typeof u==='string'&&(u.startsWith('data:image')||u.startsWith('https://')||u.startsWith('http://'))) fotoListe.push(u); });
   ['teslimFoto1','teslimFoto2','teslimFoto3'].forEach(k=>{ if(typeof d[k]==='string'&&d[k].startsWith('data:image')) fotoListe.push(d[k]); });
   const fotoBolum = fotoListe.length ? `
-<h2>${d.araclar?'5':'4'}. Araç Fotoğrafları (Teslim Anı)</h2>
+<h2>5. Araç Fotoğrafları (Teslim Anı)</h2>
 <p style="font-size:11px;">Aşağıdaki fotoğraflar teslim anında çekilmiş olup aracın mevcut durumu ile hasar/kusur varsa bunların belgesidir.</p>
 <table style="border:none;">
   ${Array.from({length:Math.ceil(fotoListe.length/2)},(_,r)=>`

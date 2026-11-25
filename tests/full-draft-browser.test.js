@@ -96,6 +96,12 @@ window.addEventListener('load',()=>setTimeout(async()=>{
     await ykSozlesmeyeIlerle(); check(rentals.find(item=>item.id===ykSihirbazState.rentalId).durum==='sozlesmeHazir','wizard contract missing');
     const wizardContract=sozlesmeler.find(item=>item.id===rentals.find(entry=>entry.id===ykSihirbazState.rentalId).sozlesmeId);
     check(!(wizardContract.data.teslimFotolar||[]).length,'stock image automatically added to wizard contract');
+    wizardContract.data.teslimFotolar=[{ts:'Teslim',data:realPhoto}];
+    await persistSozlesmeler();
+    const reloadedWizard=JSON.parse(saved.sozlesmeler).find(item=>item.id===wizardContract.id);
+    check(!reloadedWizard.data.araclar,'single-vehicle wizard fixture unexpectedly has an array');
+    const reloadedDocument=teslimTutanakHtml(reloadedWizard.data);
+    check(reloadedDocument.includes('TEST 002') && reloadedDocument.includes(realPhoto),'saved wizard delivery document lost vehicle or photo');
     document.getElementById('ykTeslimKm').value='2500'; document.getElementById('ykTeslimYakit').value='Boş';
     await ykTeslimEt(); const wizardDone=await read(wizardId);
     check(wizardDone.veri.tamamlandi && wizardDone.veri.kayitlar.rentalIds[0]===ykSihirbazState.rentalId,'wizard completion not saved');
