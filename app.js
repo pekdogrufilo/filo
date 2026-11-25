@@ -2303,6 +2303,14 @@ async function sozMusteriOnayIsle(id){
 // Sözleşme kaydına tablet kamerasıyla araç fotoğrafları eklenir; Teslim Tutanağı
 // (Ek-1) fotoğraflarla birlikte yazdırılır. Fotoğraflar fotoSikistir() ile 1280px
 // JPEG'e indirilir — kayıt boyutu ve depolama kotası korunur.
+function sozTeslimFotoSayisi(rec){
+  const fotolar=rec?.data?.teslimFotolar;
+  if(!Array.isArray(fotolar)) return 0;
+  return fotolar.filter(foto=>{
+    const data=typeof foto==='string' ? foto : foto?.data;
+    return typeof data==='string' && /^(data:image|https?:\/\/)/i.test(data) && !(typeof foto==='object' && String(foto.ts||'').startsWith('Araç Resmi ('));
+  }).length;
+}
 function sozFotoGaleriAc(id){
   const rec = sozlesmeler.find(r=>r.id===id);
   if(!rec){ showToast('Sözleşme kaydı bulunamadı.', true); return; }
@@ -2386,7 +2394,7 @@ async function sozFotoKurtar(id, button){
     sozFotoGaleriCiz(rec); showToast('Bekleyen fotoğraflar sözleşmeye kaydedildi.');
   }catch(error){ button.disabled=false; showToast('Fotoğraflar kurtarılamadı: '+error.message,true); }
 }
-function sozFotoKapat(){ document.getElementById('sozFotoOverlay')?.remove(); }
+function sozFotoKapat(){ document.getElementById('sozFotoOverlay')?.remove(); ykTeslimFotoDurumuGuncelle(); }
 // v.343: Eski sözleşmelere de stok araç resmini tek dokunuşla ekler (galeri boşken en hızlı yol)
 function sozStokResimEkle(id){
   const rec = sozlesmeler.find(r=>r.id===id);
@@ -2404,7 +2412,7 @@ function sozFotoDosyaAl(id, kameradan){
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = 'image/*';
-  input.multiple = true;
+  input.multiple = !kameradan;
   if(kameradan) input.setAttribute('capture','environment');
   input.onchange = async ()=>{
     const files = Array.from(input.files||[]);
@@ -2418,6 +2426,11 @@ function sozFotoDosyaAl(id, kameradan){
       if(file.size > 25*1024*1024){ korumaHatasi=true; showToast('Fotoğraf çok büyük (25MB üstü) — atlandı.', true); continue; }
       try{
         const data = await fotoSikistir(file, 1280, 0.7);
+        if(data && !/^data:image\/(?:jpeg|png|webp|gif);/i.test(data)){
+          korumaHatasi=true;
+          showToast('Fotoğrafın biçimi EK-1 için desteklenmiyor. JPEG veya PNG olarak yeniden seçin.',true);
+          continue;
+        }
         if(data){
           const zaman=new Date().toLocaleString('tr-TR');
           try{ yerelIdler.push(await sozTaslaklari.fotoKaydet(id,data,zaman)); }
@@ -14808,7 +14821,11 @@ function ykSihirbaziHtml(){
         ` : ''}
         ${durum==='sozlesmeHazir' ? `
         <div class="iade-section">5 — Teslim Et</div>
-        <p style="font-size:12.5px;color:var(--text-2);margin:0 0 10px;">Sözleşme hazır. Aracı teslim ederken km/yakıt ve kontrol listesini girin — kaydettiğinizde araç otomatik "Kirada" olur ve Teslim Tutanağı (Ek-1) açılır.</p>
+        <p style="font-size:12.5px;color:var(--text-2);margin:0 0 10px;">Sözleşme hazır. Teslim fotoğraflarını ekleyin, km/yakıt ve kontrol listesini girin. Teslim ettiğinizde Ek-1 açılır.</p>
+        <div style="padding:12px;margin-bottom:12px;border:1px solid var(--border);border-radius:9px;">
+          <button type="button" class="settings-btn" onclick="ykTeslimFotoAc()">Teslim fotoğrafları ekle / görüntüle</button>
+          <div id="ykTeslimFotoDurumu" style="font-size:12px;color:var(--text-2);margin-top:8px;">${sozTeslimFotoSayisi(sozlesmeler.find(item=>item.id===r.sozlesmeId))} teslim fotoğrafı · Ek-1 için önce fotoğrafı kaydedin.</div>
+        </div>
         <div class="iade-row">
           <div class="iade-field"><label>Teslim km</label><input type="number" id="ykTeslimKm" min="0" value="${v?v.teslimKm||'':''}"></div>
           <div class="iade-field">
@@ -14945,10 +14962,28 @@ async function ykSozlesmeyeIlerle(){
   const modal = document.getElementById('ykModal');
   if(modal){ modal.innerHTML = ykSihirbaziHtml(); await sozTaslaklari.sonraki(modal); }
 }
+function ykTeslimFotoAc(){
+  const r=rentals.find(item=>item.id===ykSihirbazState?.rentalId);
+  if(!r?.sozlesmeId || !sozlesmeler.some(item=>item.id===r.sozlesmeId)){
+    showToast('Sözleşme kaydı bulunamadı; fotoğraf eklenemiyor.',true);
+    return;
+  }
+  sozFotoGaleriAc(r.sozlesmeId);
+}
+function ykTeslimFotoDurumuGuncelle(){
+  const alan=document.getElementById('ykTeslimFotoDurumu');
+  if(!alan) return;
+  const r=rentals.find(item=>item.id===ykSihirbazState?.rentalId);
+  const rec=sozlesmeler.find(item=>item.id===r?.sozlesmeId);
+  alan.textContent=sozTeslimFotoSayisi(rec)+' teslim fotoğrafı · Ek-1 için önce fotoğrafı kaydedin.';
+}
 async function ykTeslimEt(){
   const r = rentals.find(x=>x.id===(ykSihirbazState&&ykSihirbazState.rentalId)); if(!r) return;
   const v = vehicles.find(x=>x.id===r.vehicleId); if(!v) return;
   if(r.durum!=='sozlesmeHazir'){ showToast('Kiralama durumu değişmiş; teslim işlemi tekrarlanmadı.', true); return; }
+  const sozRec=sozlesmeler.find(item=>item.id===r.sozlesmeId);
+  if(!sozRec?.data){ showToast('Sözleşme kaydı bulunamadı. Teslimden önce Sözleşmeler listesini kontrol edin.',true); return; }
+  if(!sozTeslimFotoSayisi(sozRec) && !confirm('Teslim fotoğrafı eklenmemiş. Fotoğrafsız teslim etmek istiyor musunuz?')) return;
   const kiralamaModali = document.getElementById('ykModal');
   if(!await sozTaslaklari.baslat(kiralamaModali)) return;
   const teslimKm = Number(document.getElementById('ykTeslimKm')?.value)||v.teslimKm||0;
@@ -14984,16 +15019,12 @@ async function ykTeslimEt(){
   r.durum = 'teslimEdildi';
   r.teslimKontrol = { tarih: todayISO(), km: teslimKm||null, yakitSeviyesi: yakit, kontrolListesi, fotograflar: [] };
   if(!await persistRentals()) return;
-  // v.374: "teslimde depo boş işaretledim ama tutanakta dolu yazıyor" — seçilen yakıt
-  // yalnızca ekranda açılan KOPYAYA yazılıyordu; sözleşme kaydına (rec.data) hiç
-  // yazılmıyordu. Sonradan Sözleşmeler listesinden açılan her tutanak, sözleşme
-  // adımındaki varsayılan ("Dolu") değeri gösteriyordu. Artık kaynağa yazılıp kalıcı
-  // hale getiriliyor (sozData === sozKaydet'in rec.data'sı ile aynı nesne).
-  if(ykSihirbazState.sozData){
-    ykSihirbazState.sozData.yakit = yakit;
-    if(ykSihirbazState.sozData.araclar && ykSihirbazState.sozData.araclar[0]){
-      ykSihirbazState.sozData.araclar.forEach(a=>{ a.teslimKm = teslimKm ? teslimKm.toLocaleString('tr-TR') : (a.teslimKm||'—'); });
-    }
+  const sozData=sozRec.data;
+  ykSihirbazState.sozData=sozData;
+  sozData.yakit=yakit;
+  sozData.teslimKm=teslimKm ? teslimKm.toLocaleString('tr-TR') : (sozData.teslimKm||'—');
+  if(Array.isArray(sozData.araclar)){
+    sozData.araclar.forEach(arac=>{ arac.teslimKm=teslimKm ? teslimKm.toLocaleString('tr-TR') : (arac.teslimKm||'—'); });
   }
   if(!await persistSozlesmeler()) return;
   await sozTaslaklari.tamamla(kiralamaModali, {sozlesmeId:r.sozlesmeId, rentalIds:[r.id], customerId:r.customerId});
